@@ -1,0 +1,585 @@
+{
+  "nodes": [],
+  "edges": [
+    {
+      "from": "London",
+      "to": "Paris",
+      "mode": "Train",
+      "notes": "Eurostar via Channel Tunnel",
+      "details": "Eurostar",
+      "info_link": "eurostar.com",
+      "journey": "London to India Overland",
+      "leg": "1.0"
+    },
+    {
+      "from": "Bangkok",
+      "to": "Nong Khai",
+      "mode": "Train",
+      "notes": "Overnight train to Laos border",
+      "details": "Thai Railways",
+      "info_link": "railway.co.th",
+      "journey": "Southeast Asia Train Map",
+      "leg": "1.0"
+    },
+    {
+      "from": "Moscow",
+      "to": "Astana",
+      "mode": "Train",
+      "notes": "Direct train every 2nd day",
+      "details": "Train 84",
+      "info_link": "rzd.ru",
+      "journey": "Central Asia by Train",
+      "leg": "1.0"
+    },
+    {
+      "from": "Southampton",
+      "to": "New York",
+      "mode": "Ship",
+      "notes": "Cunard Line, 7 nights",
+      "details": "Queen Mary 2",
+      "info_link": "cunard.com",
+      "journey": "Queen Mary 2 Crossing",
+      "leg": "1.0"
+    },
+    {
+      "from": "Moscow",
+      "to": "Yekaterinburg",
+      "mode": "Train",
+      "notes": "2nd class & luxury cabin options",
+      "details": "Train #2 / Rossiya",
+      "info_link": "rzd.ru",
+      "journey": "Trans-Siberian",
+      "leg": "1.0"
+    },
+    {
+      "from": "Lagos (Portugal)",
+      "to": "Lisbon",
+      "mode": "Train",
+      "notes": "Start of the continuous route; trains via regional & InterCity services",
+      "details": "CP Comboios de Portugal",
+      "info_link": "cp.pt",
+      "journey": "World's Longest Train Journey",
+      "leg": "1.0"
+    },
+    {
+      "from": "Cape Town",
+      "to": "Johannesburg",
+      "mode": "Train",
+      "notes": "\"Premier Classe\" luxury service + Shosholoza Meyl overnight",
+      "details": "Premier Classe / Shosholoza Meyl",
+      "info_link": "shosholozameyl.co.za",
+      "journey": "Southern Africa Routes",
+      "leg": "1.0"
+    },
+    {
+      "from": "Quetta",
+      "to": "Lahore",
+      "mode": "Train",
+      "notes": "Daily trains across Pakistan",
+      "details": "Various",
+      "info_link": "pakistanrail.gov.pk",
+      "journey": "London to India Overland",
+      "leg": "10.0"
+    },
+    {
+      "from": "Johor Bahru",
+      "to": "Woodlands (Singapore)",
+      "mode": "Train",
+      "notes": "Final border link across Johor\u00c2\u0096Singapore Causeway",
+      "details": "Shuttle Tebrau",
+      "info_link": "-",
+      "journey": "World's Longest Train Journey",
+      "leg": "10.0"
+    },
+    {
+      "from": "Bulawayo",
+      "to": "Gweru",
+      "mode": "Train",
+      "notes": "Domestic Zimbabwe line",
+      "details": "NRZ",
+      "info_link": "nrz.co.zw",
+      "journey": "Southern Africa Routes",
+      "leg": "10.0"
+    },
+    {
+      "from": "Lahore",
+      "to": "Amritsar",
+      "mode": "Train",
+      "notes": "Samjhauta Express (suspended currently)",
+      "details": "Samjhauta Express",
+      "info_link": "seat61.com",
+      "journey": "London to India Overland",
+      "leg": "11.0"
+    },
+    {
+      "from": "Bulawayo",
+      "to": "Maputo",
+      "mode": "Bus",
+      "notes": "No direct train; transfers via Beitbridge",
+      "details": "Bus/shuttle",
+      "info_link": "\u00c2\u0097",
+      "journey": "Southern Africa Routes",
+      "leg": "11.0"
+    },
+    {
+      "from": "Amritsar",
+      "to": "Delhi",
+      "mode": "Train",
+      "notes": "Frequent fast trains, including Shatabdi Express",
+      "details": "Shatabdi, Rajdhani, etc.",
+      "info_link": "irctc.co.in",
+      "journey": "London to India Overland",
+      "leg": "12.0"
+    },
+    {
+      "from": "Paris",
+      "to": "Milan",
+      "mode": "Train",
+      "notes": "TGV or Thello sleeper train",
+      "details": "TGV INOUI or Thello",
+      "info_link": "sncf.com",
+      "journey": "London to India Overland",
+      "leg": "2.0"
+    },
+    {
+      "from": "Nong Khai",
+      "to": "Thanaleng",
+      "mode": "Train",
+      "notes": "Border train to Laos capital region",
+      "details": "Shuttle Train",
+      "info_link": "Laos Shuttle",
+      "journey": "Southeast Asia Train Map",
+      "leg": "2.0"
+    },
+    {
+      "from": "London",
+      "to": "Southampton",
+      "mode": "Train",
+      "notes": "Frequent connections from London",
+      "details": "SWR Trains",
+      "info_link": "southwesternrailway.com",
+      "journey": "Queen Mary 2 Crossing",
+      "leg": "2.0"
+    },
+    {
+      "from": "Yekaterinburg",
+      "to": "Irkutsk",
+      "mode": "Train",
+      "notes": "Scenic Ural-to-Siberia section",
+      "details": "Train #8",
+      "info_link": "rzd.ru",
+      "journey": "Trans-Siberian",
+      "leg": "2.0"
+    },
+    {
+      "from": "Lisbon",
+      "to": "Hendaye",
+      "mode": "Train",
+      "notes": "Route via Barcelona & Lyon; Lis?Hendaye sleeper previously available",
+      "details": "SNCF / RENFE",
+      "info_link": "sncf.com / renfe.es",
+      "journey": "World's Longest Train Journey",
+      "leg": "2.0"
+    },
+    {
+      "from": "Johannesburg",
+      "to": "Pretoria",
+      "mode": "Train",
+      "notes": "Frequent intercity trains",
+      "details": "Metrorail / PRASA",
+      "info_link": "prasa.com",
+      "journey": "Southern Africa Routes",
+      "leg": "2.0"
+    },
+    {
+      "from": "Astana",
+      "to": "Almaty",
+      "mode": "Train",
+      "notes": "Domestic fast Talgo train",
+      "details": "Train 1/2 (Talgo)",
+      "info_link": "tickets.kz",
+      "journey": "Central Asia by Train",
+      "leg": "2.1"
+    },
+    {
+      "from": "Moscow",
+      "to": "Almaty",
+      "mode": "Train",
+      "notes": "Older route via Saratov; not fastest",
+      "details": "Train 17",
+      "info_link": "rzd.ru",
+      "journey": "Central Asia by Train",
+      "leg": "2.2"
+    },
+    {
+      "from": "Milan",
+      "to": "Ljubljana",
+      "mode": "Train",
+      "notes": "EC or IC cross-border train",
+      "details": "EC 151 / IC 211",
+      "info_link": "trenitalia.com",
+      "journey": "London to India Overland",
+      "leg": "3.0"
+    },
+    {
+      "from": "Bangkok",
+      "to": "Padang Besar",
+      "mode": "Train",
+      "notes": "Direct train to Malaysia border",
+      "details": "International Express",
+      "info_link": "KTM/Seat61",
+      "journey": "Southeast Asia Train Map",
+      "leg": "3.0"
+    },
+    {
+      "from": "Irkutsk",
+      "to": "Ulaanbaatar",
+      "mode": "Train",
+      "notes": "Border control at Naushki",
+      "details": "Train #4 / local",
+      "info_link": "-",
+      "journey": "Trans-Siberian",
+      "leg": "3.0"
+    },
+    {
+      "from": "Hendaye",
+      "to": "Paris",
+      "mode": "Train",
+      "notes": "High-speed TGV connection via Bordeaux & Tours",
+      "details": "TGV SNCF",
+      "info_link": "sncf.com",
+      "journey": "World's Longest Train Journey",
+      "leg": "3.0"
+    },
+    {
+      "from": "Johannesburg",
+      "to": "Maputo",
+      "mode": "Train",
+      "notes": "Limpopo railway line",
+      "details": "Mozambican Railways",
+      "info_link": "cfm.co.mz",
+      "journey": "Southern Africa Routes",
+      "leg": "3.0"
+    },
+    {
+      "from": "Almaty",
+      "to": "\u00dcr\u00fcmqi",
+      "mode": "Train",
+      "notes": "Route via Druzhba/Alashankou border",
+      "details": "Train K9797",
+      "info_link": "epay.railways.kz / 12306.cn",
+      "journey": "Central Asia by Train",
+      "leg": "3.1"
+    },
+    {
+      "from": "Almaty",
+      "to": "\u00dcr\u00fcmqi",
+      "mode": "Train",
+      "notes": "Route via Horgos/Altynkol border",
+      "details": "Train K9798",
+      "info_link": "chinahighlights.com",
+      "journey": "Central Asia by Train",
+      "leg": "3.2"
+    },
+    {
+      "from": "Ljubljana",
+      "to": "Belgrade",
+      "mode": "Train",
+      "notes": "Direct or connection in Zagreb",
+      "details": "Regional",
+      "info_link": "slo-zeleznice.si",
+      "journey": "London to India Overland",
+      "leg": "4.0"
+    },
+    {
+      "from": "Padang Besar",
+      "to": "Kuala Lumpur",
+      "mode": "Train",
+      "notes": "Malaysian KTM intercity trains",
+      "details": "ETS / KTM Intercity",
+      "info_link": "ktmb.com.my",
+      "journey": "Southeast Asia Train Map",
+      "leg": "4.0"
+    },
+    {
+      "from": "\u00dcr\u00fcmqi",
+      "to": "Beijing",
+      "mode": "Train",
+      "notes": "High-speed or regular Z-trains via Xian",
+      "details": "Trains Z70, Z180, Z106 etc.",
+      "info_link": "12306.cn",
+      "journey": "Central Asia by Train",
+      "leg": "4.0"
+    },
+    {
+      "from": "Ulaanbaatar",
+      "to": "Beijing",
+      "mode": "Train",
+      "notes": "Through Gobi desert, bogie change at border",
+      "details": "Train K23",
+      "info_link": "chinatraintickets.net",
+      "journey": "Trans-Siberian",
+      "leg": "4.0"
+    },
+    {
+      "from": "Paris",
+      "to": "Moscow",
+      "mode": "Train",
+      "notes": "Paris\u00c2\u0096Moscow Express (suspended due to sanctions)",
+      "details": "TGV + Rossiya via Warsaw",
+      "info_link": "seat61.com",
+      "journey": "World's Longest Train Journey",
+      "leg": "4.0"
+    },
+    {
+      "from": "Pretoria",
+      "to": "Maputo",
+      "mode": "Train",
+      "notes": "Regular sleeper train",
+      "details": "CFM sleeper",
+      "info_link": "cfm.co.mz",
+      "journey": "Southern Africa Routes",
+      "leg": "4.0"
+    },
+    {
+      "from": "Belgrade",
+      "to": "Sofia",
+      "mode": "Train",
+      "notes": "Overnight or daytime train",
+      "details": "Belgrade\u00c2\u0096Sofia Express",
+      "info_link": "bdz.bg",
+      "journey": "London to India Overland",
+      "leg": "5.0"
+    },
+    {
+      "from": "KL",
+      "to": "Singapore",
+      "mode": "Train",
+      "notes": "Train to JB, then shuttle to Singapore",
+      "details": "Shuttle Tebrau",
+      "info_link": "-",
+      "journey": "Southeast Asia Train Map",
+      "leg": "5.0"
+    },
+    {
+      "from": "Moscow",
+      "to": "Tashkent",
+      "mode": "Train",
+      "notes": "International sleeper with 4-bed, 2-bed & restaurant car",
+      "details": "Train 6 (Uzbekistan)",
+      "info_link": "rzd.ru / advantour.com",
+      "journey": "Central Asia by Train",
+      "leg": "5.0"
+    },
+    {
+      "from": "Moscow",
+      "to": "Beijing",
+      "mode": "Train",
+      "notes": "Trans-Siberian & Trans-Manchurian routes",
+      "details": "Rossiya Express etc.",
+      "info_link": "rzd.ru",
+      "journey": "World's Longest Train Journey",
+      "leg": "5.0"
+    },
+    {
+      "from": "Bulawayo",
+      "to": "Harare",
+      "mode": "Train",
+      "notes": "National Railways of Zimbabwe service",
+      "details": "NRZ",
+      "info_link": "nrz.co.zw",
+      "journey": "Southern Africa Routes",
+      "leg": "5.0"
+    },
+    {
+      "from": "Sofia",
+      "to": "Istanbul",
+      "mode": "Train",
+      "notes": "Overnight sleeper",
+      "details": "Bosfor Express",
+      "info_link": "tcddtasimacilik.gov.tr",
+      "journey": "London to India Overland",
+      "leg": "6.0"
+    },
+    {
+      "from": "Hanoi",
+      "to": "Ho Chi Minh",
+      "mode": "Train",
+      "notes": "Reunification Express",
+      "details": "SE1\u00c2\u0096SE6",
+      "info_link": "vietnamrailway.com",
+      "journey": "Southeast Asia Train Map",
+      "leg": "6.0"
+    },
+    {
+      "from": "Tashkent",
+      "to": "Samarkand",
+      "mode": "Train",
+      "notes": "Fast domestic leg",
+      "details": "Afrosiyob / Sharq",
+      "info_link": "uzrailway.uz",
+      "journey": "Central Asia by Train",
+      "leg": "6.0"
+    },
+    {
+      "from": "Beijing",
+      "to": "Kunming",
+      "mode": "Train",
+      "notes": "High-speed route through central China",
+      "details": "High-speed Rail",
+      "info_link": "12306.cn",
+      "journey": "World's Longest Train Journey",
+      "leg": "6.0"
+    },
+    {
+      "from": "Harare",
+      "to": "Lusaka",
+      "mode": "Bus",
+      "notes": "No train; bus or shuttle between capitals",
+      "details": "Border bus/shuttle",
+      "info_link": "\u00c2\u0097",
+      "journey": "Southern Africa Routes",
+      "leg": "6.0"
+    },
+    {
+      "from": "Istanbul",
+      "to": "Tehran",
+      "mode": "Train",
+      "notes": "2-train combo: Trans-Asia Express + Van-Tebriz",
+      "details": "Trans-Asia Express",
+      "info_link": "Seat61 (via rail agencies)",
+      "journey": "London to India Overland",
+      "leg": "7.0"
+    },
+    {
+      "from": "Phnom Penh",
+      "to": "Ho Chi Minh",
+      "mode": "Bus",
+      "notes": "No train; only buses or minivans",
+      "details": "Mekong Express, others",
+      "info_link": "-",
+      "journey": "Southeast Asia Train Map",
+      "leg": "7.0"
+    },
+    {
+      "from": "Samarkand",
+      "to": "Bukhara",
+      "mode": "Train",
+      "notes": "Short onward leg",
+      "details": "Afrosiyob",
+      "info_link": "uzrailway.uz",
+      "journey": "Central Asia by Train",
+      "leg": "7.0"
+    },
+    {
+      "from": "Kunming",
+      "to": "Vientiane",
+      "mode": "Train",
+      "notes": "New Laos\u00c2\u0096China Railway (opened Dec 2021) Facebook+7Big Think+7skratch.world+7Portugal ResidentFacebook+1The Man in Seat Sixty-One+1",
+      "details": "Laos\u00c2\u0096China High-speed",
+      "info_link": "-",
+      "journey": "World's Longest Train Journey",
+      "leg": "7.0"
+    },
+    {
+      "from": "Lusaka",
+      "to": "Livingstone",
+      "mode": "Train",
+      "notes": "Zambian only rail services",
+      "details": "Zambia Railways",
+      "info_link": "zambia-railways.co.zm",
+      "journey": "Southern Africa Routes",
+      "leg": "7.0"
+    },
+    {
+      "from": "Tehran",
+      "to": "Zahedan",
+      "mode": "Train",
+      "notes": "Long-distance train through desert",
+      "details": "Local Iranian Rail",
+      "info_link": "-",
+      "journey": "London to India Overland",
+      "leg": "8.0"
+    },
+    {
+      "from": "Bangkok",
+      "to": "Chiang Mai",
+      "mode": "Train",
+      "notes": "Sleeper or express trains",
+      "details": "Thai Railways",
+      "info_link": "-",
+      "journey": "Southeast Asia Train Map",
+      "leg": "8.0"
+    },
+    {
+      "from": "Bukhara",
+      "to": "Khiva",
+      "mode": "Train",
+      "notes": "Optional stopover for Silk Road history",
+      "details": "Local trains",
+      "info_link": "uzrailway.uz",
+      "journey": "Central Asia by Train",
+      "leg": "8.0"
+    },
+    {
+      "from": "Vientiane",
+      "to": "Bangkok",
+      "mode": "Train",
+      "notes": "Daily overnight sleeper service (approx. 12 hrs)",
+      "details": "Thai Railways Network",
+      "info_link": "railway.co.th",
+      "journey": "World's Longest Train Journey",
+      "leg": "8.0"
+    },
+    {
+      "from": "Livingstone",
+      "to": "Victoria Falls",
+      "mode": "Train",
+      "notes": "Short scenic ride",
+      "details": "Zambia Railways",
+      "info_link": "zambia-railways.co.zm",
+      "journey": "Southern Africa Routes",
+      "leg": "8.0"
+    },
+    {
+      "from": "Zahedan",
+      "to": "Quetta",
+      "mode": "Train",
+      "notes": "Border crossing, train with long waits",
+      "details": "Quetta Express",
+      "info_link": "Pakistan Railways",
+      "journey": "London to India Overland",
+      "leg": "9.0"
+    },
+    {
+      "from": "Moscow",
+      "to": "Bishkek",
+      "mode": "Train",
+      "notes": "The Kirgizia sleeper train, runs twice weekly",
+      "details": "Train 18",
+      "info_link": "rzd.ru",
+      "journey": "Central Asia by Train",
+      "leg": "9.0"
+    },
+    {
+      "from": "Bangkok",
+      "to": "Kuala Lumpur/Singapore border",
+      "mode": "Train",
+      "notes": "Long-distance day train + border crossing at Padang Besar ? Johor Bahru",
+      "details": "ETS + Shuttle Tebrau",
+      "info_link": "ktmb.com.my",
+      "journey": "World's Longest Train Journey",
+      "leg": "9.0"
+    },
+    {
+      "from": "Victoria Falls",
+      "to": "Bulawayo",
+      "mode": "Train",
+      "notes": "Zimbabwean connection",
+      "details": "NRZ",
+      "info_link": "nrz.co.zw",
+      "journey": "Southern Africa Routes",
+      "leg": "9.0"
+    }
+  ]
+}

@@ -1,0 +1,296 @@
+[
+  {
+    "from": "St Pancras International",
+    "to": "Gare du Nord",
+    "mode": "HIGH_SPEED_TRAIN",
+    "notes": "Paris Gare du Nord",
+    "details": "London-Paris",
+    "info_links": [
+      "https://www.eurostar.com/",
+      "www.b-europe.com",
+      "http://www.eurostar.com/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Gare du Nord",
+    "to": "Ch\u00e2telet",
+    "mode": "SUBWAY",
+    "notes": "Ch\u00e2telet",
+    "details": "4",
+    "info_links": [
+      "https://www.ratp.fr/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Ch\u00e2telet",
+    "to": "Bercy",
+    "mode": "SUBWAY",
+    "notes": "A\u00e9roport d'Orly",
+    "details": "14",
+    "info_links": [
+      "https://www.ratp.fr/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Paris Bercy",
+    "to": "Barcelona Bus Station North",
+    "mode": "BUS",
+    "notes": "Barcelona",
+    "details": "BlaBlaCar Bus 93133: Barcelona - Paris Bercy Central Bus Station",
+    "info_links": [
+      "https://www.blablacar.fr/bus",
+      "www.b-europe.com",
+      "https://www.blablacar.co.uk/bus?comuto_cmkt=UK_GMAPS-PRO_ALL_ALL&utm_medium=Partnership&utm_source=Gmaps&utm_campaign=UK_GMAPS-PRO_ALL_ALL"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Barcelone-Arc de Triomf",
+    "to": "Barcelona-Sants",
+    "mode": "HEAVY_RAIL",
+    "notes": "L'hospitalet De Llobregat",
+    "details": "L\u00ednea R1",
+    "info_links": [
+      "https://www.renfe.com/es/es/cercanias/cercanias-madrid/horarios"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Avantika Sec.1",
+    "to": "Gazipur",
+    "mode": "BUS",
+    "notes": "Anand Vihar I.S.B.T.",
+    "details": "971",
+    "info_links": [
+      "http://www.delhi.gov.in/wps/wcm/connect/doit_dtc/DTC/Home"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Anand Vihar",
+    "to": "Kawala Naka",
+    "mode": "BUS",
+    "notes": "A/C Seater / Sleeper (2+2)",
+    "details": "River Tour And Travels",
+    "info_links": [
+      "http://www.redbus.in/travels/river-tour-and-travel"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Shiroli Phata",
+    "to": "Kolhapur Bypass - Tawde Hotel NearBridge Start",
+    "mode": "BUS",
+    "notes": "A/C Sleeper (2+1)",
+    "details": "Labbaik Tours And Travels",
+    "info_links": [
+      "https://www.redbus.in/travels/labbaik-tours-and-travels?utm_source=Google_Maps&utm_medium=referral&utm_campaign=GTFS"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Kolhapur Bypass - Tawde Hotel NearBridge Start",
+    "to": "Anand Rao Circle",
+    "mode": "BUS",
+    "notes": "Volvo 9600 Multi-Axle A/C Sleeper (2+1)",
+    "details": "VRL Travels",
+    "info_links": [
+      "http://www.redbus.in/travels/vrl-travels"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Anand Rao Circle",
+    "to": "Kazhakkottam",
+    "mode": "BUS",
+    "notes": "Bharat Benz A/C Sleeper (2+1)",
+    "details": "SBM Travels",
+    "info_links": [
+      "http://www.redbus.in/travels/sbm-traansport"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "HSR Layout",
+    "to": "Rasampalayam Toll Plaza",
+    "mode": "BUS",
+    "notes": "Volvo 9600 Multi-Axle A/C Sleeper (2+1)",
+    "details": "Punchiry Tours And Travels",
+    "info_links": [
+      "https://www.redbus.in/?utm_source=Google_Maps&utm_medium=referral&utm_campaign=GTFS"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Rasampalayam Toll Plaza",
+    "to": "Infosys Campus",
+    "mode": "BUS",
+    "notes": "Bharat Benz A/C Sleeper (2+1)",
+    "details": "SBM Travels",
+    "info_links": [
+      "http://www.redbus.in/travels/sbm-traansport"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Paris Bercy",
+    "to": "Barcelona North Carrer d'Al\u00ed Bei",
+    "mode": "BUS",
+    "notes": "Barcelona Sants Central Transit Station",
+    "details": "FlixBus: Barcelona Sants Central Transit Station - Paris Bercy Central Bus Station",
+    "info_links": [
+      "https://www.awin1.com/cread.php?awinmid=112620&awinaffid=1869474&ued=https%3A%2F%2Fglobal%2Eflixbus%2Ecom%2F"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Ch\u00e2telet",
+    "to": "A\u00e9roport d'Orly",
+    "mode": "SUBWAY",
+    "notes": "A\u00e9roport d'Orly",
+    "details": "14",
+    "info_links": [
+      "https://www.ratp.fr/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Paris Orly Sud Airport Parking P5",
+    "to": "Lyon Perrache Bus Station",
+    "mode": "BUS",
+    "notes": "Marseille",
+    "details": "BlaBlaCar Bus 5807: Marseille - Paris Bercy Central Bus Station",
+    "info_links": [
+      "https://www.blablacar.co.uk/bus?comuto_cmkt=UK_GMAPS-PRO_ALL_ALL&utm_medium=Partnership&utm_source=Gmaps&utm_campaign=UK_GMAPS-PRO_ALL_ALL",
+      "https://www.blablacar.fr/bus",
+      "www.b-europe.com"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Lyon",
+    "to": "Estaci\u00f3n de Autobuses Barcelona Nord",
+    "mode": "BUS",
+    "notes": "Aeropuerto Barcelona- Prat T1",
+    "details": "Paris - Lyon - Barcelona",
+    "info_links": [
+      "https://www.alsa.es/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Lyon Part Dieu",
+    "to": "Gare de B\u00e9ziers",
+    "mode": "HIGH_SPEED_TRAIN",
+    "notes": "Perpignan",
+    "details": "Lille - Mediterranee TGV",
+    "info_links": [
+      "https://www.sncf.com/fr"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Beziers Boulevard de Verdun",
+    "to": "Barcelona North Carrer d'Al\u00ed Bei",
+    "mode": "BUS",
+    "notes": "Murcia",
+    "details": "FlixBus: Metz - Valence",
+    "info_links": [
+      "https://www.awin1.com/cread.php?awinmid=112620&awinaffid=1869474&ued=https%3A%2F%2Fglobal%2Eflixbus%2Ecom%2F"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Pg de St Joan - Ausi\u00e0s March",
+    "to": "Ronda Universitat - Pl Universitat",
+    "mode": "BUS",
+    "notes": "Moll de Barcelona",
+    "details": "Estaci\u00f3 Mar\u00edtima-El Carmel",
+    "info_links": [
+      "https://tusgsal.cat/cat/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Ch\u00e2telet",
+    "to": "Cour Saint-\u00c9milion",
+    "mode": "SUBWAY",
+    "notes": "A\u00e9roport d'Orly",
+    "details": "14",
+    "info_links": [
+      "https://www.ratp.fr/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Paris Bercy",
+    "to": "Lyon Perrache",
+    "mode": "BUS",
+    "notes": "Milan Lampugnano Bus Station",
+    "details": "FlixBus: Paris - Rouen",
+    "info_links": [
+      "https://www.awin1.com/cread.php?awinmid=112620&awinaffid=1869474&ued=https%3A%2F%2Fglobal%2Eflixbus%2Ecom%2F"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Lyon-Perrache",
+    "to": "Lyon Part Dieu",
+    "mode": "HIGH_SPEED_TRAIN",
+    "notes": "Rennes",
+    "details": "Bretagne - Sud Est TGV",
+    "info_links": [
+      "https://www.sncf.com/fr"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Lyon Part Dieu",
+    "to": "Montpellier Saint-Roch",
+    "mode": "HIGH_SPEED_TRAIN",
+    "notes": "Toulouse Matabiau",
+    "details": "Lyon - LR",
+    "info_links": [
+      "https://www.sncf.com/fr"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Montpellier Saint-Roch",
+    "to": "Barcelona-Sants",
+    "mode": "HEAVY_RAIL",
+    "notes": "Madrid Pta.Atocha - Almudena Grandes",
+    "details": "",
+    "info_links": [
+      "http://www.renfe.com/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  }
+]

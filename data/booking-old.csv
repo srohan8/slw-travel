@@ -1,0 +1,34 @@
+URL,Continent / Country Coverage,Languages Supported
+EUROPE,,
+www.bahn.com,"Germany (Deutsche Bahn - DB), International connections from Germany","German, English, others"
+www.sncf-connect.com,"France (SNCF), International connections from France","French, English"
+www.renfe.com,Spain (Renfe),"Spanish, English, others"
+www.trenitalia.com,Italy (Trenitalia),"Italian, English"
+www.sbb.ch,Switzerland (SBB CFF FFS),"German, French, Italian, English"
+www.nationalrail.co.uk,"United Kingdom (National Rail, aggregator of UK operators)",English
+www.pkp.pl/en,Poland (PKP Intercity),"Polish, English"
+www.cd.cz/en,Czech Republic (České dráhy - ČD),"Czech, English, German"
+www.oebb.at/en,Austria (ÖBB),"German, English"
+www.dsb.dk/en,Denmark (DSB),"Danish, English"
+www.vy.no/en,Norway (Vy),"Norwegian, English"
+www.sj.se/en,Sweden (SJ),"Swedish, English"
+www.b-europe.com,"Belgium (SNCB-NMBS International), key European international routes","English, French, Dutch, German"
+ASIA,,
+[suspicious link removed],India (IRCTC),"English, Hindi"
+www.12306.cn,China (China Railway),Chinese (limited English functionality may exist)
+www.jreast.co.jp/e/,"Japan (JR East, major regional operator), JR has multiple regional sites","Japanese, English, others"
+www.korail.com/en/,South Korea (Korail),"Korean, English, others"
+www.railway.co.th/en/,Thailand (State Railway of Thailand - SRT),"Thai, English"
+www.ktmb.com.my,Malaysia (Keretapi Tanah Melayu Berhad - KTMB),"Malay, English"
+www.ptkai.co.id,Indonesia (Kereta Api Indonesia - KAI),"Indonesian, English"
+AFRICA,,
+www.oncf.ma,Morocco (Office National des Chemins de Fer - ONCF),"French, Arabic, English"
+enr.gov.eg/TPA-Website/,Egypt (Egyptian National Railways - ENR),"Arabic, English"
+www.prasa.com,"South Africa (PRASA, for passenger rail)",English
+www.transnetfreightrail-tfr.net,"South Africa (Transnet Freight Rail - TFR, primarily freight but related to network)",English
+www.sncc.cd,DR Congo (Société Nationale des Chemins de fer du Congo - SNCC),French
+nrc.gov.ng,Nigeria (Nigerian Railway Corporation - NRC),English
+MIDDLE EAST,,
+www.tcddtasimacilik.gov.tr/en/,Turkey (TCDD Taşımacılık),"Turkish, English"
+www.sar.com.sa,Saudi Arabia (Saudi Arabia Railways - SAR),"Arabic, English"
+www.etihadrail.ae,UAE (Etihad Rail - primarily freight and network currently),"English, Arabic"
