@@ -2,13 +2,23 @@ let graph = {};
 let routes = [];
 let cityCoordinates = {};
 let map, routeLines = [];
+let bookingSites = {}; // 🧠 global dictionary
 
+async function loadBookingSites() {
+  const res = await fetch("http://localhost:5001/api/booking-sites")
+  bookingSites = await res.json();
+  console.log("📦 bookingSites loaded:", Object.keys(bookingSites).length);
+}
 // Load both routes and coordinates
 
 window.addEventListener("DOMContentLoaded", async () => {
   await populateCityDropdowns(); 
   await loadData(); 
 });
+
+function normalizeCity(cityName) {
+  return cityName.trim().toLowerCase();
+}
 
 // Minimal polyline decoder (Google's encoded points)
 function decodePolyline(encoded) {
@@ -46,6 +56,7 @@ async function loadData() {
 	  fetch("data/city_coordinates.json"),
 	  fetch("data/external_city_matches.json")
 	]);
+  await loadBookingSites();
 
 	const routeData = await routeRes.json();
 	const coordsMain = await coordRes.json();
@@ -128,52 +139,85 @@ function bfsAllPaths(start, end, maxPaths = 3, maxDepth = 10) {
 async function findRoute() {
   const from = document.getElementById("from").value;
   const to = document.getElementById("to").value;
+  const container = document.getElementById("routeResults");
 
   if (!from || !to || from === to) {
     alert("Please select two different cities.");
     return;
   }
 
-  // 🌐 Try fetching coordinates if city not already known
-  if (!cityCoordinates[from]) {
-    cityCoordinates[from] = await fetchCityFromNominatim(from);
-  }
-  if (!cityCoordinates[to]) {
-    cityCoordinates[to] = await fetchCityFromNominatim(to);
-  }
+  // 🌀 Show loading state
+  container.innerHTML = `
+    <div class="loading-spinner"></div>
+    <p class="loading-text">🚄 Our Minion is planning the ultimate overland journey... hang tight!</p>
+  `;
 
-  // ❌ Still unknown after OSM? Block.
+  // 🌍 Fetch coordinates if missing
+  if (!cityCoordinates[from]) cityCoordinates[from] = await fetchCityFromNominatim(from);
+  if (!cityCoordinates[to]) cityCoordinates[to] = await fetchCityFromNominatim(to);
   if (!cityCoordinates[from] || !cityCoordinates[to]) {
     alert("Sorry, we couldn't locate one of the cities.");
     return;
   }
 
-  const allRoutes = bfsAllPaths(from, to);
-  const limitedRoutes = allRoutes.slice(0, 3); // ✅ limit to top 3
-
-  if (limitedRoutes.length === 0) {
-    const userConfirmed = confirm("No known overland route found. Search live transit route via Google Maps?");
-    if (userConfirmed) {
-      checkSuggestedRoute(from, to).then(cached => {
-        if (cached) {
-          console.log("✅ Using cached suggested route:", cached);
-          showResult(cached);
-        } else {
-          fetchTransitRoute(from, to).then(result => {
-            if (result) {
-              showGoogleRouteOnMap(result.steps);
-            } else {
-              alert("No route found via Google either.");
-            }
-          });
-        }
-      });
+  // 1️⃣ Suggested route
+  try {
+    const suggested = await checkSuggestedRoute(from, to);
+    if (suggested?.length > 0) {
+      console.log("✅ Using suggested route");
+      container.innerHTML = "";
+      showUnifiedRoute(suggested, "suggested");
+      return;
     }
+  } catch (err) {
+    console.warn("⚠️ Suggested route check failed:", err);
+  }
+
+  // 2️⃣ Google Transit
+  try {
+    const google = await fetchTransitRoute(from, to);
+    if (google?.steps?.length > 0) {
+      console.log("✅ Using Google Transit");
+      container.innerHTML = "";
+      showUnifiedRoute(google.steps, "google");
+      return;
+    }
+  } catch (err) {
+    console.warn("⚠️ Google route fetch failed:", err);
+  }
+
+  // 3️⃣ Local route
+  const local = bfsAllPaths(from, to).slice(0, 3);
+  if (local.length > 0) {
+    console.log("✅ Using local route data");
+    container.innerHTML = "";
+    displayRoutes(local);
     return;
   }
 
-  displayRoutes(limitedRoutes);
+  // 4️⃣ AI-Simulated route
+  try {
+    const res = await fetch(`http://localhost:5001/api/ai-plan?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+    const aiSteps = await res.json();
+
+    if (Array.isArray(aiSteps) && aiSteps.length > 0) {
+      console.log("🧠 AI-simulated route found");
+      container.innerHTML = "";
+      showUnifiedRoute(aiSteps, "ai");
+      await loadBookingSites();
+      return;
+    } else {
+      container.innerHTML = `<p>⚠️ AI returned no valid steps for this route.</p>`;
+    }
+  } catch (e) {
+    container.innerHTML = `<p>❌ AI planning failed: ${e.message}</p>`;
+    console.error("❌ AI planning failed:", e);
+  }
+
+  // ❌ Final fallback
+  container.innerHTML = `<p>❌ No overland route found in any source.</p>`;
 }
+
 
 function showResult(path) {
   const resultDiv = document.getElementById("routeResults");
@@ -214,29 +258,18 @@ function displayRoutes(paths) {
     const color = colors[index % colors.length];
     const routeLayers = plotPathOnMap(path, routeNum, color);
 
-    allRouteLayers.push(routeLayers);  // Grouped layers
-    routeLines.push(...routeLayers);  // For full cleanup
+    allRouteLayers.push(routeLayers);
+    routeLines.push(...routeLayers);
 
-    // 🪪 UI card
     const routeCard = document.createElement("div");
     routeCard.className = "route-card";
+
     const modes = [...new Set(path.map(step => step.mode))].join(", ");
-    const legList = path.map(step => {
-      const badges = getBadges(step).join(" ");
-      return `
-        <li>
-          <strong>${step.from} → ${step.to}</strong> via <em>${step.mode}</em> ${badges}<br>
-          ${step.notes || ""}<br>
-          ${step.details ? `<code>${step.details}</code>` : ""}
-          ${step.info_link ? `<br><a href="https://${step.info_link}" target="_blank">${step.info_link}</a>` : ""}
-        </li>
-      `;
-    }).join("");
 
     routeCard.innerHTML = `
       <h3>${routeNum}</h3>
       <p>${path.length} legs | Modes: ${modes}</p>
-      <ul>${legList}</ul>
+      <ul>${renderUnifiedSteps(path)}</ul>
     `;
 
     const toggleBtn = document.createElement("button");
@@ -265,9 +298,26 @@ function initMap() {
 	}
 
   map = L.map('map').setView([30, 20], 3);
+  
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
+  
+	const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	attribution: '&copy; OpenStreetMap contributors'
+	});
+
+	const satellite = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+	attribution: '&copy; OpenTopoMap contributors'
+	});
+
+	const railway = L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png', {
+	attribution: '&copy; OpenRailwayMap contributors'
+	});
+
+	// Set default base layer
+	osm.addTo(map);
+
 
   // Add custom legend (already included in your code)
   const legend = L.control({ position: "bottomright" });
@@ -284,6 +334,15 @@ function initMap() {
     return div;
   };
   legend.addTo(map);
+  
+  const baseLayers = {
+  "🗺️ Road Map": osm,
+  "🛰️ Satellite Map": satellite,
+  "🚆 Railway Map": railway
+};
+
+L.control.layers(baseLayers, null, { collapsed: false }).addTo(map);
+
 
   // ✅ Add city markers
   for (const [city, coords] of Object.entries(cityCoordinates)) {
@@ -455,39 +514,67 @@ function findAllRoutes(from, to, maxDepth = 10) {
 
 function getBadges(leg) {
   const badges = [];
-  if (leg.mode.includes("Train") && leg.journey.includes("Longest")) badges.push("🚆 Eco");
-  if (leg.journey.includes("Queen Mary 2")) badges.push("🛳️ Historical");
+
+  if (leg.journey?.includes("Inferred")) {
+    badges.push("🧠 Inferred");
+  }
+
+  if (leg.journey === "AI-Simulated") {
+    badges.push("⚠️ AI-generated");
+  }
+
+  if (leg.mode?.toLowerCase().includes("train") && leg.journey?.includes("Longest")) {
+    badges.push("🚆 Eco");
+  }
+
+  if (leg.journey?.includes("Queen Mary 2")) {
+    badges.push("🛳️ Historical");
+  }
+
   if ((leg.notes && leg.notes.toLowerCase().includes("scenic")) ||
       (leg.details && leg.details.toLowerCase().includes("view"))) {
     badges.push("🌄 Scenic");
   }
+
   return badges;
 }
+
 
 async function fetchTransitRoute(from, to) {
   const endpoint = `http://localhost:5001/api/live-route?origin=${encodeURIComponent(from)}&destination=${encodeURIComponent(to)}`;
 
   try {
     const res = await fetch(endpoint);
-    const data = await res.json();
 
-    if (data.status !== "OK") {
-      console.error("❌ No transit route found:", data.status);
+    // ✅ Check response is OK before trying .json()
+    if (!res.ok) {
+      const text = await res.text(); // In case response is not valid JSON
+      console.error("❌ Google Transit API failed:", res.status, res.statusText, text);
       return null;
     }
 
-    const route = data.routes[0];
-	const steps = route.legs[0].steps.map(step => ({
-	  from: step.start_location,
-	  to: step.end_location,
-	  instructions: step.html_instructions,
-	  mode: step.travel_mode,
-	  points: step.polyline?.points || null,        // ✅ ADD THIS
-	  transit: step.transit_details ?? {},
-	  full: step
-	}));
+    const data = await res.json();
 
+    if (data.status !== "OK") {
+      console.warn("⚠️ Google Transit error:", data.status, data.error_message || "");
+      return null;
+    }
 
+    const route = data.routes?.[0];
+    if (!route || !route.legs?.[0]?.steps?.length) {
+      console.warn("⚠️ Google returned no usable steps");
+      return null;
+    }
+
+    const steps = route.legs[0].steps.map(step => ({
+      from: step.start_location,
+      to: step.end_location,
+      instructions: step.html_instructions,
+      mode: step.travel_mode,
+      points: step.polyline?.points || null,
+      transit: step.transit_details ?? {},
+      full: step
+    }));
 
     return {
       summary: route.summary,
@@ -637,20 +724,42 @@ function renderRouteSteps(steps, source = "local") {
       ? (step.transit?.line?.name || "")
       : (step.details || "");
 
-    const agencyName = source === "google"
-      ? step.transit?.line?.agencies?.[0]?.name || ""
-      : "";
+    // 🎯 Booking logic
+    let linkButton = "";
 
-    const agencyUrl = source === "google"
-      ? step.transit?.line?.agencies?.[0]?.url || ""
-      : "";
+    if (source === "google" && step.transit) {
+      const agencyName = step.transit?.line?.agencies?.[0]?.name || "";
+      const agencyUrl = step.transit?.line?.agencies?.[0]?.url || "";
+      const fallbackSearch = `https://www.google.com/search?q=${encodeURIComponent(`${mode} ${from} to ${to} booking`)}`;
+      const bookingLink = agencyUrl || fallbackSearch;
 
-    const fallbackSearch = `https://www.google.com/search?q=${encodeURIComponent(`${mode} ${from} to ${to} booking`)}`;
-    const bookingLink = agencyUrl || fallbackSearch;
+      linkButton = `<a href="${bookingLink}" target="_blank" rel="noopener"><button>🔗 Visit Site</button></a>`;
+    }
 
-    const linkButton = (source === "google" && step.transit)
-      ? `<a href="${bookingLink}" target="_blank" rel="noopener"><button>Book Now</button></a>`
-      : "";
+    if (step.info_link && source !== "google") {
+      try {
+        const base = step.info_link.split("/")[2]; // e.g. www.bahn.com
+        const match = bookingSites?.[base];
+
+        // Always show visit site button
+        linkButton = `<a href="${step.info_link}" target="_blank" rel="noopener"><button>🔗 Visit Site</button></a>`;
+
+        // If verified, show search template
+        if (match?.verified && match.search_url_template) {
+          const searchLink = match.search_url_template
+            .replace("A", encodeURIComponent(from))
+            .replace("B", encodeURIComponent(to));
+
+          linkButton += ` <a href="${searchLink}" target="_blank" rel="noopener"><button>🔍 Search A → B</button></a>`;
+        } else {
+          // Optional: fallback search button if you want
+          // const fallbackSearch = `https://www.google.com/search?q=${encodeURIComponent(`${mode} ${from} to ${to} booking`)}`;
+          // linkButton += ` <a href="${fallbackSearch}" target="_blank" rel="noopener"><button>🔎 Search</button></a>`;
+        }
+      } catch (err) {
+        console.warn("⚠️ Booking button parse failed:", err);
+      }
+    }
 
     return `
       <li>
@@ -662,6 +771,33 @@ function renderRouteSteps(steps, source = "local") {
     `;
   }).join("");
 }
+
+function renderUnifiedSteps(path) {
+  return path.map((step, i) => {
+    const badges = getBadges(step).join(" ");
+    const infoLinks = Array.isArray(step.info_links)
+      ? step.info_links.map(link => {
+          const safeUrl = link.url.startsWith("http") ? link.url : `https://${link.url}`;
+          return `<a href="${safeUrl}" target="_blank" rel="noopener">🔗 ${link.label || "Visit site"}</a>`;
+        }).join(" | ")
+      : "";
+
+    const reportButton = step.journey === "AI-Simulated"
+      ? `<br><button onclick="flagLeg('${step.from}', '${step.to}', ${i})" class="flag-button">⚠️ Report</button>`
+      : "";
+
+    return `
+      <li>
+        <strong>${step.from} → ${step.to}</strong> via <em>${step.mode}</em> ${badges}<br>
+        <em>${step.notes || ""}</em><br>
+        ${step.details ? `<code>${step.details}</code><br>` : ""}
+        ${infoLinks}
+        ${reportButton}
+      </li>
+    `;
+  }).join("");
+}
+
 
 async function checkSuggestedRoute(from, to) {
   const res = await fetch(`http://localhost:5001/api/suggested?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
@@ -764,5 +900,143 @@ function decodePolyline(str) {
   }
 
   return coordinates;
+}
+
+async function showUnifiedRoute(steps, source = "google") {
+  // 🧹 Clear map
+  routeLines.forEach(layer => map.removeLayer(layer));
+  routeLines = [];
+
+  const latlngs = [];
+
+  for (const step of steps) {
+    const from = step.from;
+    const to = step.to;
+
+    let fromCoord, toCoord;
+
+    // Normalize for AI/Suggested
+    if (source === "ai" || source === "suggested") {
+      fromCoord = cityCoordinates[normalizeCity(from)];
+      toCoord = cityCoordinates[normalizeCity(to)];
+    } else {
+      fromCoord = cityCoordinates[from] || (from.lat && from.lng ? [from.lat, from.lng] : null);
+      toCoord = cityCoordinates[to] || (to.lat && to.lng ? [to.lat, to.lng] : null);
+    }
+
+    // Try to geocode missing coordinates
+    if (!fromCoord) {
+      fromCoord = await fetchCityFromNominatim(from);
+      if (fromCoord) cityCoordinates[from] = fromCoord;
+    }
+    if (!toCoord) {
+      toCoord = await fetchCityFromNominatim(to);
+      if (toCoord) cityCoordinates[to] = toCoord;
+    }
+
+    if (!fromCoord || !toCoord) {
+      console.warn("🛑 Still missing coordinates after fetch:", from, to);
+      continue;
+    }
+
+    const points = step.points
+      ? decodePolyline(step.points)
+      : [fromCoord, toCoord];
+
+    if (!Array.isArray(points) || points.length < 2) {
+      console.warn("⚠️ Skipping invalid polyline for:", step.from, "→", step.to);
+      continue;
+    }
+    if (step.points) {
+      console.log("✅ Snapped polyline available for:", step.from, "→", step.to);
+    }
+
+    const color = step.mode?.toLowerCase().includes("bus") ? "green"
+      : step.mode?.toLowerCase().includes("train") ? "blue"
+      : "gray";
+
+    const polyline = L.polyline(points, {
+      color,
+      weight: 4,
+      opacity: 0.8,
+      dashArray: step.mode === "WALKING" ? "4 6" : null
+    }).addTo(map);
+
+    routeLines.push(polyline);
+    latlngs.push(fromCoord);
+
+    // Label
+    const label = `${step.mode || "?"} → ${step.notes || ""}`;
+    const labelMarker = L.marker(toCoord, {
+      icon: L.divIcon({
+        className: 'city-label',
+        html: `<div style="font-size:10px; background:white; padding:2px; border-radius:4px;">${label}</div>`
+      })
+    }).addTo(map);
+
+    routeLines.push(labelMarker);
+  }
+
+  if (latlngs.length > 0) map.fitBounds(latlngs);
+
+  const resultDiv = document.getElementById("routeResults");
+
+  const routeLabel = source === "google"
+    ? "🚍 Google Transit Route"
+    : source === "ai"
+      ? "🛰️ Route (AI)"
+      : "🛰️ Route (Suggested)";
+
+  const routeHtml = source === "google"
+    ? renderRouteSteps(steps, "google")
+    : renderUnifiedSteps(steps);  // 🛠️ This now includes booking buttons and report button
+
+  resultDiv.innerHTML = `
+    <h3>${routeLabel}</h3>
+    <ol>${routeHtml}</ol>
+  `;
+
+
+  if (source === "ai") {
+    const inferredCities = new Set();
+
+    steps.forEach(step => {
+      if (step.journey === "AI-Simulated" || step.journey?.includes("Inferred")) {
+        inferredCities.add(step.from);
+        inferredCities.add(step.to);
+      }
+    });
+
+    const viaText = Array.from(inferredCities).slice(1, -1).join(", ");
+    const explanation = document.createElement("p");
+    explanation.innerHTML = `🧠 <em>This route was inferred by AI${viaText ? ` via ${viaText}` : ""}. Please verify each leg before travel.</em>`;
+    resultDiv.appendChild(explanation);
+
+    const reportBtn = document.createElement("button");
+    reportBtn.textContent = "🚨 Report Error";
+    reportBtn.style.marginTop = "10px";
+    reportBtn.onclick = () => {
+      const body = JSON.stringify(steps, null, 2);
+      const subject = encodeURIComponent("Issue with AI-generated route");
+      const bodyEncoded = encodeURIComponent(`There was an error in this route:\n\n${body}`);
+      window.open(`mailto:support@yourdomain.com?subject=${subject}&body=${bodyEncoded}`, "_blank");
+    };
+
+    resultDiv.appendChild(reportBtn);
+  }
+}
+
+function flagLeg(from, to, index) {
+  fetch("/api/flag-leg", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to, index })
+  }).then(res => {
+    if (res.ok) {
+      alert("🚩 Route leg flagged. Thanks for reporting!");
+    } else {
+      alert("❌ Failed to flag route leg.");
+    }
+  });
 }
 

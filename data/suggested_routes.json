@@ -292,5 +292,1035 @@
     ],
     "journey": "GoogleAuto",
     "leg": "auto"
+  },
+  {
+    "from": "London",
+    "to": "Paris",
+    "mode": "Train",
+    "notes": "Eurostar service available",
+    "details": "High-speed train from London St Pancras to Paris Gare du Nord",
+    "info_link": "https://www.eurostar.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Paris",
+    "to": "Geneva",
+    "mode": "Train",
+    "notes": "Regular train service available",
+    "details": "Direct trains from Paris Gare de Lyon to Geneva",
+    "info_link": "https://www.sncf.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Geneva",
+    "to": "Milan",
+    "mode": "Train",
+    "notes": "Frequent connections available",
+    "details": "Trains from Geneva to Milan via the scenic route",
+    "info_link": "https://www.trenitalia.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Milan",
+    "to": "Rome",
+    "mode": "Train",
+    "notes": "High-speed train service available",
+    "details": "Frequent high-speed trains from Milan to Rome",
+    "info_link": "https://www.trenitalia.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Rome",
+    "to": "Athens",
+    "mode": "Ferry",
+    "notes": "Ferry connections available",
+    "details": "Ferries from Rome to Athens, typically overnight",
+    "info_link": "https://www.ferroviedellostato.it",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Athens",
+    "to": "Istanbul",
+    "mode": "Bus",
+    "notes": "Regular bus services operate",
+    "details": "Buses connect Athens to Istanbul, crossing the border",
+    "info_link": "https://www.kamilkoc.com.tr",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Istanbul",
+    "to": "Tehran",
+    "mode": "Bus",
+    "notes": "Long-distance bus services available",
+    "details": "Buses from Istanbul to Tehran, check schedules in advance",
+    "info_link": "https://www.kamilkoc.com.tr",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Tehran",
+    "to": "Kabul",
+    "mode": "Bus",
+    "notes": "Limited services, check local operators",
+    "details": "Buses from Tehran to Kabul, may require transfers",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Kabul",
+    "to": "Delhi",
+    "mode": "Bus",
+    "notes": "Possible connections available, check local schedules",
+    "details": "Buses from Kabul to Delhi, often through border crossings",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Paris",
+    "to": "Frankfurt",
+    "mode": "Train",
+    "notes": "Frequent ICE trains available",
+    "details": "High-speed train connection from Paris to Frankfurt.",
+    "info_link": "https://www.bahn.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Frankfurt",
+    "to": "Vienna",
+    "mode": "Train",
+    "notes": "Direct Railjet services available",
+    "details": "Travel through scenic routes to Vienna.",
+    "info_link": "https://www.oebb.at",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Vienna",
+    "to": "Budapest",
+    "mode": "Train",
+    "notes": "Regular trains connecting the two cities",
+    "details": "Short journey with multiple daily services.",
+    "info_link": "https://www.mavcsoport.hu",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Budapest",
+    "to": "Bucharest",
+    "mode": "Train",
+    "notes": "Overnight trains available",
+    "details": "Ideal for long-distance travel with sleeping options.",
+    "info_link": "https://www.cfrcalatori.ro",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Bucharest",
+    "to": "Istanbul",
+    "mode": "Bus",
+    "notes": "Frequent bus services operate",
+    "details": "Travel through scenic landscapes to Istanbul.",
+    "info_link": "https://www.flixbus.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Frankfurt",
+    "to": "Munich",
+    "mode": "Train",
+    "notes": "Frequent connections available",
+    "details": "ICE trains run regularly between Frankfurt and Munich",
+    "info_link": "https://www.bahn.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Munich",
+    "to": "Vienna",
+    "mode": "Train",
+    "notes": "Direct trains available",
+    "details": "Railjet trains connect Munich to Vienna",
+    "info_link": "https://www.oebb.at",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Tehran",
+    "to": "Zahedan",
+    "mode": "Bus",
+    "notes": "Regular services connect these cities",
+    "details": "Travel time approximately 18 hours",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Zahedan",
+    "to": "Quetta",
+    "mode": "Bus",
+    "notes": "Border crossing possible, check visa requirements",
+    "details": "Travel time around 10 hours",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Quetta",
+    "to": "Karachi",
+    "mode": "Bus",
+    "notes": "Frequent bus services available",
+    "details": "Approx. 8 hours travel time",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Karachi",
+    "to": "Delhi",
+    "mode": "Train",
+    "notes": "Check for available train services",
+    "details": "Travel time may vary, check schedules",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Tehran",
+    "to": "Quetta",
+    "mode": "Bus",
+    "notes": "Overland bus routes available.",
+    "details": "Bus travel from Tehran to Quetta via Zahedan.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Milan",
+    "to": "Venice",
+    "mode": "Train",
+    "notes": "Frequent service available",
+    "details": "Travel time around 2.5 hours.",
+    "info_link": "https://www.trenitalia.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Venice",
+    "to": "Bari",
+    "mode": "Train",
+    "notes": "Direct trains available",
+    "details": "Approximate journey time is 6 hours.",
+    "info_link": "https://www.trenitalia.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Bari",
+    "to": "Istanbul",
+    "mode": "Ferry",
+    "notes": "Ferry services operate between Italy and Turkey",
+    "details": "Journey duration varies, typically around 10-12 hours.",
+    "info_link": "https://www.italy-ferry.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Paris",
+    "to": "Berlin",
+    "mode": "Train",
+    "notes": "Frequent Intercity services available",
+    "details": "Direct trains from Paris Gare de l'Est to Berlin Hauptbahnhof",
+    "info_link": "https://www.bahn.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Berlin",
+    "to": "Warsaw",
+    "mode": "Train",
+    "notes": "Direct connections available",
+    "details": "Trains operate from Berlin Hauptbahnhof to Warsaw Central",
+    "info_link": "https://www.bahn.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Warsaw",
+    "to": "Kiev",
+    "mode": "Bus",
+    "notes": "Multiple bus operators available",
+    "details": "Buses run frequently from Warsaw to Kiev",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Kiev",
+    "to": "Moscow",
+    "mode": "Train",
+    "notes": "Direct train services available",
+    "details": "Trains from Kiev to Moscow run regularly",
+    "info_link": "https://www.uz.gov.ua",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Moscow",
+    "to": "Astana",
+    "mode": "Train",
+    "notes": "Trans-Siberian Railway options available",
+    "details": "Trains from Moscow to Astana are part of the Trans-Siberian route",
+    "info_link": "https://www.rzd.ru",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Astana",
+    "to": "Almaty",
+    "mode": "Train",
+    "notes": "Regular services available",
+    "details": "Direct trains connect Astana and Almaty",
+    "info_link": "https://www.railways.kz",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Almaty",
+    "to": "Tashkent",
+    "mode": "Train",
+    "notes": "Frequent train services available",
+    "details": "Trains run from Almaty to Tashkent",
+    "info_link": "https://www.railways.kz",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Tashkent",
+    "to": "Bishkek",
+    "mode": "Bus",
+    "notes": "Buses and shared taxis frequently available",
+    "details": "Travel options between Tashkent and Bishkek are common",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Bishkek",
+    "to": "Dushanbe",
+    "mode": "Bus",
+    "notes": "Shared taxis are a popular option",
+    "details": "Travel from Bishkek to Dushanbe is typically via shared taxi",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Dushanbe",
+    "to": "Delhi",
+    "mode": "Bus",
+    "notes": "Long-distance bus services available",
+    "details": "Buses run from Dushanbe to Delhi with several stops",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Quetta",
+    "to": "Delhi",
+    "mode": "Train",
+    "notes": "Check for train services across the border.",
+    "details": "Train services from Quetta to Delhi may vary.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Gare du Nord",
+    "to": "Ch\u00e2telet les Halles",
+    "mode": "COMMUTER_TRAIN",
+    "notes": "Massy - Palaiseau",
+    "details": "B",
+    "info_links": [
+      "https://www.ratp.fr/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Ch\u00e2telet",
+    "to": "Gare de Lyon",
+    "mode": "SUBWAY",
+    "notes": "A\u00e9roport d'Orly",
+    "details": "14",
+    "info_links": [
+      "https://www.ratp.fr/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Gare de Lyon",
+    "to": "N\u00eemes Pont du Gard",
+    "mode": "HIGH_SPEED_TRAIN",
+    "notes": "Montpellier Sud de France",
+    "details": "Paris - Languedoc Roussillon TGV",
+    "info_links": [
+      "https://www.sncf.com/fr"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "N\u00eemes Pont du Gard",
+    "to": "Montpellier Saint-Roch",
+    "mode": "HEAVY_RAIL",
+    "notes": "Montpellier Saint-Roch",
+    "details": "Avignon Centre - Port Bou Frontiere",
+    "info_links": [
+      "https://www.ter.sncf.com/occitanie"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Gare Saint-Roch",
+    "to": "Sabines",
+    "mode": "TRAM",
+    "notes": "Rondelet",
+    "details": "SAINT-JEAN DE V\u00c9DAS Centre - Notre-Dame de Sablassou / Jacou",
+    "info_links": [
+      "http://www.tam-voyages.com/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Montpellier Colonel Andre Pavelet dit Villars",
+    "to": "Barcelona North Carrer d'Al\u00ed Bei",
+    "mode": "BUS",
+    "notes": "Murcia",
+    "details": "FlixBus: Metz - Valence",
+    "info_links": [
+      "https://www.awin1.com/cread.php?awinmid=112620&awinaffid=1869474&ued=https%3A%2F%2Fglobal%2Eflixbus%2Ecom%2F"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Tukey",
+    "to": "Istanbul",
+    "mode": "Bus",
+    "notes": "Frequent bus services available",
+    "details": "Traveling to the major city hub of Istanbul",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Istanbul",
+    "to": "Ankara",
+    "mode": "Train",
+    "notes": "High-speed trains operate between these cities",
+    "details": "Traveling to the capital city of Turkey",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Ankara",
+    "to": "Tehran",
+    "mode": "Bus",
+    "notes": "Cross-border buses available to Iran",
+    "details": "Traveling from Turkey to Iran",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Karachi",
+    "to": "Mumbai",
+    "mode": "Bus",
+    "notes": "Buses available for intercity travel",
+    "details": "Traveling across the border into India",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Istanbul, Turkey",
+    "to": "Ankara, Turkey",
+    "mode": "Bus",
+    "notes": "Frequent bus services available",
+    "details": "Direct bus route, approximately 5-6 hours.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Ankara, Turkey",
+    "to": "Tehran, Iran",
+    "mode": "Bus",
+    "notes": "International buses run daily",
+    "details": "Journey takes about 24 hours.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Tehran, Iran",
+    "to": "Kabul, Afghanistan",
+    "mode": "Bus",
+    "notes": "Check for safety and availability",
+    "details": "Travel time can vary; expect 30-40 hours.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Kabul, Afghanistan",
+    "to": "Delhi, India",
+    "mode": "Bus",
+    "notes": "Border crossing required; check visa regulations",
+    "details": "Journey can take around 24-30 hours depending on border wait times.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Gare de Lyon",
+    "to": "Montpellier Saint-Roch",
+    "mode": "HIGH_SPEED_TRAIN",
+    "notes": "Montpellier Saint-Roch",
+    "details": "Paris - Languedoc Roussillon TGV",
+    "info_links": [
+      "https://www.sncf.com/fr"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Montpellier Rue de la Madeleine",
+    "to": "Barcelona Bus Station North",
+    "mode": "BUS",
+    "notes": "Madrid",
+    "details": "BlaBlaCar Bus 34153: Frankfurt Central Train Station - Madrid",
+    "info_links": [
+      "https://www.blablacar.co.uk/bus?comuto_cmkt=UK_GMAPS-PRO_ALL_ALL&utm_medium=Partnership&utm_source=Gmaps&utm_campaign=UK_GMAPS-PRO_ALL_ALL"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Sharjah Cement Factory 2",
+    "to": "Etisalat Bus Station 12",
+    "mode": "BUS",
+    "notes": "Etisalat Bus Stn",
+    "details": "Etisalat Bus Stn - Fujairah Bus Stn",
+    "info_links": [
+      "http://www.rta.ae/wpsv5/links/map/rta_map_en.html"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "etisalat by e& Metro Station 1",
+    "to": "Union Metro Station",
+    "mode": "SUBWAY",
+    "notes": "Creek Metro Station",
+    "details": "",
+    "info_links": [
+      "http://www.rta.ae/wpsv5/links/map/rta_map_en.html"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Union Metro Bus Stop 2-1",
+    "to": "Union Bus Station 10",
+    "mode": "BUS",
+    "notes": "Union Bus Stn",
+    "details": "Union Bus Station - Al Ras MS",
+    "info_links": [
+      "http://www.rta.ae/wpsv5/links/map/rta_map_en.html"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Sharjah Airport",
+    "to": "Dubai City",
+    "mode": "Bus",
+    "notes": "Direct bus service available from the airport to Dubai.",
+    "details": "Buses operate frequently and take approximately 30-45 minutes depending on traffic.",
+    "info_link": "https://www.sharjahairport.ae/en/transportation",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Sharjah Airport",
+    "to": "Sharjah City",
+    "mode": "Bus",
+    "notes": "Frequent bus service available to Sharjah City.",
+    "details": "Buses run every 30 minutes.",
+    "info_link": "https://www.sharjahairport.ae",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Sharjah City",
+    "to": "Dubai City",
+    "mode": "Bus",
+    "notes": "Direct bus service from Sharjah City to Dubai.",
+    "details": "Buses are comfortable and run regularly.",
+    "info_link": "https://www.rta.ae",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Delhi",
+    "to": "Mumbai",
+    "mode": "Flight",
+    "notes": "Direct flights available frequently",
+    "details": "Approx. 2.5 hours flight time",
+    "info_link": "https://www.example.com/flights-delhi-mumbai",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Mumbai",
+    "to": "Dubai",
+    "mode": "Flight",
+    "notes": "Multiple airlines operate this route",
+    "details": "Approx. 3 hours flight time",
+    "info_link": "https://www.example.com/flights-mumbai-dubai",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Dubai",
+    "to": "London",
+    "mode": "Flight",
+    "notes": "Direct flights available from Dubai to London",
+    "details": "Approx. 7 hours flight time",
+    "info_link": "https://www.example.com/flights-dubai-london",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Paris",
+    "to": "Munich",
+    "mode": "Train",
+    "notes": "Direct trains available",
+    "details": "Frequent service connecting major cities",
+    "info_link": "https://www.bahn.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Munich",
+    "to": "Budapest",
+    "mode": "Train",
+    "notes": "Direct trains available",
+    "details": "Scenic route through the Alps",
+    "info_link": "https://www.bahn.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "London",
+    "to": "Calais",
+    "mode": "Bus",
+    "notes": "Direct bus services available to Calais.",
+    "details": "Travel via Eurotunnel or ferry.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Calais",
+    "to": "Brussels",
+    "mode": "Train",
+    "notes": "Frequent trains available.",
+    "details": "Travel via Thalys or Eurostar services.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Brussels",
+    "to": "Berlin",
+    "mode": "Train",
+    "notes": "High-speed trains connect these cities.",
+    "details": "Travel via Intercity Express (ICE).",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Moscow",
+    "to": "Kazakhstan",
+    "mode": "Train",
+    "notes": "Trans-Siberian Railway options available.",
+    "details": "Travel via long-distance trains.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Kazakhstan",
+    "to": "Tashkent",
+    "mode": "Train",
+    "notes": "Direct trains available from major cities.",
+    "details": "Travel via regional rail services.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Bishkek",
+    "to": "Almaty",
+    "mode": "Bus",
+    "notes": "Frequent buses available.",
+    "details": "Travel via regional bus services.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Almaty",
+    "to": "Delhi",
+    "mode": "Bus",
+    "notes": "Long-distance bus services available.",
+    "details": "Travel through Central Asia to India.",
+    "info_link": "",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Rome",
+    "to": "Bari",
+    "mode": "Train",
+    "notes": "Frequent regional trains",
+    "details": "Short travel time",
+    "info_link": "https://www.trenitalia.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Venice",
+    "to": "Ancona",
+    "mode": "Bus",
+    "notes": "Buses run regularly between these cities.",
+    "details": "Estimated travel time is around 3-4 hours.",
+    "info_link": "https://www.flixbus.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Ancona",
+    "to": "Bari",
+    "mode": "Ferry",
+    "notes": "Ferry services available to cross the Adriatic Sea.",
+    "details": "Enjoy the sea journey to Italy's east coast.",
+    "info_link": "https://www.adiamare.it",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Rome",
+    "to": "Brindisi",
+    "mode": "Train",
+    "notes": "Direct train service to Brindisi",
+    "details": "Final leg of train travel within Italy",
+    "info_link": "https://www.trenitalia.com",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Brindisi",
+    "to": "Istanbul",
+    "mode": "Ferry",
+    "notes": "Ferry services connect Brindisi to Istanbul",
+    "details": "Enjoy a scenic ferry ride across the Adriatic Sea",
+    "info_link": "https://www.ferroviedellostato.it",
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Frankfurt",
+    "to": "Warsaw",
+    "mode": "Train",
+    "notes": "ICE or EC trains available.",
+    "details": "Direct train from Frankfurt to Warsaw.",
+    "info_links": [
+      {
+        "url": "https://www.bahn.com",
+        "label": "DB Bahn"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Warsaw",
+    "to": "Lviv",
+    "mode": "Train",
+    "notes": "Ukrainian Railways service available.",
+    "details": "Direct train service from Warsaw to Lviv.",
+    "info_links": [
+      {
+        "url": "https://www.intercity.pl",
+        "label": "Intercity"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Lviv",
+    "to": "Kyiv",
+    "mode": "Train",
+    "notes": "Ukrainian Railways service available.",
+    "details": "Direct train service from Lviv to Kyiv.",
+    "info_links": [
+      {
+        "url": "https://www.uz.gov.ua",
+        "label": "Ukrainian Railways"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Kyiv",
+    "to": "Moscow",
+    "mode": "Train",
+    "notes": "Direct train available.",
+    "details": "Train service from Kyiv to Moscow.",
+    "info_links": [
+      {
+        "url": "https://www.rzd.ru",
+        "label": "Russian Railways"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Bari",
+    "to": "Durres",
+    "mode": "Ferry",
+    "notes": "Ferry service available from Bari to Durres.",
+    "details": "Direct ferry from Bari to Durres, Albania.",
+    "info_links": [
+      {
+        "url": "https://www.adriaferries.com",
+        "label": "Adria Ferries"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Durres",
+    "to": "Tirana",
+    "mode": "Bus",
+    "notes": "Frequent buses available.",
+    "details": "Short bus ride from Durres to Tirana.",
+    "info_links": [],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Tirana",
+    "to": "Skopje",
+    "mode": "Bus",
+    "notes": "Direct buses available.",
+    "details": "Bus service from Tirana to Skopje.",
+    "info_links": [],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Skopje",
+    "to": "Sofia",
+    "mode": "Bus",
+    "notes": "Direct buses available.",
+    "details": "Bus service from Skopje to Sofia.",
+    "info_links": [],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Sofia",
+    "to": "Istanbul",
+    "mode": "Bus",
+    "notes": "Frequent bus services available.",
+    "details": "Direct bus from Sofia to Istanbul.",
+    "info_links": [],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Delhi",
+    "to": "Kochi",
+    "mode": "Train",
+    "notes": "Direct trains available from Delhi to Kochi.",
+    "details": "Traveling via Indian Railways.",
+    "info_links": [
+      {
+        "url": "https://www.irctc.co.in",
+        "label": "Indian Railways"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Kochi",
+    "to": "Thiruvananthapuram",
+    "mode": "Bus",
+    "notes": "Frequent bus services available.",
+    "details": "Estimated via NH 66.",
+    "info_links": [
+      {
+        "url": "https://www.ksrtc.in",
+        "label": "Kerala State Road Transport Corporation"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Cochin",
+    "to": "Trivandrum",
+    "mode": "Train",
+    "notes": "Direct train service available between Cochin and Trivandrum.",
+    "details": "Traveling via Indian Railways.",
+    "info_links": [
+      {
+        "url": "https://www.irctc.co.in",
+        "label": "Indian Railways"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Paris",
+    "to": "Barcelona",
+    "mode": "Train",
+    "notes": "High-speed train service via TGV or Renfe.",
+    "details": "Take a high-speed train from Paris Gare de Lyon to Barcelona Sants.",
+    "info_links": [
+      {
+        "url": "https://www.renfe.com",
+        "label": "Renfe"
+      },
+      {
+        "url": "https://www.sncf.com",
+        "label": "SNCF"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Montpellier Saint-Roch",
+    "to": "Madrid Puerta de Atocha-Almudena Grandes",
+    "mode": "HEAVY_RAIL",
+    "notes": "Madrid Pta.Atocha - Almudena Grandes",
+    "details": "",
+    "info_links": [
+      "http://www.renfe.com/",
+      "https://renfe.com"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Atocha",
+    "to": "M\u00e9ndez \u00c1lvaro",
+    "mode": "HEAVY_RAIL",
+    "notes": "Pinar de Las Rozas",
+    "details": "Villalba -Aeropuerto-T4",
+    "info_links": [
+      "https://www.renfe.com/es/es/cercanias/cercanias-madrid/horarios"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Madrid- South",
+    "to": "Portel",
+    "mode": "BUS",
+    "notes": "Lisboa Sete Rios",
+    "details": "Milan - Madrid - Lisboa",
+    "info_links": [
+      "https://www.alsa.es/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Lisboa Oriente",
+    "to": "Santa Apol\u00f3nia",
+    "mode": "HEAVY_RAIL",
+    "notes": "Lisboa Santa Apolonia",
+    "details": "Porto - Campanha / Lisboa - Santa Apol\u00f3nia",
+    "info_links": [
+      "http://www.cp.pt/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Barcelona",
+    "to": "Algeciras",
+    "mode": "Bus",
+    "notes": "Regular bus services available.",
+    "details": "Direct buses from Barcelona to Algeciras.",
+    "info_links": [
+      {
+        "url": "https://www.flixbus.com",
+        "label": "Flixbus"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Algeciras",
+    "to": "Tangier",
+    "mode": "Ferry",
+    "notes": "Ferry service across the Strait of Gibraltar.",
+    "details": "Ferries run frequently between Algeciras and Tangier.",
+    "info_links": [
+      {
+        "url": "https://www.trasmediterranea.es",
+        "label": "Trasmediterranea"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Tangier",
+    "to": "Morroco",
+    "mode": "Bus",
+    "notes": "Buses available to various cities in Morocco.",
+    "details": "Local buses connect Tangier to other Moroccan cities.",
+    "info_links": [],
+    "journey": "AI-Simulated",
+    "leg": "auto"
   }
 ]

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Booking Sites Admin</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    td, th { border: 1px solid #ccc; padding: 5px; }
+    .warn { background-color: #ffeaea; }
+  </style>
+</head>
+<body>
+  <h2>🚏 Booking Providers Admin Panel</h2>
+
+  <form action="/admin/import" method="post" enctype="multipart/form-data">
+    <label>📂 Import CSV: <input type="file" name="csv" accept=".csv" required></label>
+    <button type="submit">Upload</button>
+  </form>
+
+  <p><a href="/admin/export" target="_blank">⬇️ Export CSV</a></p>
+
+  <table>
+    <tr>
+      <th>Agency</th>
+      <th>Primary Link</th>
+      <th>Search URL</th>
+      <th>Modes</th>
+      <th>Alt Links</th>
+      <th>Active</th>
+      <th>Search Verified</th>
+      <th>Action</th>
+    </tr>
+    {% for row in rows %}
+    <tr class="{{ 'warn' if row[5] == 'no' and row[4] }}">
+      <form method="post" action="/admin/update">
+        <input type="hidden" name="id" value="{{ row[0] }}">
+        <td><input name="agency" value="{{ row[1] }}" size="20"></td>
+        <td><input name="primary_link" value="{{ row[2] }}" size="30"></td>
+        <td><input name="search_url" value="{{ row[3] }}" size="30"></td>
+        <td><input name="modes" value="{{ row[7] or '' }}" size="10" placeholder="train, bus, ferry"></td>
+        <td><input name="alt_links" value="{{ row[4] }}" size="30"></td>
+        <td>
+          <select name="active">
+            <option value="yes" {% if row[5] == 'yes' %}selected{% endif %}>yes</option>
+            <option value="no" {% if row[5] == 'no' %}selected{% endif %}>no</option>
+          </select>
+        </td>
+        <td>
+          <select name="search_url_verified">
+            <option value="yes" {% if row[6] == 'yes' %}selected{% endif %}>yes</option>
+            <option value="no" {% if row[6] == 'no' %}selected{% endif %}>no</option>
+          </select>
+        </td>
+        <td><button type="submit">💾 Save</button></td>
+      </form>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
