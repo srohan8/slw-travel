@@ -19,15 +19,24 @@ from db import get_db
 # Load environment variables
 load_dotenv()
 API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
-
-print("🔑 Loaded Google API key:", API_KEY[:8] + "..." if API_KEY else "❌ Not found")
-
 app = Flask(__name__, template_folder="../templates")
 CORS(app)
-
 SUGGESTED_PATH = Path(__file__).resolve().parent.parent / "data" / "suggested_routes.json"
-
 DB_PATH = Path(__file__).resolve().parent.parent / "backend" / "travel_data.db"
+
+
+def load_all_known_edges():
+    edges = []
+
+    if Path("data/routes.json").exists():
+        with open("data/routes.json", "r", encoding="utf-8") as f:
+            edges.extend(json.load(f)["edges"])
+
+    if Path("data/suggested_routes.json").exists():
+        with open("data/suggested_routes.json", "r", encoding="utf-8") as f:
+            edges.extend(json.load(f))
+
+    return edges
 
 
 def load_agency_links():
@@ -48,6 +57,7 @@ def load_agency_links():
             ]
         }
     return agency_links
+
 
 def save_suggested_legs(from_city, to_city, steps):
     entries = []
@@ -555,7 +565,35 @@ def get_country_from_city(city):
 def infer_region(country1, country2):
     return country_region_map.get(country1) or country_region_map.get(country2) or "Global"
 
+def bfs_path(from_city, to_city, edges, max_depth=10):
+    graph = {}
+    for edge in edges:
+        graph.setdefault(edge["from"], []).append(edge)
 
+    queue = [(from_city, [])]
+    visited = set()
+
+    while queue:
+        city, path = queue.pop(0)
+        if city == to_city:
+            return path
+
+        if len(path) >= max_depth:
+            continue
+
+        for edge in graph.get(city, []):
+            if edge["to"] not in visited:
+                visited.add(edge["to"])
+                queue.append((edge["to"], path + [edge]))
+
+    return None  # No path found
+
+
+HUB_CITIES = [
+    "Barcelona", "Milan", "Istanbul", "Tehran",
+    "Delhi", "Mumbai", "Bangkok", "Singapore",
+    "Cairo", "Nairobi", "Tashkent"
+]
 
 
 if __name__ == "__main__":
