@@ -1545,5 +1545,117 @@
     "journey": "AI-Simulated",
     "leg": "train",
     "report_origin": "AI inference from OpenAI"
+  },
+  {
+    "from": "Estaci\u00f3 d'autobusos",
+    "to": "Estaci\u00f3 del Camp de Tarragona",
+    "mode": "BUS",
+    "notes": "Valls (estaci\u00f3 d'autobusos)",
+    "details": "Tarragona-Valls",
+    "info_links": [
+      "https://empresaplana.cat/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Camp de Tarragona Train Station",
+    "to": "Barcelona-Sants",
+    "mode": "HEAVY_RAIL",
+    "notes": "Barcelona-Sants",
+    "details": "",
+    "info_links": [
+      "http://www.renfe.com/",
+      "https://renfe.com"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Barcelona-Sants",
+    "to": "Valence TGV Rh\u00f4ne-Alpes Sud",
+    "mode": "HIGH_SPEED_TRAIN",
+    "notes": "Paris Gare de Lyon Hall 1 - 2",
+    "details": "Paris - Barcelona TGV",
+    "info_links": [
+      "https://www.sncf.com/fr"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Valence TGV Rh\u00f4ne-Alpes Sud",
+    "to": "Grenoble station",
+    "mode": "HEAVY_RAIL",
+    "notes": "Annecy",
+    "details": "Valence - Annecy",
+    "info_links": [
+      "https://www.ter.sncf.com/auvergne-rhone-alpes"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Grenoble",
+    "to": "Turin (Vittorio Emanuele)",
+    "mode": "BUS",
+    "notes": "Otranto",
+    "details": "FlixBus: Grenoble - Otranto",
+    "info_links": [
+      "https://flixbus.com",
+      "https://www.awin1.com/cread.php?awinmid=112620&awinaffid=1869474&ued=https%3A%2F%2Fglobal%2Eflixbus%2Ecom%2F"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Torino Porta Susa",
+    "to": "Milano Centrale",
+    "mode": "HEAVY_RAIL",
+    "notes": "Roma Termini",
+    "details": "Torino Porta Nuova - Roma Termini",
+    "info_links": [
+      "http://goo.gl/5M9i3T"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Milano Centrale",
+    "to": "Roma Termini",
+    "mode": "HEAVY_RAIL",
+    "notes": "Roma Termini",
+    "details": "Frecciarossa",
+    "info_links": [
+      "www.b-europe.com",
+      "http://www.trenitalia.com/",
+      "https://www.trenitalia.com/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Termini",
+    "to": "Tiburtina",
+    "mode": "SUBWAY",
+    "notes": "Rebibbia (Mb)",
+    "details": "Metro B",
+    "info_links": [
+      "https://romamobilita.it/it"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Rome Tiburtina Bus Station",
+    "to": "Bari Central Train Station (Via Capruzzi)",
+    "mode": "BUS",
+    "notes": "Gallipoli",
+    "details": "MarinoBus 106: Foligno - Gallipoli",
+    "info_links": [
+      "https://marinobus.transport-ticket.com/?marketingCarrierCode=MARN&retailerPartnerNumber=130331&utm_campaign=gtfs&utm_medium=agency-url&utm_source=googlemaps&utm_stream=intercity_europe&utm_country=IT"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
   }
 ]
