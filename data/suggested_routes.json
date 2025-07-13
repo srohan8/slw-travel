@@ -1322,5 +1322,228 @@
     "info_links": [],
     "journey": "AI-Simulated",
     "leg": "auto"
+  },
+  {
+    "from": "Paris",
+    "to": "Madrid",
+    "mode": "Train",
+    "notes": "High-speed train available.",
+    "details": "Take a Renfe train from Paris to Madrid.",
+    "info_links": [
+      {
+        "url": "https://www.renfe.com",
+        "label": "Renfe"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Madrid",
+    "to": "Algeciras",
+    "mode": "Train",
+    "notes": "Direct train service available.",
+    "details": "Train from Madrid to Algeciras.",
+    "info_links": [
+      {
+        "url": "https://www.renfe.com",
+        "label": "Renfe"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Tangier",
+    "to": "Casablanca",
+    "mode": "Train",
+    "notes": "ONCF train service available.",
+    "details": "Train from Tangier to Casablanca.",
+    "info_links": [
+      {
+        "url": "https://www.oncf.ma",
+        "label": "ONCF"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto"
+  },
+  {
+    "from": "Tangier",
+    "to": "Rabat",
+    "mode": "Bus",
+    "notes": "Bus services available",
+    "details": "Bus from Tangier to Rabat.",
+    "info_links": [
+      {
+        "url": "https://www.ctm.ma",
+        "label": "CTM"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto",
+    "report_origin": "AI inference from OpenAI"
+  },
+  {
+    "from": "Rabat",
+    "to": "Dakar",
+    "mode": "Bus",
+    "notes": "Long-distance bus services available",
+    "details": "Bus from Rabat to Dakar with possible connections.",
+    "info_links": [],
+    "journey": "AI-Simulated",
+    "leg": "auto",
+    "report_origin": "AI inference from OpenAI"
+  },
+  {
+    "from": "Sharjah Airport",
+    "to": "Dubai",
+    "mode": "Bus",
+    "notes": "Direct bus service available from the airport to various locations in Dubai.",
+    "details": "Buses run frequently from Sharjah Airport to Dubai.",
+    "info_links": [
+      {
+        "url": "https://www.sharjahairport.ae/en/transportation",
+        "label": "Sharjah Airport Transportation"
+      },
+      {
+        "url": "https://www.rta.ae",
+        "label": "RTA Dubai"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "bus",
+    "report_origin": "AI inference from OpenAI"
+  },
+  {
+    "from": "Sharjah Airport",
+    "to": "Sharjah City Center",
+    "mode": "Bus",
+    "notes": "Bus service available from the airport to the city center.",
+    "details": "Buses operate frequently and are a cost-effective option.",
+    "info_links": [
+      {
+        "url": "https://www.sharjahairport.ae",
+        "label": "Sharjah Airport Transport"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto",
+    "report_origin": "AI inference from OpenAI"
+  },
+  {
+    "from": "Sharjah City Center",
+    "to": "Dubai City Center",
+    "mode": "Bus",
+    "notes": "Direct bus services available to Dubai.",
+    "details": "Approximately 30-45 minutes depending on traffic.",
+    "info_links": [
+      {
+        "url": "https://www.flixbus.com",
+        "label": "Flixbus"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto",
+    "report_origin": "AI inference from OpenAI"
+  },
+  {
+    "from": "Dubai City Center",
+    "to": "Burj Khalifa",
+    "mode": "Metro",
+    "notes": "Take the metro to the Burj Khalifa/Dubai Mall station.",
+    "details": "Metro service is efficient and connects directly to the Burj Khalifa.",
+    "info_links": [
+      {
+        "url": "https://www.rta.ae",
+        "label": "RTA Dubai Metro"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto",
+    "report_origin": "AI inference from OpenAI"
+  },
+  {
+    "from": "K\u00f6benhavn H",
+    "to": "Malm\u00f6 Centralstation",
+    "mode": "LONG_DISTANCE_TRAIN",
+    "notes": "Lund Centralstation",
+    "details": "\u00d6resundst\u00e5g",
+    "info_links": [
+      "http://www.oresundstag.se/"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Malm\u00f6 Centralstation",
+    "to": "Stockholm Central Station",
+    "mode": "HIGH_SPEED_TRAIN",
+    "notes": "Stockholm Centralstation",
+    "details": "SJ Snabbt\u00e5g X2000",
+    "info_links": [
+      "https://www.sj.se/?l=en"
+    ],
+    "journey": "GoogleAuto",
+    "leg": "auto"
+  },
+  {
+    "from": "Girona, Espa\u00f1a",
+    "to": "Barcelona, Espa\u00f1a",
+    "mode": "Bus",
+    "notes": "Frequent services available.",
+    "details": "Approx. 1.5 hours by bus.",
+    "info_links": [
+      {
+        "url": "https://www.flixbus.com",
+        "label": "Flixbus"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "auto",
+    "report_origin": "AI inference from OpenAI"
+  },
+  {
+    "from": "Barcelona, Espa\u00f1a",
+    "to": "Madrid, Espa\u00f1a",
+    "mode": "Train",
+    "notes": "High-speed train service.",
+    "details": "Approx. 3 hours via AVE.",
+    "info_links": [
+      {
+        "url": "https://www.renfe.com",
+        "label": "Renfe"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "train",
+    "report_origin": "AI inference from OpenAI"
+  },
+  {
+    "from": "Madrid, Espa\u00f1a",
+    "to": "Mumbai, India",
+    "mode": "Bus",
+    "notes": "No direct bus; likely requires multiple legs.",
+    "details": "Simulated route; check local transport.",
+    "info_links": [],
+    "journey": "AI-Simulated",
+    "leg": "auto",
+    "report_origin": "AI inference from OpenAI"
+  },
+  {
+    "from": "Mumbai, India",
+    "to": "Kochi, India",
+    "mode": "Train",
+    "notes": "Direct trains available.",
+    "details": "Approx. 10-12 hours travel time.",
+    "info_links": [
+      {
+        "url": "https://www.irctc.co.in",
+        "label": "IRCTC"
+      }
+    ],
+    "journey": "AI-Simulated",
+    "leg": "train",
+    "report_origin": "AI inference from OpenAI"
   }
 ]

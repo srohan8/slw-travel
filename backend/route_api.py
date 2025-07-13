@@ -208,26 +208,72 @@ def normalize_city(name):
     match = re.match(r"(.*?)(?:\s+Bus Station.*|[\-,].*)?$", name, re.IGNORECASE)
     return match.group(1).strip() if match else name
 
-@app.route("/api/all-cities")
-def all_cities():
-    cities = set()
+# @app.route("/api/all-cities")
+# def all_cities():
+    # cities = set()
 
-    # city_coordinates.json
-    if CITY_COORDS_PATH.exists():
-        with open(CITY_COORDS_PATH, "r", encoding="utf-8") as f:
-            coords = json.load(f)
-            for city in coords:
-                cities.add(city.strip())
+    # # city_coordinates.json
+    # if CITY_COORDS_PATH.exists():
+        # with open(CITY_COORDS_PATH, "r", encoding="utf-8") as f:
+            # coords = json.load(f)
+            # for city in coords:
+                # cities.add(city.strip())
 
-    # suggested_routes.json
-    if SUGGESTED_PATH.exists():
-        with open(SUGGESTED_PATH, "r", encoding="utf-8") as f:
-            routes = json.load(f)
-            for entry in routes:
-                cities.add(normalize_city(entry["from"]))
-                cities.add(normalize_city(entry["to"]))
+    # # suggested_routes.json
+    # if SUGGESTED_PATH.exists():
+        # with open(SUGGESTED_PATH, "r", encoding="utf-8") as f:
+            # routes = json.load(f)
+            # for entry in routes:
+                # cities.add(normalize_city(entry["from"]))
+                # cities.add(normalize_city(entry["to"]))
 
-    return jsonify(sorted(list(cities)))
+    # return jsonify(sorted(list(cities)))
+
+
+
+@app.route("/api/geodb-cities")
+def geodb_proxy_nominatim():
+    query = request.args.get("q")
+    if not query:
+        return jsonify([])
+
+    url = "https://nominatim.openstreetmap.org/search"
+    params = {
+        "q": query,
+        "format": "json",
+        "limit": 10,
+        "addressdetails": 1
+    }
+
+    try:
+        r = requests.get(url, params=params, headers={"User-Agent": "slw.travel/1.0"})
+        r.raise_for_status()
+        data = r.json()
+
+        seen = set()
+        results = []
+
+        for item in data:
+            addr = item.get("address", {})
+            city = addr.get("city") or addr.get("town") or addr.get("village") or addr.get("hamlet") or addr.get("municipality")
+            country = addr.get("country")
+
+            # Broader filter: include common types + some admin boundaries
+            if not city or not country:
+                continue
+
+            key = (city.lower(), country.lower())
+            if key in seen:
+                continue
+
+            seen.add(key)
+            results.append({"city": city, "country": country})
+
+        return jsonify(results)
+
+    except Exception as e:
+        print("❌ Nominatim error:", e)
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/geocode")
 def geocode_city():
@@ -263,16 +309,30 @@ def append_ai_suggestions(legs):
             existing = json.load(f)
 
     existing_pairs = {(e["from"], e["to"]) for e in existing}
+    known_pairs = {(e["from"], e["to"]) for e in load_known_edges()}
 
     for leg in legs:
         key = (leg["from"], leg["to"])
-        if key not in existing_pairs:
+
+        # Skip duplicates
+        if key in existing_pairs:
+            continue
+
+        # Determine label + reporting origin
+        if key in known_pairs and leg.get("journey") == "Known":
+            leg["report_origin"] = "Matched known segment"
+        elif leg.get("journey") == "GoogleAuto":
+            leg["report_origin"] = "Imported from Google Maps"
+        else:
             leg["journey"] = "AI-Simulated"
-            leg["leg"] = "auto"
-            existing.append(leg)
+            leg["report_origin"] = "AI inference from OpenAI"
+
+        leg["leg"] = leg.get("leg", "auto")
+        existing.append(leg)
 
     with open(SUGGESTED_PATH, "w", encoding="utf-8") as f:
         json.dump(existing, f, indent=2)
+
 
 ROUTES_PATH = Path(__file__).resolve().parent.parent / "data" / "routes.json"
 SUGGESTED_PATH = Path(__file__).resolve().parent.parent / "data" / "suggested_routes.json"

@@ -12,8 +12,12 @@ async function loadBookingSites() {
 // Load both routes and coordinates
 
 window.addEventListener("DOMContentLoaded", async () => {
-  await populateCityDropdowns(); 
+ // await populateCityDropdowns(); 
   await loadData(); 
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  setTimeout(initDropdowns, 200); // slight delay ensures DOM is ready
 });
 
 function normalizeCity(cityName) {
@@ -82,6 +86,7 @@ async function loadData() {
 	populateDropdowns(cityNames);
   buildGraph(routes);
   initMap();  // Initialize Leaflet
+  //window.addEventListener("DOMContentLoaded", initDropdowns);
 }
 
 function populateDropdowns(cities) {
@@ -805,33 +810,63 @@ async function checkSuggestedRoute(from, to) {
   return data && data.length > 0 ? data : null;
 }
 
-async function populateCityDropdowns() {
-  try {
-    const res = await fetch("http://localhost:5001/api/all-cities");
-    const cities = await res.json();
 
-    const fromInput = document.getElementById("from");
-    const toInput = document.getElementById("to");
+ 
+function setupGeoDBAutocomplete(inputEl) {
+  // Explicitly attach and store the Awesomplete instance
+  let awesompleteInstance = new Awesomplete(inputEl, {
+    minChars: 2,
+    maxItems: 10,
+    autoFirst: true
+  });
+  inputEl.awesomplete = awesompleteInstance; // 👈 this line is key
 
-    // Attach Awesomplete dropdown
-    fromInput.setAttribute("data-list", cities.join(","));
-    toInput.setAttribute("data-list", cities.join(","));
+  console.log("✅ Awesomplete instance attached");
 
-    new Awesomplete(fromInput, {
-      minChars: 1,
-      maxItems: 10
-    });
+  let timeout;
+  inputEl.addEventListener("input", () => {
+    clearTimeout(timeout);
+    const query = inputEl.value.trim();
+    if (query.length < 2) return;
 
-    new Awesomplete(toInput, {
-      minChars: 1,
-      maxItems: 10
-    });
+    timeout = setTimeout(async () => {
+      try {
+        const res = await fetch(`http://localhost:5001/api/geodb-cities?q=${encodeURIComponent(query)}`);
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error("❌ Backend returned:", res.status, errText);
+          return;
+        }
 
-    console.log("✅ Autocomplete cities loaded:", cities.length);
-  } catch (err) {
-    console.error("❌ Failed to load autocomplete cities:", err);
+        const data = await res.json();
+        const suggestions = data.map(city => `${city.city}, ${city.country}`);
+
+        inputEl.awesomplete.list = suggestions;
+        console.log(`✅ Suggestions loaded for "${query}"`);
+      } catch (err) {
+        console.error("❌ City lookup failed:", err);
+      }
+    }, 400); // Debounce
+  });
+}
+
+
+function initDropdowns() {
+  const fromInput = document.getElementById("from");
+  const toInput = document.getElementById("to");
+
+  if (fromInput && toInput) {
+    setupGeoDBAutocomplete(fromInput);
+    setupGeoDBAutocomplete(toInput);
+    console.log("✅ Awesomplete initialized for From/To inputs");
+  } else {
+    console.warn("⚠️ Input fields not found in DOM");
   }
 }
+
+
+
+
 
 async function fetchCityFromNominatim(cityName) {
   const endpoint = `http://localhost:5001/api/geocode?q=${encodeURIComponent(cityName)}`;
