@@ -1,35 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>SLW.Travel</title>
-  <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://leaverou.github.io/awesomplete/awesomplete.css" />
-  <link rel="stylesheet" href="css/style.css" />
-<script src="https://leaverou.github.io/awesomplete/awesomplete.min.js"></script>
-
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SLW Travel — Overland Trip Planner</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede9;
+    --text: #1a1a18; --text2: #6b6b67; --text3: #a0a09c;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --green: #1D9E75; --blue: #185FA5;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c; --bg2: #28281f; --bg3: #1a1a18;
+      --text: #e8e8e0; --text2: #9a9a90; --text3: #606058;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+  nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-bottom: 0.5px solid var(--border); background: var(--bg); }
+  .logo { font-size: 18px; font-weight: 500; color: var(--text); text-decoration: none; }
+  .logo span { color: var(--green); }
+  .hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 1.5rem; text-align: center; }
+  h1 { font-size: clamp(28px, 5vw, 48px); font-weight: 500; color: var(--text); margin-bottom: 1rem; line-height: 1.2; }
+  h1 span { color: var(--green); }
+  .sub { font-size: 16px; color: var(--text2); max-width: 500px; line-height: 1.7; margin-bottom: 2.5rem; }
+  .auth-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 380px; }
+  .auth-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 0.5px solid var(--border); }
+  .auth-tab { flex: 1; font-size: 13px; padding: 8px; cursor: pointer; border: none; background: transparent; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -0.5px; font-family: inherit; }
+  .auth-tab.active { color: var(--text); font-weight: 500; border-bottom: 2px solid var(--text); }
+  .field { margin-bottom: 12px; }
+  .field label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
+  .field input { width: 100%; font-size: 14px; padding: 8px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); outline: none; font-family: inherit; }
+  .field input:focus { border-color: var(--green); }
+  .btn-full { width: 100%; font-size: 14px; padding: 10px; border-radius: var(--radius); border: none; cursor: pointer; font-family: inherit; font-weight: 500; margin-top: 4px; }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-outline { background: transparent; border: 0.5px solid var(--border2); color: var(--text); margin-top: 8px; }
+  .btn-outline:hover { background: var(--bg2); }
+  .divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--text3); font-size: 12px; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+  .msg { font-size: 12px; text-align: center; margin-top: 10px; min-height: 18px; }
+  .msg.err { color: #a32d2d; } .msg.ok { color: var(--green); }
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; max-width: 700px; margin: 3rem auto 0; width: 100%; padding: 0 1rem; }
+  .feat { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; }
+  .feat-icon { font-size: 20px; margin-bottom: 8px; }
+  .feat h3 { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .feat p { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .skip-link { font-size: 12px; color: var(--text3); text-align: center; margin-top: 12px; cursor: pointer; }
+  .skip-link:hover { color: var(--text2); }
+  .maintenance { background: #faeeda; border: 0.5px solid rgba(133,79,11,0.3); border-radius: var(--radius); padding: 10px 16px; font-size: 13px; color: #633806; margin-bottom: 1rem; display: none; }
+</style>
 </head>
 <body>
-<!-- Inside <body> -->
-<div class="flex-container">
-<div class="txt_content flex-left">
-<h2> SLW.Travel</h2>
-<div class="controls ">
-<input id="from" class="awesomplete" placeholder="From city...">
-<input id="to" class="awesomplete" placeholder="To city...">
 
-  <button onclick="findRoute()">Find Route</button>
+<nav>
+  <a class="logo" href="/"><span>SLW</span> Travel</a>
+  <span style="font-size:12px;color:var(--text3)">slwtravel.com</span>
+</nav>
+
+<div class="hero">
+  <div id="maintenance" class="maintenance">We're currently under maintenance. Back soon.</div>
+
+  <h1>Plan your <span>overland</span> adventure</h1>
+  <p class="sub">AI-powered route planning for buses, trains, ferries and hitchhiking. Avoid conflict zones, find the best flight connections, and record your journey as you go.</p>
+
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="showTab('signin')">Sign in</button>
+      <button class="auth-tab" onclick="showTab('signup')">Create account</button>
+    </div>
+
+    <!-- Sign in -->
+    <div id="signin-panel">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="si-email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="si-pass" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <button class="btn-full btn-primary" onclick="signIn()">Sign in</button>
+      <div class="divider">or</div>
+      <button class="btn-full btn-outline" onclick="signInGoogle()">Continue with Google</button>
+      <div class="msg" id="si-msg"></div>
+    </div>
+
+    <!-- Sign up -->
+    <div id="signup-panel" style="display:none">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="su-email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="su-pass" placeholder="Min 8 characters" autocomplete="new-password"/>
+      </div>
+      <button class="btn-full btn-primary" onclick="signUp()">Create account</button>
+      <div class="divider">or</div>
+      <button class="btn-full btn-outline" onclick="signInGoogle()">Continue with Google</button>
+      <div class="msg" id="su-msg"></div>
+    </div>
+
+    <p class="skip-link" onclick="skipToApp()">Try without an account →</p>
+  </div>
+
+  <div class="features">
+    <div class="feat">
+      <div class="feat-icon">🗺️</div>
+      <h3>AI route planner</h3>
+      <p>Get realistic overland routes with stops, transport modes and rough costs.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">✈️</div>
+      <h3>Flight corridor finder</h3>
+      <p>Find the best flight routes including which regions to avoid.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📓</div>
+      <h3>Trip journal</h3>
+      <p>Record your route, costs and notes as you travel. Save and share.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🛡️</div>
+      <h3>Safety routing</h3>
+      <p>Avoid conflict zones and get alternative routes around them.</p>
+    </div>
+  </div>
 </div>
-<div id="routeResults"></div>
-</div>
 
+<script>
+  const SUPABASE_URL  = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+  // Check if already logged in
+  sb.auth.getSession().then(({ data }) => {
+    if (data.session) window.location.href = '/app.html';
+  });
 
-<div  class="flex-right" id="map" style="    height: 100vh;"></div>
+  // Check maintenance mode
+  sb.from('admin_settings').select('value').eq('key','maintenance_mode').single().then(({ data }) => {
+    if (data?.value === true || data?.value === 'true') {
+      document.getElementById('maintenance').style.display = 'block';
+    }
+  });
 
-</div>
+  // Check if new signups enabled
+  let signupsEnabled = true;
+  sb.from('admin_settings').select('value').eq('key','new_signups_enabled').single().then(({ data }) => {
+    signupsEnabled = data?.value !== false && data?.value !== 'false';
+  });
 
+  function showTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='signin')||(i===1&&tab==='signup')));
+    document.getElementById('signin-panel').style.display = tab==='signin' ? 'block' : 'none';
+    document.getElementById('signup-panel').style.display = tab==='signup' ? 'block' : 'none';
+  }
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="js/app.js"></script>
+  function setMsg(id, msg, isErr) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'msg ' + (isErr ? 'err' : 'ok');
+  }
 
+  async function signIn() {
+    const email = document.getElementById('si-email').value.trim();
+    const pass  = document.getElementById('si-pass').value;
+    if (!email || !pass) return setMsg('si-msg','Please fill in all fields', true);
+    setMsg('si-msg','Signing in...');
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) return setMsg('si-msg', error.message, true);
+    window.location.href = '/app.html';
+  }
+
+  async function signUp() {
+    if (!signupsEnabled) return setMsg('su-msg','New signups are currently paused.', true);
+    const email = document.getElementById('su-email').value.trim();
+    const pass  = document.getElementById('su-pass').value;
+    if (!email || !pass) return setMsg('su-msg','Please fill in all fields', true);
+    if (pass.length < 8) return setMsg('su-msg','Password must be at least 8 characters', true);
+    setMsg('su-msg','Creating account...');
+    const { data, error } = await sb.auth.signUp({ email, password: pass });
+    if (error) return setMsg('su-msg', error.message, true);
+    if (data.user) {
+      await sb.from('profiles').upsert({ id: data.user.id, email, plan: 'free' });
+    }
+    setMsg('su-msg','Check your email to confirm your account.');
+  }
+
+  async function signInGoogle() {
+    await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/app.html` }
+    });
+  }
+
+  function skipToApp() {
+    window.location.href = '/app.html?guest=1';
+  }
+
+  // Enter key support
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const siPanel = document.getElementById('signin-panel');
+    if (siPanel.style.display !== 'none') signIn();
+    else signUp();
+  });
+</script>
 </body>
+</html>
