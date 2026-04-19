@@ -135,27 +135,15 @@
 </div>
 
 <script>
-  const SUPABASE_URL  = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  // Local Storage Mock for Auth
+  const getSession = () => {
+    const user = localStorage.getItem('slw_user');
+    return { data: { session: user ? JSON.parse(user) : null } };
+  };
 
-  // Check if already logged in
-  sb.auth.getSession().then(({ data }) => {
-    if (data.session) window.location.href = '/app.html';
-  });
-
-  // Check maintenance mode
-  sb.from('admin_settings').select('value').eq('key','maintenance_mode').single().then(({ data }) => {
-    if (data?.value === true || data?.value === 'true') {
-      document.getElementById('maintenance').style.display = 'block';
-    }
-  });
-
-  // Check if new signups enabled
-  let signupsEnabled = true;
-  sb.from('admin_settings').select('value').eq('key','new_signups_enabled').single().then(({ data }) => {
-    signupsEnabled = data?.value !== false && data?.value !== 'false';
-  });
+  if (getSession().data.session) {
+    window.location.href = 'app.html';
+  }
 
   function showTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='signin')||(i===1&&tab==='signup')));
@@ -174,38 +162,36 @@
     const pass  = document.getElementById('si-pass').value;
     if (!email || !pass) return setMsg('si-msg','Please fill in all fields', true);
     setMsg('si-msg','Signing in...');
-    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-    if (error) return setMsg('si-msg', error.message, true);
+    
+    // Simulating auth success for local mode
+    const user = { email, id: 'local-' + btoa(email) };
+    localStorage.setItem('slw_user', JSON.stringify(user));
     window.location.href = '/app.html';
   }
 
   async function signUp() {
-    if (!signupsEnabled) return setMsg('su-msg','New signups are currently paused.', true);
     const email = document.getElementById('su-email').value.trim();
     const pass  = document.getElementById('su-pass').value;
     if (!email || !pass) return setMsg('su-msg','Please fill in all fields', true);
     if (pass.length < 8) return setMsg('su-msg','Password must be at least 8 characters', true);
     setMsg('su-msg','Creating account...');
-    const { data, error } = await sb.auth.signUp({ email, password: pass });
-    if (error) return setMsg('su-msg', error.message, true);
-    if (data.user) {
-      await sb.from('profiles').upsert({ id: data.user.id, email, plan: 'free' });
-    }
-    setMsg('su-msg','Check your email to confirm your account.');
+    
+    const user = { email, id: 'local-' + btoa(email) };
+    localStorage.setItem('slw_user', JSON.stringify(user));
+    setMsg('su-msg','Account created locally!');
+    setTimeout(() => window.location.href = '/app.html', 1000);
   }
 
   async function signInGoogle() {
-    await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/app.html` }
-    });
+    const user = { email: 'google-user@gmail.com', id: 'local-google' };
+    localStorage.setItem('slw_user', JSON.stringify(user));
+    window.location.href = '/app.html';
   }
 
   function skipToApp() {
-    window.location.href = '/app.html?guest=1';
+    window.location.href = 'app.html?guest=1';
   }
 
-  // Enter key support
   document.addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
     const siPanel = document.getElementById('signin-panel');
