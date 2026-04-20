@@ -192,7 +192,6 @@
   <div class="tabs">
     <button class="tab active" onclick="switchTab('plan',this)">Plan a route</button>
     <button class="tab" onclick="switchTab('record',this)">My trip</button>
-    <button class="tab" onclick="switchTab('flights',this)">Flights</button>
     <button class="tab" onclick="switchTab('admin',this)">Admin</button>
   </div>
 
@@ -271,64 +270,6 @@
   </div>
 
   <!-- FLIGHTS TAB -->
-  <div id="flights" class="panel">
-    <div id="flight-usage" class="usage-bar" style="display:none"></div>
-    <div class="card">
-      <div class="form-row">
-        <span class="lbl">From</span>
-        <input class="inp" id="fFrom" placeholder="City or country, e.g. India / Mumbai"/>
-        <div class="vsep"></div>
-        <span class="lbl">To</span>
-        <input class="inp" id="fTo" placeholder="City or region, e.g. Europe / London"/>
-      </div>
-      <div class="form-row" style="align-items:flex-start">
-        <span class="lbl" style="padding-top:3px">Route through</span>
-        <div style="flex:1">
-          <input class="inp" id="fVia" placeholder="Regions or hubs to route through (optional)"/>
-          <div class="hint">e.g. Southeast Asia, Central Asia, Gulf</div>
-        </div>
-      </div>
-      <div class="form-row" style="align-items:flex-start">
-        <span class="lbl" style="padding-top:6px">Avoid</span>
-        <div style="flex:1;display:flex;flex-direction:column;gap:8px">
-          <input class="inp" id="fAvoid" placeholder="Regions, countries or airspace to avoid..."/>
-          <div class="pills" id="quickAvoids">
-            <button class="avoid-pill" onclick="toggleAvoid(this,'Middle East')">Middle East</button>
-            <button class="avoid-pill" onclick="toggleAvoid(this,'Russia / Belarus airspace')">Russia / Belarus</button>
-            <button class="avoid-pill" onclick="toggleAvoid(this,'Ukraine airspace')">Ukraine airspace</button>
-            <button class="avoid-pill" onclick="toggleAvoid(this,'Iran')">Iran</button>
-            <button class="avoid-pill" onclick="toggleAvoid(this,'Pakistan')">Pakistan</button>
-            <button class="avoid-pill" onclick="toggleAvoid(this,'Afghanistan')">Afghanistan</button>
-            <button class="avoid-pill" onclick="toggleAvoid(this,'Sudan / Horn of Africa')">Sudan / Horn of Africa</button>
-            <button class="avoid-pill" onclick="toggleAvoid(this,'Myanmar')">Myanmar</button>
-          </div>
-          <div class="hint">Quick-select conflict zones or type your own</div>
-        </div>
-      </div>
-      <div class="form-row">
-        <span class="lbl">Travel month</span>
-        <input class="inp" id="fDate" type="month" style="max-width:150px"/>
-        <div class="vsep"></div>
-        <span class="lbl">Budget</span>
-        <input class="inp" id="fBudget" placeholder="e.g. $600 return" style="max-width:140px"/>
-      </div>
-      <div class="form-row" style="flex-direction:column;gap:6px">
-        <span class="lbl" style="padding-top:0">Priorities</span>
-        <div class="pills" id="flightPriorityPills">
-          <button class="pill on" onclick="this.classList.toggle('on')">Cheapest</button>
-          <button class="pill" onclick="this.classList.toggle('on')">Fewest stops</button>
-          <button class="pill" onclick="this.classList.toggle('on')">Long layover OK</button>
-          <button class="pill" onclick="this.classList.toggle('on')">Explore stopover</button>
-        </div>
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <button class="btn btn-primary" id="flightBtn" onclick="findFlights()">Find flight options ↗</button>
-      <span style="font-size:12px;color:var(--text3)">AI maps safe routes, hubs & airlines</span>
-    </div>
-    <div id="flightResult" style="margin-top:1rem;display:none"></div>
-  </div>
-
   <!-- ADMIN TAB -->
   <div id="admin" class="panel">
 
@@ -351,7 +292,6 @@
             <select class="inp" id="sf_cat">
               <option value="buses">Bus / Shared taxi</option>
               <option value="trains">Train</option>
-              <option value="flights">Flight</option>
               <option value="ferries">Ferry</option>
               <option value="accommodation">Accommodation</option>
             </select>
@@ -471,7 +411,6 @@ let legs  = [{mode:'bus',cost:0,km:0}];
 let pace  = 'slow';
 let prefModes = ['bus','train'];
 let lastSuggestion = null;
-let activeAvoids   = new Set();
 let currentTripId  = null;
 let appSettings    = {};
 let currentUser    = null;
@@ -1019,113 +958,6 @@ function adoptRoute() {
   render();
 }
 
-// ── Flights tab ───────────────────────────────────────────────────
-function toggleAvoid(el, region) {
-  if (activeAvoids.has(region)) { activeAvoids.delete(region); el.classList.remove('on'); }
-  else { activeAvoids.add(region); el.classList.add('on'); }
-  const inp = document.getElementById('fAvoid');
-  const manual = inp.value.split(',').map(s => s.trim()).filter(s => s && ![...activeAvoids].includes(s));
-  inp.value = [...activeAvoids, ...manual].filter(Boolean).join(', ');
-}
-
-async function findFlights() {
-  const from = document.getElementById('fFrom').value.trim();
-  const to   = document.getElementById('fTo').value.trim();
-  if (!from || !to) { alert('Please enter origin and destination.'); return; }
-
-  const allowed = await checkAndGate('flightSearches');
-  if (!allowed) {
-    document.getElementById('flightResult').style.display = 'block';
-    document.getElementById('flightResult').innerHTML = `<div class="gate-msg"><h3>Monthly limit reached</h3><p>You've used all your free flight searches this month.</p><a href="/index.html" class="btn btn-primary">Upgrade to Pro</a></div>`;
-    return;
-  }
-
-  const via      = document.getElementById('fVia').value.trim();
-  const avoid    = document.getElementById('fAvoid').value.trim();
-  const month    = document.getElementById('fDate').value;
-  const budget   = document.getElementById('fBudget').value.trim();
-  const priorities = [...document.querySelectorAll('#flightPriorityPills .pill.on')].map(b => b.textContent).join(', ');
-  const btn = document.getElementById('flightBtn');
-  btn.disabled = true; btn.textContent = 'Searching...';
-  const res = document.getElementById('flightResult');
-  res.style.display = 'block';
-  res.innerHTML = '<div class="result-box"><span class="thinking">Mapping safe flight corridors...</span></div>';
-
-  const avoidClause = avoid ? `\n\nIMPORTANT: STRICTLY AVOID routing through or over: ${avoid}. Do not suggest routes through these regions even if cheaper or faster.` : '';
-
-  try {
-    const data = await callAI(`You are a flight routing expert. Traveller wants to fly from ${from} to ${to}${via ? ' preferring to route through: ' + via : ''}.
-${month ? 'Travel month: ' + month + '.' : ''}${budget ? ' Budget: ' + budget + '.' : ''}${priorities ? '\nPriorities: ' + priorities + '.' : ''}${avoidClause}
-Give 3 distinct routing options with different hubs/airlines.
-Respond ONLY in JSON (no markdown):
-{"context":"1-2 sentences","avoided_regions":["list"],"options":[{"label":"Short label","avoids_note":"how avoids requested regions or empty","airports":[{"code":"BOM","city":"Mumbai","role":"origin"},{"code":"NBO","city":"Nairobi","role":"stopover","layover_hours":4,"explore_tip":"optional"},{"code":"LHR","city":"London","role":"destination"}],"airlines":["Airline"],"est_price_usd":600,"total_hours":13,"stops":1,"notes":"tip","best_for":"e.g. avoids Middle East"}],"tips":["tip"]}`, 1400);
-    renderFlightResults(data, avoid, month);
-    updateUsageBars();
-  } catch (e) {
-    res.innerHTML = '<div class="result-box"><span style="color:var(--danger-text)">Could not load suggestions. Try again.</span></div>';
-  }
-  btn.disabled = false; btn.textContent = 'Find flight options ↗';
-}
-
-function renderFlightResults(d, avoid, month) {
-  const showAff = appSettings.affiliate_links !== false;
-  const fromVal = document.getElementById('fFrom').value.trim();
-  const toVal   = document.getElementById('fTo').value.trim();
-  let h = '';
-  if (avoid && d.avoided_regions?.length) {
-    h += `<div class="avoid-notice">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="var(--danger-text)" stroke-width="1.5"/><line x1="5" y1="5" x2="11" y2="11" stroke="var(--danger-text)" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="5" x2="5" y2="11" stroke="var(--danger-text)" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <p>Routes avoid: <strong>${d.avoided_regions.join(', ')}</strong></p>
-    </div>`;
-  }
-  if (d.context) h += `<p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">${d.context}</p>`;
-
-  d.options.forEach((opt, i) => {
-    const orig = opt.airports[0]?.code || fromVal;
-    const dest = opt.airports[opt.airports.length - 1]?.code || toVal;
-    h += `<div class="flight-card${i === 0 ? ' top' : ''}">`;
-    if (i === 0) h += `<div style="margin-bottom:8px"><span style="font-size:11px;padding:2px 10px;border-radius:99px;background:var(--info-bg);color:var(--info-text);border:0.5px solid var(--info-border)">Top pick</span></div>`;
-    h += `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-      <div>
-        <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px">${opt.label}</div>
-        <div style="font-size:12px;color:var(--text2)">${opt.stops === 0 ? 'Non-stop' : opt.stops + ' stop' + (opt.stops > 1 ? 's' : '')} · ~${opt.total_hours}h</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:15px;font-weight:500;color:var(--text)">~$${opt.est_price_usd}</div>
-        <div style="font-size:11px;color:var(--text3)">est. per person</div>
-      </div>
-    </div>`;
-    if (opt.avoids_note) h += `<div class="avoids-ok">${opt.avoids_note}</div>`;
-    h += `<div class="flight-path">`;
-    opt.airports.forEach((ap, j) => {
-      const isStop = ap.role === 'stopover';
-      h += `<div class="via-node">
-        <div style="width:9px;height:9px;border-radius:50%;background:${isStop ? 'var(--warn-bg)' : 'var(--bg)'};border:2px solid ${isStop ? 'var(--amber)' : ap.role === 'origin' ? 'var(--green)' : 'var(--blue)'}"></div>
-        <div style="font-size:12px;font-weight:500;color:var(--text);margin-top:3px">${ap.code}</div>
-        <div style="font-size:10px;color:var(--text3);white-space:nowrap">${ap.city}</div>
-        ${isStop && ap.layover_hours ? `<div style="font-size:10px;color:var(--text2)">${ap.layover_hours}h</div>` : ''}
-      </div>`;
-      if (j < opt.airports.length - 1) h += `<div class="via-line"></div>`;
-    });
-    h += `</div>`;
-    opt.airports.filter(a => a.role === 'stopover' && a.explore_tip).forEach(a => {
-      h += `<div style="font-size:12px;color:var(--text2);margin-top:4px;padding:6px 8px;background:var(--bg2);border-radius:var(--radius)">Stopover in ${a.city}: ${a.explore_tip}</div>`;
-    });
-    h += `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 4px">`;
-    opt.airlines.forEach(al => { h += `<span class="airline-badge">${al}</span>`; });
-    h += `<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:var(--bg2);color:var(--text2);border:0.5px solid var(--border)">${opt.best_for}</span></div>`;
-    if (opt.notes) h += `<div style="font-size:12px;color:var(--text2);margin-top:4px">${opt.notes}</div>`;
-    if (showAff) h += renderFlightSearchLinks(orig, dest, month);
-    h += `</div>`;
-  });
-
-  if (d.tips?.length) {
-    h += `<div class="tips-box">`;
-    d.tips.forEach(t => { h += `<div>— ${t}</div>`; });
-    h += `</div>`;
-  }
-  document.getElementById('flightResult').innerHTML = h;
-}
 
 // ── Affiliate link renderers ──────────────────────────────────────
 function renderTransportLinks(mode, orig, dest) {
@@ -1149,14 +981,6 @@ function renderTransportLinks(mode, orig, dest) {
   </div>`;
 }
 
-function renderFlightSearchLinks(orig, dest, month) {
-  const sid = `flight|${orig}|${dest}|${month || 'any'}`;
-  AFF.flights.forEach(s => trackAffShown(s.name, 'flights', sid));
-  return `<div class="search-links">
-    <span class="search-links-label">Search this route on</span>
-    ${AFF.flights.map(s => `<a class="search-link" href="${s.buildUrl(orig, dest, month)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
-  </div>`;
-}
 
 function renderAccommodationLinks(city) {
   const sources = AFF.accommodation || [];
