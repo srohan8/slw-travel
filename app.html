@@ -322,13 +322,61 @@
 
   <!-- ADMIN TAB -->
   <div id="admin" class="panel">
+
+    <!-- Booking sites manager -->
+    <div class="card" style="margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0">Booking sites</h3>
+        <button onclick="showAddSiteForm()" id="addSiteBtn" class="btn btn-primary" style="font-size:12px;padding:6px 14px">+ Add site</button>
+      </div>
+
+      <!-- Add / Edit form (hidden by default) -->
+      <div id="siteForm" style="display:none;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <div class="lbl" style="margin-bottom:4px">Site name</div>
+            <input class="inp" id="sf_name" placeholder="e.g. Bookaway"/>
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:4px">Category</div>
+            <select class="inp" id="sf_cat">
+              <option value="buses">Bus / Shared taxi</option>
+              <option value="trains">Train</option>
+              <option value="flights">Flight</option>
+              <option value="ferries">Ferry</option>
+              <option value="accommodation">Accommodation</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div class="lbl" style="margin-bottom:4px">URL template</div>
+          <input class="inp" id="sf_url" placeholder="https://example.com/search?from={origin}&to={dest}"/>
+          <div class="hint">Placeholders: <code>{origin}</code> <code>{dest}</code> <code>{month}</code> — all URL-encoded automatically</div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="lbl" style="margin-bottom:4px">Affiliate ID / tag <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
+          <input class="inp" id="sf_aff" placeholder="e.g. slwtravel or ref=slw"/>
+          <div class="hint">Appended as <code>&affid={value}</code> — or paste the full affiliate param if your network uses a different key</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" style="font-size:13px;padding:7px 16px" onclick="saveSite()">Save site</button>
+          <button onclick="hideSiteForm()" style="font-size:13px;padding:7px 14px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">Cancel</button>
+        </div>
+        <input type="hidden" id="sf_editId"/>
+      </div>
+
+      <div id="adminSiteList"></div>
+    </div>
+
+    <!-- Impression stats -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0">Booking site impressions</h3>
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0">Impression stats</h3>
         <button onclick="clearAffStats()" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;padding:0">Clear stats</button>
       </div>
       <div id="adminAffTable"></div>
     </div>
+
   </div>
 </div>
 
@@ -429,6 +477,7 @@ async function init() {
       return;
   }
 
+  loadCustomSitesIntoAFF();
   render();
   updateUsageBars();
   updateCacheClearBtn();
@@ -657,6 +706,7 @@ function clearAffStats() {
 }
 
 function renderAdminTab() {
+  renderAdminSiteList();
   const el = document.getElementById('adminAffTable');
   if (!el) return;
   const stats = _readAffStats();
@@ -689,6 +739,140 @@ function renderAdminTab() {
       <td>${s.shown}</td>
       <td>${s.searches.length}</td>
       <td style="color:var(--text3);font-size:12px">${s.lastSeen ? timeAgo(s.lastSeen) : '—'}</td>
+    </tr>`;
+  });
+
+  h += '</tbody></table>';
+  el.innerHTML = h;
+}
+
+// ── Custom booking sites ──────────────────────────────────────────
+function _readCustomSites() {
+  try { return JSON.parse(localStorage.getItem('slw_custom_sites') || '[]'); } catch { return []; }
+}
+function _writeCustomSites(arr) {
+  localStorage.setItem('slw_custom_sites', JSON.stringify(arr));
+}
+
+// Build a buildUrl function from a URL template string
+// Placeholders: {origin}, {dest}, {month}, {affid}
+function _buildUrlFn(template, affId) {
+  return (o, d, m) => {
+    let url = template
+      .replace('{origin}', encodeURIComponent(o || ''))
+      .replace('{dest}',   encodeURIComponent(d || ''))
+      .replace('{month}',  encodeURIComponent(m || ''));
+    if (affId) url += (url.includes('?') ? '&' : '?') + 'affid=' + encodeURIComponent(affId);
+    return url;
+  };
+}
+
+// Merge custom sites into the live AFF object
+function loadCustomSitesIntoAFF() {
+  const sites = _readCustomSites();
+  // Remove previously injected custom entries (marked with _custom: true)
+  ['flights','buses','trains','ferries','accommodation'].forEach(cat => {
+    if (AFF[cat]) AFF[cat] = AFF[cat].filter(s => !s._custom);
+  });
+  sites.forEach(s => {
+    if (!s.enabled) return;
+    if (!AFF[s.category]) AFF[s.category] = [];
+    AFF[s.category].push({ name: s.name, buildUrl: _buildUrlFn(s.urlTemplate, s.affId), _custom: true });
+  });
+}
+
+function showAddSiteForm(editId) {
+  const form = document.getElementById('siteForm');
+  document.getElementById('sf_name').value = '';
+  document.getElementById('sf_url').value  = '';
+  document.getElementById('sf_aff').value  = '';
+  document.getElementById('sf_cat').value  = 'buses';
+  document.getElementById('sf_editId').value = '';
+
+  if (editId !== undefined) {
+    const sites = _readCustomSites();
+    const s = sites.find(x => x.id === editId);
+    if (s) {
+      document.getElementById('sf_name').value = s.name;
+      document.getElementById('sf_url').value  = s.urlTemplate;
+      document.getElementById('sf_aff').value  = s.affId || '';
+      document.getElementById('sf_cat').value  = s.category;
+      document.getElementById('sf_editId').value = s.id;
+    }
+  }
+  form.style.display = 'block';
+  document.getElementById('sf_name').focus();
+}
+
+function hideSiteForm() {
+  document.getElementById('siteForm').style.display = 'none';
+}
+
+function saveSite() {
+  const name     = document.getElementById('sf_name').value.trim();
+  const category = document.getElementById('sf_cat').value;
+  const urlTpl   = document.getElementById('sf_url').value.trim();
+  const affId    = document.getElementById('sf_aff').value.trim();
+  const editId   = document.getElementById('sf_editId').value;
+
+  if (!name)   { alert('Site name is required.'); return; }
+  if (!urlTpl) { alert('URL template is required.'); return; }
+
+  const sites = _readCustomSites();
+  if (editId) {
+    const idx = sites.findIndex(s => s.id === editId);
+    if (idx > -1) sites[idx] = { ...sites[idx], name, category, urlTemplate: urlTpl, affId };
+  } else {
+    sites.push({ id: Date.now().toString(), name, category, urlTemplate: urlTpl, affId, enabled: true });
+  }
+  _writeCustomSites(sites);
+  loadCustomSitesIntoAFF();
+  hideSiteForm();
+  renderAdminSiteList();
+}
+
+function toggleSiteEnabled(id) {
+  const sites = _readCustomSites();
+  const s = sites.find(x => x.id === id);
+  if (s) s.enabled = !s.enabled;
+  _writeCustomSites(sites);
+  loadCustomSitesIntoAFF();
+  renderAdminSiteList();
+}
+
+function deleteSite(id) {
+  if (!confirm('Remove this booking site?')) return;
+  _writeCustomSites(_readCustomSites().filter(s => s.id !== id));
+  loadCustomSitesIntoAFF();
+  renderAdminSiteList();
+}
+
+function renderAdminSiteList() {
+  const el = document.getElementById('adminSiteList');
+  if (!el) return;
+  const sites = _readCustomSites();
+  const catLabel = { buses:'Bus/Taxi', trains:'Train', flights:'Flight', ferries:'Ferry', accommodation:'Stay' };
+
+  if (!sites.length) {
+    el.innerHTML = '<div class="aff-empty">No custom sites yet. Built-in sites (Busbud, Omio, etc.) are always active.</div>';
+    return;
+  }
+
+  let h = `<table class="aff-table"><thead><tr>
+    <th>Site</th><th>Category</th><th>URL template</th><th>Aff. ID</th><th>On</th><th></th>
+  </tr></thead><tbody>`;
+
+  sites.forEach(s => {
+    h += `<tr>
+      <td style="font-weight:500">${s.name}</td>
+      <td><span class="aff-cat">${catLabel[s.category] || s.category}</span></td>
+      <td style="font-size:11px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.urlTemplate}">${s.urlTemplate}</td>
+      <td style="font-size:12px;color:var(--text3)">${s.affId || '—'}</td>
+      <td><input type="checkbox" ${s.enabled ? 'checked' : ''} onchange="toggleSiteEnabled('${s.id}')" style="cursor:pointer"/></td>
+      <td style="white-space:nowrap">
+        <button onclick="showAddSiteForm('${s.id}')" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--text2);font-family:inherit;padding:0 6px 0 0">Edit</button>
+        <button onclick="deleteSite('${s.id}')" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--danger-text);font-family:inherit;padding:0">Remove</button>
+      </td>
     </tr>`;
   });
 
