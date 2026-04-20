@@ -1215,10 +1215,17 @@ async function planRoute() {
   document.getElementById('adoptBtn').style.display = 'none';
 
   try {
+    // Build site hint for AI so it knows what options exist
+    const affSites = _readAllSites().filter(s => s.enabled !== false && s.category !== 'accommodation');
+    const sitesByMode = {};
+    affSites.forEach(s => { (sitesByMode[s.category] = sitesByMode[s.category] || []).push(s.name); });
+    const siteHint = Object.entries(sitesByMode).map(([cat, names]) => `${cat}: ${[...new Set(names)].join(', ')}`).join('; ');
+
     const data = await callAI(`You are an expert overland travel planner. Suggest a practical overland route from ${from} to ${to}${via ? ' via ' + via : ''}.
 Pace: ${pace}. Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}
+Available booking sites (${siteHint}). For each leg add "booking_sites":["Name"] listing only sites that actually operate on that specific route/region. Leave array empty if no online booking exists.
 Respond ONLY in this JSON (no markdown, no preamble):
-{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"tip"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip"}],"total_days":14,"total_cost_usd":200}`);
+{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"tip"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","booking_sites":["Busbud"]}],"total_days":14,"total_cost_usd":200}`);
     lastSuggestion = data;
     setCachedRoute(cacheKey, data, from, to);
     updateCacheClearBtn();
@@ -1250,7 +1257,7 @@ function renderPlanSuggestion(d, fromCache = false) {
       <div style="font-size:13px;font-weight:500;color:var(--text)">${leg.from} → ${leg.to}</div>
       <div style="font-size:12px;color:var(--text2);margin-top:2px">${leg.mode} · ${leg.hours}h · ${leg.km}km · ~$${leg.cost_usd}</div>
       ${leg.notes ? `<div style="font-size:12px;color:var(--text3);margin-top:1px">${leg.notes}</div>` : ''}
-      ${showAff ? renderTransportLinks(leg.mode, leg.from, leg.to) : ''}
+      ${showAff ? renderTransportLinks(leg.mode, leg.from, leg.to, leg.booking_sites) : ''}
       ${ns ? `
         <div class="stay-toggle" onclick="var d=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');d.style.display=d.style.display==='block'?'none':'block';c.classList.toggle('open')">
           <i class="ph ph-bed"></i>
@@ -1278,7 +1285,8 @@ function adoptRoute() {
   d.legs.forEach(l => legs.push({
     mode: l.mode, cost: l.cost_usd || 0, km: l.km || 0,
     hours: l.hours || 0, notes: l.notes || '',
-    booked: false, bookingRef: '', bookingUrl: ''
+    booked: false, bookingRef: '', bookingUrl: '',
+    bookingSites: l.booking_sites || []
   }));
   switchTab('record', document.querySelectorAll('.tab')[1]);
   render();
@@ -1286,12 +1294,12 @@ function adoptRoute() {
 
 
 // ── Affiliate link renderers ──────────────────────────────────────
-function renderTransportLinks(mode, orig, dest) {
+function renderTransportLinks(mode, orig, dest, allowedNames) {
   let sources = [], category = '';
-  if (mode === 'flight')                          { sources = AFF.flights;  category = 'flights'; }
-  else if (mode === 'bus' || mode === 'shared taxi') { sources = AFF.buses; category = 'buses'; }
-  else if (mode === 'train')                      { sources = AFF.trains;   category = 'trains'; }
-  else if (mode === 'ferry')                      { sources = AFF.ferries;  category = 'ferries'; }
+  if (mode === 'flight')                             { sources = AFF.flights;  category = 'flights'; }
+  else if (mode === 'bus' || mode === 'shared taxi') { sources = AFF.buses;    category = 'buses'; }
+  else if (mode === 'train')                         { sources = AFF.trains;   category = 'trains'; }
+  else if (mode === 'ferry')                         { sources = AFF.ferries;  category = 'ferries'; }
   else if (mode === 'hitchhike') {
     return `<div class="search-links">
       <span class="search-links-label">Hitchhiking Guide</span>
@@ -1299,6 +1307,11 @@ function renderTransportLinks(mode, orig, dest) {
     </div>`;
   }
   if (!sources.length) return '';
+  // Filter to AI-recommended sites for this route if provided; fall back to all if none match
+  if (allowedNames && allowedNames.length) {
+    const filtered = sources.filter(s => allowedNames.includes(s.name));
+    if (filtered.length) sources = filtered;
+  }
   const sid = `${orig}|${dest}|${pace}|${[...prefModes].sort().join(',')}`;
   sources.forEach(s => trackAffShown(s.name, category, sid));
   return `<div class="search-links">
@@ -1382,7 +1395,7 @@ function renderLeg(i) {
 
   // Booking links for transport
   const transportLinks = showAff && fromCity && toCity
-    ? renderTransportLinks(leg.mode, fromCity, toCity) : '';
+    ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites) : '';
 
   // Booking record panel
   const bookedSection = `
