@@ -901,15 +901,18 @@ function _readAllSites() {
     const stored = localStorage.getItem('slw_all_sites');
     if (stored) {
       let arr = JSON.parse(stored);
-      // Silently fix any built-in whose category or name has drifted (stale seed)
+      // Silently fix any built-in whose category, name, or regions has drifted (stale seed)
       let dirty = false;
       arr = arr.map(s => {
         if (s._builtin && defaultById[s.id]) {
           const def = defaultById[s.id];
-          if (s.category !== def.category || s.name !== def.name) {
-            dirty = true;
-            return { ...s, category: def.category, name: def.name };
-          }
+          const fixes = {};
+          if (s.category !== def.category) fixes.category = def.category;
+          if (s.name !== def.name)         fixes.name     = def.name;
+          // Seed regions from DEFAULT_SITES when stored entry pre-dates the regions feature
+          // (empty array = not yet set; only migrate, never override user-added regions)
+          if (!s.regions?.length && def.regions?.length) fixes.regions = def.regions;
+          if (Object.keys(fixes).length) { dirty = true; return { ...s, ...fixes }; }
         }
         return s;
       });
