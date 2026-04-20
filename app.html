@@ -953,7 +953,7 @@ function loadCustomSitesIntoAFF() {
   });
 }
 
-function showAddSiteForm(editId) {
+function showAddSiteForm(editId, prefill) {
   const form = document.getElementById('siteForm');
   document.getElementById('sf_name').value = '';
   document.getElementById('sf_url').value  = '';
@@ -977,6 +977,10 @@ function showAddSiteForm(editId) {
       document.getElementById('sf_cat').value  = s.category;
       document.getElementById('sf_editId').value = s.id;
     }
+  } else if (prefill) {
+    // Pre-fill from AI suggestion (name + category known, URL still needed)
+    if (prefill.name)     document.getElementById('sf_name').value = prefill.name;
+    if (prefill.category) document.getElementById('sf_cat').value  = prefill.category;
   }
   form.style.display = 'block';
   document.getElementById('sf_name').focus();
@@ -1306,17 +1310,34 @@ function renderTransportLinks(mode, orig, dest, allowedNames) {
       <a class="search-link" href="https://hitchwiki.org/en/Main_Page" target="_blank" rel="noopener">Hitchwiki ↗</a>
     </div>`;
   }
-  if (!sources.length) return '';
+  if (!sources.length && !(allowedNames && allowedNames.length)) return '';
+
   // Filter to AI-recommended sites for this route if provided; fall back to all if none match
+  let unconfigured = [];
   if (allowedNames && allowedNames.length) {
+    const knownNames = sources.map(s => s.name);
     const filtered = sources.filter(s => allowedNames.includes(s.name));
     if (filtered.length) sources = filtered;
+    // Sites AI recommended that we don't have a URL template for yet
+    unconfigured = allowedNames.filter(n => !knownNames.includes(n));
   }
+
   const sid = `${orig}|${dest}|${pace}|${[...prefModes].sort().join(',')}`;
   sources.forEach(s => trackAffShown(s.name, category, sid));
+
+  const modeToCategory = { bus:'buses', 'shared taxi':'buses', train:'trains', ferry:'ferries', flight:'flights' };
+  const unconfiguredHtml = unconfigured.map(name => {
+    const cat = modeToCategory[mode] || 'buses';
+    const prefill = encodeURIComponent(JSON.stringify({ name, category: cat }));
+    return `<button class="search-link" style="background:none;border:1px dashed var(--border);color:var(--text3);cursor:pointer;font-family:inherit"
+      onclick="switchTab('admin',document.querySelectorAll('.tab')[3]);showAddSiteForm(undefined,JSON.parse(decodeURIComponent('${prefill}')))">+ Add ${name}</button>`;
+  }).join('');
+
+  if (!sources.length && !unconfiguredHtml) return '';
   return `<div class="search-links">
     <span class="search-links-label">Book this leg on</span>
     ${sources.map(s => `<a class="search-link" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
+    ${unconfiguredHtml}
   </div>`;
 }
 
