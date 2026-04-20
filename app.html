@@ -829,39 +829,17 @@ function renderTransportLinks(mode, orig, dest) {
   else if (mode === 'train')                      sources = AFF.trains;
   else if (mode === 'ferry')                      sources = AFF.ferries;
   else if (mode === 'hitchhike') {
-    return `<<divdiv class="search-links">
-      <<spanspan class="search-links-label">Hitchhiking Guide</span>
-      <<aa class="search-link" href="https://hitchwiki.org/en/Main_Page" target="_blank" rel="noopener">Hitchwiki ↗</a>
+    return `<div class="search-links">
+      <span class="search-links-label">Hitchhiking Guide</span>
+      <a class="search-link" href="https://hitchwiki.org/en/Main_Page" target="_blank" rel="noopener">Hitchwiki ↗</a>
     </div>`;
   }
   if (!sources.length) return '';
-  return `<<divdiv class="search-links">
-    <<spanspan class="search-links-label">Book this leg on</span>
-    ${sources.map(s => `<<aa class="search-link" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
+  return `<div class="search-links">
+    <span class="search-links-label">Book this leg on</span>
+    ${sources.map(s => `<a class="search-link" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
   </div>`;
 }
-
-  if (!sources.length) return '';
-  return `<<divdiv class="search-links">
-    <<spanspan class="search-links-label">Book this leg on</span>
-    ${sources.map(s => `<<aa class="search-link" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
-  </div>`;
-}
-
-  if (!sources.length) return '';
-  return `<<divdiv class="search-links">
-    <<spanspan class="search-links-label">Book this leg on</span>
-    ${sources.map(s => `<<aa class="search-link" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
-  </div>`;
-}
-
-  if (!sources.length) return '';
-  return `<<divdiv class="search-links">
-    <<spanspan class="search-links-label">Book this leg on</span>
-    ${sources.map(s => `<<aa class="search-link" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
-  </div>`;
-}
-
 
 function renderFlightSearchLinks(orig, dest, month) {
   return `<div class="search-links">
