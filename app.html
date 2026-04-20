@@ -332,13 +332,19 @@
         </div>
         <div style="margin-bottom:10px">
           <div class="lbl" style="margin-bottom:4px">URL template</div>
-          <input class="inp" id="sf_url" placeholder="https://example.com/search?from={origin}&to={dest}"/>
+          <input class="inp" id="sf_url" placeholder="https://example.com/search?from={origin}&to={dest}" oninput="previewSiteUrl()"/>
           <div class="hint">Placeholders: <code>{origin}</code> <code>{dest}</code> <code>{month}</code> — URL-encoded automatically. For accommodation, <code>{origin}</code> = city name.</div>
         </div>
         <div style="margin-bottom:12px">
           <div class="lbl" style="margin-bottom:4px">Affiliate ID / tag <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
-          <input class="inp" id="sf_aff" placeholder="e.g. slwtravel or ref=slw"/>
+          <input class="inp" id="sf_aff" placeholder="e.g. slwtravel or ref=slw" oninput="previewSiteUrl()"/>
           <div class="hint">Appended as <code>&affid={value}</code> — or paste the full affiliate param if your network uses a different key</div>
+        </div>
+        <div id="sf_preview" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius)">
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Example URL</div>
+          <a id="sf_preview_url" href="#" target="_blank" rel="noopener"
+             style="font-size:12px;color:var(--green);word-break:break-all;text-decoration:none;line-height:1.5"></a>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Using: origin = <em>Tbilisi</em>, dest = <em>Kathmandu</em>, month = <em>2025-06</em></div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-primary" style="font-size:13px;padding:7px 16px" onclick="saveSite()">Save site</button>
@@ -834,10 +840,33 @@ function showAddSiteForm(editId) {
   }
   form.style.display = 'block';
   document.getElementById('sf_name').focus();
+  previewSiteUrl();
 }
 
 function hideSiteForm() {
   document.getElementById('siteForm').style.display = 'none';
+  document.getElementById('sf_preview').style.display = 'none';
+}
+
+function previewSiteUrl() {
+  const tpl   = document.getElementById('sf_url').value.trim();
+  const affId = document.getElementById('sf_aff').value.trim();
+  const box   = document.getElementById('sf_preview');
+  const link  = document.getElementById('sf_preview_url');
+  if (!tpl) { box.style.display = 'none'; return; }
+
+  const o = encodeURIComponent('Tbilisi');
+  const d = encodeURIComponent('Kathmandu');
+  const m = encodeURIComponent('2025-06');
+  let url = tpl
+    .replace('{origin}', o)
+    .replace('{dest}',   d)
+    .replace('{month}',  m);
+  if (affId) url += (url.includes('?') ? '&' : '?') + 'affid=' + encodeURIComponent(affId);
+
+  link.textContent = url;
+  link.href = url;
+  box.style.display = 'block';
 }
 
 function saveSite() {
