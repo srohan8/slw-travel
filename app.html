@@ -947,7 +947,7 @@ function _buildUrlFn(template, affId) {
 // Rebuild AFF from all sites (replaces hardcoded entries)
 function loadCustomSitesIntoAFF() {
   AFF.buses = []; AFF.trains = []; AFF.ferries = []; AFF.accommodation = [];
-  _readAllSites().filter(s => s.enabled !== false).forEach(s => {
+  _readAllSites().filter(s => s.enabled !== false && s.urlTemplate).forEach(s => {
     if (!AFF[s.category]) AFF[s.category] = [];
     AFF[s.category].push({ name: s.name, buildUrl: _buildUrlFn(s.urlTemplate, s.affId) });
   });
@@ -1139,21 +1139,28 @@ function renderAdminSiteList() {
 
   sites.forEach(s => {
     const isBuiltin = !!s._builtin;
+    const needsUrl  = !s.urlTemplate;
     const badge = isBuiltin
       ? ` <span style="font-size:10px;color:var(--text3);border:0.5px solid var(--border);border-radius:3px;padding:1px 5px;vertical-align:middle">built-in</span>`
+      : '';
+    const urlWarn = needsUrl
+      ? ` <span style="font-size:10px;color:var(--warn,#e67e22);border:0.5px solid currentColor;border-radius:3px;padding:1px 5px;vertical-align:middle">⚠ URL needed</span>`
       : '';
     const disableBtn = isBuiltin
       ? `<button onclick="toggleSiteEnabled('${s.id}')" style="font-size:11px;background:none;border:none;cursor:pointer;color:${s.enabled ? 'var(--text3)' : 'var(--green)'};font-family:inherit;padding:0">${s.enabled ? 'Disable' : 'Enable'}</button>`
       : `<button onclick="deleteSite('${s.id}')" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--danger-text);font-family:inherit;padding:0">Remove</button>`;
+    const editStyle = needsUrl
+      ? 'font-size:11px;background:none;border:none;cursor:pointer;color:var(--green);font-weight:600;font-family:inherit;padding:0 8px 0 0'
+      : 'font-size:11px;background:none;border:none;cursor:pointer;color:var(--text2);font-family:inherit;padding:0 8px 0 0';
     const rowOpacity = s.enabled === false ? 'opacity:0.45;' : '';
     h += `<tr style="${rowOpacity}">
-      <td style="font-weight:500">${s.name}${badge}</td>
+      <td style="font-weight:500">${s.name}${badge}${urlWarn}</td>
       <td><span class="aff-cat">${catLabel[s.category] || s.category}</span></td>
       <td style="font-size:11px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.urlTemplate}">${s.urlTemplate}</td>
       <td style="font-size:12px;color:var(--text3)">${s.affId || '—'}</td>
       <td><input type="checkbox" ${s.enabled !== false ? 'checked' : ''} onchange="toggleSiteEnabled('${s.id}')" style="cursor:pointer"/></td>
       <td style="white-space:nowrap">
-        <button onclick="showAddSiteForm('${s.id}')" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--text2);font-family:inherit;padding:0 8px 0 0">Edit</button>
+        <button onclick="showAddSiteForm('${s.id}')" style="${editStyle}">Edit</button>
         ${disableBtn}
       </td>
     </tr>`;
@@ -1231,6 +1238,26 @@ Available booking sites (${siteHint}). For each leg add "booking_sites":["Name"]
 Respond ONLY in this JSON (no markdown, no preamble):
 {"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"tip"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","booking_sites":["Busbud"]}],"total_days":14,"total_cost_usd":200}`);
     lastSuggestion = data;
+
+    // Auto-register any AI-suggested booking sites not yet in Admin
+    {
+      const _m2c = { bus:'buses', 'shared taxi':'buses', train:'trains', ferry:'ferries', flight:'flights' };
+      const _all = _readAllSites();
+      const _known = new Set(_all.map(s => s.name));
+      let _dirty = false;
+      (data.legs || []).forEach(leg => {
+        (leg.booking_sites || []).forEach(name => {
+          if (!_known.has(name)) {
+            _all.push({ id:'ai_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
+              name, category:_m2c[leg.mode]||'buses', urlTemplate:'', affId:'', enabled:false, _builtin:false });
+            _known.add(name);
+            _dirty = true;
+          }
+        });
+      });
+      if (_dirty) _writeAllSites(_all);
+    }
+
     setCachedRoute(cacheKey, data, from, to);
     updateCacheClearBtn();
     renderPlanSuggestion(data, false);
@@ -1310,34 +1337,21 @@ function renderTransportLinks(mode, orig, dest, allowedNames) {
       <a class="search-link" href="https://hitchwiki.org/en/Main_Page" target="_blank" rel="noopener">Hitchwiki ↗</a>
     </div>`;
   }
-  if (!sources.length && !(allowedNames && allowedNames.length)) return '';
+  if (!sources.length) return '';
 
   // Filter to AI-recommended sites for this route if provided; fall back to all if none match
-  let unconfigured = [];
   if (allowedNames && allowedNames.length) {
-    const knownNames = sources.map(s => s.name);
     const filtered = sources.filter(s => allowedNames.includes(s.name));
     if (filtered.length) sources = filtered;
-    // Sites AI recommended that we don't have a URL template for yet
-    unconfigured = allowedNames.filter(n => !knownNames.includes(n));
   }
 
   const sid = `${orig}|${dest}|${pace}|${[...prefModes].sort().join(',')}`;
   sources.forEach(s => trackAffShown(s.name, category, sid));
 
-  const modeToCategory = { bus:'buses', 'shared taxi':'buses', train:'trains', ferry:'ferries', flight:'flights' };
-  const unconfiguredHtml = unconfigured.map(name => {
-    const cat = modeToCategory[mode] || 'buses';
-    const prefill = encodeURIComponent(JSON.stringify({ name, category: cat }));
-    return `<button class="search-link" style="background:none;border:1px dashed var(--border);color:var(--text3);cursor:pointer;font-family:inherit"
-      onclick="switchTab('admin',document.querySelectorAll('.tab')[3]);showAddSiteForm(undefined,JSON.parse(decodeURIComponent('${prefill}')))">+ Add ${name}</button>`;
-  }).join('');
-
-  if (!sources.length && !unconfiguredHtml) return '';
+  if (!sources.length) return '';
   return `<div class="search-links">
     <span class="search-links-label">Book this leg on</span>
     ${sources.map(s => `<a class="search-link" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
-    ${unconfiguredHtml}
   </div>`;
 }
 
