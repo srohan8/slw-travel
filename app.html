@@ -117,6 +117,13 @@
   .adopt-btn:hover{background:var(--bg2); color: var(--text); border-color: var(--text2);}
   .warn-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:99px;background:var(--warn-bg);color:var(--warn-text);border:0.5px solid var(--warn-border);margin-bottom:8px;font-weight: 500;}
   .cache-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:99px;background:var(--success-bg);color:var(--success-text);border:0.5px solid var(--success-border);margin-bottom:8px;font-weight:500;}
+  .aff-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .aff-table th{text-align:left;font-size:11px;font-weight:600;color:var(--text3);padding:6px 10px;border-bottom:0.5px solid var(--border);text-transform:uppercase;letter-spacing:.04em;}
+  .aff-table td{padding:8px 10px;border-bottom:0.5px solid var(--border);color:var(--text);}
+  .aff-table tr:last-child td{border-bottom:none;}
+  .aff-table tr:hover td{background:var(--bg2);}
+  .aff-cat{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--bg2);color:var(--text3);border:0.5px solid var(--border);font-weight:500;white-space:nowrap;}
+  .aff-empty{color:var(--text3);font-size:13px;padding:1rem 0;text-align:center;}
   .avoid-notice{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--danger-bg);border:0.5px solid var(--danger-border);border-radius:var(--radius);margin-bottom:16px;}
   .avoid-notice p{font-size:13px;color:var(--danger-text);line-height:1.5;margin: 0;}
   .flight-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:12px;box-shadow: var(--shadow);transition: all 0.2s;}
@@ -177,6 +184,7 @@
     <button class="tab active" onclick="switchTab('plan',this)">Plan a route</button>
     <button class="tab" onclick="switchTab('record',this)">My trip</button>
     <button class="tab" onclick="switchTab('flights',this)">Flights</button>
+    <button class="tab" onclick="switchTab('admin',this)">Admin</button>
   </div>
 
   <!-- PLAN TAB -->
@@ -310,6 +318,17 @@
       <span style="font-size:12px;color:var(--text3)">AI maps safe routes, hubs & airlines</span>
     </div>
     <div id="flightResult" style="margin-top:1rem;display:none"></div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div id="admin" class="panel">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0">Booking site impressions</h3>
+        <button onclick="clearAffStats()" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;padding:0">Clear stats</button>
+      </div>
+      <div id="adminAffTable"></div>
+    </div>
   </div>
 </div>
 
@@ -608,6 +627,75 @@ function updateCacheClearBtn() {
   btn.textContent = `Clear cache (${count})`;
 }
 
+// ── Affiliate impression tracking ────────────────────────────────
+function _readAffStats() {
+  try { return JSON.parse(localStorage.getItem('slw_aff_stats') || '{}'); } catch { return {}; }
+}
+function _writeAffStats(obj) {
+  localStorage.setItem('slw_aff_stats', JSON.stringify(obj));
+}
+
+// siteName: display name of the booking site
+// category: 'buses' | 'trains' | 'flights' | 'ferries' | 'accommodation'
+// searchId: unique string identifying this search (e.g. "tbilisi|kathmandu|slow|bus,train")
+function trackAffShown(siteName, category, searchId) {
+  const stats = _readAffStats();
+  if (!stats[siteName]) {
+    stats[siteName] = { category, shown: 0, searches: [], lastSeen: null };
+  }
+  stats[siteName].shown += 1;
+  stats[siteName].lastSeen = Date.now();
+  if (!stats[siteName].searches.includes(searchId)) {
+    stats[siteName].searches.push(searchId);
+  }
+  _writeAffStats(stats);
+}
+
+function clearAffStats() {
+  _writeAffStats({});
+  renderAdminTab();
+}
+
+function renderAdminTab() {
+  const el = document.getElementById('adminAffTable');
+  if (!el) return;
+  const stats = _readAffStats();
+  const entries = Object.entries(stats).sort((a, b) => b[1].shown - a[1].shown);
+
+  if (!entries.length) {
+    el.innerHTML = '<div class="aff-empty">No impressions recorded yet. Search for a route to start tracking.</div>';
+    return;
+  }
+
+  const catLabel = { buses:'Bus/Taxi', trains:'Train', flights:'Flight', ferries:'Ferry', accommodation:'Stay', flight:'Flight' };
+  const timeAgo = ts => {
+    const m = Math.floor((Date.now() - ts) / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
+  };
+
+  let h = `<table class="aff-table">
+    <thead><tr>
+      <th>Site</th><th>Category</th><th>Impressions</th><th>Searches</th><th>Last shown</th>
+    </tr></thead><tbody>`;
+
+  entries.forEach(([name, s]) => {
+    h += `<tr>
+      <td style="font-weight:500">${name}</td>
+      <td><span class="aff-cat">${catLabel[s.category] || s.category}</span></td>
+      <td>${s.shown}</td>
+      <td>${s.searches.length}</td>
+      <td style="color:var(--text3);font-size:12px">${s.lastSeen ? timeAgo(s.lastSeen) : '—'}</td>
+    </tr>`;
+  });
+
+  h += '</tbody></table>';
+  el.innerHTML = h;
+}
+
 // ── Tab switching ─────────────────────────────────────────────────
 function switchTab(id, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -615,6 +703,7 @@ function switchTab(id, el) {
   el.classList.add('active');
   document.getElementById(id).classList.add('active');
   if (id === 'record') render();
+  if (id === 'admin') renderAdminTab();
 }
 
 // ── Plan tab ──────────────────────────────────────────────────────
@@ -823,11 +912,11 @@ function renderFlightResults(d, avoid, month) {
 
 // ── Affiliate link renderers ──────────────────────────────────────
 function renderTransportLinks(mode, orig, dest) {
-  let sources = [];
-  if (mode === 'flight')                          sources = AFF.flights;
-  else if (mode === 'bus' || mode === 'shared taxi') sources = AFF.buses;
-  else if (mode === 'train')                      sources = AFF.trains;
-  else if (mode === 'ferry')                      sources = AFF.ferries;
+  let sources = [], category = '';
+  if (mode === 'flight')                          { sources = AFF.flights;  category = 'flights'; }
+  else if (mode === 'bus' || mode === 'shared taxi') { sources = AFF.buses; category = 'buses'; }
+  else if (mode === 'train')                      { sources = AFF.trains;   category = 'trains'; }
+  else if (mode === 'ferry')                      { sources = AFF.ferries;  category = 'ferries'; }
   else if (mode === 'hitchhike') {
     return `<div class="search-links">
       <span class="search-links-label">Hitchhiking Guide</span>
@@ -835,6 +924,8 @@ function renderTransportLinks(mode, orig, dest) {
     </div>`;
   }
   if (!sources.length) return '';
+  const sid = `${orig}|${dest}|${pace}|${[...prefModes].sort().join(',')}`;
+  sources.forEach(s => trackAffShown(s.name, category, sid));
   return `<div class="search-links">
     <span class="search-links-label">Book this leg on</span>
     ${sources.map(s => `<a class="search-link" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
@@ -842,6 +933,8 @@ function renderTransportLinks(mode, orig, dest) {
 }
 
 function renderFlightSearchLinks(orig, dest, month) {
+  const sid = `flight|${orig}|${dest}|${month || 'any'}`;
+  AFF.flights.forEach(s => trackAffShown(s.name, 'flights', sid));
   return `<div class="search-links">
     <span class="search-links-label">Search this route on</span>
     ${AFF.flights.map(s => `<a class="search-link" href="${s.buildUrl(orig, dest, month)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
