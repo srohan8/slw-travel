@@ -384,6 +384,11 @@
           <input class="inp" id="sf_aff" placeholder="e.g. slwtravel or ref=slw" oninput="previewSiteUrl()"/>
           <div class="hint">Appended as <code>&affid={value}</code> — or paste the full affiliate param if your network uses a different key</div>
         </div>
+        <div style="margin-bottom:12px">
+          <div class="lbl" style="margin-bottom:4px">Regions covered <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
+          <input class="inp" id="sf_regions" placeholder="e.g. Southeast Asia, Central Asia, Europe"/>
+          <div class="hint">Comma-separated. Used to build a regional directory over time. Leave blank if global.</div>
+        </div>
         <div id="sf_preview" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius)">
           <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Example URL</div>
           <a id="sf_preview_url" href="#" target="_blank" rel="noopener"
@@ -879,15 +884,15 @@ function renderAdminTab() {
 
 // ── Booking sites (unified — built-ins + custom, all editable) ───
 const DEFAULT_SITES = [
-  { id:'_bi_busbud',   name:'Busbud',         category:'buses',         urlTemplate:'https://www.busbud.com/en/bus-{origin}-{dest}',                                                           affId:'', enabled:true, _builtin:true },
-  { id:'_bi_bookaway', name:'Bookaway',        category:'buses',         urlTemplate:'https://www.bookaway.com/search?srcName={origin}&dstName={dest}',                                         affId:'', enabled:true, _builtin:true },
-  { id:'_bi_12go',     name:'12Go',            category:'buses',         urlTemplate:'https://12go.asia/en/travel/{origin}/{dest}',                                                             affId:'', enabled:true, _builtin:true },
-  { id:'_bi_omio_b',   name:'Omio',            category:'buses',         urlTemplate:'https://www.omio.com/app/search-results?origin={origin}&destination={dest}',                              affId:'', enabled:true, _builtin:true },
-  { id:'_bi_omio_t',   name:'Omio',            category:'trains',        urlTemplate:'https://www.omio.com/app/search-results?origin={origin}&destination={dest}&transportType=train',          affId:'', enabled:true, _builtin:true },
-  { id:'_bi_raileu',   name:'Rail Europe',     category:'trains',        urlTemplate:'https://www.raileurope.com/en/search#from={origin}&to={dest}',                                            affId:'', enabled:true, _builtin:true },
-  { id:'_bi_dferries', name:'Direct Ferries',  category:'ferries',       urlTemplate:'https://www.directferries.com/ferry_{origin}_{dest}.htm',                                                 affId:'', enabled:true, _builtin:true },
-  { id:'_bi_hostelw',  name:'Hostelworld',     category:'accommodation', urlTemplate:'https://www.hostelworld.com/findabed.php/ChosenCity.{origin}',                                            affId:'', enabled:true, _builtin:true },
-  { id:'_bi_booking',  name:'Booking.com',     category:'accommodation', urlTemplate:'https://www.booking.com/search.html?ss={origin}',                                                         affId:'', enabled:true, _builtin:true },
+  { id:'_bi_busbud',   name:'Busbud',         category:'buses',         regions:['North America','Latin America','Europe','Southeast Asia'],                           urlTemplate:'https://www.busbud.com/en/bus-{origin}-{dest}',                                                           affId:'', enabled:true, _builtin:true },
+  { id:'_bi_bookaway', name:'Bookaway',        category:'buses',         regions:['Southeast Asia','Central Asia','South Asia','Latin America','East Africa'],         urlTemplate:'https://www.bookaway.com/search?srcName={origin}&dstName={dest}',                                         affId:'', enabled:true, _builtin:true },
+  { id:'_bi_12go',     name:'12Go',            category:'buses',         regions:['Southeast Asia','Central Asia','South Asia','East Asia'],                           urlTemplate:'https://12go.asia/en/travel/{origin}/{dest}',                                                             affId:'', enabled:true, _builtin:true },
+  { id:'_bi_omio_b',   name:'Omio',            category:'buses',         regions:['Europe'],                                                                           urlTemplate:'https://www.omio.com/app/search-results?origin={origin}&destination={dest}',                              affId:'', enabled:true, _builtin:true },
+  { id:'_bi_omio_t',   name:'Omio',            category:'trains',        regions:['Europe'],                                                                           urlTemplate:'https://www.omio.com/app/search-results?origin={origin}&destination={dest}&transportType=train',          affId:'', enabled:true, _builtin:true },
+  { id:'_bi_raileu',   name:'Rail Europe',     category:'trains',        regions:['Europe'],                                                                           urlTemplate:'https://www.raileurope.com/en/search#from={origin}&to={dest}',                                            affId:'', enabled:true, _builtin:true },
+  { id:'_bi_dferries', name:'Direct Ferries',  category:'ferries',       regions:['Europe','Southeast Asia','Oceania'],                                                urlTemplate:'https://www.directferries.com/ferry_{origin}_{dest}.htm',                                                 affId:'', enabled:true, _builtin:true },
+  { id:'_bi_hostelw',  name:'Hostelworld',     category:'accommodation', regions:[],                                                                                   urlTemplate:'https://www.hostelworld.com/findabed.php/ChosenCity.{origin}',                                            affId:'', enabled:true, _builtin:true },
+  { id:'_bi_booking',  name:'Booking.com',     category:'accommodation', regions:[],                                                                                   urlTemplate:'https://www.booking.com/search.html?ss={origin}',                                                         affId:'', enabled:true, _builtin:true },
 ];
 
 function _readAllSites() {
@@ -955,11 +960,12 @@ function loadCustomSitesIntoAFF() {
 
 function showAddSiteForm(editId, prefill) {
   const form = document.getElementById('siteForm');
-  document.getElementById('sf_name').value = '';
-  document.getElementById('sf_url').value  = '';
-  document.getElementById('sf_aff').value  = '';
-  document.getElementById('sf_cat').value  = 'buses';
-  document.getElementById('sf_editId').value = '';
+  document.getElementById('sf_name').value    = '';
+  document.getElementById('sf_url').value     = '';
+  document.getElementById('sf_aff').value     = '';
+  document.getElementById('sf_regions').value = '';
+  document.getElementById('sf_cat').value     = 'buses';
+  document.getElementById('sf_editId').value  = '';
   // Reset extraction helper
   document.getElementById('sf_example_url').value = '';
   document.getElementById('sf_ex_origin').value   = '';
@@ -971,16 +977,18 @@ function showAddSiteForm(editId, prefill) {
     const sites = _readAllSites();
     const s = sites.find(x => x.id === editId);
     if (s) {
-      document.getElementById('sf_name').value = s.name;
-      document.getElementById('sf_url').value  = s.urlTemplate;
-      document.getElementById('sf_aff').value  = s.affId || '';
-      document.getElementById('sf_cat').value  = s.category;
-      document.getElementById('sf_editId').value = s.id;
+      document.getElementById('sf_name').value    = s.name;
+      document.getElementById('sf_url').value     = s.urlTemplate;
+      document.getElementById('sf_aff').value     = s.affId || '';
+      document.getElementById('sf_regions').value = (s.regions || []).join(', ');
+      document.getElementById('sf_cat').value     = s.category;
+      document.getElementById('sf_editId').value  = s.id;
     }
   } else if (prefill) {
     // Pre-fill from AI suggestion (name + category known, URL still needed)
-    if (prefill.name)     document.getElementById('sf_name').value = prefill.name;
-    if (prefill.category) document.getElementById('sf_cat').value  = prefill.category;
+    if (prefill.name)     document.getElementById('sf_name').value    = prefill.name;
+    if (prefill.category) document.getElementById('sf_cat').value     = prefill.category;
+    if (prefill.regions)  document.getElementById('sf_regions').value = prefill.regions.join(', ');
   }
   form.style.display = 'block';
   document.getElementById('sf_name').focus();
@@ -988,11 +996,12 @@ function showAddSiteForm(editId, prefill) {
 }
 
 function hideSiteForm() {
-  document.getElementById('siteForm').style.display = 'none';
+  document.getElementById('siteForm').style.display   = 'none';
   document.getElementById('sf_preview').style.display = 'none';
-  document.getElementById('sf_example_url').value = '';
-  document.getElementById('sf_ex_origin').value   = '';
-  document.getElementById('sf_ex_dest').value     = '';
+  document.getElementById('sf_regions').value         = '';
+  document.getElementById('sf_example_url').value     = '';
+  document.getElementById('sf_ex_origin').value       = '';
+  document.getElementById('sf_ex_dest').value         = '';
   document.getElementById('sf_extract_msg').textContent = '';
   document.getElementById('sf_extract_msg').style.color = '';
 }
@@ -1084,6 +1093,7 @@ function saveSite() {
   const category = document.getElementById('sf_cat').value;
   const urlTpl   = document.getElementById('sf_url').value.trim();
   const affId    = document.getElementById('sf_aff').value.trim();
+  const regions  = document.getElementById('sf_regions').value.split(',').map(r => r.trim()).filter(Boolean);
   const editId   = document.getElementById('sf_editId').value;
 
   if (!name)   { alert('Site name is required.'); return; }
@@ -1092,9 +1102,9 @@ function saveSite() {
   const sites = _readAllSites();
   if (editId) {
     const idx = sites.findIndex(s => s.id === editId);
-    if (idx > -1) sites[idx] = { ...sites[idx], name, category, urlTemplate: urlTpl, affId };
+    if (idx > -1) sites[idx] = { ...sites[idx], name, category, urlTemplate: urlTpl, affId, regions, enabled: true };
   } else {
-    sites.push({ id: Date.now().toString(), name, category, urlTemplate: urlTpl, affId, enabled: true, _builtin: false });
+    sites.push({ id: Date.now().toString(), name, category, urlTemplate: urlTpl, affId, regions, enabled: true, _builtin: false });
   }
   _writeAllSites(sites);
   loadCustomSitesIntoAFF();
@@ -1134,7 +1144,7 @@ function renderAdminSiteList() {
   const catLabel = { buses:'Bus/Taxi', trains:'Train', ferries:'Ferry', accommodation:'Stay' };
 
   let h = `<table class="aff-table"><thead><tr>
-    <th>Site</th><th>Category</th><th>URL template</th><th>Aff. ID</th><th>On</th><th></th>
+    <th>Site</th><th>Category</th><th>Regions</th><th>URL template</th><th>Aff. ID</th><th>On</th><th></th>
   </tr></thead><tbody>`;
 
   sites.forEach(s => {
@@ -1153,10 +1163,14 @@ function renderAdminSiteList() {
       ? 'font-size:11px;background:none;border:none;cursor:pointer;color:var(--green);font-weight:600;font-family:inherit;padding:0 8px 0 0'
       : 'font-size:11px;background:none;border:none;cursor:pointer;color:var(--text2);font-family:inherit;padding:0 8px 0 0';
     const rowOpacity = s.enabled === false ? 'opacity:0.45;' : '';
+    const regionPills = (s.regions && s.regions.length)
+      ? s.regions.map(r => `<span style="display:inline-block;font-size:10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:3px;padding:1px 5px;margin:1px 2px 1px 0;white-space:nowrap">${r}</span>`).join('')
+      : `<span style="font-size:11px;color:var(--text3)">global</span>`;
     h += `<tr style="${rowOpacity}">
       <td style="font-weight:500">${s.name}${badge}${urlWarn}</td>
       <td><span class="aff-cat">${catLabel[s.category] || s.category}</span></td>
-      <td style="font-size:11px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.urlTemplate}">${s.urlTemplate}</td>
+      <td style="max-width:160px">${regionPills}</td>
+      <td style="font-size:11px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.urlTemplate}">${s.urlTemplate || '—'}</td>
       <td style="font-size:12px;color:var(--text3)">${s.affId || '—'}</td>
       <td><input type="checkbox" ${s.enabled !== false ? 'checked' : ''} onchange="toggleSiteEnabled('${s.id}')" style="cursor:pointer"/></td>
       <td style="white-space:nowrap">
@@ -1234,23 +1248,30 @@ async function planRoute() {
 
     const data = await callAI(`You are an expert overland travel planner. Suggest a practical overland route from ${from} to ${to}${via ? ' via ' + via : ''}.
 Pace: ${pace}. Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}
-Available booking sites (${siteHint}). For each leg add "booking_sites":["Name"] listing only sites that actually operate on that specific route/region. Leave array empty if no online booking exists.
+Available booking sites (${siteHint}). For each leg add "booking_sites":["Name"] listing only sites that actually operate on that specific route/region, and "leg_region" with the world region (e.g. "Southeast Asia","Central Asia","South Asia","East Asia","Europe","Middle East","Africa","North America","Latin America","Oceania"). Leave booking_sites empty if no online booking exists.
 Respond ONLY in this JSON (no markdown, no preamble):
-{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"tip"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","booking_sites":["Busbud"]}],"total_days":14,"total_cost_usd":200}`);
+{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"tip"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"]}],"total_days":14,"total_cost_usd":200}`);
     lastSuggestion = data;
 
-    // Auto-register any AI-suggested booking sites not yet in Admin
+    // Auto-register AI-suggested booking sites; accumulate regions onto existing ones
     {
       const _m2c = { bus:'buses', 'shared taxi':'buses', train:'trains', ferry:'ferries', flight:'flights' };
       const _all = _readAllSites();
-      const _known = new Set(_all.map(s => s.name));
       let _dirty = false;
       (data.legs || []).forEach(leg => {
+        const region = leg.leg_region || '';
         (leg.booking_sites || []).forEach(name => {
-          if (!_known.has(name)) {
+          const existing = _all.find(s => s.name === name);
+          if (existing) {
+            // Union new region into existing site's regions
+            if (region && !(existing.regions || []).includes(region)) {
+              existing.regions = [...(existing.regions || []), region];
+              _dirty = true;
+            }
+          } else {
             _all.push({ id:'ai_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
-              name, category:_m2c[leg.mode]||'buses', urlTemplate:'', affId:'', enabled:false, _builtin:false });
-            _known.add(name);
+              name, category:_m2c[leg.mode]||'buses', regions: region ? [region] : [],
+              urlTemplate:'', affId:'', enabled:false, _builtin:false });
             _dirty = true;
           }
         });
