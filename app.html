@@ -954,7 +954,7 @@ function loadCustomSitesIntoAFF() {
   AFF.buses = []; AFF.trains = []; AFF.ferries = []; AFF.accommodation = [];
   _readAllSites().filter(s => s.enabled !== false && s.urlTemplate).forEach(s => {
     if (!AFF[s.category]) AFF[s.category] = [];
-    AFF[s.category].push({ name: s.name, buildUrl: _buildUrlFn(s.urlTemplate, s.affId) });
+    AFF[s.category].push({ name: s.name, regions: s.regions || [], buildUrl: _buildUrlFn(s.urlTemplate, s.affId) });
   });
 }
 
@@ -1309,7 +1309,7 @@ function renderPlanSuggestion(d, fromCache = false) {
       <div style="font-size:13px;font-weight:500;color:var(--text)">${leg.from} → ${leg.to}</div>
       <div style="font-size:12px;color:var(--text2);margin-top:2px">${leg.mode} · ${leg.hours}h · ${leg.km}km · ~$${leg.cost_usd}</div>
       ${leg.notes ? `<div style="font-size:12px;color:var(--text3);margin-top:1px">${leg.notes}</div>` : ''}
-      ${showAff ? renderTransportLinks(leg.mode, leg.from, leg.to, leg.booking_sites) : ''}
+      ${showAff ? renderTransportLinks(leg.mode, leg.from, leg.to, leg.booking_sites, leg.leg_region) : ''}
       ${ns ? `
         <div class="stay-toggle" onclick="var d=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');d.style.display=d.style.display==='block'?'none':'block';c.classList.toggle('open')">
           <i class="ph ph-bed"></i>
@@ -1338,7 +1338,8 @@ function adoptRoute() {
     mode: l.mode, cost: l.cost_usd || 0, km: l.km || 0,
     hours: l.hours || 0, notes: l.notes || '',
     booked: false, bookingRef: '', bookingUrl: '',
-    bookingSites: l.booking_sites || []
+    bookingSites: l.booking_sites || [],
+    legRegion: l.leg_region || ''
   }));
   switchTab('record', document.querySelectorAll('.tab')[1]);
   render();
@@ -1346,7 +1347,7 @@ function adoptRoute() {
 
 
 // ── Affiliate link renderers ──────────────────────────────────────
-function renderTransportLinks(mode, orig, dest, allowedNames) {
+function renderTransportLinks(mode, orig, dest, allowedNames, legRegion) {
   let sources = [], category = '';
   if (mode === 'flight')                             { sources = AFF.flights;  category = 'flights'; }
   else if (mode === 'bus' || mode === 'shared taxi') { sources = AFF.buses;    category = 'buses'; }
@@ -1360,16 +1361,22 @@ function renderTransportLinks(mode, orig, dest, allowedNames) {
   }
   if (!sources.length) return '';
 
-  // Filter to AI-recommended sites for this route if provided; fall back to all if none match
+  // 1. Filter to AI-recommended names if provided; fall back to all if none match
   if (allowedNames && allowedNames.length) {
-    const filtered = sources.filter(s => allowedNames.includes(s.name));
-    if (filtered.length) sources = filtered;
+    const byName = sources.filter(s => allowedNames.includes(s.name));
+    if (byName.length) sources = byName;
   }
 
-  const sid = `${orig}|${dest}|${pace}|${[...prefModes].sort().join(',')}`;
-  sources.forEach(s => trackAffShown(s.name, category, sid));
+  // 2. Region filter — always applied. sites with regions:[] are global (always shown).
+  //    sites with regions set only show when legRegion matches one of them.
+  if (legRegion) {
+    const byRegion = sources.filter(s => !s.regions.length || s.regions.includes(legRegion));
+    if (byRegion.length) sources = byRegion;
+  }
 
   if (!sources.length) return '';
+  const sid = `${orig}|${dest}|${pace}|${[...prefModes].sort().join(',')}`;
+  sources.forEach(s => trackAffShown(s.name, category, sid));
   return `<div class="search-links">
     <span class="search-links-label">Book this leg on</span>
     ${sources.map(s => `<a class="search-link" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
@@ -1451,7 +1458,7 @@ function renderLeg(i) {
 
   // Booking links for transport
   const transportLinks = showAff && fromCity && toCity
-    ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites) : '';
+    ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites, leg.legRegion) : '';
 
   // Booking record panel
   const bookedSection = `
