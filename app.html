@@ -886,7 +886,7 @@ function renderAdminTab() {
 const DEFAULT_SITES = [
   // ── Global / multi-region buses ──
   { id:'_bi_busbud',   name:'Busbud',         category:'buses',  regions:['North America','Latin America','Europe','Middle East','Southeast Asia'],                  urlTemplate:'https://www.busbud.com/en/bus-{origin}-{dest}',                                                           affId:'', enabled:true, _builtin:true },
-  { id:'_bi_bookaway', name:'Bookaway',        category:'buses',  regions:['Southeast Asia','Central Asia','South Asia','Middle East','Latin America','East Africa'],urlTemplate:'https://www.bookaway.com/search?srcName={origin}&dstName={dest}',                                         affId:'', enabled:true, _builtin:true },
+  { id:'_bi_bookaway', name:'Bookaway',        category:'buses',  regions:['Southeast Asia','Central Asia','South Asia','Middle East','East Asia','Latin America','East Africa'],urlTemplate:'https://www.bookaway.com/search?srcName={origin}&dstName={dest}',                                         affId:'', enabled:true, _builtin:true },
   { id:'_bi_12go',     name:'12Go',            category:'buses',  regions:['Southeast Asia','Central Asia','South Asia','East Asia'],                                urlTemplate:'https://12go.asia/en/travel/{origin}/{dest}',                                                             affId:'', enabled:true, _builtin:true },
   // ── Europe buses & trains ──
   { id:'_bi_flixbus',  name:'FlixBus',         category:'buses',  regions:['Europe','North America'],                                                                urlTemplate:'https://shop.flixbus.com/search?departureCity={origin}&arrivalCity={dest}',                               affId:'', enabled:true, _builtin:true },
@@ -1315,7 +1315,9 @@ function renderPlanSuggestion(d, fromCache = false) {
   let h = '';
   if (fromCache) {
     const sub = d._subset_of ? ` <span style="opacity:0.7;font-weight:400">— sliced from ${d._subset_of}</span>` : '';
-    h += `<span class="cache-badge">⚡ From cache${sub}</span><br>`;
+    const noRegion = d.legs?.some(l => !l.leg_region);
+    const staleHint = noRegion ? ` · <button onclick="clearRouteCache();planRoute()" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--green);text-decoration:underline;font-family:inherit;padding:0">Refresh for booking links</button>` : '';
+    h += `<span class="cache-badge">⚡ From cache${sub}${staleHint}</span><br>`;
     updateCacheClearBtn();
   }
   h += `<p style="color:var(--text);margin-bottom:10px">${d.summary}</p>`;
@@ -1390,12 +1392,11 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion) {
   // 2. Region hard gate — always applied, result always used.
   //    sites with regions:[] are global (always pass).
   //    sites with regions set are blocked unless legRegion matches.
-  //    This corrects AI mistakes — a Europe-only site never shows on a South Asia leg.
   if (legRegion) {
     sources = sources.filter(s => !s.regions.length || s.regions.includes(legRegion));
   }
 
-  if (!sources.length) return '';
+  if (!sources.length) return ''; // nothing to show — no label rendered either
   const sid = `${orig}|${dest}|${pace}|${[...prefModes].sort().join(',')}`;
   sources.forEach(s => trackAffShown(s.name, category, sid));
   return `<div class="search-links">
