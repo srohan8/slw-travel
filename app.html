@@ -520,9 +520,27 @@ async function checkAndGate(action) {
 async function saveCurrentTrip() {
   document.getElementById('saveStatus').textContent = 'Saving...';
   
+  // Auto-generate title if blank or still the default placeholder
+  const typedTitle = document.getElementById('tripTitle').value.trim();
+  const defaultTitles = ['', 'My overland journey', 'Untitled trip'];
+  let autoTitle = typedTitle;
+  if (defaultTitles.includes(typedTitle)) {
+    const from = stops[0]?.name;
+    const to   = stops[stops.length - 1]?.name;
+    const totalDays = stops.reduce((s, x) => s + (x.days || 0), 0);
+    if (from && to && from !== to) {
+      autoTitle = `${from} → ${to}${totalDays ? ' · ' + totalDays + 'd' : ''}`;
+    } else if (from) {
+      autoTitle = from;
+    } else {
+      autoTitle = 'Untitled trip';
+    }
+    document.getElementById('tripTitle').value = autoTitle;
+  }
+
   const tripData = {
     id: currentTripId || 'trip-' + Date.now(),
-    title: document.getElementById('tripTitle').value || 'Untitled trip',
+    title: autoTitle,
     stops, legs,
     notes: document.getElementById('tripNotes').value,
     budget: document.getElementById('budgInp').value,
