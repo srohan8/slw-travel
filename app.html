@@ -126,6 +126,19 @@
   .stay-chevron{font-size:9px;opacity:0.5;transition:transform .2s;}
   .stay-chevron.open{transform:rotate(180deg);}
   .stay-links-drop{padding:4px 0 2px 0;animation:fadeIn .15s ease;}
+  .leg-mode-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--text2);}
+  .leg-mode-badge i{font-size:14px;}
+  .leg-edit-btn{font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;padding:0;margin-left:4px;}
+  .leg-edit-btn:hover{color:var(--text);}
+  .insert-stop-btn{display:block;width:100%;font-size:11px;color:var(--text3);background:none;border:0.5px dashed var(--border);border-radius:var(--radius);cursor:pointer;padding:4px 0;margin:4px 0;font-family:inherit;transition:all .15s;}
+  .insert-stop-btn:hover{color:var(--text);border-color:var(--text3);}
+  .booking-rec{margin-top:6px;padding:8px 10px;background:var(--bg2);border-radius:var(--radius);border:0.5px solid var(--border);}
+  .booking-rec-row{display:flex;align-items:center;gap:6px;margin-top:5px;}
+  .booking-rec input{flex:1;font-size:12px;border:0.5px solid var(--border);border-radius:6px;padding:4px 8px;background:var(--bg);color:var(--text);font-family:inherit;outline:none;}
+  .booking-rec input:focus{border-color:var(--green);}
+  .booked-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--border);background:var(--bg);color:var(--text3);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
+  .booked-pill.on{background:var(--success-bg);color:var(--success-text);border-color:var(--success-border);}
+  .tl-booked{font-size:9px;color:var(--success-text);margin-left:2px;}
   .aff-table{width:100%;border-collapse:collapse;font-size:13px;}
   .aff-table th{text-align:left;font-size:11px;font-weight:600;color:var(--text3);padding:6px 10px;border-bottom:0.5px solid var(--border);text-transform:uppercase;letter-spacing:.04em;}
   .aff-table td{padding:8px 10px;border-bottom:0.5px solid var(--border);color:var(--text);}
@@ -406,8 +419,9 @@ const MODE_ICONS = {
 };
 const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',cycle:'Cycle',taxi:'Taxi',flight:'Flight','shared taxi':'S.Taxi'};
 
-let stops = [{name:'',date:''},{name:'',date:''}];
-let legs  = [{mode:'bus',cost:0,km:0}];
+let stops = [{name:'',date:'',days:0},{name:'',date:'',days:0}];
+let legs  = [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
+let editingLegModes = new Set(); // indices of legs currently showing mode picker
 let pace  = 'slow';
 let prefModes = ['bus','train'];
 let lastSuggestion = null;
@@ -950,10 +964,17 @@ function renderPlanSuggestion(d, fromCache = false) {
 
 function adoptRoute() {
   if (!lastSuggestion) return;
-  const d = lastSuggestion; stops = []; legs = [];
-  if (d.stops?.length) { d.stops.forEach(s => stops.push({ name: s.name, date: '' })); }
-  else { [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ name: c, date: '' })); }
-  d.legs.forEach(l => legs.push({ mode: l.mode, cost: l.cost_usd || 0, km: l.km || 0 }));
+  const d = lastSuggestion; stops = []; legs = []; editingLegModes.clear();
+  if (d.stops?.length) {
+    d.stops.forEach(s => stops.push({ name: s.name, date: '', days: s.days || 0 }));
+  } else {
+    [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ name: c, date: '', days: 0 }));
+  }
+  d.legs.forEach(l => legs.push({
+    mode: l.mode, cost: l.cost_usd || 0, km: l.km || 0,
+    hours: l.hours || 0, notes: l.notes || '',
+    booked: false, bookingRef: '', bookingUrl: ''
+  }));
   switchTab('record', document.querySelectorAll('.tab')[1]);
   render();
 }
@@ -994,9 +1015,25 @@ function renderAccommodationLinks(city) {
 }
 
 // ── Record tab ────────────────────────────────────────────────────
-function getLeg(i)    { return legs[i] || { mode: 'bus', cost: 0, km: 0 }; }
+function getLeg(i) {
+  return legs[i] || { mode: 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' };
+}
 function getCurr()    { return document.getElementById('currSel').value; }
 function getCurrSym() { return { USD: '$', EUR: '€', GBP: '£', INR: '₹' }[getCurr()] || '$'; }
+
+function autoFillDates(fromIdx) {
+  for (let i = fromIdx + 1; i < stops.length; i++) {
+    const prev = stops[i - 1];
+    if (!prev.date) break;
+    if (stops[i]._autoFilled !== false) { // don't overwrite manually entered dates
+      const d = new Date(prev.date + 'T00:00');
+      d.setDate(d.getDate() + (prev.days || 1));
+      stops[i].date = d.toISOString().slice(0, 10);
+      stops[i]._autoFilled = true;
+    }
+  }
+  renderTl(); updateSum();
+}
 
 function render()     { renderSegs(); renderTl(); updateSum(); }
 
@@ -1004,31 +1041,113 @@ function renderSegs() {
   const el = document.getElementById('segs'); let h = '';
   stops.forEach((s, i) => {
     const isF = i === 0, isL = i === stops.length - 1;
-    h += `<div class="seg"><div class="seg-l"><div class="dot${isF ? ' s' : isL ? ' e' : ''}"></div>${!isL ? '<div class="vl"></div>' : ''}</div><div>
+    h += `<div class="seg"><div class="seg-l"><div class="dot${isF ? ' s' : isL ? ' e' : ''}"></div>${!isL ? '<div class="vl"></div>' : ''}</div><div style="flex:1">
       <div class="stop-row">
         <input class="sinp" placeholder="City / place" value="${s.name}" oninput="stops[${i}].name=this.value;renderTl();updateSum()"/>
-        <input class="dinp" type="date" value="${s.date || ''}" oninput="stops[${i}].date=this.value;renderTl();updateSum()"/>
+        <input class="dinp" type="date" value="${s.date || ''}" oninput="stops[${i}].date=this.value;stops[${i}]._autoFilled=false;autoFillDates(${i})"/>
         ${stops.length > 2 ? `<button class="rm" onclick="removeStop(${i})">×</button>` : ''}
       </div>
+      ${s.days ? `<div style="font-size:11px;color:var(--text3);margin:2px 0 0 2px">${s.days}d stay</div>` : ''}
       ${!isL ? renderLeg(i) : ''}
+      ${!isL ? `<button class="insert-stop-btn" onclick="insertStop(${i})">+ Insert stop here</button>` : ''}
     </div></div>`;
   });
   el.innerHTML = h;
 }
 
 function renderLeg(i) {
-  const leg  = getLeg(i);
-  const pills = MODES.map(m => `<button class="mp${leg.mode === m ? ' on' : ''}" onclick="setMode(${i},'${m}')">${MI[m]}</button>`).join('');
-  const showAff = appSettings.affiliate_links !== false;
-  const affLinks = showAff && leg.from && leg.to ? renderTransportLinks(leg.mode, leg.from || '', leg.to || '') : '';
-  return `<div class="leg-card">
-    <div class="pills" style="flex:1">${pills}</div>
-    <div style="display:flex;gap:6px;align-items:center">
-      <input class="linp" type="number" placeholder="cost" value="${leg.cost || ''}" oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].cost=+this.value;updateSum()"/>
-      <span class="lsep">${getCurrSym()}</span>
-      <input class="linp" type="number" placeholder="km" value="${leg.km || ''}" oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].km=+this.value;updateSum()"/>
-      <span class="lsep">km</span>
+  const leg      = getLeg(i);
+  const showAff  = appSettings.affiliate_links !== false;
+  const fromCity = stops[i]?.name   || '';
+  const toCity   = stops[i+1]?.name || '';
+  const iconCls  = MODE_ICONS[leg.mode] || 'ph-path';
+  const isEditing = editingLegModes.has(i);
+
+  // Mode section: compact badge OR full pills
+  const modeSection = isEditing
+    ? `<div style="margin-bottom:6px">
+        <div class="pills" style="flex-wrap:wrap">${MODES.map(m => `<button class="mp${leg.mode===m?' on':''}" onclick="setMode(${i},'${m}')">${MI[m]}</button>`).join('')}</div>
+        <button class="leg-edit-btn" style="margin-top:4px" onclick="editingLegModes.delete(${i});render()">Cancel</button>
+      </div>`
+    : `<div class="leg-mode-badge" style="margin-bottom:6px">
+        <i class="ph ${iconCls}"></i>
+        <span>${MI[leg.mode] || leg.mode}</span>
+        <button class="leg-edit-btn" onclick="editingLegModes.add(${i});render()">Edit</button>
+      </div>`;
+
+  // Booking links for transport
+  const transportLinks = showAff && fromCity && toCity
+    ? renderTransportLinks(leg.mode, fromCity, toCity) : '';
+
+  // Booking record panel
+  const bookedSection = `
+    <div style="margin-top:6px">
+      <button class="booked-pill${leg.booked?' on':''}" onclick="legs[${i}].booked=!legs[${i}].booked;render()">
+        ${leg.booked ? '✓ Booked' : 'Mark as booked'}
+      </button>
+      ${leg.booked ? `<div class="booking-rec">
+        <div class="booking-rec-row">
+          <i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
+          <input placeholder="Confirmation ref #" value="${leg.bookingRef||''}"
+            oninput="legs[${i}].bookingRef=this.value"/>
+        </div>
+        <div class="booking-rec-row">
+          <i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
+          <input placeholder="Booking URL" value="${leg.bookingUrl||''}"
+            oninput="legs[${i}].bookingUrl=this.value"/>
+        </div>
+      </div>` : ''}
+    </div>`;
+
+  // Stay section for the next stop
+  const nextStop = stops[i + 1];
+  const stayId   = `rec_stay_${i}`;
+  const staySection = nextStop ? `
+    <div class="stay-toggle" onclick="var d=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');d.style.display=d.style.display==='block'?'none':'block';c.classList.toggle('open')">
+      <i class="ph ph-bed"></i>
+      <span>Stay: <strong>${nextStop.name || '…'}</strong>${nextStop.days ? ` · ${nextStop.days}d` : ''}</span>
+      <span class="stay-chevron">▾</span>
     </div>
+    <div id="${stayId}" class="stay-links-drop" style="display:none">
+      ${showAff && nextStop.name ? renderAccommodationLinks(nextStop.name) : ''}
+      ${renderStayBookingRecord(i + 1)}
+    </div>` : '';
+
+  return `<div class="leg-card">
+    ${modeSection}
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input class="linp" type="number" placeholder="cost" value="${leg.cost||''}" oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].cost=+this.value;updateSum()"/>
+      <span class="lsep">${getCurrSym()}</span>
+      <input class="linp" type="number" placeholder="km" value="${leg.km||''}" oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].km=+this.value;updateSum()"/>
+      <span class="lsep">km</span>
+      ${leg.hours ? `<span style="font-size:11px;color:var(--text3)">~${leg.hours}h</span>` : ''}
+    </div>
+    ${leg.notes ? `<div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-style:italic">${leg.notes}</div>` : ''}
+    ${transportLinks}
+    ${bookedSection}
+    ${staySection}
+  </div>`;
+}
+
+function renderStayBookingRecord(stopIdx) {
+  const s = stops[stopIdx];
+  if (!s) return '';
+  return `<div style="margin-top:6px">
+    <button class="booked-pill${s.accomBooked?' on':''}" onclick="stops[${stopIdx}].accomBooked=!stops[${stopIdx}].accomBooked;render()">
+      ${s.accomBooked ? '✓ Stay booked' : 'Mark stay as booked'}
+    </button>
+    ${s.accomBooked ? `<div class="booking-rec">
+      <div class="booking-rec-row">
+        <i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
+        <input placeholder="Confirmation ref #" value="${s.accomRef||''}"
+          oninput="stops[${stopIdx}].accomRef=this.value"/>
+      </div>
+      <div class="booking-rec-row">
+        <i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
+        <input placeholder="Booking URL" value="${s.accomUrl||''}"
+          oninput="stops[${stopIdx}].accomUrl=this.value"/>
+      </div>
+    </div>` : ''}
   </div>`;
 }
 
@@ -1038,7 +1157,7 @@ function renderTl() {
     const isF = i === 0, isL = i === stops.length - 1;
     const ds = s.date ? new Date(s.date + 'T00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' }) : '';
     h += `<div class="tl-stop"><div class="tl-dot${isF ? ' s' : isL ? ' e' : ''}"></div><div class="tl-nm">${s.name || '?'}</div><div class="tl-dt">${ds}</div></div>`;
-    if (!isL) { const leg = getLeg(i); h += `<div class="tl-leg"><div class="tl-line"></div><div class="tl-badge">${MI[leg.mode] || leg.mode}</div></div>`; }
+    if (!isL) { const leg = getLeg(i); h += `<div class="tl-leg"><div class="tl-line"></div><div class="tl-badge">${MI[leg.mode] || leg.mode}${leg.booked ? '<span class="tl-booked">✓</span>' : ''}</div></div>`; }
   });
   el.innerHTML = h;
 }
@@ -1064,9 +1183,23 @@ function updateSum() {
   } else bel.textContent = '';
 }
 
-function setMode(i, m)  { if (!legs[i]) legs[i] = { cost: 0, km: 0 }; legs[i].mode = m; render(); }
-function addStop()       { stops.push({ name: '', date: '' }); legs.push({ mode: 'bus', cost: 0, km: 0 }); render(); }
-function removeStop(i)   { stops.splice(i, 1); if (i < legs.length) legs.splice(i, 1); render(); }
+function setMode(i, m)  {
+  if (!legs[i]) legs[i] = { cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' };
+  legs[i].mode = m;
+  editingLegModes.delete(i);
+  render();
+}
+function addStop() {
+  stops.push({ name: '', date: '', days: 0 });
+  legs.push({ mode: 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
+  render();
+}
+function insertStop(i) {
+  stops.splice(i + 1, 0, { name: '', date: '', days: 0 });
+  legs.splice(i + 1, 0, { mode: legs[i]?.mode || 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
+  render();
+}
+function removeStop(i)  { stops.splice(i, 1); if (i < legs.length) legs.splice(i, 1); editingLegModes.delete(i); render(); }
 
 function exportTrip() {
   const title = document.getElementById('tripTitle').value;
