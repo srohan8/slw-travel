@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SLW Travel — App</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -117,6 +118,14 @@
   .adopt-btn:hover{background:var(--bg2); color: var(--text); border-color: var(--text2);}
   .warn-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:99px;background:var(--warn-bg);color:var(--warn-text);border:0.5px solid var(--warn-border);margin-bottom:8px;font-weight: 500;}
   .cache-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:99px;background:var(--success-bg);color:var(--success-text);border:0.5px solid var(--success-border);margin-bottom:8px;font-weight:500;}
+  .leg-icon-dot{position:absolute;left:-9px;top:3px;width:16px;height:16px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .leg-icon-dot i{font-size:9px;color:#fff;}
+  .stay-toggle{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);margin-top:5px;cursor:pointer;user-select:none;padding:3px 0;}
+  .stay-toggle:hover{color:var(--text);}
+  .stay-toggle i{font-size:13px;color:var(--text3);}
+  .stay-chevron{font-size:9px;opacity:0.5;transition:transform .2s;}
+  .stay-chevron.open{transform:rotate(180deg);}
+  .stay-links-drop{padding:4px 0 2px 0;animation:fadeIn .15s ease;}
   .aff-table{width:100%;border-collapse:collapse;font-size:13px;}
   .aff-table th{text-align:left;font-size:11px;font-weight:600;color:var(--text3);padding:6px 10px;border-bottom:0.5px solid var(--border);text-transform:uppercase;letter-spacing:.04em;}
   .aff-table td{padding:8px 10px;border-bottom:0.5px solid var(--border);color:var(--text);}
@@ -351,7 +360,7 @@
         <div style="margin-bottom:10px">
           <div class="lbl" style="margin-bottom:4px">URL template</div>
           <input class="inp" id="sf_url" placeholder="https://example.com/search?from={origin}&to={dest}"/>
-          <div class="hint">Placeholders: <code>{origin}</code> <code>{dest}</code> <code>{month}</code> — all URL-encoded automatically</div>
+          <div class="hint">Placeholders: <code>{origin}</code> <code>{dest}</code> <code>{month}</code> — URL-encoded automatically. For accommodation, <code>{origin}</code> = city name.</div>
         </div>
         <div style="margin-bottom:12px">
           <div class="lbl" style="margin-bottom:4px">Affiliate ID / tag <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
@@ -443,6 +452,18 @@ const AFF = {
 
 // ── App state ─────────────────────────────────────────────────────
 const MODES = ['bus','train','hitchhike','ferry','walk','cycle','taxi','flight','shared taxi'];
+const MODE_ICONS = {
+  bus:          'ph-bus',
+  train:        'ph-train',
+  hitchhike:    'ph-thumbs-up',
+  ferry:        'ph-boat',
+  walk:         'ph-person-simple-walk',
+  walking:      'ph-person-simple-walk',
+  cycle:        'ph-bicycle',
+  taxi:         'ph-taxi',
+  flight:       'ph-airplane',
+  'shared taxi':'ph-van',
+};
 const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',cycle:'Cycle',taxi:'Taxi',flight:'Flight','shared taxi':'S.Taxi'};
 
 let stops = [{name:'',date:''},{name:'',date:''}];
@@ -964,12 +985,24 @@ function renderPlanSuggestion(d, fromCache = false) {
   if (d.warnings?.length) { d.warnings.forEach(w => { h += `<span class="warn-badge">${w}</span><br>`; }); h += '<br>'; }
   d.legs.forEach((leg, i) => {
     const ns = d.stops[i + 1];
-    h += `<div style="border-left:2px solid var(--green);padding-left:10px;margin:8px 0">
+    const iconCls = MODE_ICONS[leg.mode] || 'ph-path';
+    const stayId  = `stay_${i}_${Date.now()}`;
+    h += `<div style="border-left:2px solid var(--green);padding-left:14px;margin:8px 0;position:relative">
+      <div class="leg-icon-dot"><i class="ph ${iconCls}"></i></div>
       <div style="font-size:13px;font-weight:500;color:var(--text)">${leg.from} → ${leg.to}</div>
       <div style="font-size:12px;color:var(--text2);margin-top:2px">${leg.mode} · ${leg.hours}h · ${leg.km}km · ~$${leg.cost_usd}</div>
       ${leg.notes ? `<div style="font-size:12px;color:var(--text3);margin-top:1px">${leg.notes}</div>` : ''}
-      ${ns ? `<div style="font-size:12px;color:var(--text2);margin-top:3px">Stay: ${ns.name} ${ns.days}d${ns.notes ? ' — ' + ns.notes : ''}</div>` : ''}
       ${showAff ? renderTransportLinks(leg.mode, leg.from, leg.to) : ''}
+      ${ns ? `
+        <div class="stay-toggle" onclick="var d=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');d.style.display=d.style.display==='block'?'none':'block';c.classList.toggle('open')">
+          <i class="ph ph-bed"></i>
+          <span>Stay: <strong>${ns.name}</strong> · ${ns.days}d${ns.notes ? ` — ${ns.notes}` : ''}</span>
+          <span class="stay-chevron">▾</span>
+        </div>
+        <div id="${stayId}" class="stay-links-drop" style="display:none">
+          ${showAff ? renderAccommodationLinks(ns.name) : '<div style="font-size:12px;color:var(--text3);padding:4px 0">Affiliate links disabled.</div>'}
+        </div>
+      ` : ''}
     </div>`;
   });
   h += `<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2)">Total: ~${d.total_days} days · ~$${d.total_cost_usd}</div>`;
@@ -1122,6 +1155,17 @@ function renderFlightSearchLinks(orig, dest, month) {
   return `<div class="search-links">
     <span class="search-links-label">Search this route on</span>
     ${AFF.flights.map(s => `<a class="search-link" href="${s.buildUrl(orig, dest, month)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
+  </div>`;
+}
+
+function renderAccommodationLinks(city) {
+  const sources = AFF.accommodation || [];
+  if (!sources.length) return '<div style="font-size:12px;color:var(--text3);padding:4px 0">No accommodation sites configured.</div>';
+  const sid = `stay|${city}`;
+  sources.forEach(s => trackAffShown(s.name, 'accommodation', sid));
+  return `<div class="search-links">
+    <span class="search-links-label">Find a place to stay</span>
+    ${sources.map(s => `<a class="search-link" href="${s.buildUrl(city)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
   </div>`;
 }
 
