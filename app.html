@@ -1367,11 +1367,12 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion) {
     if (byName.length) sources = byName;
   }
 
-  // 2. Region filter — always applied. sites with regions:[] are global (always shown).
-  //    sites with regions set only show when legRegion matches one of them.
+  // 2. Region hard gate — always applied, result always used.
+  //    sites with regions:[] are global (always pass).
+  //    sites with regions set are blocked unless legRegion matches.
+  //    This corrects AI mistakes — a Europe-only site never shows on a South Asia leg.
   if (legRegion) {
-    const byRegion = sources.filter(s => !s.regions.length || s.regions.includes(legRegion));
-    if (byRegion.length) sources = byRegion;
+    sources = sources.filter(s => !s.regions.length || s.regions.includes(legRegion));
   }
 
   if (!sources.length) return '';
