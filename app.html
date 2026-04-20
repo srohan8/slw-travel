@@ -1383,20 +1383,17 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion) {
   }
   if (!sources.length) return '';
 
-  // 1. Filter to AI-recommended names if provided; fall back to all if none match
   if (allowedNames && allowedNames.length) {
+    // AI explicitly recommended these sites for this leg — trust it, skip region gate
     const byName = sources.filter(s => allowedNames.includes(s.name));
     if (byName.length) sources = byName;
-  }
-
-  // 2. Region hard gate — always applied, result always used.
-  //    sites with regions:[] are global (always pass).
-  //    sites with regions set are blocked unless legRegion matches.
-  if (legRegion) {
+  } else if (legRegion) {
+    // No AI recommendation — use region tags as fallback filter.
+    // sites with regions:[] are global; others only show when region matches.
     sources = sources.filter(s => !s.regions.length || s.regions.includes(legRegion));
   }
 
-  if (!sources.length) return ''; // nothing to show — no label rendered either
+  if (!sources.length) return '';
   const sid = `${orig}|${dest}|${pace}|${[...prefModes].sort().join(',')}`;
   sources.forEach(s => trackAffShown(s.name, category, sid));
   return `<div class="search-links">
