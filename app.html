@@ -215,17 +215,14 @@
     <select id="currSel" onchange="render()" style="font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius);background:transparent;color:var(--text2);padding:5px 8px;outline:none;font-family:inherit;">
       <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option>
     </select>
-    <button class="btn btn-primary" onclick="exportTrip()">Export</button>
+    <button class="btn" onclick="exportTrip()">Export</button>
   </div>
 </nav>
 
 <div class="container">
   <div class="top-bar">
     <input class="trip-title" placeholder="Name your trip..." value="My overland journey" id="tripTitle"/>
-    <div style="display:flex;gap:8px;">
-      <button class="btn" onclick="saveCurrentTrip()" id="saveBtn">Save trip</button>
-      <button class="btn" onclick="showMyTrips()" id="myTripsBtn">My trips</button>
-    </div>
+    <button class="btn" onclick="saveCurrentTrip()" id="saveBtn">Save</button>
   </div>
 
   <div class="tabs">
@@ -275,7 +272,6 @@
     <div style="display:flex;gap:10px;align-items:center">
       <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
       <span style="font-size:12px;color:var(--text3)">AI suggests stops, transport & rough costs</span>
-      <button id="cacheClearBtn" onclick="clearRouteCache()" style="display:none;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit">Clear cache (0)</button>
     </div>
     <div id="planResult" class="result-box" style="display:none"></div>
     <button class="adopt-btn" id="adoptBtn" style="display:none" onclick="adoptRoute()">Add this route to My trip →</button>
@@ -298,7 +294,7 @@
     <!-- Saved trips drawer -->
     <div class="trips-drawer" id="tripsDrawer">
       <div class="trips-drawer-hdr" onclick="toggleTripsDrawer()">
-        <span>📂 Saved trips</span>
+        <span>Saved trips</span>
         <span id="tripsDrawerChevron" style="font-size:10px;opacity:0.5;transition:transform .2s">▾</span>
       </div>
       <div class="trips-drawer-body" id="tripsDrawerBody"></div>
@@ -406,6 +402,17 @@
       <div id="adminSiteList"></div>
     </div>
 
+    <!-- Route cache -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 2px">Route cache</h3>
+          <p style="font-size:12px;color:var(--text3);margin:0">AI route results are cached for 14 days to save API calls</p>
+        </div>
+        <button id="cacheClearBtn" onclick="clearRouteCache()" style="display:none;font-size:12px;padding:6px 14px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">Clear cache (<span id="cacheCount">0</span>)</button>
+      </div>
+    </div>
+
     <!-- Impression stats -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
@@ -453,6 +460,8 @@ const sb = {
 
 
 // ── Affiliate config (all links in one place) ─────────────────────
+// AFF is rebuilt dynamically by loadCustomSitesIntoAFF() from DEFAULT_SITES + custom sites.
+// flights are not in DEFAULT_SITES so they stay hardcoded here.
 const AFF = {
   flights: [
     { name:'Google Flights', buildUrl:(o,d)=>`https://www.google.com/travel/flights?q=Flights+from+${encodeURIComponent(o)}+to+${encodeURIComponent(d)}` },
@@ -460,23 +469,7 @@ const AFF = {
     { name:'Kayak',          buildUrl:(o,d,m)=>`https://www.kayak.com/flights/${o}-${d}/${m?m.replace('-','-01'):''}` },
     { name:'Momondo',        buildUrl:(o,d)=>`https://www.momondo.com/flight-search/${encodeURIComponent(o)}-${encodeURIComponent(d)}` },
   ],
-  buses: [
-    { name:'Busbud',   buildUrl:(o,d)=>`https://www.busbud.com/en/bus-${encodeURIComponent(o.toLowerCase())}-${encodeURIComponent(d.toLowerCase())}` },
-    { name:'Bookaway', buildUrl:(o,d)=>`https://www.bookaway.com/search?srcName=${encodeURIComponent(o)}&dstName=${encodeURIComponent(d)}` },
-    { name:'12Go',     buildUrl:(o,d)=>`https://12go.asia/en/travel/${encodeURIComponent(o.toLowerCase())}/${encodeURIComponent(d.toLowerCase())}` },
-    { name:'Omio',     buildUrl:(o,d)=>`https://www.omio.com/app/search-results?origin=${encodeURIComponent(o)}&destination=${encodeURIComponent(d)}` },
-  ],
-  trains: [
-    { name:'Omio',        buildUrl:(o,d)=>`https://www.omio.com/app/search-results?origin=${encodeURIComponent(o)}&destination=${encodeURIComponent(d)}&transportType=train` },
-    { name:'Rail Europe', buildUrl:(o,d)=>`https://www.raileurope.com/en/search#from=${encodeURIComponent(o)}&to=${encodeURIComponent(d)}` },
-  ],
-  ferries: [
-    { name:'Direct Ferries', buildUrl:(o,d)=>`https://www.directferries.com/ferry_${encodeURIComponent(o.toLowerCase())}_${encodeURIComponent(d.toLowerCase())}.htm` },
-  ],
-  accommodation: [
-    { name:'Hostelworld', buildUrl:(c)=>`https://www.hostelworld.com/findabed.php/ChosenCity.${encodeURIComponent(c)}` },
-    { name:'Booking.com', buildUrl:(c)=>`https://www.booking.com/search.html?ss=${encodeURIComponent(c)}` },
-  ],
+  // buses, trains, ferries, accommodation, info — populated at runtime by loadCustomSitesIntoAFF()
 };
 
 // ── App state ─────────────────────────────────────────────────────
@@ -810,8 +803,9 @@ function updateCacheClearBtn() {
   const btn = document.getElementById('cacheClearBtn');
   if (!btn) return;
   const count = Object.keys(_readCache()).length;
-  btn.style.display = count > 0 ? 'inline' : 'none';
-  btn.textContent = `Clear cache (${count})`;
+  btn.style.display = count > 0 ? 'inline-block' : 'none';
+  const span = document.getElementById('cacheCount');
+  if (span) span.textContent = count;
 }
 
 // ── Affiliate impression tracking ────────────────────────────────
