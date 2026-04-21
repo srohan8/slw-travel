@@ -502,6 +502,7 @@ let pace  = 'slow';
 let prefModes = ['bus','train'];
 let lastSuggestion = null;
 let currentTripId  = null;
+let _autoRefreshPending = false; // true while a stale-cache background re-fetch is in flight
 let appSettings    = {};
 let currentUser    = null;
 
@@ -891,16 +892,27 @@ const DEFAULT_SITES = [
   { id:'_bi_12go',     name:'12Go',            category:'buses',  regions:['Southeast Asia','Central Asia','South Asia','East Asia'],                                urlTemplate:'https://12go.asia/en/travel/{origin}/{dest}',                                                             affId:'', enabled:true, _builtin:true },
   // ── Europe buses & trains ──
   { id:'_bi_flixbus',  name:'FlixBus',         category:'buses',  regions:['Europe','North America'],                                                                urlTemplate:'https://shop.flixbus.com/search?departureCity={origin}&arrivalCity={dest}',                               affId:'', enabled:true, _builtin:true },
+  { id:'_bi_getbybus', name:'GetByBus',        category:'buses',  regions:['Europe'],                                                                                urlTemplate:'https://getbybus.com/en/bus/{origin}/{dest}',                                                             affId:'', enabled:true, _builtin:true },
   { id:'_bi_omio_b',   name:'Omio',            category:'buses',  regions:['Europe'],                                                                                urlTemplate:'https://www.omio.com/app/search-results?origin={origin}&destination={dest}',                              affId:'', enabled:true, _builtin:true },
   { id:'_bi_omio_t',   name:'Omio',            category:'trains', regions:['Europe'],                                                                                urlTemplate:'https://www.omio.com/app/search-results?origin={origin}&destination={dest}&transportType=train',          affId:'', enabled:true, _builtin:true },
   { id:'_bi_raileu',   name:'Rail Europe',     category:'trains', regions:['Europe'],                                                                                urlTemplate:'https://www.raileurope.com/en/search#from={origin}&to={dest}',                                            affId:'', enabled:true, _builtin:true },
   { id:'_bi_trainline',name:'Trainline',       category:'trains', regions:['Europe'],                                                                                urlTemplate:'https://www.thetrainline.com/search/{origin}/{dest}',                                                     affId:'', enabled:true, _builtin:true },
-  // ── Middle East / Turkey ──
+  { id:'_bi_eurostar', name:'Eurostar',        category:'trains', regions:['Europe'],                                                                                urlTemplate:'https://www.eurostar.com/uk-en/search#origin={origin}&destination={dest}',                               affId:'', enabled:true, _builtin:true },
+  { id:'_bi_sncf',     name:'SNCF Connect',    category:'trains', regions:['Europe'],                                                                                urlTemplate:'https://www.sncf-connect.com/en-en/app/search/result?originCode={origin}&destinationCode={dest}',         affId:'', enabled:true, _builtin:true },
+  { id:'_bi_db',       name:'Deutsche Bahn',   category:'trains', regions:['Europe'],                                                                                urlTemplate:'https://www.bahn.de/buchung/fahrplan/suche#sts=true&so={origin}&zo={dest}',                              affId:'', enabled:true, _builtin:true },
+  { id:'_bi_obb',      name:'OBB',             category:'trains', regions:['Europe'],                                                                                urlTemplate:'https://fahrplan.oebb.at/bin/query.exe/en?S={origin}&Z={dest}',                                           affId:'', enabled:true, _builtin:true },
+  { id:'_bi_mav',      name:'MAV',             category:'trains', regions:['Europe'],                                                                                urlTemplate:'https://jegy.mav.hu/search?from={origin}&to={dest}',                                                      affId:'', enabled:true, _builtin:true },
+  // ── Middle East / Turkey / Iran ──
   { id:'_bi_obilet',   name:'Obilet',          category:'buses',  regions:['Middle East'],                                                                           urlTemplate:'https://www.obilet.com/seferler/{origin}-{dest}',                                                         affId:'', enabled:true, _builtin:true },
+  { id:'_bi_metrotur', name:'Metro Turizm',    category:'buses',  regions:['Middle East'],                                                                           urlTemplate:'https://www.metroturizm.com.tr/en/route/{origin}/{dest}',                                                 affId:'', enabled:true, _builtin:true },
+  { id:'_bi_tcdd',     name:'TCDD',            category:'trains', regions:['Middle East'],                                                                           urlTemplate:'https://bilet.tcdd.gov.tr/home?sehirden={origin}&sehire={dest}',                                           affId:'', enabled:true, _builtin:true },
+  { id:'_bi_raja',     name:'RAJA Trains',     category:'trains', regions:['Middle East'],                                                                           urlTemplate:'https://www.raja.ir/fa/trains?origin={origin}&destination={dest}',                                         affId:'', enabled:true, _builtin:true },
+  { id:'_bi_1stquest', name:'1stQuest',        category:'buses',  regions:['Middle East'],                                                                           urlTemplate:'https://www.1stquest.ir/bus/{origin}/{dest}',                                                             affId:'', enabled:true, _builtin:true },
   // ── South Asia ──
   { id:'_bi_redbus',   name:'RedBus',          category:'buses',  regions:['South Asia','Southeast Asia','Latin America'],                                           urlTemplate:'https://www.redbus.in/bus-tickets/{origin}-to-{dest}',                                                    affId:'', enabled:true, _builtin:true },
   { id:'_bi_cleartrip',name:'Cleartrip',       category:'buses',  regions:['South Asia'],                                                                            urlTemplate:'https://www.cleartrip.com/bus/{origin}-to-{dest}/',                                                       affId:'', enabled:true, _builtin:true },
   { id:'_bi_irctc',    name:'IRCTC',           category:'trains', regions:['South Asia'],                                                                            urlTemplate:'https://www.irctc.co.in/nget/train-search?fromStation={origin}&toStation={dest}',                          affId:'', enabled:true, _builtin:true },
+  { id:'_bi_pakrail', name:'Pakistan Railways',category:'trains', regions:['South Asia'],                                                                            urlTemplate:'https://www.pakrail.gov.pk/train_schedule?from={origin}&to={dest}',                                        affId:'', enabled:true, _builtin:true },
   // ── East / Southeast Asia ──
   { id:'_bi_baolau',   name:'Baolau',          category:'buses',  regions:['Southeast Asia'],                                                                        urlTemplate:'https://www.baolau.com/search/result?from={origin}&to={dest}',                                            affId:'', enabled:true, _builtin:true },
   { id:'_bi_easybook', name:'Easybook',        category:'buses',  regions:['Southeast Asia'],                                                                        urlTemplate:'https://www.easybook.com/en-sg/bus/{origin}/{dest}',                                                      affId:'', enabled:true, _builtin:true },
@@ -1231,6 +1243,7 @@ function toggleMode(el, m) {
 }
 
 async function planRoute() {
+  _autoRefreshPending = false;
   const from = document.getElementById('pFrom').value.trim();
   const to   = document.getElementById('pTo').value.trim();
   if (!from || !to) { alert('Please enter start and end.'); return; }
@@ -1322,8 +1335,13 @@ function renderPlanSuggestion(d, fromCache = false) {
   if (fromCache) {
     const sub = d._subset_of ? ` <span style="opacity:0.7;font-weight:400">— sliced from ${d._subset_of}</span>` : '';
     const noRegion = d.legs?.some(l => !l.leg_region);
-    const staleHint = noRegion ? ` · <button onclick="clearRouteCache();planRoute()" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--green);text-decoration:underline;font-family:inherit;padding:0">Refresh for booking links</button>` : '';
-    h += `<span class="cache-badge">⚡ From cache${sub}${staleHint}</span><br>`;
+    if (noRegion && !_autoRefreshPending) {
+      _autoRefreshPending = true;
+      h += `<span class="cache-badge" style="color:var(--text3)">⟳ Updating route data…</span><br>`;
+      setTimeout(() => { clearRouteCache(); planRoute(); }, 0);
+    } else {
+      h += `<span class="cache-badge">⚡ From cache${sub}</span><br>`;
+    }
     updateCacheClearBtn();
   }
   h += `<p style="color:var(--text);margin-bottom:10px">${d.summary}</p>`;
@@ -1391,9 +1409,16 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
   if (!sources.length) return '';
 
   if (allowedNames && allowedNames.length) {
-    // AI explicitly recommended these sites for this leg — trust it, skip region gate
-    const byName = sources.filter(s => allowedNames.includes(s.name));
-    if (byName.length) sources = byName;
+    // AI explicitly recommended these sites — trust it, skip region gate.
+    // Matched: use their proper URL template. Unmatched: Google search fallback.
+    const matched   = sources.filter(s => allowedNames.includes(s.name));
+    const unmatched = allowedNames.filter(n => !matched.find(s => s.name === n));
+    const fallbacks = unmatched.map(n => ({
+      name: n,
+      buildUrl: (o, d) => `https://www.google.com/search?q=${encodeURIComponent(n + ' ' + o + ' to ' + d + ' ticket')}`
+    }));
+    sources = [...matched, ...fallbacks];
+    // sources is now guaranteed non-empty if AI gave any names
   } else if (legRegion) {
     // No AI recommendation — use region tags as fallback filter.
     // sites with regions:[] are global; others only show when region matches.
@@ -1404,10 +1429,15 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
     // No bookable platform — show info/research sites instead
     if (mode === 'walk' || mode === 'cycle') return '';
     let infoSrc = AFF.info || [];
-    // AI-recommended info sites take priority
+    // AI-recommended info sites: matched get proper URL, unmatched get Google search fallback
     if (allowedInfoNames && allowedInfoNames.length) {
-      const byName = infoSrc.filter(s => allowedInfoNames.includes(s.name));
-      if (byName.length) infoSrc = byName;
+      const matched   = infoSrc.filter(s => allowedInfoNames.includes(s.name));
+      const unmatched = allowedInfoNames.filter(n => !matched.find(s => s.name === n));
+      const fallbacks = unmatched.map(n => ({
+        name: n,
+        buildUrl: (o, d) => `https://www.google.com/search?q=${encodeURIComponent(n + ' ' + o + ' to ' + d)}`
+      }));
+      infoSrc = [...matched, ...fallbacks];
     } else if (legRegion) {
       const regional = infoSrc.filter(s => !s.regions.length || s.regions.includes(legRegion));
       if (regional.length) infoSrc = regional;
