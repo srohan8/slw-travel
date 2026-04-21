@@ -496,7 +496,7 @@ const MODE_ICONS = {
   flight:       'ph-airplane',
   'shared taxi':'ph-van',
 };
-const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',cycle:'Cycle',taxi:'Taxi',flight:'Flight','shared taxi':'S.Taxi'};
+const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',walking:'Walk',cycle:'Cycle',taxi:'Taxi',flight:'Flight','shared taxi':'S.Taxi'};
 
 let stops = [{name:'',date:'',days:0},{name:'',date:'',days:0}];
 let legs  = [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
@@ -1476,7 +1476,7 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
 
   if (!sources.length) {
     // No bookable platform — show info/research sites instead
-    if (mode === 'walk' || mode === 'cycle') return '';
+    if (mode === 'walk' || mode === 'walking' || mode === 'cycle') return '';
     let infoSrc = AFF.info || [];
     // AI-recommended info sites: matched get proper URL, unmatched get Google search fallback
     if (allowedInfoNames && allowedInfoNames.length) {
