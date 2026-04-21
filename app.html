@@ -357,6 +357,7 @@
               <option value="trains">Train</option>
               <option value="ferries">Ferry</option>
               <option value="accommodation">Accommodation</option>
+              <option value="info">Information / research</option>
             </select>
           </div>
         </div>
@@ -907,6 +908,10 @@ const DEFAULT_SITES = [
   { id:'_bi_recorrido',name:'Recorrido',       category:'buses',  regions:['Latin America'],                                                                         urlTemplate:'https://www.recorrido.cl/es/bus/{origin}/{dest}',                                                         affId:'', enabled:true, _builtin:true },
   // ── Ferries ──
   { id:'_bi_dferries', name:'Direct Ferries',  category:'ferries',regions:['Europe','Southeast Asia','Oceania','Middle East'],                                       urlTemplate:'https://www.directferries.com/ferry_{origin}_{dest}.htm',                                                 affId:'', enabled:true, _builtin:true },
+  // ── Information / research (shown as fallback when no booking platform available) ──
+  { id:'_bi_rome2rio',     name:'Rome2rio',              category:'info', regions:[],                                                                urlTemplate:'https://www.rome2rio.com/s/{origin}/{dest}',        affId:'', enabled:true, _builtin:true },
+  { id:'_bi_seat61',       name:'The Man in Seat 61',    category:'info', regions:['Europe','Middle East','Central Asia','South Asia','East Asia'],  urlTemplate:'https://www.seat61.com/?s={dest}',                  affId:'', enabled:true, _builtin:true },
+  { id:'_bi_caravanistan', name:'Caravanistan',           category:'info', regions:['Central Asia','Middle East'],                                   urlTemplate:'https://caravanistan.com/?s={origin}+to+{dest}',   affId:'', enabled:true, _builtin:true },
   // ── Accommodation (global) ──
   { id:'_bi_hostelw',  name:'Hostelworld',     category:'accommodation', regions:[],                                                                                 urlTemplate:'https://www.hostelworld.com/findabed.php/ChosenCity.{origin}',                                            affId:'', enabled:true, _builtin:true },
   { id:'_bi_booking',  name:'Booking.com',     category:'accommodation', regions:[],                                                                                 urlTemplate:'https://www.booking.com/search.html?ss={origin}',                                                         affId:'', enabled:true, _builtin:true },
@@ -971,7 +976,7 @@ function _buildUrlFn(template, affId) {
 
 // Rebuild AFF from all sites (replaces hardcoded entries)
 function loadCustomSitesIntoAFF() {
-  AFF.buses = []; AFF.trains = []; AFF.ferries = []; AFF.accommodation = [];
+  AFF.buses = []; AFF.trains = []; AFF.ferries = []; AFF.accommodation = []; AFF.info = [];
   _readAllSites().filter(s => s.enabled !== false && s.urlTemplate).forEach(s => {
     if (!AFF[s.category]) AFF[s.category] = [];
     AFF[s.category].push({ name: s.name, regions: s.regions || [], buildUrl: _buildUrlFn(s.urlTemplate, s.affId) });
@@ -1161,7 +1166,7 @@ function renderAdminSiteList() {
   const el = document.getElementById('adminSiteList');
   if (!el) return;
   const sites = _readAllSites();
-  const catLabel = { buses:'Bus/Taxi', trains:'Train', ferries:'Ferry', accommodation:'Stay' };
+  const catLabel = { buses:'Bus/Taxi', trains:'Train', ferries:'Ferry', accommodation:'Stay', info:'Info/Research' };
 
   let h = `<table class="aff-table"><thead><tr>
     <th>Site</th><th>Category</th><th>Regions</th><th>URL template</th><th>Aff. ID</th><th>On</th><th></th>
@@ -1268,9 +1273,9 @@ async function planRoute() {
 
     const data = await callAI(`You are an expert overland travel planner. Suggest a practical overland route from ${from} to ${to}${via ? ' via ' + via : ''}.
 Pace: ${pace}. Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}
-Available booking sites (${siteHint}). For each leg add "booking_sites":["Name"] listing only sites that actually operate on that specific route/region, and "leg_region" with the world region (e.g. "Southeast Asia","Central Asia","South Asia","East Asia","Europe","Middle East","Africa","North America","Latin America","Oceania"). Leave booking_sites empty if no online booking exists.
+Available booking sites (${siteHint}). For each leg add "booking_sites":["Name"] listing only sites that actually operate on that specific route/region, and "leg_region" with the world region (e.g. "Southeast Asia","Central Asia","South Asia","East Asia","Europe","Middle East","Africa","North America","Latin America","Oceania"). If booking_sites is empty, add "info_sites":["Name"] with relevant government transport portals or authoritative travel-info sites (e.g. Rome2rio, Caravanistan, national rail websites).
 Respond ONLY in this JSON (no markdown, no preamble):
-{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"tip"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"]}],"total_days":14,"total_cost_usd":200}`);
+{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"tip"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"],"info_sites":[]}],"total_days":14,"total_cost_usd":200}`);
     lastSuggestion = data;
 
     // Auto-register AI-suggested booking sites; accumulate regions onto existing ones
@@ -1280,21 +1285,22 @@ Respond ONLY in this JSON (no markdown, no preamble):
       let _dirty = false;
       (data.legs || []).forEach(leg => {
         const region = leg.leg_region || '';
-        (leg.booking_sites || []).forEach(name => {
+        const autoStub = (name, category) => {
           const existing = _all.find(s => s.name === name);
           if (existing) {
-            // Union new region into existing site's regions
             if (region && !(existing.regions || []).includes(region)) {
               existing.regions = [...(existing.regions || []), region];
               _dirty = true;
             }
           } else {
             _all.push({ id:'ai_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
-              name, category:_m2c[leg.mode]||'buses', regions: region ? [region] : [],
+              name, category, regions: region ? [region] : [],
               urlTemplate:'', affId:'', enabled:false, _builtin:false });
             _dirty = true;
           }
-        });
+        };
+        (leg.booking_sites || []).forEach(n => autoStub(n, _m2c[leg.mode]||'buses'));
+        (leg.info_sites    || []).forEach(n => autoStub(n, 'info'));
       });
       if (_dirty) _writeAllSites(_all);
     }
@@ -1331,7 +1337,7 @@ function renderPlanSuggestion(d, fromCache = false) {
       <div style="font-size:13px;font-weight:500;color:var(--text)">${leg.from} → ${leg.to}</div>
       <div style="font-size:12px;color:var(--text2);margin-top:2px">${leg.mode} · ${leg.hours}h · ${leg.km}km · ~$${leg.cost_usd}</div>
       ${leg.notes ? `<div style="font-size:12px;color:var(--text3);margin-top:1px">${leg.notes}</div>` : ''}
-      ${showAff ? renderTransportLinks(leg.mode, leg.from, leg.to, leg.booking_sites, leg.leg_region) : ''}
+      ${showAff ? renderTransportLinks(leg.mode, leg.from, leg.to, leg.booking_sites, leg.leg_region, leg.info_sites) : ''}
       ${ns ? `
         <div class="stay-toggle" onclick="var d=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');d.style.display=d.style.display==='block'?'none':'block';c.classList.toggle('open')">
           <i class="ph ph-bed"></i>
@@ -1361,7 +1367,8 @@ function adoptRoute() {
     hours: l.hours || 0, notes: l.notes || '',
     booked: false, bookingRef: '', bookingUrl: '',
     bookingSites: l.booking_sites || [],
-    legRegion: l.leg_region || ''
+    infoSites:    l.info_sites    || [],
+    legRegion:    l.leg_region    || ''
   }));
   switchTab('record', document.querySelectorAll('.tab')[1]);
   render();
@@ -1369,7 +1376,7 @@ function adoptRoute() {
 
 
 // ── Affiliate link renderers ──────────────────────────────────────
-function renderTransportLinks(mode, orig, dest, allowedNames, legRegion) {
+function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowedInfoNames) {
   let sources = [], category = '';
   if (mode === 'flight')                             { sources = AFF.flights;  category = 'flights'; }
   else if (mode === 'bus' || mode === 'shared taxi') { sources = AFF.buses;    category = 'buses'; }
@@ -1393,7 +1400,24 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion) {
     sources = sources.filter(s => !s.regions.length || s.regions.includes(legRegion));
   }
 
-  if (!sources.length) return '';
+  if (!sources.length) {
+    // No bookable platform — show info/research sites instead
+    if (mode === 'walk' || mode === 'cycle') return '';
+    let infoSrc = AFF.info || [];
+    // AI-recommended info sites take priority
+    if (allowedInfoNames && allowedInfoNames.length) {
+      const byName = infoSrc.filter(s => allowedInfoNames.includes(s.name));
+      if (byName.length) infoSrc = byName;
+    } else if (legRegion) {
+      const regional = infoSrc.filter(s => !s.regions.length || s.regions.includes(legRegion));
+      if (regional.length) infoSrc = regional;
+    }
+    if (!infoSrc.length) return '';
+    return `<div class="search-links">
+      <span class="search-links-label" style="color:var(--text3)">Research this leg</span>
+      ${infoSrc.map(s => `<a class="search-link" style="opacity:0.8" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name} ↗</a>`).join('')}
+    </div>`;
+  }
   const sid = `${orig}|${dest}|${pace}|${[...prefModes].sort().join(',')}`;
   sources.forEach(s => trackAffShown(s.name, category, sid));
   return `<div class="search-links">
@@ -1477,7 +1501,7 @@ function renderLeg(i) {
 
   // Booking links for transport
   const transportLinks = showAff && fromCity && toCity
-    ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites, leg.legRegion) : '';
+    ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites, leg.legRegion, leg.infoSites) : '';
 
   // Booking record panel
   const bookedSection = `
