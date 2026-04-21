@@ -704,10 +704,9 @@ function loadTrip(trip) {
 }
 
 // ── AI calls (via proxy) ──────────────────────────────────────────
-async function callAI(prompt, maxTokens = 1200) {
+async function callAI(prompt, maxTokens = 4000) {
   const url = PROXY_URL ? `${PROXY_URL}/api/ai` : 'https://api.anthropic.com/v1/messages';
   const headers = { 'Content-Type': 'application/json' };
-  // If no proxy set, direct call (dev mode — add your key here temporarily)
   if (!PROXY_URL) {
     headers['x-api-key'] = 'YOUR_ANTHROPIC_KEY_DEV_ONLY';
     headers['anthropic-version'] = '2023-06-01';
@@ -717,8 +716,17 @@ async function callAI(prompt, maxTokens = 1200) {
     body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
   });
   const d = await r.json();
+  if (!r.ok || d.error) {
+    const msg = d.error?.message || `HTTP ${r.status}`;
+    throw new Error(msg);
+  }
   const text = d.content.map(c => c.text || '').join('');
-  return JSON.parse(text.replace(/```json|```/g, '').trim());
+  try {
+    return JSON.parse(text.replace(/```json|```/g, '').trim());
+  } catch {
+    console.error('AI response (parse failed):', text);
+    throw new Error('Response was not valid JSON — try again');
+  }
 }
 
 // ── Route result cache ────────────────────────────────────────────
@@ -1318,7 +1326,8 @@ Respond ONLY in this JSON (no markdown, no preamble):
     document.getElementById('adoptBtn').style.display = 'inline-block';
     updateUsageBars();
   } catch (e) {
-    res.innerHTML = '<span style="color:var(--danger-text)">Could not get a suggestion. Try again.</span>';
+    console.error('planRoute error:', e);
+    res.innerHTML = `<span style="color:var(--danger-text)">Could not get a suggestion — ${e.message || 'unknown error'}. Try again.</span>`;
   }
   btn.disabled = false; btn.textContent = 'Suggest route ↗';
 }
