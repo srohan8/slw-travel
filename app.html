@@ -182,6 +182,12 @@
   .search-link{font-size:12px;padding:5px 14px;border-radius:99px;border:0.5px solid var(--border2);color:var(--text2);text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition: all 0.2s;font-weight: 500;}
   .search-link:hover{background:var(--bg2);color:var(--text);border-color: var(--text2);}
   .search-links-label{font-size:11px;color:var(--text3);width:100%;margin-bottom:4px;text-transform: uppercase; letter-spacing: 0.05em;}
+  .leg-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px;}
+  .leg-col{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 10px;min-width:0;}
+  .leg-col-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+  .leg-col .search-links{margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border);}
+  .leg-col .stay-toggle{margin-top:2px;}
+  @media(max-width:640px){.leg-grid{grid-template-columns:1fr;}}
 
   .save-trip-bar{display:flex;gap:8px;align-items:center;padding:10px 0;margin-bottom:.5rem;}
   .save-status{font-size:12px;color:var(--text3);}
@@ -223,7 +229,7 @@
     <button class="btn" onclick="signOut()" id="signOutBtn" style="display:none">Sign out</button>
     <a href="/index.html" class="btn" id="signInBtn">Sign in</a>
     <select id="currSel" onchange="render()" style="font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius);background:transparent;color:var(--text2);padding:5px 8px;outline:none;font-family:inherit;">
-      <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option>
+      <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option><option>AUD</option><option>CAD</option><option>JPY</option><option>THB</option>
     </select>
     <button class="btn" onclick="exportTrip()">Export</button>
   </div>
@@ -930,6 +936,8 @@ const DEFAULT_SITES = [
   { id:'_bi_easybook', name:'Easybook',        category:'buses',  regions:['Southeast Asia'],                                                                        urlTemplate:'https://www.easybook.com/en-sg/bus/{origin}/{dest}',                                                      affId:'', enabled:true, _builtin:true },
   // ── Latin America ──
   { id:'_bi_recorrido',name:'Recorrido',       category:'buses',  regions:['Latin America'],                                                                         urlTemplate:'https://www.recorrido.cl/es/bus/{origin}/{dest}',                                                         affId:'', enabled:true, _builtin:true },
+  // ── Carpooling / Shared taxi ──
+  { id:'_bi_blablacar',name:'BlaBlaCar',       category:'buses',  regions:['Europe','Latin America','South Asia','Middle East'],                                     urlTemplate:'https://www.blablacar.com/search?source={origin}&destination={dest}',                                      affId:'', enabled:true, _builtin:true },
   // ── Ferries ──
   { id:'_bi_dferries', name:'Direct Ferries',  category:'ferries',regions:['Europe','Southeast Asia','Oceania','Middle East'],                                       urlTemplate:'https://www.directferries.com/ferry_{origin}_{dest}.htm',                                                 affId:'', enabled:true, _builtin:true },
   // ── Information / research (shown as fallback when no booking platform available) ──
@@ -1298,7 +1306,7 @@ async function planRoute() {
 
     const data = await callAI(`You are an expert overland travel planner. Suggest a practical overland route from ${from} to ${to}${via ? ' via ' + via : ''}.
 Pace: ${pace}. Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}
-Available booking sites (${siteHint}). For each leg include:
+Available booking sites (${siteHint}; for shared taxi / carpooling legs also consider BlaBlaCar in Europe/LatAm/South Asia). For each leg include:
 - "booking_sites":["Name"] — only sites that actually operate on that route/region
 - "leg_region" — world region (Southeast Asia/Central Asia/South Asia/East Asia/Europe/Middle East/Africa/North America/Latin America/Oceania)
 - "info_sites":["Name"] — if booking_sites is empty, add research/info sites for that region
@@ -1395,27 +1403,40 @@ function renderPlanSuggestion(d, fromCache = false) {
     const ns = d.stops[i + 1];
     const iconCls = MODE_ICONS[leg.mode] || 'ph-path';
     const stayId  = `stay_${i}_${Date.now()}`;
-    h += `<div style="border-left:2px solid var(--green);padding-left:14px;margin:8px 0;position:relative">
+    const transportCol = showAff ? renderTransportLinks(leg.mode, leg.from, leg.to, leg.booking_sites, leg.leg_region, leg.info_sites) : '';
+    const stayCol = ns ? `
+      <div class="stay-toggle" onclick="var el=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');el.style.display=el.style.display==='block'?'none':'block';c.classList.toggle('open')">
+        <i class="ph ph-bed"></i>
+        <span>Stay: <strong>${ns.name}</strong> · ${ns.days}d${ns.notes ? ` — ${ns.notes}` : ''}</span>
+        <span class="stay-chevron">▾</span>
+      </div>
+      <div id="${stayId}" class="stay-links-drop" style="display:none">
+        ${showAff ? renderAccommodationLinks(ns.name) : '<div style="font-size:12px;color:var(--text3);padding:4px 0">Affiliate links disabled.</div>'}
+      </div>` : '<div style="font-size:12px;color:var(--text3);font-style:italic">Last stop</div>';
+    h += `<div style="border-left:2px solid var(--green);padding-left:14px;margin:10px 0;position:relative">
       <div class="leg-icon-dot"><i class="ph ${iconCls}"></i></div>
-      <div style="font-size:13px;font-weight:500;color:var(--text)">${leg.from} → ${leg.to}</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:2px">${leg.mode} · ${leg.hours}h · ${leg.km}km · ~$${leg.cost_usd}</div>
-      ${leg.notes ? `<div style="font-size:12px;color:var(--text3);margin-top:1px">${leg.notes}</div>` : ''}
-      ${renderConfidenceBadge(leg.confidence)}
-      ${renderConflictAlert(leg.conflict)}
-      ${showAff ? renderTransportLinks(leg.mode, leg.from, leg.to, leg.booking_sites, leg.leg_region, leg.info_sites) : ''}
-      ${ns ? `
-        <div class="stay-toggle" onclick="var d=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');d.style.display=d.style.display==='block'?'none':'block';c.classList.toggle('open')">
-          <i class="ph ph-bed"></i>
-          <span>Stay: <strong>${ns.name}</strong> · ${ns.days}d${ns.notes ? ` — ${ns.notes}` : ''}</span>
-          <span class="stay-chevron">▾</span>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">${leg.from} → ${leg.to}</div>
+      <div class="leg-grid">
+        <div class="leg-col">
+          <div class="leg-col-lbl">Journey</div>
+          <div style="font-size:12px;color:var(--text2)">${MI[leg.mode]||leg.mode} · ${leg.hours}h · ${leg.km}km</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">~${fmtCost(leg.cost_usd)}</div>
+          ${leg.notes ? `<div style="font-size:11px;color:var(--text3);margin-top:3px">${leg.notes}</div>` : ''}
+          ${renderConfidenceBadge(leg.confidence)}
+          ${renderConflictAlert(leg.conflict)}
         </div>
-        <div id="${stayId}" class="stay-links-drop" style="display:none">
-          ${showAff ? renderAccommodationLinks(ns.name) : '<div style="font-size:12px;color:var(--text3);padding:4px 0">Affiliate links disabled.</div>'}
+        <div class="leg-col">
+          <div class="leg-col-lbl">Transport</div>
+          ${transportCol || '<div style="font-size:12px;color:var(--text3)">No links for this leg</div>'}
         </div>
-      ` : ''}
+        <div class="leg-col">
+          <div class="leg-col-lbl">Stay at ${ns?.name || '—'}</div>
+          ${stayCol}
+        </div>
+      </div>
     </div>`;
   });
-  h += `<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2)">Total: ~${d.total_days} days · ~$${d.total_cost_usd}</div>`;
+  h += `<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2)">Total: ~${d.total_days} days · ~${fmtCost(d.total_cost_usd)}</div>`;
   document.getElementById('planResult').innerHTML = h;
 }
 
@@ -1428,7 +1449,7 @@ function adoptRoute() {
     [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ name: c, date: '', days: 0 }));
   }
   d.legs.forEach(l => legs.push({
-    mode: l.mode, cost: l.cost_usd || 0, km: l.km || 0,
+    mode: l.mode, cost: convertCost(l.cost_usd || 0), km: l.km || 0,
     hours: l.hours || 0, notes: l.notes || '',
     booked: false, bookingRef: '', bookingUrl: '',
     bookingSites: l.booking_sites || [],
@@ -1522,7 +1543,11 @@ function getLeg(i) {
   return legs[i] || { mode: 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' };
 }
 function getCurr()    { return document.getElementById('currSel').value; }
-function getCurrSym() { return { USD: '$', EUR: '€', GBP: '£', INR: '₹' }[getCurr()] || '$'; }
+function getCurrSym() { return { USD: '$', EUR: '€', GBP: '£', INR: '₹', AUD: 'A$', CAD: 'C$', JPY: '¥', THB: '฿' }[getCurr()] || '$'; }
+// Approximate rates from USD — no API, just ballpark for travellers
+const RATES = { USD:1, EUR:0.92, GBP:0.79, INR:84, AUD:1.55, CAD:1.37, JPY:156, THB:36 };
+function convertCost(usd) { return Math.round((+usd || 0) * (RATES[getCurr()] || 1)); }
+function fmtCost(usd)     { return getCurrSym() + convertCost(usd); }
 
 function autoFillDates(fromIdx) {
   for (let i = fromIdx + 1; i < stops.length; i++) {
@@ -1538,7 +1563,7 @@ function autoFillDates(fromIdx) {
   renderTl(); updateSum();
 }
 
-function render()     { renderSegs(); renderTl(); updateSum(); }
+function render()     { renderSegs(); renderTl(); updateSum(); if (lastSuggestion) renderPlanSuggestion(lastSuggestion, lastSuggestion._from_cache || false); }
 
 function renderSegs() {
   const el = document.getElementById('segs'); let h = '';
