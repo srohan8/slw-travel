@@ -2615,43 +2615,103 @@ function renderMyTripsPanel() {
   </div>`;
 }
 
-function renderProfilePanel() {
+async function renderProfilePanel() {
   const el = document.getElementById('profilePanel');
   if (!el) return;
-  const rawUser = localStorage.getItem('slw_user');
-  const user = rawUser ? JSON.parse(rawUser) : null;
-  const email = user?.email || 'Guest';
-  const initials = email === 'Guest' ? '?' : email.slice(0,2).toUpperCase();
-  const displayName = email.includes('@') ? email.split('@')[0] : email;
-  const trips = storage.get('trips') || [];
-  const allLegs  = trips.flatMap(t => t.legs||[]);
-  const totalKm  = Math.round(allLegs.reduce((a,l)=>a+(+l.km||0),0));
-  const totalLegs= allLegs.length;
-  const contribs = contribStorage.getAll();
-  const legKeys  = Object.keys(contribs);
+
+  // ── Data ──────────────────────────────────────────────────────────
+  const user   = currentUser;
+  const email  = user?.email || '';
+  const trips  = storage.get('trips') || [];
+  const allLegs = trips.flatMap(t => t.legs||[]);
+  const totalKm = Math.round(allLegs.reduce((a,l)=>a+(+l.km||0),0));
+
+  const contribs   = contribStorage.getAll();
+  const legKeys    = Object.keys(contribs);
   const totalNotes = legKeys.reduce((a,k)=>a+(contribs[k]||[]).length,0);
   const totalVotes = legKeys.reduce((a,k)=>a+(contribs[k]||[]).reduce((b,n)=>b+(n.votes||0),0),0);
+  const totalConf  = legKeys.reduce((a,k)=>a+(contribs[k]||[]).filter(n=>n.confirmed).length,0);
+
   const CONTRIB_KINDS_LIST = Object.entries(CONTRIB_KINDS);
   const kindCounts = {};
   CONTRIB_KINDS_LIST.forEach(([k])=>{ kindCounts[k]=0; });
   legKeys.forEach(k=>{ (contribs[k]||[]).forEach(n=>{ if(n.kind && kindCounts[n.kind]!==undefined) kindCounts[n.kind]++; }); });
   const totalByKind = Object.values(kindCounts).reduce((a,b)=>a+b,0);
 
+  // Fetch Supabase profile (display_name, karma, created_at, location)
+  let profile = {};
+  if (user) {
+    try {
+      const { data } = await sb.from('profiles').select('*').eq('id', user.id).single();
+      if (data) profile = data;
+    } catch { /* ignore */ }
+  }
+  const displayName = profile.display_name || email.split('@')[0] || 'Traveller';
+  const handle      = '@' + (email.split('@')[0] || 'you');
+  const karma       = profile.karma || 0;
+  const location    = profile.location || '';
+  const memberSince = profile.created_at
+    ? new Date(profile.created_at).toLocaleDateString('en',{month:'short',year:'numeric'})
+    : '';
+  const initials    = displayName.slice(0,2).toUpperCase();
+
+  // ── Donut SVG ─────────────────────────────────────────────────────
+  const CIRC = 100.53; // 2π × 16
+  let donutArcs = '', offset = 0;
+  if (totalByKind > 0) {
+    CONTRIB_KINDS_LIST.forEach(([k, v]) => {
+      const pct = kindCounts[k] / totalByKind;
+      const len = pct * CIRC;
+      donutArcs += `<circle cx="18" cy="18" r="16" fill="none" stroke="${v.color}" stroke-width="4"
+        stroke-dasharray="${len.toFixed(2)} ${CIRC}" stroke-dashoffset="${(-offset).toFixed(2)}"
+        style="transition:all 0.3s"/>`;
+      offset += len;
+    });
+  } else {
+    donutArcs = `<circle cx="18" cy="18" r="16" fill="none" stroke="var(--border)" stroke-width="4"/>`;
+  }
+
+  // ── Badges ────────────────────────────────────────────────────────
+  const BADGES = [
+    { icon:'ph-train',          color:'#2E6FA8', tint:'#E3EEF7', label:'Rails',        sub:'Train notes ×10', earned: (kindCounts.schedule||0)>=10 },
+    { icon:'ph-boat',           color:'#2E8B8B', tint:'#D4EFEF', label:'Seafarer',     sub:'Ferry leg verified', earned: false },
+    { icon:'ph-mountains',      color:'#6B4F3A', tint:'#EDE3DC', label:'High passes',  sub:'3 legs >3500m',  earned: false },
+    { icon:'ph-compass',        color:'#C9A84C', tint:'#F6ECCE', label:'Frontier',     sub:'First to log',   earned: false },
+    { icon:'ph-shield-check',   color:'#2D4A2D', tint:'#D4E3CC', label:'Trusted',      sub:'20+ confirms',   earned: totalConf>=20 },
+    { icon:'ph-tag',            color:'#4A7C4A', tint:'#D4E3CC', label:'Honest price', sub:'5 price updates', earned:(kindCounts.price||0)>=5 },
+    { icon:'ph-lock-key-open',  color:'#9AA880', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
+    { icon:'ph-lock-key-open',  color:'#9AA880', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
+    { icon:'ph-lock-key-open',  color:'#9AA880', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
+  ];
+
+  // ── Render ────────────────────────────────────────────────────────
+  if (!user) {
+    el.innerHTML = `<div style="text-align:center;padding:3rem 1rem">
+      <div style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:10px">Welcome to SLW Travel</div>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Sign in to save trips, track karma, and contribute notes to the community.</p>
+      <a class="btn btn-primary" href="auth.html">Sign in / Create account</a>
+    </div>`;
+    return;
+  }
+
   el.innerHTML = `
-  <!-- Hero identity card -->
+
+  <!-- ── Hero identity card ───────────────────────────── -->
   <div style="background:var(--dusk);color:var(--cream);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:16px;position:relative;overflow:hidden;display:grid;grid-template-columns:72px 1fr auto;gap:20px;align-items:center">
-    <div style="width:72px;height:72px;border-radius:50%;background:var(--moss);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:32px;border:2px solid var(--sage)">${initials}</div>
-    <div>
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage)">Contributor · SLW Travel</div>
-      <div style="font-family:var(--serif);font-size:28px;font-weight:300;letter-spacing:-0.3px;margin-top:2px;color:var(--cream)">${displayName} <span style="font-size:13px;color:rgba(212,227,204,0.45);font-family:var(--mono)">${email}</span></div>
-      ${user ? `<div style="font-size:12px;color:rgba(212,227,204,0.6);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap">
-        <span><i class="ph ph-map-pin" style="font-size:12px"></i> SLW Traveller</span>
-        <span><i class="ph ph-train" style="font-size:12px"></i> ${trips.length} trips planned</span>
-      </div>` : `<div style="font-size:12px;color:rgba(212,227,204,0.5);margin-top:4px"><a href="/index.html" style="color:var(--sage)">Sign in</a> to save trips and contribute</div>`}
+    <div style="width:72px;height:72px;border-radius:50%;background:var(--moss);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:32px;font-weight:400;border:2px solid var(--sage);flex-shrink:0">${initials}</div>
+    <div style="min-width:0">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage)">Contributor${memberSince?' · since '+memberSince:''}</div>
+      <div style="font-family:var(--serif);font-size:28px;font-weight:300;letter-spacing:-0.3px;margin-top:2px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+        ${displayName} <span style="font-size:13px;color:rgba(212,227,204,0.45);font-family:var(--mono);letter-spacing:0.5px">${handle}</span>
+      </div>
+      <div style="font-size:12px;color:rgba(212,227,204,0.65);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        ${location ? `<span style="display:inline-flex;align-items:center;gap:4px"><i class="ph ph-map-pin" style="font-size:12px"></i> ${location}</span>` : ''}
+        <span style="display:inline-flex;align-items:center;gap:4px"><i class="ph ph-map-trifold" style="font-size:12px"></i> ${trips.length} trips planned</span>
+      </div>
     </div>
-    <div style="text-align:right">
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:rgba(212,227,204,0.45);text-transform:uppercase">Notes</div>
-      <div style="font-family:var(--serif);font-size:44px;font-weight:300;color:var(--gold);letter-spacing:-0.8px;line-height:1">${totalNotes}</div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:rgba(212,227,204,0.5);text-transform:uppercase">Karma</div>
+      <div style="font-family:var(--serif);font-size:44px;font-weight:300;color:var(--gold);letter-spacing:-0.8px;line-height:1">${karma.toLocaleString()}</div>
       <div style="font-size:11px;color:rgba(212,227,204,0.5);margin-top:4px;font-family:var(--mono)">${totalVotes} upvotes received</div>
     </div>
     <div style="position:absolute;right:-40px;top:-20px;opacity:0.08;pointer-events:none">
@@ -2659,59 +2719,182 @@ function renderProfilePanel() {
     </div>
   </div>
 
-  <!-- Stats row -->
-  <div class="sumbar" style="margin-bottom:16px">
-    <div class="met"><div class="met-lbl">Trips planned</div><div class="met-val">${trips.length}</div></div>
-    <div class="met"><div class="met-lbl">Legs logged</div><div class="met-val">${totalLegs}</div></div>
-    <div class="met"><div class="met-lbl">Distance</div><div class="met-val">${totalKm.toLocaleString()} <span class="met-u">km</span></div></div>
-    <div class="met"><div class="met-lbl">Notes posted</div><div class="met-val">${totalNotes}</div></div>
+  <!-- ── 4-stat row ───────────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+    ${[
+      ['Notes posted', totalNotes,              'across '+legKeys.length+' legs'],
+      ['Upvotes received', totalVotes,          totalNotes ? (totalVotes/totalNotes).toFixed(1)+' avg' : '0 avg'],
+      ['× Confirmed', totalConf,               'by other travellers'],
+      ['Trips planned', trips.length,           trips.filter(t=>t.stops?.some(s=>s.date)).length+' with dates'],
+    ].map(([l,v,sub])=>`
+      <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">${l}</div>
+        <div style="font-family:var(--serif);font-size:26px;color:var(--text);font-weight:300;letter-spacing:-0.3px;line-height:1">${v}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${sub}</div>
+      </div>`).join('')}
   </div>
 
-  <!-- Contribution mix + recent notes -->
-  <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:16px">
-    <!-- Mix -->
+  <!-- ── Karma breakdown + Badges ─────────────────────── -->
+  <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-bottom:16px">
+
+    <!-- Karma breakdown -->
     <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:12px">Contribution mix</div>
-      ${totalByKind === 0 ? `<div style="font-size:13px;color:var(--text3);padding:1rem 0;text-align:center">No notes yet.<br>Expand a leg to contribute.</div>` :
-        CONTRIB_KINDS_LIST.map(([k,v])=>`
-        <div style="display:grid;grid-template-columns:18px 1fr auto auto;gap:8px;align-items:center;padding:5px 0;border-top:0.5px dashed var(--border);font-size:12px">
-          <span style="width:10px;height:10px;border-radius:3px;background:${v.color};display:inline-block"></span>
-          <span style="color:var(--text)">${v.label}</span>
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${kindCounts[k]}</span>
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text2);min-width:26px;text-align:right">${totalByKind?Math.round(kindCounts[k]/totalByKind*100):0}%</span>
-        </div>`).join('')
-      }
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">How you earn karma</div>
+      </div>
+      ${[
+        ['Posting a verified note',            '+15','ea', kindCounts.confirmed||0,  (kindCounts.confirmed||0)*15],
+        ['Upvote received on your note',       '+2', 'ea', totalVotes,              totalVotes*2],
+        ['Your note confirmed by another',     '+25','ea', totalConf,               totalConf*25],
+        ['Completed trip + journal',           '+50','ea', 0,                        0],
+        ['First-to-document a leg',            '+100','ea',0,                        0],
+      ].map(([name,rate,unit,n,total],i)=>`
+        <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:9px 0;${i?'border-top:0.5px dashed var(--border)':''}">
+          <div style="font-size:13px;color:var(--text)">${name}</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--fern);font-weight:600">${rate} <span style="color:var(--text3);font-weight:400">${unit}</span></div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text3)">× ${n}</div>
+          <div style="font-family:var(--mono);font-size:13px;color:var(--text);font-weight:600;text-align:right;min-width:46px">+${total.toLocaleString()}</div>
+        </div>`).join('')}
     </div>
+
+    <!-- Badges -->
+    <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:12px">Badges · ${BADGES.filter(b=>b.earned).length} earned</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        ${BADGES.map(b=>`
+          <div style="text-align:center;padding:10px 4px;border-radius:var(--radius);background:${b.dim?'transparent':b.tint};border:${b.dim?'0.5px dashed var(--border2)':'0.5px solid var(--border)'};opacity:${b.dim?0.45:1}">
+            <i class="ph ${b.icon}" style="font-size:20px;color:${b.color}"></i>
+            <div style="font-size:11px;color:var(--text);font-weight:600;margin-top:4px">${b.label}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:1px;font-family:var(--mono)">${b.sub}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Contribution mix (donut) + Recent notes ───────── -->
+  <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:16px">
+
+    <!-- Donut -->
+    <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:14px">Contribution mix</div>
+      <div style="display:flex;align-items:center;gap:18px">
+        <div style="position:relative;width:110px;height:110px;flex-shrink:0">
+          <svg viewBox="0 0 36 36" width="110" height="110" style="transform:rotate(-90deg)">${donutArcs}</svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <div style="font-family:var(--serif);font-size:26px;font-weight:300;color:var(--text);line-height:1">${totalNotes}</div>
+            <div style="font-size:9px;font-family:var(--mono);letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-top:2px">notes</div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+          ${CONTRIB_KINDS_LIST.map(([k,v])=>`
+            <div style="display:grid;grid-template-columns:10px 1fr auto auto;gap:8px;align-items:center;font-size:12px">
+              <span style="width:8px;height:8px;border-radius:2px;background:${v.color};display:inline-block"></span>
+              <span style="color:var(--text)">${v.label}</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${kindCounts[k]||0}</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--text2);min-width:28px;text-align:right">${totalByKind?Math.round((kindCounts[k]||0)/totalByKind*100):0}%</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
     <!-- Recent notes -->
     <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
         <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">Your recent notes</div>
         <span style="font-size:11px;color:var(--fern)">${totalNotes} total</span>
       </div>
-      ${totalNotes === 0 ? `<div style="font-size:13px;color:var(--text3);padding:1rem 0;text-align:center">No notes yet. Open a leg and add one!</div>` :
-        legKeys.flatMap(k=>(contribs[k]||[]).slice(0,2).map(n=>{
-          const kd=CONTRIB_KINDS[n.kind]||CONTRIB_KINDS.tip;
-          return `<div style="display:grid;grid-template-columns:20px 1fr auto;gap:10px;padding:8px 0;border-top:0.5px dashed var(--border)">
-            <div style="width:20px;height:20px;border-radius:5px;background:${kd.bg};color:${kd.color};display:flex;align-items:center;justify-content:center;margin-top:2px"><i class="ph ${kd.icon}" style="font-size:11px"></i></div>
-            <div>
-              <div style="font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:0.3px;margin-bottom:2px">${k} · ${n.when||'just now'}</div>
-              <div style="font-size:12px;color:var(--text);line-height:1.4">${(n.text||'').slice(0,100)}${(n.text||'').length>100?'…':''}</div>
-            </div>
-            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap"><i class="ph ph-arrow-fat-up" style="font-size:10px"></i> ${n.votes||0}</div>
-          </div>`;
-        })).slice(0,5).join('')
+      ${totalNotes === 0
+        ? `<div style="font-size:13px;color:var(--text3);padding:1.5rem 0;text-align:center">No notes yet.<br>Expand a leg to contribute.</div>`
+        : legKeys.flatMap(k=>(contribs[k]||[]).map(n=>{
+            const kd = CONTRIB_KINDS[n.kind]||CONTRIB_KINDS.tip;
+            return `<div style="display:grid;grid-template-columns:20px 1fr auto;gap:10px;padding:8px 0;border-top:0.5px dashed var(--border)">
+              <div style="width:20px;height:20px;border-radius:5px;background:${kd.bg};color:${kd.color};display:flex;align-items:center;justify-content:center;margin-top:2px"><i class="ph ${kd.icon}" style="font-size:11px"></i></div>
+              <div style="min-width:0">
+                <div style="font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:0.3px;margin-bottom:2px">${k} · ${n.when||'just now'}</div>
+                <div style="font-size:12.5px;color:var(--text);line-height:1.45">${(n.text||'').slice(0,110)}${(n.text||'').length>110?'…':''}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:40px">
+                <span style="font-family:var(--mono);font-size:11px;color:var(--text2);display:inline-flex;align-items:center;gap:3px"><i class="ph ph-arrow-fat-up" style="font-size:10px"></i> ${n.votes||0}</span>
+                ${n.confirmed?`<span style="font-family:var(--mono);font-size:10px;color:var(--moss);display:inline-flex;align-items:center;gap:2px"><i class="ph ph-shield-check" style="font-size:10px"></i>${n.confirmed}×</span>`:''}
+              </div>
+            </div>`;
+          })).slice(0,5).join('')
       }
     </div>
   </div>
 
-  <!-- Settings / account -->
-  <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
-    <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:12px">Account</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      ${user ? `<button class="btn" onclick="signOut()">Sign out</button>` : `<a class="btn btn-primary" href="/index.html">Sign in / Create account</a>`}
-      <button class="btn" onclick="exportTrip()">Export current trip</button>
+  <!-- ── Trips strip ───────────────────────────────────── -->
+  <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">Trips · ${trips.length} total</div>
+      <span style="font-size:11px;color:var(--fern);cursor:pointer" onclick="switchTab('mytrips',document.getElementById('navbtn_mytrips'))">Open My Trips →</span>
     </div>
+    ${trips.length === 0
+      ? `<div style="font-size:13px;color:var(--text3);padding:1rem 0;text-align:center">No trips yet — plan one in the Planner!</div>`
+      : `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          ${trips.slice(0,3).map(t=>{
+            const legCount = (t.legs||[]).length;
+            const bookedCount = (t.legs||[]).filter(l=>l.booked).length;
+            const state = bookedCount === legCount && legCount > 0 ? 'Planned'
+                        : bookedCount > 0 ? 'In progress' : 'Draft';
+            const stateColor = state === 'Planned' ? 'var(--gold)'
+                             : state === 'In progress' ? 'var(--fern)' : 'var(--text3)';
+            return `<div style="padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);cursor:pointer" onclick="loadTrip('${t.id}')">
+              <div style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:${stateColor};margin-bottom:4px">${state}</div>
+              <div style="font-family:var(--serif);font-size:16px;color:var(--text);letter-spacing:-0.2px">${t.title||'Untitled'}</div>
+              <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px">${legCount} legs${bookedCount?' · '+bookedCount+' booked':''}</div>
+            </div>`;
+          }).join('')}
+        </div>`}
+  </div>
+
+  <!-- ── Account settings ──────────────────────────────── -->
+  <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;margin-bottom:16px">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:14px">Account settings</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div>
+        <label style="font-size:11px;color:var(--text3);font-family:var(--mono);display:block;margin-bottom:5px">Display name</label>
+        <input id="profName" class="inp" value="${displayName}" placeholder="Your name" style="width:100%"/>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text3);font-family:var(--mono);display:block;margin-bottom:5px">Location</label>
+        <input id="profLocation" class="inp" value="${location}" placeholder="City, Country" style="width:100%"/>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text3);font-family:var(--mono);display:block;margin-bottom:5px">Email</label>
+        <input class="inp" value="${email}" disabled style="width:100%;opacity:0.55;cursor:not-allowed"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary" onclick="saveProfileSettings()">Save changes</button>
+      <span id="profSaveStatus" style="font-size:12px;color:var(--text3)"></span>
+    </div>
+  </div>
+
+  <!-- ── Settings row ─────────────────────────────────── -->
+  <div style="display:flex;gap:12px;font-size:12px;color:var(--text3);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:12px 0 24px;border-top:0.5px solid var(--border);flex-wrap:wrap">
+    <span style="color:var(--fern);cursor:pointer" onclick="document.getElementById('prof-settings-section').scrollIntoView({behavior:'smooth'})">Account settings</span>
+    <span>·</span>
+    <span style="color:var(--fern);cursor:pointer" onclick="exportTrip()">Export data</span>
+    <span style="flex:1"></span>
+    <span style="color:var(--rust);cursor:pointer" onclick="signOut()">Sign out</span>
   </div>`;
+}
+
+async function saveProfileSettings() {
+  const name     = document.getElementById('profName')?.value.trim();
+  const location = document.getElementById('profLocation')?.value.trim();
+  const status   = document.getElementById('profSaveStatus');
+  if (!currentUser) return;
+  if (status) status.textContent = 'Saving…';
+  try {
+    const { error } = await sb.from('profiles').update({ display_name: name, location }).eq('id', currentUser.id);
+    if (error) throw error;
+    if (status) { status.textContent = 'Saved ✓'; setTimeout(()=>{ if(status) status.textContent=''; }, 2500); }
+    updateNavAuth();
+  } catch(e) {
+    if (status) status.textContent = 'Error: ' + e.message;
+  }
 }
 
 function setMode(i, m)  {

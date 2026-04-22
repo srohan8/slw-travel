@@ -77,9 +77,13 @@ create table if not exists public.profiles (
   email       text,
   display_name text       default '',
   avatar_url  text        default '',
+  location    text        default '',
   karma       int         not null default 0,
   created_at  timestamptz not null default now()
 );
+
+-- Add location column if upgrading from older schema
+alter table public.profiles add column if not exists location text default '';
 
 alter table public.profiles enable row level security;
 
