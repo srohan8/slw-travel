@@ -1311,8 +1311,13 @@ async function planRoute() {
       : hitchMixed
       ? `User enjoys occasional hitchhiking for adventure. Assign mode:"hitchhike" to roughly 20% of legs (pick shorter, safe, well-travelled legs where it's realistic). Use the other preferred modes for the rest.`
       : '';
+    const paceGuide = {
+      slow:     'Slow travel: 3–5+ days per stop, favor scenic/indirect routes, include extra stops worth lingering in, maximize experiences over speed.',
+      moderate: 'Moderate pace: 2–3 days per stop, balance of direct connections and interesting detours, reasonable total trip length.',
+      fast:     'Fast travel: 1–2 days per stop, most direct connections only, minimal detours, keep stop count low and legs efficient.',
+    }[pace] || '';
     const data = await callAI(`You are an expert overland travel planner. Suggest a practical overland route from ${from} to ${to}${via ? ' via ' + via : ''}.
-Pace: ${pace}. Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}${hitchNote ? '\n' + hitchNote : ''}
+${paceGuide} Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}${hitchNote ? '\n' + hitchNote : ''}
 Available booking sites (${siteHint}; for shared taxi / carpooling legs also consider BlaBlaCar in Europe/LatAm/South Asia). For each leg include:
 - "booking_sites":["Name"] — only sites that actually operate on that route/region
 - "leg_region" — world region (Southeast Asia/Central Asia/South Asia/East Asia/Europe/Middle East/Africa/North America/Latin America/Oceania)
