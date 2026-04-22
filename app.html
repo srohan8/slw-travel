@@ -1458,7 +1458,7 @@ function renderPlanSuggestion(d, fromCache = false) {
         <div class="leg-col">
           <div class="leg-col-lbl">Journey</div>
           <div style="font-size:12px;color:var(--text2)">${MI[leg.mode]||leg.mode} · ${leg.hours}h · ${leg.km}km</div>
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">~${fmtCost(leg.cost_usd)}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:3px">~${fmtCost(leg.cost_usd)} <span style="font-size:10px;font-family:var(--mono);font-weight:400;color:var(--text3)">ticket</span></div>
           ${leg.notes ? `<div style="font-size:11px;color:var(--text3);margin-top:3px">${leg.notes}</div>` : ''}
           ${renderConfidenceBadge(leg.confidence)}
           ${renderConflictAlert(leg.conflict)}
