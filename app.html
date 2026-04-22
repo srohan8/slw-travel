@@ -385,14 +385,13 @@
   </a>
   <div class="nav-utils">
     <button class="nav-link active" id="navbtn_plan"    onclick="switchTab('plan',this)">Planner</button>
-    <button class="nav-link"        id="navbtn_record"  onclick="switchTab('record',this)">My trip</button>
     <button class="nav-link"        id="navbtn_mytrips" onclick="switchTab('mytrips',this)">My Trips</button>
     <button class="nav-link"        id="navbtn_profile" onclick="switchTab('profile',this)">Profile</button>
+    <button class="nav-link"        id="navbtn_admin"   onclick="switchTab('admin',this)">Admin</button>
     <div class="nav-vsep"></div>
     <select id="currSel" onchange="render()">
       <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option><option>AUD</option><option>CAD</option><option>JPY</option><option>THB</option>
     </select>
-    <button class="btn" onclick="exportTrip()">Export</button>
     <span class="user-badge" id="userBadge" style="cursor:pointer" onclick="currentUser?switchTab('profile',document.getElementById('navbtn_profile')):window.location.href='auth.html'">Guest</span>
     <button class="btn" onclick="window.location.href='auth.html'" id="signInBtn">Sign in</button>
     <button class="btn" onclick="signOut()" id="signOutBtn" style="display:none">Sign out</button>
