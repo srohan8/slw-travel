@@ -16,6 +16,11 @@ create index if not exists trips_user_id_idx on public.trips(user_id);
 -- Row Level Security: each user can only see/edit their own trips
 alter table public.trips enable row level security;
 
+drop policy if exists "Users can read own trips"   on public.trips;
+drop policy if exists "Users can insert own trips"  on public.trips;
+drop policy if exists "Users can update own trips"  on public.trips;
+drop policy if exists "Users can delete own trips"  on public.trips;
+
 create policy "Users can read own trips"
   on public.trips for select
   using (auth.uid() = user_id);
@@ -49,6 +54,10 @@ create index if not exists contrib_leg_key_idx on public.contributions(leg_key);
 
 alter table public.contributions enable row level security;
 
+drop policy if exists "Anyone can read contributions"               on public.contributions;
+drop policy if exists "Authenticated users can insert contributions" on public.contributions;
+drop policy if exists "Users can update own contributions"           on public.contributions;
+
 create policy "Anyone can read contributions"
   on public.contributions for select
   using (true);
@@ -73,6 +82,9 @@ create table if not exists public.profiles (
 );
 
 alter table public.profiles enable row level security;
+
+drop policy if exists "Anyone can read profiles"      on public.profiles;
+drop policy if exists "Users can update own profile"  on public.profiles;
 
 create policy "Anyone can read profiles"
   on public.profiles for select using (true);
