@@ -954,11 +954,25 @@ async function callAI(prompt, maxTokens = 4000) {
     throw new Error(msg);
   }
   const text = d.content.map(c => c.text || '').join('');
+  // Strip markdown fences then extract the outermost {...}
+  const stripped = text.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+  const first = stripped.indexOf('{');
+  const last  = stripped.lastIndexOf('}');
+  const jsonStr = first !== -1 && last > first ? stripped.slice(first, last + 1) : stripped;
   try {
-    return JSON.parse(text.replace(/```json|```/g, '').trim());
+    return JSON.parse(jsonStr);
   } catch {
     console.error('AI response (parse failed):', text);
-    throw new Error('Response was not valid JSON — try again');
+    // Second attempt: try to patch common truncation (missing closing braces)
+    try {
+      let s = jsonStr;
+      const opens  = (s.match(/\{/g) || []).length;
+      const closes = (s.match(/\}/g) || []).length;
+      s += '}'.repeat(Math.max(0, opens - closes));
+      return JSON.parse(s);
+    } catch {
+      throw new Error('Response was not valid JSON — try again');
+    }
   }
 }
 
@@ -1558,8 +1572,9 @@ Available transport booking sites (${siteHint}; for shared taxi/carpooling also 
 Available accommodation platforms (${accomHint}). For each stop include:
 - "accom_sites":["Name"] — platforms that work for that city/region (e.g. Agoda for SE/East Asia; Hostelworld for hostel-rich cities; omit platforms irrelevant to that destination; use empty array if only guesthouses/no platform)
 - "accom_note":"one practical sentence" — neighbourhood to stay, price level, style (e.g. "Stay in Thamel, hostels from $8" or "Guesthouses only in old town, no major platforms")
-Respond ONLY in this JSON (no markdown, no preamble):
-{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"sightseeing tip","accom_sites":["Booking.com","Hostelworld"],"accom_note":"Stay near the old town, budget options from $12"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"],"info_sites":[],"confidence":"verified","conflict":{"level":"tension","note":"border area caution"}}],"total_days":14,"total_cost_usd":200}`);
+Respond with ONLY a single raw JSON object — no markdown fences, no preamble, no commentary. Start with { and end with }. Schema:
+{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"sightseeing tip","accom_sites":["Booking.com","Hostelworld"],"accom_note":"Stay near the old town, budget options from $12"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"],"info_sites":[],"confidence":"verified","conflict":{"level":"tension","note":"border area caution"}}],"total_days":14,"total_cost_usd":200}
+Include ALL stops and ALL legs for the complete route. Do not truncate.`);
     lastSuggestion = data;
 
     // Auto-register AI-suggested booking sites; accumulate regions onto existing ones
