@@ -952,7 +952,7 @@ const DEFAULT_SITES = [
   { id:'_bi_raja',     name:'RAJA Trains',     category:'trains', regions:['Middle East'],                                                                           urlTemplate:'https://www.raja.ir/fa/trains?origin={origin}&destination={dest}',                                         affId:'', enabled:true, _builtin:true },
   { id:'_bi_1stquest', name:'1stQuest',        category:'buses',  regions:['Middle East'],                                                                           urlTemplate:'https://www.1stquest.ir/bus/{origin}/{dest}',                                                             affId:'', enabled:true, _builtin:true },
   // ── South Asia ──
-  { id:'_bi_redbus',   name:'RedBus',          category:'buses',  regions:['South Asia','Southeast Asia','Latin America'],                                           urlTemplate:'https://www.redbus.in/bus-tickets/{origin}-to-{dest}',                                                    affId:'', enabled:true, _builtin:true },
+  { id:'_bi_redbus',   name:'RedBus',          category:'buses',  regions:['South Asia'],                                                                            urlTemplate:'https://www.redbus.in/bus-tickets/{origin}-to-{dest}',                                                    affId:'', enabled:true, _builtin:true },
   { id:'_bi_cleartrip',name:'Cleartrip',       category:'buses',  regions:['South Asia'],                                                                            urlTemplate:'https://www.cleartrip.com/bus/{origin}-to-{dest}/',                                                       affId:'', enabled:true, _builtin:true },
   { id:'_bi_irctc',    name:'IRCTC',           category:'trains', regions:['South Asia'],                                                                            urlTemplate:'https://www.irctc.co.in/nget/train-search?fromStation={origin}&toStation={dest}',                          affId:'', enabled:true, _builtin:true },
   { id:'_bi_pakrail', name:'Pakistan Railways',category:'trains', regions:['South Asia'],                                                                            urlTemplate:'https://www.pakrail.gov.pk/train_schedule?from={origin}&to={dest}',                                        affId:'', enabled:true, _builtin:true },
@@ -969,9 +969,11 @@ const DEFAULT_SITES = [
   { id:'_bi_rome2rio',     name:'Rome2rio',              category:'info', regions:[],                                                                urlTemplate:'https://www.rome2rio.com/s/{origin}/{dest}',        affId:'', enabled:true, _builtin:true },
   { id:'_bi_seat61',       name:'The Man in Seat 61',    category:'info', regions:['Europe','Middle East','Central Asia','South Asia','East Asia'],  urlTemplate:'https://www.seat61.com/?s={dest}',                  affId:'', enabled:true, _builtin:true },
   { id:'_bi_caravanistan', name:'Caravanistan',           category:'info', regions:['Central Asia','Middle East'],                                   urlTemplate:'https://caravanistan.com/?s={origin}+to+{dest}',   affId:'', enabled:true, _builtin:true },
-  // ── Accommodation (global) ──
-  { id:'_bi_hostelw',  name:'Hostelworld',     category:'accommodation', regions:[],                                                                                 urlTemplate:'https://www.hostelworld.com/findabed.php/ChosenCity.{origin}',                                            affId:'', enabled:true, _builtin:true },
+  // ── Accommodation (global + regional) ──
   { id:'_bi_booking',  name:'Booking.com',     category:'accommodation', regions:[],                                                                                 urlTemplate:'https://www.booking.com/search.html?ss={origin}',                                                         affId:'', enabled:true, _builtin:true },
+  { id:'_bi_hostelw',  name:'Hostelworld',     category:'accommodation', regions:[],                                                                                 urlTemplate:'https://www.hostelworld.com/findabed.php/ChosenCity.{origin}',                                            affId:'', enabled:true, _builtin:true },
+  { id:'_bi_agoda',    name:'Agoda',           category:'accommodation', regions:['Southeast Asia','East Asia','South Asia','Middle East'],                          urlTemplate:'https://www.agoda.com/search?city={origin}',                                                              affId:'', enabled:true, _builtin:true },
+  { id:'_bi_airbnb',   name:'Airbnb',          category:'accommodation', regions:[],                                                                                 urlTemplate:'https://www.airbnb.com/s/{origin}/homes',                                                                 affId:'', enabled:true, _builtin:true },
 ];
 
 function _readAllSites() {
@@ -1341,16 +1343,21 @@ async function planRoute() {
       moderate: 'Moderate pace: 2–3 days per stop, balance of direct connections and interesting detours, reasonable total trip length.',
       fast:     'Fast travel: 1–2 days per stop, most direct connections only, minimal detours, keep stop count low and legs efficient.',
     }[pace] || '';
+    const accomSites = _readAllSites().filter(s => s.enabled !== false && s.category === 'accommodation').map(s => s.name);
+    const accomHint  = accomSites.join(', ');
     const data = await callAI(`You are an expert overland travel planner. Suggest a practical overland route from ${from} to ${to}${via ? ' via ' + via : ''}.
 ${paceGuide} Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}${hitchNote ? '\n' + hitchNote : ''}
-Available booking sites (${siteHint}; for shared taxi / carpooling legs also consider BlaBlaCar in Europe/LatAm/South Asia). For each leg include:
+Available transport booking sites (${siteHint}; for shared taxi/carpooling also consider BlaBlaCar in Europe/LatAm/South Asia). For each leg include:
 - "booking_sites":["Name"] — only sites that actually operate on that route/region
 - "leg_region" — world region (Southeast Asia/Central Asia/South Asia/East Asia/Europe/Middle East/Africa/North America/Latin America/Oceania)
 - "info_sites":["Name"] — if booking_sites is empty, add research/info sites for that region
 - "confidence":"verified"|"check"|"uncertain" — verified=well-documented regular service; check=route exists but verify before booking (seasonal/irregular/suspended); uncertain=AI is not confident this connection currently operates
-- "conflict":{"level":"war"|"conflict"|"tension"|"advisory","note":"one-line reason"} — ONLY include if the leg passes through or near a flagged country/region; omit entirely if safe
+- "conflict":{"level":"war"|"conflict"|"tension"|"advisory","note":"one-line reason"} — ONLY if leg passes through a flagged area; omit if safe
+Available accommodation platforms (${accomHint}). For each stop include:
+- "accom_sites":["Name"] — platforms that work for that city/region (e.g. Agoda for SE/East Asia; Hostelworld for hostel-rich cities; omit platforms irrelevant to that destination; use empty array if only guesthouses/no platform)
+- "accom_note":"one practical sentence" — neighbourhood to stay, price level, style (e.g. "Stay in Thamel, hostels from $8" or "Guesthouses only in old town, no major platforms")
 Respond ONLY in this JSON (no markdown, no preamble):
-{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"tip"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"],"info_sites":[],"confidence":"verified","conflict":{"level":"tension","note":"border area caution"}}],"total_days":14,"total_cost_usd":200}`);
+{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"sightseeing tip","accom_sites":["Booking.com","Hostelworld"],"accom_note":"Stay near the old town, budget options from $12"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"],"info_sites":[],"confidence":"verified","conflict":{"level":"tension","note":"border area caution"}}],"total_days":14,"total_cost_usd":200}`);
     lastSuggestion = data;
 
     // Auto-register AI-suggested booking sites; accumulate regions onto existing ones
@@ -1439,17 +1446,10 @@ function renderPlanSuggestion(d, fromCache = false) {
   d.legs.forEach((leg, i) => {
     const ns = d.stops[i + 1];
     const iconCls = MODE_ICONS[leg.mode] || 'ph-path';
-    const stayId  = `stay_${i}_${Date.now()}`;
     const transportCol = showAff ? renderTransportLinks(leg.mode, leg.from, leg.to, leg.booking_sites, leg.leg_region, leg.info_sites) : '';
-    const stayCol = ns ? `
-      <div class="stay-toggle" onclick="var el=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');el.style.display=el.style.display==='block'?'none':'block';c.classList.toggle('open')">
-        <i class="ph ph-bed"></i>
-        <span>Stay: <strong>${ns.name}</strong> · ${ns.days}d${ns.notes ? ` — ${ns.notes}` : ''}</span>
-        <span class="stay-chevron">▾</span>
-      </div>
-      <div id="${stayId}" class="stay-links-drop" style="display:none">
-        ${showAff ? renderAccommodationLinks(ns.name) : '<div style="font-size:12px;color:var(--text3);padding:4px 0">Affiliate links disabled.</div>'}
-      </div>` : '<div style="font-size:12px;color:var(--text3);font-style:italic">Last stop</div>';
+    const stayCol = ns
+      ? (showAff ? renderAccommodationLinks(ns.name, ns.accom_sites, ns.accom_note) : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>')
+      : '<div style="font-size:12px;color:var(--text3);font-style:italic">Final destination</div>';
     const modeColor = MODE_COLORS[leg.mode] || 'var(--fern)';
     h += `<div style="border-left:3px solid ${modeColor};padding-left:14px;margin:10px 0;position:relative">
       <div class="leg-icon-dot" style="background:${modeColor}"><i class="ph ${iconCls}"></i></div>
@@ -1482,7 +1482,7 @@ function adoptRoute() {
   if (!lastSuggestion) return;
   const d = lastSuggestion; stops = []; legs = []; editingLegModes.clear();
   if (d.stops?.length) {
-    d.stops.forEach(s => stops.push({ name: s.name, date: '', days: s.days || 0 }));
+    d.stops.forEach(s => stops.push({ name: s.name, date: '', days: s.days || 0, accomSites: s.accom_sites || [], accomNote: s.accom_note || '' }));
   } else {
     [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ name: c, date: '', days: 0 }));
   }
@@ -1568,13 +1568,22 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
 }
 
 
-function renderAccommodationLinks(city) {
-  const sources = AFF.accommodation || [];
-  if (!sources.length) return '<div style="font-size:12px;color:var(--text3);padding:4px 0">No accommodation sites configured.</div>';
+function renderAccommodationLinks(city, suggestedNames, accomNote) {
+  let sources = AFF.accommodation || [];
+  if (!sources.length) return '<div style="font-size:12px;color:var(--text3);padding:2px 0">No accommodation sites configured.</div>';
+  if (suggestedNames?.length) {
+    const matched   = sources.filter(s => suggestedNames.includes(s.name));
+    const unmatched = suggestedNames.filter(n => !matched.find(s => s.name === n));
+    const fallbacks = unmatched.map(n => ({
+      name: n,
+      buildUrl: (c) => `https://www.google.com/search?q=${encodeURIComponent(n + ' ' + c + ' accommodation')}`
+    }));
+    sources = matched.length ? [...matched, ...fallbacks] : sources; // fallback to all if AI gave nothing we know
+  }
   const sid = `stay|${city}`;
   sources.forEach(s => trackAffShown(s.name, 'accommodation', sid));
-  return `<div class="search-links">
-    <span class="search-links-label">Find a place to stay</span>
+  const noteHtml = accomNote ? `<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:5px">${accomNote}</div>` : '';
+  return `${noteHtml}<div class="search-links" style="margin-top:0;padding-top:0;border-top:none">
     ${sources.map(s => `<a class="search-link" href="${s.buildUrl(city)}" target="_blank" rel="noopener">${s.name}</a>`).join('')}
   </div>`;
 }
