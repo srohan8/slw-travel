@@ -55,8 +55,8 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 }
 .hero-inner { max-width:860px; margin:0 auto; padding:0 1.25rem; position:relative; z-index:1; }
 .hero-sloth {
-  position:absolute; right:-40px; top:16px;
-  opacity:0.18; pointer-events:none;
+  position:absolute; right:-20px; top:-10px;
+  opacity:0.32; pointer-events:none;
 }
 .hero-corner {
   position:absolute; font-family:var(--mono); font-size:10px;
@@ -316,16 +316,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 <!-- ── Marketing header ──────────────────────────────────────── -->
 <header class="mkt-nav">
   <a class="mkt-logo" href="#">
-    <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-      <ellipse cx="14" cy="16" rx="7" ry="6" fill="#8BAF7A" opacity="0.95"/>
-      <circle cx="14" cy="9" r="5" fill="#8BAF7A" opacity="0.95"/>
-      <ellipse cx="14" cy="10" rx="3" ry="2.5" fill="#fff" opacity="0.25"/>
-      <circle cx="12.2" cy="8.5" r="1" fill="#1A2B1A"/>
-      <circle cx="15.8" cy="8.5" r="1" fill="#1A2B1A"/>
-      <path d="M12.5 11 Q14 12.5 15.5 11" stroke="#1A2B1A" stroke-width="0.7" fill="none" stroke-linecap="round"/>
-      <path d="M7 14 Q4 12 3.5 10" stroke="#8BAF7A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M21 14 Q24 12 24.5 10" stroke="#8BAF7A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    </svg>
+    <img src="public/sloth-logo.svg" height="32" style="filter:brightness(0) invert(1);opacity:0.9"/>
     <span class="mkt-logo-text">SLW <em>Travel</em></span>
   </a>
   <div class="mkt-nav-links">
@@ -344,7 +335,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 
   <!-- Decorative sloth -->
   <div class="hero-sloth">
-    <img src="public/sloth-logo.svg" width="320" style="filter:brightness(0) saturate(100%) invert(62%) sepia(18%) saturate(400%) hue-rotate(70deg) brightness(95%);opacity:0.55"/>
+    <img src="public/sloth-logo.svg" width="520" style="filter:brightness(0) saturate(100%) invert(62%) sepia(18%) saturate(400%) hue-rotate(70deg) brightness(95%)"/>
   </div>
 
   <div class="hero-inner">
@@ -568,13 +559,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
     <!-- Left pitch -->
     <div class="auth-left">
       <div class="auth-left-logo">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <ellipse cx="14" cy="16" rx="7" ry="6" fill="#8BAF7A" opacity="0.95"/>
-          <circle cx="14" cy="9" r="5" fill="#8BAF7A" opacity="0.95"/>
-          <circle cx="12.2" cy="8.5" r="1" fill="#1A2B1A"/>
-          <circle cx="15.8" cy="8.5" r="1" fill="#1A2B1A"/>
-          <path d="M12.5 11 Q14 12.5 15.5 11" stroke="#1A2B1A" stroke-width="0.7" fill="none" stroke-linecap="round"/>
-        </svg>
+        <img src="public/sloth-logo.svg" height="30" style="filter:brightness(0) invert(1);opacity:0.85"/>
         <span>SLW <em>Travel</em></span>
       </div>
       <div style="position:relative;z-index:1;margin-top:auto;margin-bottom:36px">
