@@ -131,7 +131,7 @@
   .adopt-btn:hover{background:var(--bg2); color: var(--text); border-color: var(--text2);}
   .warn-badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:99px;background:var(--warn-bg);color:var(--warn-text);border:0.5px solid var(--warn-border);margin-bottom:8px;font-weight:500;}
   .cache-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:99px;background:var(--success-bg);color:var(--success-text);border:0.5px solid var(--success-border);margin-bottom:8px;font-weight:500;}
-  .conf-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;margin-top:4px;border:0.5px solid transparent;}
+  .conf-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;margin-top:4px;border:0.5px solid transparent;cursor:help;}
   .conf-ok  {background:var(--success-bg);color:var(--success-text);border-color:var(--success-border);}
   .conf-warn{background:var(--warn-bg);color:var(--warn-text);border-color:var(--warn-border);}
   .conf-bad {background:var(--bg2);color:var(--text3);border-color:var(--border);}
@@ -1400,9 +1400,9 @@ Respond ONLY in this JSON (no markdown, no preamble):
 }
 
 const CONF = {
-  verified:  { label:'Verified',             cls:'conf-ok',   icon:'ph-check-circle' },
-  check:     { label:'Check before booking',  cls:'conf-warn', icon:'ph-warning-circle' },
-  uncertain: { label:'Uncertain',             cls:'conf-bad',  icon:'ph-question' },
+  verified:  { label:'Verified',            cls:'conf-ok',   icon:'ph-check-circle',    tip:'Well-documented route with regular service — you can book with confidence.' },
+  check:     { label:'Check before booking', cls:'conf-warn', icon:'ph-warning-circle',  tip:'Route exists but may be seasonal, irregular, or recently suspended. Verify current schedules before booking.' },
+  uncertain: { label:'Uncertain',            cls:'conf-bad',  icon:'ph-question',        tip:"AI isn't confident this connection currently operates. Research carefully before relying on it." },
 };
 const CONFLICT_LEVELS = {
   war:      { label:'Do not travel',    cls:'conflict-war',      icon:'ph-prohibit' },
@@ -1413,7 +1413,7 @@ const CONFLICT_LEVELS = {
 
 function renderConfidenceBadge(confidence) {
   const c = CONF[confidence] || CONF.uncertain;
-  return `<span class="conf-badge ${c.cls}"><i class="ph ${c.icon}"></i> ${c.label}</span>`;
+  return `<span class="conf-badge ${c.cls}" title="${c.tip}"><i class="ph ${c.icon}"></i> ${c.label}</span>`;
 }
 
 function renderConflictAlert(conflict, withLinks = true) {
