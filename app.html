@@ -40,29 +40,30 @@
     --green:var(--sage);--blue:var(--sage);--amber:#EF9F27;
   }}
   body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh;transition:background 0.3s ease;}
-  nav{display:flex;justify-content:space-between;align-items:center;padding:.75rem 1.5rem;border-bottom:none;background:var(--dusk);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(26,43,26,0.18);}
-  .logo{font-family:var(--serif);font-size:20px;font-weight:300;color:var(--cream);text-decoration:none;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px;}
+  nav{display:flex;justify-content:space-between;align-items:center;padding:12px 22px;border-bottom:none;background:var(--dusk);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(26,43,26,0.18);}
+  .logo{font-family:var(--serif);font-size:19px;font-weight:300;color:var(--cream);text-decoration:none;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px;}
   .logo em{font-style:italic;color:var(--sage);}
-  .nav-right{display:flex;gap:10px;align-items:center;}
+  .nav-links{display:flex;gap:18px;align-items:center;}
+  .nav-link{font-size:13px;color:rgba(212,227,204,0.55);border:none;background:none;border-bottom:2px solid transparent;padding-bottom:3px;cursor:pointer;font-family:var(--body);transition:color .2s;white-space:nowrap;}
+  .nav-link:hover{color:var(--cream);}
+  .nav-link.active{color:var(--cream);border-bottom-color:var(--sage);}
+  .nav-utils{display:flex;gap:8px;align-items:center;}
   .user-badge{font-size:12px;color:var(--sage);padding:5px 12px;border:0.5px solid rgba(139,175,122,0.3);border-radius:99px;background:rgba(139,175,122,0.08);}
   .btn{font-size:13px;padding:7px 16px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--body);transition:all 0.2s ease;font-weight:500;}
   .btn:hover{background:var(--bg2);color:var(--text);border-color:var(--text2);}
   .btn:disabled{opacity:0.4;cursor:default;}
-  nav .btn{background:rgba(255,255,255,0.07);color:rgba(212,227,204,0.8);border-color:rgba(139,175,122,0.25);}
-  nav .btn:hover{background:rgba(255,255,255,0.14);color:var(--cream);}
-  nav select{background:rgba(255,255,255,0.07);color:rgba(212,227,204,0.8);border-color:rgba(139,175,122,0.25);}
+  .nav-utils .btn{background:rgba(255,255,255,0.07);color:rgba(212,227,204,0.8);border-color:rgba(139,175,122,0.25);}
+  .nav-utils .btn:hover{background:rgba(255,255,255,0.14);color:var(--cream);}
+  .nav-utils select{font-size:12px;background:rgba(255,255,255,0.07);color:rgba(212,227,204,0.8);border:0.5px solid rgba(139,175,122,0.25);border-radius:var(--radius);padding:5px 8px;outline:none;font-family:inherit;cursor:pointer;}
   .btn-primary{font-weight:600;background:var(--moss);color:var(--cream);border-color:var(--moss);box-shadow:0 2px 4px rgba(45,74,45,0.3);}
   .btn-primary:hover{background:var(--fern);transform:translateY(-1px);box-shadow:0 4px 8px rgba(45,74,45,0.4);}
   .container{max-width:860px;margin:0 auto;padding:2rem 1.25rem;}
-  .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;}
-  .trip-title{font-size:24px;font-weight:600;color:var(--text);border:none;background:transparent;outline:none;width:320px;font-family:inherit; transition: color 0.2s;}
-  .trip-title:focus{color: var(--green);}
-  .trip-title::placeholder{color:var(--text3);}
-  .tabs{display:flex;gap:4px;border-bottom:0.5px solid var(--border);margin-bottom:1.5rem;}
-  .tab{font-size:14px;padding:10px 20px;cursor:pointer;border:none;background:transparent;color:var(--text2);border-bottom:3px solid transparent;margin-bottom:-0.5px;font-family:inherit;transition: all 0.2s ease;}
-  .tab:hover{color: var(--text); background: var(--bg2);}
-  .tab.active{color:var(--text);font-weight:600;border-bottom:3px solid var(--green); background: var(--bg2);}
+  .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;background:transparent;outline:none;width:320px;letter-spacing:-0.3px;transition:color .2s;}
+  .trip-title:focus{color:var(--fern);}
+  .trip-title::placeholder{color:var(--text3);font-weight:300;}
   .panel{display:none;animation: fadeIn 0.3s ease;}.panel.active{display:block;}
+  @media(max-width:700px){.nav-links{display:none;}}
+  @media(max-width:500px){.nav-utils .btn:not(.btn-primary){display:none;}}
   @keyframes fadeIn { from {opacity:0; transform: translateY(5px);} to {opacity:1; transform: translateY(0);} }
   .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.2rem;box-shadow: var(--shadow);}
   .form-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;}
@@ -215,7 +216,7 @@
   .trip-card:hover{border-color:var(--border2);}
   .trip-card-title{font-size:14px;font-weight:500;margin-bottom:4px;}
   .trip-card-meta{font-size:12px;color:var(--text2);}
-  @media(max-width:600px){.sumbar{grid-template-columns:repeat(2,minmax(0,1fr));}.top-bar{flex-direction:column;align-items:flex-start;gap:10px;}}
+  @media(max-width:600px){.sumbar{grid-template-columns:repeat(2,minmax(0,1fr));}}
 
   /* ── My Trip redesign ─────────────────────────────────────────── */
   /* Trip header row */
@@ -378,11 +379,17 @@
     </svg>
     SLW <em>Travel</em>
   </a>
-  <div class="nav-right">
+  <div class="nav-links">
+    <button class="nav-link active" id="navbtn_plan"    onclick="switchTab('plan',this)">Plan a route</button>
+    <button class="nav-link"        id="navbtn_record"  onclick="switchTab('record',this)">My trip</button>
+    <button class="nav-link"        id="navbtn_mytrips" onclick="switchTab('mytrips',this)">My Trips</button>
+    <button class="nav-link"        id="navbtn_admin"   onclick="switchTab('admin',this)">Admin</button>
+  </div>
+  <div class="nav-utils">
     <span class="user-badge" id="userBadge">Guest</span>
     <button class="btn" onclick="signOut()" id="signOutBtn" style="display:none">Sign out</button>
     <a href="/index.html" class="btn" id="signInBtn">Sign in</a>
-    <select id="currSel" onchange="render()" style="font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius);background:transparent;color:var(--text2);padding:5px 8px;outline:none;font-family:inherit;">
+    <select id="currSel" onchange="render()">
       <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option><option>AUD</option><option>CAD</option><option>JPY</option><option>THB</option>
     </select>
     <button class="btn" onclick="exportTrip()">Export</button>
@@ -390,17 +397,6 @@
 </nav>
 
 <div class="container">
-  <div class="top-bar">
-    <input class="trip-title" placeholder="Name your trip..." value="My overland journey" id="tripTitle"/>
-    <button class="btn" onclick="saveCurrentTrip()" id="saveBtn">Save</button>
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('plan',this)">Plan a route</button>
-    <button class="tab" onclick="switchTab('record',this)">My trip</button>
-    <button class="tab" onclick="switchTab('mytrips',this)">My Trips</button>
-    <button class="tab" onclick="switchTab('admin',this)">Admin</button>
-  </div>
 
   <!-- PLAN TAB -->
   <div id="plan" class="panel active">
@@ -493,6 +489,7 @@
     </div>
 
     <div class="save-trip-bar">
+      <input class="trip-title" placeholder="Name your trip..." value="My overland journey" id="tripTitle" style="flex:1"/>
       <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
       <span class="save-status" id="saveStatus"></span>
     </div>
@@ -876,8 +873,7 @@ async function saveCurrentTrip() {
 
 function showMyTrips() { goToMyTrips(); }
 function goToMyTrips() {
-  const tab = document.querySelectorAll('.tab')[2]; // My Trips tab
-  switchTab('mytrips', tab);
+  switchTab('mytrips', document.getElementById('navbtn_mytrips'));
 }
 
 // kept for backward compat — now delegates to renderMyTripsPanel
@@ -931,8 +927,7 @@ function loadTrip(trip) {
   document.getElementById('budgInp').value   = trip.budget || '';
   if (trip.currency) document.getElementById('currSel').value = trip.currency;
   // Switch to My trip tab
-  const recTab = document.querySelectorAll('.tab')[1];
-  switchTab('record', recTab);
+  switchTab('record', document.getElementById('navbtn_record'));
   updateActiveTripBar();
   render();
 }
@@ -1463,9 +1458,10 @@ function renderAdminSiteList() {
 
 // ── Tab switching ─────────────────────────────────────────────────
 function switchTab(id, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
+  const btn = el || document.getElementById('navbtn_' + id);
+  if (btn) btn.classList.add('active');
   document.getElementById(id).classList.add('active');
   if (id === 'record')   { render(); }
   if (id === 'admin')    { renderAdminTab(); }
@@ -1728,7 +1724,7 @@ function adoptRoute() {
     confidence:   l.confidence    || 'uncertain',
     conflict:     l.conflict      || null
   }));
-  switchTab('record', document.querySelectorAll('.tab')[1]);
+  switchTab('record', document.getElementById('navbtn_record'));
   render();
 }
 
@@ -2347,7 +2343,7 @@ function renderPlanLanding() {
       </div>
       ${recentHtml}
       <div style="margin-top:8px;padding-top:10px;border-top:0.5px dashed var(--border)">
-        <button class="btn" style="width:100%" onclick="startNewTrip();switchTab('record',document.querySelectorAll('.tab')[1])">+ New empty trip</button>
+        <button class="btn" style="width:100%" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New empty trip</button>
       </div>
     </div>
   </div>
@@ -2405,13 +2401,13 @@ function renderMyTripsPanel() {
         <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern)">Your journeys</div>
         <div class="mytrips-serif-title">My <em>trips</em></div>
       </div>
-      <button class="btn btn-primary" onclick="startNewTrip();switchTab('record',document.querySelectorAll('.tab')[1])">+ New trip</button>
+      <button class="btn btn-primary" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New trip</button>
     </div>
     <div style="text-align:center;padding:3rem 1rem;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg)">
       <div style="font-family:var(--serif);font-size:28px;font-weight:300;color:var(--text);letter-spacing:-0.3px">No trips yet.<br><em style="color:var(--fern)">Start slow.</em></div>
       <div style="font-size:13px;color:var(--text2);margin-top:12px;line-height:1.7;max-width:380px;margin-left:auto;margin-right:auto">Pick two places. We'll map the trains, buses, and ferries between them.</div>
       <div style="margin-top:20px;display:flex;gap:10px;justify-content:center">
-        <button class="btn btn-primary" onclick="switchTab('plan',document.querySelectorAll('.tab')[0])">Plan a route</button>
+        <button class="btn btn-primary" onclick="switchTab('plan',document.getElementById('navbtn_plan'))">Plan a route</button>
       </div>
     </div>`;
     return;
@@ -2453,7 +2449,7 @@ function renderMyTripsPanel() {
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern)">Your journeys</div>
       <div class="mytrips-serif-title">My <em>trips</em></div>
     </div>
-    <button class="btn btn-primary" onclick="startNewTrip();switchTab('record',document.querySelectorAll('.tab')[1])">+ New trip</button>
+    <button class="btn btn-primary" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New trip</button>
   </div>
   <div class="mytrips-table">
     <div class="mytrips-table-hdr">
