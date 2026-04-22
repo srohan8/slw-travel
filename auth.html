@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign in — SLW Travel</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --moss:#2D4A2D; --fern:#4A7C4A; --sage:#8BAF7A; --mist:#D4E3CC;
+  --cream:#F5F0E8; --sand:#E8DFD0; --dusk:#1A2B1A; --gold:#C9A84C;
+  --bg:#FAF7F2; --bg2:#F2EDE4; --text:#1A2B1A; --text2:#4A6040; --text3:#9AA880;
+  --border:rgba(45,74,45,0.15); --border2:rgba(45,74,45,0.3);
+  --radius:10px; --radius-lg:16px;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono','Courier New',monospace;
+}
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--body);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+/* ── Left pitch panel ─────────────────────────────────────── */
+.auth-left {
+  background: linear-gradient(180deg, #0D120D 0%, #17231A 100%);
+  padding: 48px 56px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--cream);
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.auth-logo-text {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--cream);
+  letter-spacing: -0.3px;
+}
+.auth-logo-text em { font-style: italic; color: var(--sage); }
+
+.auth-left-body {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  margin-bottom: 40px;
+}
+.kicker {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--sage);
+  font-weight: 400;
+}
+.auth-left-h {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(36px, 4vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -1px;
+  margin: 12px 0 18px;
+  color: var(--cream);
+}
+.auth-left-h em { font-style: italic; color: var(--sage); }
+
+.auth-left-sub {
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(245,240,232,0.65);
+  max-width: 340px;
+}
+
+.auth-trust {
+  display: flex;
+  gap: 24px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 0.5px solid rgba(245,240,232,0.13);
+}
+.auth-trust-item {}
+.auth-trust-n {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--cream);
+  letter-spacing: -0.3px;
+}
+.auth-trust-l {
+  font-size: 10px;
+  color: rgba(212,227,204,0.5);
+  margin-top: 2px;
+  font-family: var(--mono);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.auth-bg-sloth {
+  position: absolute;
+  right: -60px;
+  bottom: -30px;
+  opacity: 0.12;
+  pointer-events: none;
+}
+.auth-version {
+  position: absolute;
+  left: 56px;
+  top: 96px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(212,227,204,0.28);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ── Right form panel ─────────────────────────────────────── */
+.auth-right {
+  background: var(--bg);
+  padding: 48px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+}
+.auth-form-wrap {
+  max-width: 360px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Tab switcher */
+.auth-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 0.5px solid var(--border);
+  margin-bottom: 28px;
+}
+.auth-tab {
+  font-size: 13px;
+  padding: 10px 2px;
+  margin-right: 22px;
+  color: var(--text3);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -0.5px;
+  font-family: var(--body);
+  transition: color .15s;
+}
+.auth-tab.active {
+  color: var(--text);
+  font-weight: 500;
+  border-bottom-color: var(--fern);
+}
+
+.auth-title {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: -0.4px;
+  margin-top: 4px;
+  margin-bottom: 22px;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+/* OAuth buttons */
+.oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 0.5px solid var(--border2);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--body);
+  cursor: pointer;
+  width: 100%;
+  transition: background .15s;
+  margin-bottom: 8px;
+}
+.oauth-btn:hover { background: var(--bg2); }
+.oauth-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* Divider */
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+.auth-or::before, .auth-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.auth-or span {
+  font-size: 10px;
+  font-family: var(--mono);
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+/* Fields */
+.field { margin-bottom: 12px; }
+.field-lbl {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.field-lbl a {
+  color: var(--fern);
+  font-size: 11px;
+  text-decoration: none;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  font-family: var(--body);
+}
+.field-inp {
+  font-size: 14px;
+  color: var(--text);
+  border: 0.5px solid var(--border2);
+  border-radius: 8px;
+  background: var(--bg);
+  padding: 11px 13px;
+  outline: none;
+  font-family: var(--body);
+  width: 100%;
+  transition: border-color .15s;
+}
+.field-inp:focus { border-color: var(--fern); }
+
+/* Remember me */
+.remember-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text2);
+  margin: 6px 0 0;
+}
+.remember-row input { accent-color: var(--fern); }
+
+/* Submit */
+.auth-submit {
+  margin-top: 14px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--moss);
+  color: var(--cream);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--body);
+  cursor: pointer;
+  width: 100%;
+  transition: background .15s;
+}
+.auth-submit:hover { background: var(--fern); }
+.auth-submit:disabled { opacity: 0.5; cursor: default; }
+
+/* Message */
+.auth-msg {
+  font-size: 12px;
+  text-align: center;
+  margin-top: 10px;
+  min-height: 16px;
+  line-height: 1.5;
+}
+.auth-msg.err { color: #C4622D; }
+.auth-msg.ok  { color: var(--fern); }
+
+/* Footer note */
+.auth-fine {
+  font-size: 11px;
+  color: var(--text3);
+  text-align: center;
+  margin-top: 20px;
+  line-height: 1.6;
+}
+.auth-fine a { color: var(--fern); text-decoration: underline; cursor: pointer; }
+
+.auth-skip {
+  font-size: 12px;
+  color: var(--text3);
+  text-align: center;
+  margin-top: 10px;
+  cursor: pointer;
+}
+.auth-skip:hover { color: var(--text2); }
+
+/* Mobile */
+@media(max-width: 680px) {
+  body { grid-template-columns: 1fr; }
+  .auth-left { display: none; }
+  .auth-right { padding: 32px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Left pitch panel ──────────────────────────────── -->
+<div class="auth-left">
+  <a class="auth-logo" href="index.html">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <ellipse cx="14" cy="16" rx="7" ry="6" fill="#8BAF7A" opacity="0.95"/>
+      <circle cx="14" cy="9" r="5" fill="#8BAF7A" opacity="0.95"/>
+      <ellipse cx="14" cy="10" rx="3" ry="2.5" fill="#fff" opacity="0.25"/>
+      <circle cx="12.2" cy="8.5" r="1" fill="#1A2B1A"/>
+      <circle cx="15.8" cy="8.5" r="1" fill="#1A2B1A"/>
+      <path d="M12.5 11 Q14 12.5 15.5 11" stroke="#1A2B1A" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+      <path d="M7 14 Q4 12 3.5 10" stroke="#8BAF7A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M21 14 Q24 12 24.5 10" stroke="#8BAF7A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </svg>
+    <span class="auth-logo-text">SLW <em>Travel</em></span>
+  </a>
+
+  <div class="auth-left-body">
+    <div class="kicker">Overland planner · Community-verified</div>
+    <h1 class="auth-left-h">
+      Every leg<br>
+      <em>double-checked</em><br>
+      by someone<br>
+      who was there.
+    </h1>
+    <p class="auth-left-sub">SLW routes are planned by an AI and verified by travellers. Join 2,400+ contributors keeping borders, prices, and schedules honest.</p>
+
+    <div class="auth-trust">
+      <div class="auth-trust-item">
+        <div class="auth-trust-n">2,400+</div>
+        <div class="auth-trust-l">Contributors</div>
+      </div>
+      <div class="auth-trust-item">
+        <div class="auth-trust-n">18,600</div>
+        <div class="auth-trust-l">Notes verified</div>
+      </div>
+      <div class="auth-trust-item">
+        <div class="auth-trust-n">23</div>
+        <div class="auth-trust-l">Countries live</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-version">v0.4 · private beta</div>
+
+  <!-- Decorative sloth -->
+  <div class="auth-bg-sloth">
+    <svg width="360" height="360" viewBox="0 0 140 140" fill="none">
+      <ellipse cx="70" cy="80" rx="35" ry="30" fill="#8BAF7A"/>
+      <circle cx="70" cy="45" r="25" fill="#8BAF7A"/>
+      <ellipse cx="70" cy="50" rx="15" ry="12.5" fill="#fff" opacity="0.15"/>
+      <circle cx="61" cy="42.5" r="5" fill="#1A2B1A" opacity="0.6"/>
+      <circle cx="79" cy="42.5" r="5" fill="#1A2B1A" opacity="0.6"/>
+    </svg>
+  </div>
+</div>
+
+<!-- ── Right form panel ──────────────────────────────── -->
+<div class="auth-right">
+  <div class="auth-form-wrap">
+
+    <!-- Tab switcher -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign in</button>
+      <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Create account</button>
+    </div>
+
+    <!-- ── Sign in ── -->
+    <div id="panel-signin">
+      <div class="kicker">Welcome back</div>
+      <div class="auth-title">Plan the next slow one.</div>
+
+      <button class="oauth-btn" onclick="oauthGoogle()" disabled title="Google sign-in coming soon">
+        <i class="ph ph-google-logo" style="font-size:16px"></i> Continue with Google
+      </button>
+      <button class="oauth-btn" onclick="oauthApple()" disabled title="Apple sign-in coming soon">
+        <i class="ph ph-apple-logo" style="font-size:16px"></i> Continue with Apple
+      </button>
+
+      <div class="auth-or"><span>or</span></div>
+
+      <div class="field">
+        <div class="field-lbl">Email</div>
+        <input class="field-inp" type="email" id="si-email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <div class="field-lbl">
+          <span>Password</span>
+          <a onclick="showForgot()">Forgot?</a>
+        </div>
+        <input class="field-inp" type="password" id="si-pass" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <label class="remember-row">
+        <input type="checkbox" id="si-remember" checked> Keep me signed in on this device
+      </label>
+
+      <button class="auth-submit" onclick="signIn()">Sign in →</button>
+      <div class="auth-msg" id="si-msg"></div>
+      <p class="auth-skip" onclick="skipToApp()">Try without an account →</p>
+    </div>
+
+    <!-- ── Create account ── -->
+    <div id="panel-signup" style="display:none">
+      <div class="kicker">Join 2,400+ travellers</div>
+      <div class="auth-title">Start your slow journey.</div>
+
+      <button class="oauth-btn" onclick="oauthGoogle()" disabled title="Google sign-in coming soon">
+        <i class="ph ph-google-logo" style="font-size:16px"></i> Continue with Google
+      </button>
+      <button class="oauth-btn" onclick="oauthApple()" disabled title="Apple sign-in coming soon">
+        <i class="ph ph-apple-logo" style="font-size:16px"></i> Continue with Apple
+      </button>
+
+      <div class="auth-or"><span>or</span></div>
+
+      <div class="field">
+        <div class="field-lbl">Email</div>
+        <input class="field-inp" type="email" id="su-email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <div class="field-lbl">Password</div>
+        <input class="field-inp" type="password" id="su-pass" placeholder="Min 8 characters" autocomplete="new-password"/>
+      </div>
+
+      <button class="auth-submit" onclick="signUp()">Create account →</button>
+      <div class="auth-msg" id="su-msg"></div>
+      <p class="auth-skip" onclick="skipToApp()">Try without an account →</p>
+    </div>
+
+    <!-- ── Forgot password ── -->
+    <div id="panel-forgot" style="display:none">
+      <div class="kicker">Reset password</div>
+      <div class="auth-title">We'll send a link.</div>
+      <div class="field">
+        <div class="field-lbl">Email</div>
+        <input class="field-inp" type="email" id="fp-email" placeholder="you@example.com"/>
+      </div>
+      <button class="auth-submit" onclick="sendReset()">Send reset link →</button>
+      <div class="auth-msg" id="fp-msg"></div>
+      <p class="auth-skip" onclick="switchTab('signin')">← Back to sign in</p>
+    </div>
+
+    <p class="auth-fine">
+      By continuing you agree to our <a>Terms</a> and <a>Privacy Policy</a>.<br>
+      No flights. No data sold.
+    </p>
+  </div>
+</div>
+
+<script>
+  const SUPA_URL = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
+  const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  // Redirect if already signed in
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) window.location.href = 'app.html';
+  });
+
+  // Read ?tab= param
+  const urlTab = new URLSearchParams(window.location.search).get('tab');
+  if (urlTab === 'signup') switchTab('signup');
+
+  function switchTab(tab) {
+    ['signin','signup','forgot'].forEach(t => {
+      document.getElementById('panel-' + t).style.display = t === tab ? 'block' : 'none';
+    });
+    document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
+    document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  }
+
+  function showForgot() { switchTab('forgot'); }
+
+  function setMsg(id, msg, isErr) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'auth-msg ' + (isErr ? 'err' : 'ok');
+  }
+
+  async function signIn() {
+    const email = document.getElementById('si-email').value.trim();
+    const pass  = document.getElementById('si-pass').value;
+    if (!email || !pass) return setMsg('si-msg', 'Please fill in all fields', true);
+    setMsg('si-msg', 'Signing in…');
+    const btn = document.querySelector('#panel-signin .auth-submit');
+    btn.disabled = true;
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    btn.disabled = false;
+    if (error) return setMsg('si-msg', error.message, true);
+    window.location.href = 'app.html';
+  }
+
+  async function signUp() {
+    const email = document.getElementById('su-email').value.trim();
+    const pass  = document.getElementById('su-pass').value;
+    if (!email || !pass) return setMsg('su-msg', 'Please fill in all fields', true);
+    if (pass.length < 8) return setMsg('su-msg', 'Password must be 8+ characters', true);
+    setMsg('su-msg', 'Creating account…');
+    const btn = document.querySelector('#panel-signup .auth-submit');
+    btn.disabled = true;
+    const { error } = await sb.auth.signUp({ email, password: pass });
+    btn.disabled = false;
+    if (error) return setMsg('su-msg', error.message, true);
+    setMsg('su-msg', '✓ Check your email to confirm your account, then sign in.');
+    setTimeout(() => switchTab('signin'), 3000);
+  }
+
+  async function sendReset() {
+    const email = document.getElementById('fp-email').value.trim();
+    if (!email) return setMsg('fp-msg', 'Enter your email', true);
+    setMsg('fp-msg', 'Sending…');
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/auth.html'
+    });
+    if (error) return setMsg('fp-msg', error.message, true);
+    setMsg('fp-msg', '✓ Reset link sent — check your inbox.');
+  }
+
+  async function oauthGoogle() {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/app.html' }
+    });
+    if (error) setMsg('si-msg', error.message, true);
+  }
+
+  async function oauthApple() {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo: window.location.origin + '/app.html' }
+    });
+    if (error) setMsg('si-msg', error.message, true);
+  }
+
+  function skipToApp() {
+    window.location.href = 'app.html?guest=1';
+  }
+
+  // Enter key
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const active = document.querySelector('[id^="panel-"]:not([style*="display: none"])');
+    if (active?.id === 'panel-signin')  signIn();
+    if (active?.id === 'panel-signup')  signUp();
+    if (active?.id === 'panel-forgot')  sendReset();
+  });
+</script>
+</body>
+</html>

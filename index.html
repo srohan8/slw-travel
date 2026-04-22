@@ -332,8 +332,8 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
     <span onclick="scrollTo('.section-pillars')">How it works</span>
     <span onclick="scrollTo('.section-routes')">Routes</span>
     <span onclick="scrollTo('.section-pricing')">Pricing</span>
-    <span onclick="openAuth('signin')">Sign in</span>
-    <button class="mkt-cta-pill" onclick="openAuth('signup')">Start planning →</button>
+    <span onclick="window.location='auth.html'">Sign in</span>
+    <button class="mkt-cta-pill" onclick="window.location='auth.html?tab=signup'">Start planning →</button>
   </div>
 </header>
 
@@ -365,8 +365,8 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
     <p class="hero-sub">Trains, buses, ferries, shared taxis, the occasional hitch. SLW maps a realistic overland route between any two cities — and is honest about the legs it isn't sure about.</p>
 
     <div class="hero-cta">
-      <button class="hero-btn-primary" onclick="openAuth('signup')">Plan your first route <span>→</span></button>
-      <button class="hero-btn-ghost" onclick="openAuth('signin')">Sign in</button>
+      <button class="hero-btn-primary" onclick="window.location='auth.html?tab=signup'">Plan your first route <span>→</span></button>
+      <button class="hero-btn-ghost" onclick="window.location='auth.html'">Sign in</button>
       <span class="hero-free-lbl">Free · 3 routes/mo</span>
     </div>
 
@@ -430,7 +430,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 <div class="section section-gap section-routes">
   <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
     <div class="kicker">Routes the community has planned</div>
-    <span style="font-size:11px;color:var(--fern);cursor:pointer" onclick="openAuth('signup')">Browse all 142 →</span>
+    <span style="font-size:11px;color:var(--fern);cursor:pointer" onclick="window.location='auth.html?tab=signup'">Browse all 142 →</span>
   </div>
   <div class="route-table">
     <div class="route-row" onclick="setDemoAndLaunch('Istanbul, Turkey','Kathmandu, Nepal')">
@@ -524,7 +524,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
         <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Confidence badges</div>
         <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Basic journal</div>
       </div>
-      <button class="price-cta price-cta-free" onclick="openAuth('signup')">Start free →</button>
+      <button class="price-cta price-cta-free" onclick="window.location='auth.html?tab=signup'">Start free →</button>
     </div>
     <div class="price-card price-card-pro">
       <div class="pro-rec-badge"><i class="ph ph-sparkle" style="font-size:11px"></i> Recommended</div>
@@ -540,7 +540,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
         <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Offline export · GPX + PDF</div>
         <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Shared trips with editors</div>
       </div>
-      <button class="price-cta price-cta-pro" onclick="openAuth('signup')">Try Pro free for 14 days →</button>
+      <button class="price-cta price-cta-pro" onclick="window.location='auth.html?tab=signup'">Try Pro free for 14 days →</button>
     </div>
   </div>
 </div>
@@ -551,7 +551,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
     <div class="kicker" style="color:var(--sage)">Ready when you are</div>
     <div class="final-cta-h">The slow way is the <em>only</em> way<br>to really see a place.</div>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap">
-      <button class="hero-btn-primary" onclick="openAuth('signup')">Plan your first route →</button>
+      <button class="hero-btn-primary" onclick="window.location='auth.html?tab=signup'">Plan your first route →</button>
       <button class="hero-btn-ghost" style="border-color:rgba(212,227,204,0.25);color:var(--cream)">Read the manifesto</button>
     </div>
   </div>
@@ -666,7 +666,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 <script>
   // ── Supabase ──────────────────────────────────────────────────
   const SUPA_URL = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
-  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdtcW9tZ3lqdW8iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3NDA3NDAyMiwiZXhwIjoyMDg5NjUwMDIyfQ.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
   const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
   // ── Session check: redirect if already signed in ───────────────
