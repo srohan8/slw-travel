@@ -6,6 +6,7 @@
 <title>SLW Travel — Go the long way. On purpose.</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -663,11 +664,15 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 </div>
 
 <script>
-  // ── Session check ─────────────────────────────────────────────
-  const stored = localStorage.getItem('slw_user');
-  if (stored) {
-    try { if (JSON.parse(stored)?.id) window.location.href = 'app.html'; } catch(e){}
-  }
+  // ── Supabase ──────────────────────────────────────────────────
+  const SUPA_URL = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdtcW9tZ3lqdW8iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3NDA3NDAyMiwiZXhwIjoyMDg5NjUwMDIyfQ.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
+  const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  // ── Session check: redirect if already signed in ───────────────
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) window.location.href = 'app.html';
+  });
 
   // ── Auth modal ────────────────────────────────────────────────
   function openAuth(tab='signin') {
@@ -697,27 +702,32 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   async function signIn() {
     const email = document.getElementById('si-email').value.trim();
     const pass  = document.getElementById('si-pass').value;
-    if (!email || !pass) return setMsg('si-msg','Please fill in all fields', true);
-    setMsg('si-msg','Signing in…');
-    const user = { email, id: 'local-' + btoa(email) };
-    localStorage.setItem('slw_user', JSON.stringify(user));
+    if (!email || !pass) return setMsg('si-msg', 'Please fill in all fields', true);
+    setMsg('si-msg', 'Signing in…');
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) return setMsg('si-msg', error.message, true);
     window.location.href = 'app.html';
   }
+
   async function signUp() {
     const email = document.getElementById('su-email').value.trim();
     const pass  = document.getElementById('su-pass').value;
-    if (!email || !pass) return setMsg('su-msg','Please fill in all fields', true);
-    if (pass.length < 8) return setMsg('su-msg','Password must be 8+ characters', true);
-    setMsg('su-msg','Creating account…');
-    const user = { email, id: 'local-' + btoa(email) };
-    localStorage.setItem('slw_user', JSON.stringify(user));
-    setTimeout(() => window.location.href = 'app.html', 800);
+    if (!email || !pass) return setMsg('su-msg', 'Please fill in all fields', true);
+    if (pass.length < 8) return setMsg('su-msg', 'Password must be 8+ characters', true);
+    setMsg('su-msg', 'Creating account…');
+    const { error } = await sb.auth.signUp({ email, password: pass });
+    if (error) return setMsg('su-msg', error.message, true);
+    setMsg('su-msg', 'Check your email to confirm your account ✓');
   }
+
   async function signInGoogle() {
-    const user = { email: 'traveller@gmail.com', id: 'local-google' };
-    localStorage.setItem('slw_user', JSON.stringify(user));
-    window.location.href = 'app.html';
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/app.html' }
+    });
+    if (error) setMsg('si-msg', error.message, true);
   }
+
   function skipToApp() {
     window.location.href = 'app.html?guest=1';
   }

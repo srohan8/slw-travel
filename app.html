@@ -629,37 +629,19 @@
 </div>
 
 <script>
-// ── Local Storage State Management ──────────────────────────────────
+// ── Supabase client ───────────────────────────────────────────────
+const SUPA_URL  = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
+const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdtcW9tZ3lqdW8iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3NDA3NDAyMiwiZXhwIjoyMDg5NjUwMDIyfQ.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── Local Storage fallback (for offline / non-auth data) ──────────
 const storage = {
-  get: (key) => JSON.parse(localStorage.getItem('slw_' + key) || '[]'),
+  get: (key) => { try { return JSON.parse(localStorage.getItem('slw_' + key) || '[]'); } catch { return []; } },
   set: (key, val) => localStorage.setItem('slw_' + key, JSON.stringify(val)),
-  getUser: () => JSON.parse(localStorage.getItem('slw_user') || 'null')
 };
 
 // ── Config ────────────────────────────────────────────────────────
-const PROXY_URL     = 'https://slw-travel-proxy-production.up.railway.app';
-
-// Mock Supabase client for existing function calls
-const sb = {
-  from: () => ({
-    select: () => ({
-      eq: () => ({
-        eq: () => ({
-          eq: () => ({
-            single: async () => ({ data: null })
-          })
-        })
-      })
-    })
-  }),
-  auth: {
-    getSession: async () => ({ data: { session: storage.getUser() } }),
-    signOut: async () => { 
-      localStorage.removeItem('slw_user');
-      return { data: null };
-    }
-  }
-};
+const PROXY_URL = 'https://slw-travel-proxy-production.up.railway.app';
 
 
 // ── Affiliate config (all links in one place) ─────────────────────
@@ -765,24 +747,27 @@ let currentUser    = null;
 
 // ── Init ──────────────────────────────────────────────────────────
 async function init() {
-  // Default settings (since admin_settings was in Supabase)
-  appSettings = {
-    login_required: false,
-    freemium_enabled: false,
-    affiliate_links: true
-  };
+  appSettings = { login_required: false, freemium_enabled: false, affiliate_links: true };
 
-  // Auth state
-  const user = storage.getUser();
-  currentUser = user || null;
+  // Real Supabase session
+  const { data: { session } } = await sb.auth.getSession();
+  currentUser = session?.user || null;
   updateNavAuth();
 
-  // Check login_required
+  // Sync trips from Supabase → localStorage if signed in
+  if (currentUser) await syncTripsFromCloud();
+
+  // Keep auth in sync across tabs / token refresh
+  sb.auth.onAuthStateChange((_event, session) => {
+    currentUser = session?.user || null;
+    updateNavAuth();
+    if (currentUser) syncTripsFromCloud();
+  });
+
   const params = new URLSearchParams(window.location.search);
   const isGuest = params.get('guest') === '1';
   if (appSettings.login_required && !currentUser && !isGuest) {
-      window.location.href = 'index.html';
-      return;
+    window.location.href = 'index.html'; return;
   }
 
   loadCustomSitesIntoAFF();
@@ -792,6 +777,85 @@ async function init() {
   updateCacheClearBtn();
   renderSavedTrips();
   updateActiveTripBar();
+}
+
+// ── Cloud sync helpers ────────────────────────────────────────────
+async function syncTripsFromCloud() {
+  if (!currentUser) return;
+  try {
+    const { data, error } = await sb
+      .from('trips')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    if (data && data.length) {
+      // Merge: cloud wins for same-id trips
+      const local = storage.get('trips');
+      const cloudIds = new Set(data.map(t => t.id));
+      const merged = [
+        ...data.map(t => ({ ...t.data, id: t.id, updated_at: t.updated_at })),
+        ...local.filter(t => !cloudIds.has(t.id))
+      ];
+      storage.set('trips', merged);
+    }
+  } catch(e) { console.warn('syncTripsFromCloud:', e.message); }
+}
+
+async function saveCurrentTrip() {
+  document.getElementById('saveStatus').textContent = 'Saving...';
+
+  const typedTitle = document.getElementById('tripTitle').value.trim();
+  const defaultTitles = ['', 'My overland journey', 'Untitled trip'];
+  let autoTitle = typedTitle;
+  if (defaultTitles.includes(typedTitle)) {
+    const from = stops[0]?.name, to = stops[stops.length - 1]?.name;
+    const totalDays = stops.reduce((s, x) => s + (x.days || 0), 0);
+    if (from && to && from !== to) autoTitle = `${from} → ${to}${totalDays ? ' · ' + totalDays + 'd' : ''}`;
+    else if (from) autoTitle = from;
+    else autoTitle = 'Untitled trip';
+    document.getElementById('tripTitle').value = autoTitle;
+  }
+
+  const tripData = {
+    id: currentTripId || 'trip-' + Date.now(),
+    title: autoTitle, stops, legs,
+    notes:    document.getElementById('tripNotes').value,
+    budget:   document.getElementById('budgInp').value,
+    currency: document.getElementById('currSel').value,
+    updated_at: new Date().toISOString()
+  };
+
+  // Always save locally
+  let trips = storage.get('trips');
+  const idx = trips.findIndex(t => t.id === tripData.id);
+  if (idx !== -1) trips[idx] = tripData; else trips.push(tripData);
+  storage.set('trips', trips);
+  currentTripId = tripData.id;
+
+  // Also save to Supabase if signed in
+  if (currentUser) {
+    try {
+      const { error } = await sb.from('trips').upsert({
+        id:         tripData.id,
+        user_id:    currentUser.id,
+        title:      tripData.title,
+        data:       tripData,          // full blob in jsonb column
+        updated_at: tripData.updated_at
+      }, { onConflict: 'id' });
+      if (error) throw error;
+      document.getElementById('saveStatus').textContent = 'Saved ✓';
+    } catch(e) {
+      console.warn('Cloud save failed, kept local:', e.message);
+      document.getElementById('saveStatus').textContent = 'Saved locally ✓';
+    }
+  } else {
+    document.getElementById('saveStatus').textContent = 'Saved locally ✓';
+  }
+
+  renderSavedTrips();
+  updateActiveTripBar();
+  setTimeout(() => document.getElementById('saveStatus').textContent = '', 2500);
 }
 
 
@@ -827,54 +891,6 @@ async function checkAndGate(action) {
 }
 
 // ── Trip saving ───────────────────────────────────────────────────
-async function saveCurrentTrip() {
-  document.getElementById('saveStatus').textContent = 'Saving...';
-  
-  // Auto-generate title if blank or still the default placeholder
-  const typedTitle = document.getElementById('tripTitle').value.trim();
-  const defaultTitles = ['', 'My overland journey', 'Untitled trip'];
-  let autoTitle = typedTitle;
-  if (defaultTitles.includes(typedTitle)) {
-    const from = stops[0]?.name;
-    const to   = stops[stops.length - 1]?.name;
-    const totalDays = stops.reduce((s, x) => s + (x.days || 0), 0);
-    if (from && to && from !== to) {
-      autoTitle = `${from} → ${to}${totalDays ? ' · ' + totalDays + 'd' : ''}`;
-    } else if (from) {
-      autoTitle = from;
-    } else {
-      autoTitle = 'Untitled trip';
-    }
-    document.getElementById('tripTitle').value = autoTitle;
-  }
-
-  const tripData = {
-    id: currentTripId || 'trip-' + Date.now(),
-    title: autoTitle,
-    stops, legs,
-    notes: document.getElementById('tripNotes').value,
-    budget: document.getElementById('budgInp').value,
-    currency: document.getElementById('currSel').value,
-    updated_at: new Date().toISOString()
-  };
-
-  let trips = storage.get('trips');
-  const idx = trips.findIndex(t => t.id === tripData.id);
-  
-  if (idx !== -1) {
-    trips[idx] = tripData;
-  } else {
-    trips.push(tripData);
-  }
-  
-  storage.set('trips', trips);
-  currentTripId = tripData.id;
-  renderSavedTrips();
-  updateActiveTripBar();
-  document.getElementById('saveStatus').textContent = 'Saved ✓';
-  setTimeout(() => document.getElementById('saveStatus').textContent = '', 2000);
-}
-
 function showMyTrips() { goToMyTrips(); }
 function goToMyTrips() {
   switchTab('mytrips', document.getElementById('navbtn_mytrips'));
@@ -884,10 +900,14 @@ function goToMyTrips() {
 function toggleTripsDrawer() { goToMyTrips(); }
 function renderSavedTrips()  { renderMyTripsPanel(); }
 
-function deleteTrip(id) {
+async function deleteTrip(id) {
   if (!confirm('Delete this trip?')) return;
   storage.set('trips', storage.get('trips').filter(t => t.id !== id));
   if (currentTripId === id) { currentTripId = null; updateActiveTripBar(); }
+  if (currentUser) {
+    try { await sb.from('trips').delete().eq('id', id).eq('user_id', currentUser.id); }
+    catch(e) { console.warn('Cloud delete failed:', e.message); }
+  }
   renderSavedTrips();
 }
 
