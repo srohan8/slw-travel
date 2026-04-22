@@ -408,14 +408,7 @@
     <div id="planLanding">
       <div class="plan-hero">
         <div class="plan-hero-sloth">
-          <svg width="140" height="140" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.9">
-            <ellipse cx="70" cy="80" rx="35" ry="30" fill="#8BAF7A"/>
-            <circle cx="70" cy="45" r="25" fill="#8BAF7A"/>
-            <ellipse cx="70" cy="50" rx="15" ry="12.5" fill="#fff" opacity="0.25"/>
-            <circle cx="61" cy="42.5" r="5" fill="#1A2B1A"/>
-            <circle cx="79" cy="42.5" r="5" fill="#1A2B1A"/>
-            <path d="M62.5 55 Q70 62.5 77.5 55" stroke="#1A2B1A" stroke-width="3" fill="none" stroke-linecap="round"/>
-          </svg>
+          <img src="public/sloth-logo.svg" width="160" style="filter:brightness(0) invert(1);opacity:0.35"/>
         </div>
         <div class="plan-hero-kicker">Overland planner · no flights, ever</div>
         <div class="plan-hero-title">Where do you want<br>to go <em>slowly?</em></div>
@@ -731,23 +724,119 @@ const POPULAR_CORRIDORS = [
 ];
 
 // ── Contrib storage abstraction (localStorage now, Supabase-ready) ─
+// ── Contribution storage — localStorage cache + Supabase backend ─────
+// localStorage is the fast read path. Supabase is the source of truth.
+// On first expand of a leg we fetch from Supabase and merge into cache.
 const contribStorage = {
   _key: 'slw_contribs',
-  getAll()        { try { return JSON.parse(localStorage.getItem(this._key)||'{}'); } catch{ return {}; } },
-  getForLeg(key)  { return this.getAll()[key] || []; },
-  addToLeg(key, note) {
+  _fetched: new Set(), // leg keys already synced this session
+
+  getAll()       { try { return JSON.parse(localStorage.getItem(this._key)||'{}'); } catch{ return {}; } },
+  getForLeg(key) { return this.getAll()[key] || []; },
+
+  _save(all) { localStorage.setItem(this._key, JSON.stringify(all)); },
+
+  // Write a new note to localStorage immediately, then persist to Supabase
+  async addToLeg(key, note) {
     const all = this.getAll();
     if (!all[key]) all[key] = [];
-    const ts = Date.now();
-    all[key].unshift({ ...note, votes:0, when:'just now', _ts:ts, id: ts.toString(36) });
-    localStorage.setItem(this._key, JSON.stringify(all));
+    const ts  = Date.now();
+    const local = { ...note, votes:0, confirmed_count:0, when:'just now', _ts:ts,
+                    id: ts.toString(36), author: note.author || currentUser?.email?.split('@')[0] || 'anonymous' };
+    all[key].unshift(local);
+    this._save(all);
+
+    if (currentUser) {
+      try {
+        const { data, error } = await sb.from('contributions').insert({
+          leg_key: key,
+          user_id: currentUser.id,
+          kind:    note.kind,
+          text:    note.text,
+          source:  note.source || '',
+        }).select().single();
+        if (!error && data) {
+          // replace temp id with real uuid
+          const idx = all[key].findIndex(n => n._ts === ts);
+          if (idx !== -1) all[key][idx].id = data.id;
+          this._save(all);
+        }
+      } catch(e) { console.warn('contrib save:', e.message); }
+    }
   },
-  upvote(key, idx) {
+
+  // Fetch contributions for a leg from Supabase, merge into cache
+  async fetchForLeg(key) {
+    if (this._fetched.has(key)) return;
+    this._fetched.add(key);
+    try {
+      const { data, error } = await sb
+        .from('contributions')
+        .select('*, profiles(display_name, email)')
+        .eq('leg_key', key)
+        .order('votes', { ascending: false })
+        .order('created_at', { ascending: false });
+      if (error || !data?.length) return;
+
+      const all = this.getAll();
+      const existingIds = new Set((all[key]||[]).map(n => n.id));
+      const cloud = data.map(row => ({
+        id:              row.id,
+        kind:            row.kind,
+        text:            row.text,
+        source:          row.source || '',
+        votes:           row.votes || 0,
+        confirmed_count: row.confirmed_count || 0,
+        when:            _timeAgo(row.created_at),
+        author:          row.profiles?.display_name || row.profiles?.email?.split('@')[0] || 'traveller',
+        _fromCloud:      true,
+      }));
+      // Merge: cloud wins for same IDs; keep local-only entries
+      const merged = [
+        ...cloud,
+        ...(all[key]||[]).filter(n => !n._fromCloud && !existingIds.has(n.id)),
+      ];
+      all[key] = merged;
+      this._save(all);
+    } catch(e) { console.warn('contrib fetch:', e.message); }
+  },
+
+  // Upvote: insert into contribution_votes, increment contributions.votes
+  async upvote(noteId, legKey) {
+    if (!currentUser) { alert('Sign in to upvote notes.'); return; }
+    // Optimistic local update
     const all = this.getAll();
-    if (all[key]?.[idx]) all[key][idx].votes = (all[key][idx].votes||0) + 1;
-    localStorage.setItem(this._key, JSON.stringify(all));
+    const note = (all[legKey]||[]).find(n => n.id === noteId);
+    if (note) { note.votes = (note.votes||0) + 1; this._save(all); }
+    try {
+      await sb.from('contribution_votes').insert({ contribution_id: noteId, user_id: currentUser.id });
+      await sb.from('contributions').update({ votes: (note?.votes||1) }).eq('id', noteId);
+    } catch(e) { console.warn('upvote:', e.message); }
+  },
+
+  // Confirm: insert into contribution_confirms, increment confirmed_count
+  async confirm(noteId, legKey) {
+    if (!currentUser) { alert('Sign in to confirm notes.'); return; }
+    const all = this.getAll();
+    const note = (all[legKey]||[]).find(n => n.id === noteId);
+    if (note) { note.confirmed_count = (note.confirmed_count||0) + 1; this._save(all); }
+    try {
+      await sb.from('contribution_confirms').insert({ contribution_id: noteId, user_id: currentUser.id });
+      await sb.rpc('increment_confirmed', { contrib_id: noteId });
+    } catch(e) { console.warn('confirm:', e.message); }
   },
 };
+
+function _timeAgo(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff/60000), h = Math.floor(m/60), d = Math.floor(h/24);
+  if (d > 30) return new Date(iso).toLocaleDateString('en',{month:'short',year:'numeric'});
+  if (d > 0)  return d + 'd ago';
+  if (h > 0)  return h + 'h ago';
+  if (m > 0)  return m + 'm ago';
+  return 'just now';
+}
 
 let stops = [{name:'',date:'',days:0},{name:'',date:'',days:0}];
 let legs  = [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
@@ -2239,8 +2328,10 @@ function toggleLegExpand(i) {
 }
 
 // ── Contrib block / card renderers ───────────────────────────────────
-function renderContribCard(note, compact) {
-  const k = CONTRIB_KINDS[note.kind] || CONTRIB_KINDS.tip;
+function renderContribCard(note, compact, legKey) {
+  const k   = CONTRIB_KINDS[note.kind] || CONTRIB_KINDS.tip;
+  const id  = note.id || '';
+  const lk  = (legKey||'').replace(/'/g,"\\'");
   if (compact) {
     return `<div class="contrib-card-compact">
       <div class="contrib-icon-sm" style="background:${k.bg};color:${k.color}"><i class="ph ${k.icon}" style="font-size:11px"></i></div>
@@ -2248,7 +2339,9 @@ function renderContribCard(note, compact) {
         <span style="font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:${k.color};font-weight:600;margin-right:6px">${k.label}</span>${note.text}
       </div>
       <span style="font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap">${note.author||''} · ${note.when||''}</span>
-      <span style="display:flex;align-items:center;gap:2px;color:var(--text3)"><i class="ph ph-arrow-fat-up" style="font-size:11px"></i><span class="contrib-votes-n">${note.votes||0}</span></span>
+      <span style="display:flex;align-items:center;gap:2px;color:var(--text3);cursor:pointer" onclick="contribUpvote(event,'${id}','${lk}')">
+        <i class="ph ph-arrow-fat-up" style="font-size:11px"></i><span class="contrib-votes-n">${note.votes||0}</span>
+      </span>
     </div>`;
   }
   return `<div class="contrib-card">
@@ -2258,13 +2351,20 @@ function renderContribCard(note, compact) {
         <span style="font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:${k.color};font-weight:600">${k.label}</span>
         <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">· ${note.author||'anonymous'}</span>
         <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">· ${note.when||''}</span>
-        ${note.verified ? `<span style="font-size:10px;color:var(--fern);font-family:var(--mono);display:inline-flex;align-items:center;gap:2px"><i class="ph ph-shield-check" style="font-size:10px"></i>${note.verified}× confirmed</span>` : ''}
+        ${note.confirmed_count ? `<span style="font-size:10px;color:var(--fern);font-family:var(--mono);display:inline-flex;align-items:center;gap:2px"><i class="ph ph-shield-check" style="font-size:10px"></i>${note.confirmed_count}× confirmed</span>` : ''}
       </div>
       <div style="font-size:12.5px;color:var(--text);line-height:1.5">${note.text}</div>
+      ${note.source ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;font-style:italic">${note.source}</div>` : ''}
     </div>
-    <div class="contrib-votes" onclick="contribUpvote(event)">
-      <i class="ph ph-arrow-fat-up" style="font-size:14px"></i>
-      <span class="contrib-votes-n">${note.votes||0}</span>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
+      <div class="contrib-votes" onclick="contribUpvote(event,'${id}','${lk}')">
+        <i class="ph ph-arrow-fat-up" style="font-size:14px"></i>
+        <span class="contrib-votes-n">${note.votes||0}</span>
+      </div>
+      <div class="contrib-votes" style="font-size:10px" title="Confirm this is still accurate" onclick="contribConfirm(event,'${id}','${lk}')">
+        <i class="ph ph-shield-check" style="font-size:12px"></i>
+        <span class="contrib-conf-n">${note.confirmed_count||0}</span>
+      </div>
     </div>
   </div>`;
 }
@@ -2278,17 +2378,25 @@ function renderContribBlock(legIdx) {
 }
 
 function renderContribBlockForKey(legKey, legIdx) {
-  const items = contribStorage.getForLeg(legKey);
+  const items   = contribStorage.getForLeg(legKey);
   const blockId = `cb_${legKey.replace(/[^a-z0-9]/gi,'_')}`;
-  const noNotes = items.length === 0;
+  const safeKey = legKey.replace(/'/g,"\\'");
 
-  if (noNotes) {
-    return `<div class="contrib-block">
+  // Kick off a background Supabase fetch — DOM will refresh once done
+  if (!contribStorage._fetched.has(legKey)) {
+    contribStorage.fetchForLeg(legKey).then(() => {
+      const el = document.getElementById(blockId);
+      if (el) el.outerHTML = renderContribBlockForKey(legKey, legIdx);
+    });
+  }
+
+  if (items.length === 0) {
+    return `<div class="contrib-block" id="${blockId}">
       <div class="contrib-block-hdr">
         <span class="contrib-block-label"><i class="ph ph-users-three" style="font-size:11px"></i> From travellers</span>
         <span style="font-size:11px;color:var(--text3);font-style:italic">No notes yet — be the first.</span>
         <span style="flex:1"></span>
-        <span class="contrib-add-pill" onclick="showContribModal(${legIdx||0},'${legKey.replace(/'/g,"\\'")}')"><i class="ph ph-plus" style="font-size:10px"></i> Add a note</span>
+        <span class="contrib-add-pill" onclick="showContribModal(${legIdx||0},'${safeKey}')"><i class="ph ph-plus" style="font-size:10px"></i> Add a note</span>
       </div>
     </div>`;
   }
@@ -2298,7 +2406,7 @@ function renderContribBlockForKey(legKey, legIdx) {
     <div class="contrib-block-hdr" onclick="toggleContribBlock('${blockId}')">
       <span class="contrib-block-label"><i class="ph ph-users-three" style="font-size:11px"></i> From travellers <span style="color:var(--text2);margin-left:4px">· ${items.length} note${items.length===1?'':'s'}</span></span>
       <span style="flex:1"></span>
-      <span class="contrib-add-pill" onclick="event.stopPropagation();showContribModal(${legIdx||0},'${legKey.replace(/'/g,"\\'")}')"><i class="ph ph-plus" style="font-size:10px"></i> Add a note</span>
+      <span class="contrib-add-pill" onclick="event.stopPropagation();showContribModal(${legIdx||0},'${safeKey}')"><i class="ph ph-plus" style="font-size:10px"></i> Add a note</span>
       <span style="color:var(--text3);display:inline-flex;align-items:center;margin-left:4px"><i class="ph ph-caret-down" id="${blockId}_chev" style="font-size:12px;transition:transform .2s"></i></span>
     </div>
     <div id="${blockId}_preview" style="margin-top:2px;padding-left:2px">${renderContribCard(top, true)}</div>
@@ -2317,7 +2425,26 @@ function toggleContribBlock(id) {
   if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
 }
 
-function contribUpvote(e) { e.stopPropagation(); /* future: contribStorage.upvote */ }
+function contribUpvote(e, noteId, legKey) {
+  e.stopPropagation();
+  contribStorage.upvote(noteId, legKey).then(() => {
+    // Update the vote count in-place without full re-render
+    const btn = e.currentTarget;
+    const counter = btn?.querySelector('.contrib-votes-n');
+    if (counter) counter.textContent = parseInt(counter.textContent||'0') + 1;
+    btn.style.color = 'var(--fern)';
+  });
+}
+
+function contribConfirm(e, noteId, legKey) {
+  e.stopPropagation();
+  contribStorage.confirm(noteId, legKey).then(() => {
+    const btn = e.currentTarget;
+    btn.style.color = 'var(--moss)';
+    const counter = btn?.querySelector('.contrib-conf-n');
+    if (counter) counter.textContent = parseInt(counter.textContent||'0') + 1;
+  });
+}
 
 // ── Contribute modal ──────────────────────────────────────────────────
 let _contribModalState = { legIdx:0, legKey:'', kind:'tip', source:'I did this leg' };
@@ -2397,7 +2524,7 @@ function showContribModal(legIdx, legKey) {
       <div class="contrib-modal-footer">
         <div style="font-size:11px;color:var(--text3);flex:1;line-height:1.5">Your note goes live immediately. Other travellers can upvote or flag it.</div>
         <button class="btn" onclick="closeContribModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="submitContrib()"><i class="ph ph-paper-plane-tilt" style="font-size:12px"></i> Post note</button>
+        <button class="btn btn-primary" id="contribSubmitBtn" onclick="submitContrib()"><i class="ph ph-paper-plane-tilt" style="font-size:12px"></i> Post note</button>
       </div>
     </div>
   </div>`;
@@ -2431,12 +2558,15 @@ function closeContribModal() {
   document.getElementById('contribModal').innerHTML = '';
 }
 
-function submitContrib() {
+async function submitContrib() {
   const text = document.getElementById('contribText')?.value.trim();
   if (!text) { alert('Please write a note first.'); return; }
   const when   = document.getElementById('contribWhen')?.value.trim() || 'recently';
-  const author = document.getElementById('contribAuthor')?.value.trim() || 'anonymous';
-  contribStorage.addToLeg(_contribModalState.legKey, {
+  const author = document.getElementById('contribAuthor')?.value.trim()
+               || currentUser?.email?.split('@')[0] || 'anonymous';
+  const btn = document.getElementById('contribSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
+  await contribStorage.addToLeg(_contribModalState.legKey, {
     kind:   _contribModalState.kind,
     text, when, author,
     source: _contribModalState.source,
@@ -2715,7 +2845,7 @@ async function renderProfilePanel() {
       <div style="font-size:11px;color:rgba(212,227,204,0.5);margin-top:4px;font-family:var(--mono)">${totalVotes} upvotes received</div>
     </div>
     <div style="position:absolute;right:-40px;top:-20px;opacity:0.08;pointer-events:none">
-      <svg width="200" height="200" viewBox="0 0 140 140" fill="none"><ellipse cx="70" cy="80" rx="35" ry="30" fill="#8BAF7A"/><circle cx="70" cy="45" r="25" fill="#8BAF7A"/></svg>
+      <img src="public/sloth-logo.svg" width="200" style="filter:brightness(0) invert(1)"/>
     </div>
   </div>
 
