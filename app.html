@@ -1043,7 +1043,8 @@ function updateActiveTripBar() {
 }
 
 function startNewTrip() {
-  if (!confirm('Start a new trip? Your current unsaved changes will be lost.')) return;
+  const hasContent = stops.some(s => s.name) || currentTripId;
+  if (hasContent && !confirm('Start a new trip? Unsaved changes to the current trip will be lost.')) return;
   stops = [{name:'',date:'',days:0},{name:'',date:'',days:0}];
   legs  = [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
   editingLegModes.clear();
@@ -1926,6 +1927,8 @@ function renderPlanSuggestion(d, fromCache = false) {
 function adoptRoute() {
   if (!lastSuggestion) return;
   const d = lastSuggestion; stops = []; legs = []; editingLegModes.clear();
+  currentTripId = null;   // always creates a new trip on next save
+  expandedLegs.clear();
   if (d.stops?.length) {
     d.stops.forEach(s => stops.push({ name: s.name, date: '', days: s.days || 0, accomSites: s.accom_sites || [], accomNote: s.accom_note || '' }));
   } else {
