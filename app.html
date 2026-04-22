@@ -292,6 +292,9 @@
   .recent-trip-title{font-family:var(--serif);font-size:15px;color:var(--text);transition:color .15s;}
   .recent-trip-sub{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono);letter-spacing:0.5px;}
 
+  /* ── Plan edit bar (shown in results view) ──────────── */
+  .plan-edit-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:2px;}
+
   /* ── Plan summary strip ─────────────────────────────── */
   .plan-summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
   .plan-sum-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
@@ -420,6 +423,18 @@
       </div>
     </div>
 
+    <!-- Compact "edit search" bar — shown only when results are visible -->
+    <div id="planEditBar" style="display:none;margin-bottom:10px">
+      <div class="plan-edit-bar">
+        <i class="ph ph-pencil-simple" style="color:var(--text3);font-size:14px;flex-shrink:0"></i>
+        <span id="planEditBarLabel" style="flex:1;font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
+        <button class="btn" style="font-size:11px;padding:4px 10px" onclick="openPlanSearch()">Edit search</button>
+        <button class="btn" style="font-size:11px;padding:4px 10px" onclick="planRoute()">Re-run ↗</button>
+      </div>
+    </div>
+
+    <!-- Full search form (collapsed after first search) -->
+    <div id="planSearchForm">
     <div class="card">
       <div class="form-row">
         <span class="lbl">From</span>
@@ -459,6 +474,7 @@
       <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
       <span style="font-size:12px;color:var(--text3)">Free to use · No account needed</span>
     </div>
+    </div><!-- end #planSearchForm -->
 
     <!-- Landing: popular corridors + recent trips (shown when no result) -->
     <div id="planLandingGrid" style="display:block">
@@ -777,6 +793,18 @@ async function init() {
   updateCacheClearBtn();
   renderSavedTrips();
   updateActiveTripBar();
+
+  // ── Auto-fill + auto-trigger from URL params (?from=X&to=Y&via=Z) ──
+  const urlFrom = params.get('from');
+  const urlTo   = params.get('to');
+  if (urlFrom || urlTo) {
+    if (urlFrom) document.getElementById('pFrom').value = urlFrom;
+    if (urlTo)   document.getElementById('pTo').value   = urlTo;
+    const urlVia = params.get('via');
+    if (urlVia)  document.getElementById('pVia').value  = urlVia;
+    // Slight delay so the DOM is fully ready before firing the AI call
+    setTimeout(planRoute, 80);
+  }
 }
 
 // ── Cloud sync helpers ────────────────────────────────────────────
@@ -1543,6 +1571,7 @@ async function planRoute() {
     document.getElementById('planResult').style.display = 'block';
     renderPlanSuggestion(hit, true);
     document.getElementById('adoptBtn').style.display = 'inline-block';
+    _collapseSearchForm(from, to);
     return;
   }
   // ── End cache lookup ──────────────────────────────────────────────
@@ -1552,6 +1581,7 @@ async function planRoute() {
   if (lg) lg.style.display = 'none';
   const hl = document.getElementById('planLanding');
   if (hl) hl.style.display = 'none';
+  _collapseSearchForm(from, to);
 
   const btn    = document.getElementById('planBtn');
   btn.disabled = true; btn.textContent = 'Planning...';
@@ -1634,6 +1664,31 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
     res.innerHTML = `<span style="color:var(--danger-text)">Could not get a suggestion — ${e.message || 'unknown error'}. Try again.</span>`;
   }
   btn.disabled = false; btn.textContent = 'Suggest route ↗';
+}
+
+// ── Search form show/hide ─────────────────────────────────────────────
+function _collapseSearchForm(from, to) {
+  const form = document.getElementById('planSearchForm');
+  const bar  = document.getElementById('planEditBar');
+  const lbl  = document.getElementById('planEditBarLabel');
+  if (form) form.style.display = 'none';
+  if (bar)  bar.style.display  = 'block';
+  if (lbl)  lbl.textContent    = `${from} → ${to}`;
+}
+
+function openPlanSearch() {
+  const form = document.getElementById('planSearchForm');
+  const bar  = document.getElementById('planEditBar');
+  if (form) { form.style.display = 'block'; document.getElementById('pFrom')?.focus(); }
+  if (bar)  bar.style.display  = 'none';
+  // Re-show hero + landing grid; hide stale results
+  const hl = document.getElementById('planLanding');
+  if (hl) hl.style.display = 'block';
+  const lg = document.getElementById('planLandingGrid');
+  if (lg) lg.style.display = 'block';
+  document.getElementById('planResult').style.display       = 'none';
+  document.getElementById('planSummaryStrip').style.display = 'none';
+  document.getElementById('adoptBtn').style.display         = 'none';
 }
 
 const CONF = {
@@ -1939,93 +1994,111 @@ function renderLeg(i) {
   const modeColor  = MODE_COLORS[leg.mode] || 'var(--fern)';
   const modeTint   = MODE_TINTS[leg.mode]  || '#E0EBD6';
   const isEditing  = editingLegModes.has(i);
+  const isExpanded = expandedLegs.has(i);
   const nextStop   = stops[i+1];
   const stayCity   = nextStop?.name || '—';
-  const legKey     = `${fromCity}→${stayCity}`;
 
-  // ── Mode section for Journey col ──
+  // ── Compact summary row (always visible) ──────────────────────────
+  const summaryRow = `<div class="leg-summary-row" onclick="toggleLegExpand(${i})">
+    <div class="leg-mode-icon" style="background:${modeColor}"><i class="ph ${iconCls}"></i></div>
+    <span class="leg-route-lbl">${fromCity||'?'} → ${toCity||'?'}</span>
+    ${leg.cost ? `<span class="leg-cost-lbl">${getCurrSym()}${leg.cost}</span>` : ''}
+    ${leg.km   ? `<span class="leg-cost-lbl" style="color:var(--text3)">${leg.km} km</span>` : ''}
+    ${leg.booked ? `<span class="booked-pill on" style="font-size:10px;padding:2px 7px;pointer-events:none">✓</span>` : ''}
+    <span class="leg-expand-chevron${isExpanded?' open':''}">▾</span>
+  </div>`;
+
+  if (!isExpanded) {
+    return `<div class="leg-card${leg.booked?' leg-booked':''}">${summaryRow}</div>`;
+  }
+
+  // ── Expanded detail ────────────────────────────────────────────────
   const modeSection = isEditing
-    ? `<div class="pills" style="flex-wrap:wrap;margin-bottom:6px">
-         ${MODES.map(m=>`<button class="mp${leg.mode===m?' on':''}" onclick="setMode(${i},'${m}')">${MI[m]}</button>`).join('')}
-       </div>
-       <button class="leg-edit-btn" onclick="editingLegModes.delete(${i});render()">Cancel</button>`
-    : `<div style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:3px">
+    ? `<div style="margin:8px 0 6px">
+         <div class="pills" style="flex-wrap:wrap">
+           ${MODES.map(m=>`<button class="mp${leg.mode===m?' on':''}" onclick="setMode(${i},'${m}')">${MI[m]}</button>`).join('')}
+         </div>
+         <button class="leg-edit-btn" style="margin-top:4px" onclick="editingLegModes.delete(${i});renderSegs()">Cancel</button>
+       </div>`
+    : `<div style="display:flex;align-items:center;gap:6px;font-size:12px;margin:8px 0 4px">
          <span style="width:22px;height:22px;border-radius:6px;background:${modeTint};color:${modeColor};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
            <i class="ph ${iconCls}" style="font-size:13px"></i>
          </span>
          <span style="text-transform:capitalize;font-weight:500;color:${modeColor}">${leg.mode||'bus'}</span>
          ${leg.hours ? `<span style="color:var(--text3)">· ${leg.hours}h</span>` : ''}
-         <button class="leg-edit-btn" onclick="editingLegModes.add(${i});render()">Edit</button>
+         <button class="leg-edit-btn" onclick="editingLegModes.add(${i});renderSegs()">Edit</button>
        </div>`;
 
-  const costVal = leg.cost ? `${getCurrSym()}${leg.cost}` : '—';
+  const metricsRow = `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+    <input class="linp" type="number" placeholder="cost" value="${leg.cost||''}"
+      oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].cost=+this.value;updateSum();renderBudgetBar()"/>
+    <span class="lsep">${getCurrSym()}</span>
+    <input class="linp" type="number" placeholder="km" value="${leg.km||''}"
+      oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].km=+this.value;updateSum()"/>
+    <span class="lsep">km</span>
+    ${leg.hours ? `<span style="font-size:11px;color:var(--text3)">~${leg.hours}h</span>` : ''}
+  </div>`;
 
-  // ── Transport col ──
-  const bookedSection = `<span class="booked-pill${leg.booked?' on':''}" onclick="if(!legs[${i}])legs[${i}]={};legs[${i}].booked=!legs[${i}].booked;renderSegs();renderBookingProgress()" style="cursor:pointer;margin-bottom:5px;display:inline-block">
-    ${leg.booked ? `<i class="ph ph-check-circle" style="font-size:10px"></i> Booked${leg.bookingRef?' · '+leg.bookingRef:''}` : 'Mark as booked'}
-  </span>
-  ${leg.booked ? `<div class="booking-rec">
-    <div class="booking-rec-row"><i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
-      <input placeholder="Ref #" value="${leg.bookingRef||''}" oninput="legs[${i}].bookingRef=this.value"/></div>
-    <div class="booking-rec-row"><i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
-      <input placeholder="Booking URL" value="${leg.bookingUrl||''}" oninput="legs[${i}].bookingUrl=this.value"/></div>
-  </div>` : ''}`;
+  const bookedSection = `<div style="margin-top:6px">
+    <button class="booked-pill${leg.booked?' on':''}"
+      onclick="if(!legs[${i}])legs[${i}]={};legs[${i}].booked=!legs[${i}].booked;if(legs[${i}].booked)expandedLegs.delete(${i});renderSegs();renderBookingProgress()">
+      ${leg.booked ? '✓ Booked' : 'Mark as booked'}
+    </button>
+    ${leg.booked ? `<div class="booking-rec">
+      <div class="booking-rec-row"><i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
+        <input placeholder="Ref #" value="${leg.bookingRef||''}" oninput="legs[${i}].bookingRef=this.value"/></div>
+      <div class="booking-rec-row"><i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
+        <input placeholder="Booking URL" value="${leg.bookingUrl||''}" oninput="legs[${i}].bookingUrl=this.value"/></div>
+    </div>` : ''}
+  </div>`;
+
   const transportLinks = showAff && fromCity && toCity
     ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites||[], leg.legRegion||'', leg.infoSites||[])
     : '';
 
-  // ── Stay col ──
+  // Stay section — collapsible sub-panel
   const stayBooked = nextStop?.accomBooked || false;
-  const stayBookedPill = `<span class="booked-pill${stayBooked?' on':''}" onclick="if(!stops[${i+1}])stops[${i+1}]={};stops[${i+1}].accomBooked=!stops[${i+1}].accomBooked;renderSegs();renderBookingProgress()" style="cursor:pointer;margin-bottom:5px;display:inline-block">
-    ${stayBooked ? `<i class="ph ph-check-circle" style="font-size:10px"></i> Stay booked` : `<i class="ph ph-bed" style="font-size:10px"></i> Mark stay booked`}
-  </span>`;
-  const accomLinks = showAff && nextStop?.name
-    ? renderAccommodationLinks(nextStop.name, nextStop.accomSites||[], nextStop.accomNote||'')
-    : '';
+  const stayId = `stay_${i}`;
+  const staySection = nextStop ? `
+    <div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">
+      <div class="stay-toggle" onclick="var el=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');el.style.display=el.style.display==='block'?'none':'block';c.classList.toggle('open')">
+        <i class="ph ph-bed"></i>
+        <span>Stay: <strong>${nextStop.name||'…'}</strong>${nextStop.days?` · ${nextStop.days}d`:''}</span>
+        <button class="booked-pill${stayBooked?' on':''}" style="margin-left:auto;pointer-events:none;font-size:10px;padding:2px 7px">${stayBooked?'✓ Booked':'Not booked'}</button>
+        <span class="stay-chevron">▾</span>
+      </div>
+      <div id="${stayId}" class="stay-links-drop" style="display:none">
+        <div style="margin-bottom:6px">
+          <button class="booked-pill${stayBooked?' on':''}"
+            onclick="if(!stops[${i+1}])stops[${i+1}]={};stops[${i+1}].accomBooked=!stops[${i+1}].accomBooked;renderSegs();renderBookingProgress()">
+            ${stayBooked ? '✓ Stay booked' : 'Mark stay as booked'}
+          </button>
+          ${stayBooked ? `<div class="booking-rec">
+            <div class="booking-rec-row"><i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
+              <input placeholder="Ref #" value="${nextStop?.accomRef||''}" oninput="stops[${i+1}].accomRef=this.value"/></div>
+            <div class="booking-rec-row"><i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
+              <input placeholder="Booking URL" value="${nextStop?.accomUrl||''}" oninput="stops[${i+1}].accomUrl=this.value"/></div>
+          </div>` : ''}
+        </div>
+        ${showAff && nextStop.name ? renderAccommodationLinks(nextStop.name, nextStop.accomSites||[], nextStop.accomNote||'') : ''}
+      </div>
+    </div>` : '';
 
   const contribs = renderContribBlock(i);
 
-  // ── 3-col layout: Journey | Transport | Stay ──────────
-  const metricsRow = `<div style="display:flex;gap:5px;align-items:center;margin-top:4px">
-    <span style="font-size:9px;color:var(--text3);font-family:var(--mono)">${getCurrSym()}</span>
-    <input class="linp" type="number" placeholder="cost" value="${leg.cost||''}"
-      oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].cost=+this.value;updateSum();renderBudgetBar()"/>
-    <span class="lsep" style="font-size:9px">KM</span>
-    <input class="linp" type="number" placeholder="km" value="${leg.km||''}"
-      oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].km=+this.value;updateSum()"/>
-  </div>`;
-
   return `<div class="leg-card${leg.booked?' leg-booked':''}">
-    <div class="leg-grid" style="padding:8px">
-      <div class="leg-col leg-col-b">
-        <div class="leg-col-lbl">Journey</div>
-        ${modeSection}
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">
-          ${costVal} <span style="font-size:10px;font-family:var(--mono);font-weight:400;color:var(--text3)">ticket</span>
-        </div>
-        ${metricsRow}
-        ${leg.notes ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;font-style:italic">${leg.notes}</div>` : ''}
-        ${renderConfidenceBadge(leg.confidence||'uncertain')}
-        ${renderConflictAlert(leg.conflict, false)}
-      </div>
-      <div class="leg-col leg-col-b">
-        <div class="leg-col-lbl">Transport</div>
-        ${bookedSection}
-        ${transportLinks || '<div style="font-size:11px;color:var(--text3);margin-top:4px">No links for this leg</div>'}
-      </div>
-      <div class="leg-col leg-col-b">
-        <div class="leg-col-lbl">Stay at ${stayCity}</div>
-        ${stayBookedPill}
-        ${stayBooked ? `<div class="booking-rec" style="margin-bottom:5px">
-          <div class="booking-rec-row"><i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
-            <input placeholder="Ref #" value="${nextStop?.accomRef||''}" oninput="stops[${i+1}].accomRef=this.value"/></div>
-          <div class="booking-rec-row"><i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
-            <input placeholder="Booking URL" value="${nextStop?.accomUrl||''}" oninput="stops[${i+1}].accomUrl=this.value"/></div>
-        </div>` : ''}
-        ${accomLinks}
-      </div>
+    ${summaryRow}
+    <div class="leg-detail">
+      ${modeSection}
+      ${metricsRow}
+      ${leg.notes ? `<div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-style:italic">${leg.notes}</div>` : ''}
+      ${renderConfidenceBadge(leg.confidence||'uncertain')}
+      ${renderConflictAlert(leg.conflict, false)}
+      ${transportLinks}
+      ${bookedSection}
+      ${staySection}
+      ${contribs ? `<div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">${contribs}</div>` : ''}
     </div>
-    ${contribs ? `<div style="padding:0 8px 8px">${contribs}</div>` : ''}
   </div>`;
 }
 
@@ -2126,7 +2199,11 @@ function updateSum() {
   } else bel.textContent = '';
 }
 
-function toggleLegExpand(i) { /* kept for compat — 3-col layout always visible */ }
+function toggleLegExpand(i) {
+  if (expandedLegs.has(i)) expandedLegs.delete(i);
+  else expandedLegs.add(i);
+  renderSegs();
+}
 
 // ── Contrib block / card renderers ───────────────────────────────────
 function renderContribCard(note, compact) {
