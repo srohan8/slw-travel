@@ -1447,9 +1447,10 @@ function renderPlanSuggestion(d, fromCache = false) {
     const ns = d.stops[i + 1];
     const iconCls = MODE_ICONS[leg.mode] || 'ph-path';
     const transportCol = showAff ? renderTransportLinks(leg.mode, leg.from, leg.to, leg.booking_sites, leg.leg_region, leg.info_sites) : '';
-    const stayCol = ns
-      ? (showAff ? renderAccommodationLinks(ns.name, ns.accom_sites, ns.accom_note) : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>')
-      : '<div style="font-size:12px;color:var(--text3);font-style:italic">Final destination</div>';
+    const stayCity = ns?.name || leg.to;
+    const stayCol  = showAff
+      ? renderAccommodationLinks(stayCity, ns?.accom_sites, ns?.accom_note)
+      : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
     const modeColor = MODE_COLORS[leg.mode] || 'var(--fern)';
     h += `<div style="border-left:3px solid ${modeColor};padding-left:14px;margin:10px 0;position:relative">
       <div class="leg-icon-dot" style="background:${modeColor}"><i class="ph ${iconCls}"></i></div>
@@ -1628,6 +1629,7 @@ function renderSegs() {
       ${s.days ? `<div style="font-size:11px;color:var(--text3);margin:2px 0 0 2px">${s.days}d stay</div>` : ''}
       ${!isL ? renderLeg(i) : ''}
       ${!isL ? `<button class="insert-stop-btn" onclick="insertStop(${i})">+ Insert stop here</button>` : ''}
+      ${isL && s.name ? renderFinalStay(i) : ''}
     </div></div>`;
   });
   el.innerHTML = h;
@@ -1708,6 +1710,26 @@ function renderLeg(i) {
     ${transportLinks}
     ${bookedSection}
     ${staySection}
+  </div>`;
+}
+
+function renderFinalStay(stopIdx) {
+  const s = stops[stopIdx];
+  if (!s?.name) return '';
+  const showAff = appSettings.affiliate_links !== false;
+  const stayId  = `final_stay_${stopIdx}`;
+  return `<div class="leg-card" style="margin-top:6px">
+    <div style="display:flex;align-items:center;gap:6px;width:100%;margin-bottom:6px">
+      <i class="ph ph-flag-checkered" style="color:var(--fern);font-size:15px"></i>
+      <span style="font-size:12px;font-weight:500;color:var(--text)">Stay in ${s.name}</span>
+    </div>
+    <div class="stay-toggle" onclick="var el=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');el.style.display=el.style.display==='block'?'none':'block';c.classList.toggle('open')">
+      <i class="ph ph-bed"></i><span>Accommodation links</span><span class="stay-chevron">▾</span>
+    </div>
+    <div id="${stayId}" class="stay-links-drop" style="display:none">
+      ${showAff ? renderAccommodationLinks(s.name, s.accomSites, s.accomNote) : ''}
+      ${renderStayBookingRecord(stopIdx)}
+    </div>
   </div>`;
 }
 
