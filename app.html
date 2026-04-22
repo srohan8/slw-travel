@@ -1304,8 +1304,15 @@ async function planRoute() {
     affSites.forEach(s => { (sitesByMode[s.category] = sitesByMode[s.category] || []).push(s.name); });
     const siteHint = Object.entries(sitesByMode).map(([cat, names]) => `${cat}: ${[...new Set(names)].join(', ')}`).join('; ');
 
+    const hitchOnly  = prefModes.length === 1 && prefModes[0] === 'hitchhike';
+    const hitchMixed = prefModes.includes('hitchhike') && prefModes.length > 1;
+    const hitchNote  = hitchOnly
+      ? `User wants to hitchhike the ENTIRE route. Set mode:"hitchhike" on every leg. In each leg's notes field include the single best starting spot for thumbing (e.g. "Start at the Esso truck stop on the N1 ring road" or "Head to the motorway on-ramp at XYZ junction") — practical, specific, one sentence.`
+      : hitchMixed
+      ? `User enjoys occasional hitchhiking for adventure. Assign mode:"hitchhike" to roughly 20% of legs (pick shorter, safe, well-travelled legs where it's realistic). Use the other preferred modes for the rest.`
+      : '';
     const data = await callAI(`You are an expert overland travel planner. Suggest a practical overland route from ${from} to ${to}${via ? ' via ' + via : ''}.
-Pace: ${pace}. Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}
+Pace: ${pace}. Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}${hitchNote ? '\n' + hitchNote : ''}
 Available booking sites (${siteHint}; for shared taxi / carpooling legs also consider BlaBlaCar in Europe/LatAm/South Asia). For each leg include:
 - "booking_sites":["Name"] — only sites that actually operate on that route/region
 - "leg_region" — world region (Southeast Asia/Central Asia/South Asia/East Asia/Europe/Middle East/Africa/North America/Latin America/Oceania)
@@ -1471,9 +1478,12 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
   else if (mode === 'train')                         { sources = AFF.trains;   category = 'trains'; }
   else if (mode === 'ferry')                         { sources = AFF.ferries;  category = 'ferries'; }
   else if (mode === 'hitchhike') {
+    const hw = (city) => `https://hitchwiki.org/en/${encodeURIComponent(city)}`;
     return `<div class="search-links">
-      <span class="search-links-label">Hitchhiking Guide</span>
-      <a class="search-link" href="https://hitchwiki.org/en/Main_Page" target="_blank" rel="noopener">Hitchwiki ↗</a>
+      <span class="search-links-label">Hitchhiking resources</span>
+      <a class="search-link" href="${hw(orig)}" target="_blank" rel="noopener"><i class="ph ph-thumbs-up"></i> ${orig} spots ↗</a>
+      <a class="search-link" href="${hw(dest)}" target="_blank" rel="noopener"><i class="ph ph-map-pin"></i> ${dest} spots ↗</a>
+      <a class="search-link" style="opacity:0.7" href="https://hitchwiki.org/en/Main_Page" target="_blank" rel="noopener">Hitchwiki ↗</a>
     </div>`;
   }
   if (!sources.length) return '';
