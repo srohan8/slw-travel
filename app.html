@@ -44,10 +44,11 @@
   .logo{font-family:var(--serif);font-size:19px;font-weight:300;color:var(--cream);text-decoration:none;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px;}
   .logo em{font-style:italic;color:var(--sage);}
   .nav-links{display:flex;gap:18px;align-items:center;}
-  .nav-link{font-size:13px;color:rgba(212,227,204,0.55);border:none;background:none;border-bottom:2px solid transparent;padding-bottom:3px;cursor:pointer;font-family:var(--body);transition:color .2s;white-space:nowrap;}
+  .nav-link{font-size:13px;color:rgba(212,227,204,0.55);border:none;background:none;border-bottom:2px solid transparent;padding-bottom:3px;cursor:pointer;font-family:var(--body);transition:color .2s;white-space:nowrap;padding:0;margin:0 5px;}
   .nav-link:hover{color:var(--cream);}
   .nav-link.active{color:var(--cream);border-bottom-color:var(--sage);}
   .nav-utils{display:flex;gap:8px;align-items:center;}
+  .nav-vsep{width:1px;height:16px;background:rgba(139,175,122,0.25);flex-shrink:0;}
   .user-badge{font-size:12px;color:var(--sage);padding:5px 12px;border:0.5px solid rgba(139,175,122,0.3);border-radius:99px;background:rgba(139,175,122,0.08);}
   .btn{font-size:13px;padding:7px 16px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--body);transition:all 0.2s ease;font-weight:500;}
   .btn:hover{background:var(--bg2);color:var(--text);border-color:var(--text2);}
@@ -379,20 +380,18 @@
     </svg>
     SLW <em>Travel</em>
   </a>
-  <div class="nav-links">
-    <button class="nav-link active" id="navbtn_plan"    onclick="switchTab('plan',this)">Plan a route</button>
+  <div class="nav-utils">
+    <button class="nav-link active" id="navbtn_plan"    onclick="switchTab('plan',this)">Planner</button>
     <button class="nav-link"        id="navbtn_record"  onclick="switchTab('record',this)">My trip</button>
     <button class="nav-link"        id="navbtn_mytrips" onclick="switchTab('mytrips',this)">My Trips</button>
-    <button class="nav-link"        id="navbtn_admin"   onclick="switchTab('admin',this)">Admin</button>
-  </div>
-  <div class="nav-utils">
-    <span class="user-badge" id="userBadge">Guest</span>
-    <button class="btn" onclick="signOut()" id="signOutBtn" style="display:none">Sign out</button>
-    <a href="/index.html" class="btn" id="signInBtn">Sign in</a>
+    <button class="nav-link"        id="navbtn_profile" onclick="switchTab('profile',this)">Profile</button>
+    <div class="nav-vsep"></div>
     <select id="currSel" onchange="render()">
       <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option><option>AUD</option><option>CAD</option><option>JPY</option><option>THB</option>
     </select>
     <button class="btn" onclick="exportTrip()">Export</button>
+    <span class="user-badge" id="userBadge" style="cursor:pointer" onclick="switchTab('profile',document.getElementById('navbtn_profile'))">Guest</span>
+    <button class="btn" onclick="signOut()" id="signOutBtn" style="display:none">Sign out</button>
   </div>
 </nav>
 
@@ -521,11 +520,16 @@
     <div id="mytripsPanel"><!-- filled by renderMyTripsPanel() --></div>
   </div>
 
+  <!-- PROFILE TAB -->
+  <div id="profile" class="panel">
+    <div id="profilePanel"><!-- filled by renderProfilePanel() --></div>
+  </div>
+
   <!-- CONTRIB MODAL (global overlay) -->
   <div id="contribModal" style="display:none"></div>
 
   <!-- FLIGHTS TAB -->
-  <!-- ADMIN TAB -->
+  <!-- ADMIN TAB (accessible via URL hash or admin badge) -->
   <div id="admin" class="panel">
 
     <!-- Booking sites manager -->
@@ -1466,6 +1470,7 @@ function switchTab(id, el) {
   if (id === 'record')   { render(); }
   if (id === 'admin')    { renderAdminTab(); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
+  if (id === 'profile')  { renderProfilePanel(); }
   if (id === 'plan' && !lastSuggestion) { renderPlanLanding(); }
 }
 
@@ -2462,6 +2467,105 @@ function renderMyTripsPanel() {
     <div class="met"><div class="met-lbl">Total km</div><div class="met-val">${totalKm.toLocaleString()} <span class="met-u">km</span></div></div>
     <div class="met"><div class="met-lbl">Days on road</div><div class="met-val">${totalDays||'—'}</div></div>
     <div class="met"><div class="met-lbl">CO₂ saved</div><div class="met-val" style="font-size:13px;padding-top:4px;font-family:var(--mono)">vs flights</div></div>
+  </div>`;
+}
+
+function renderProfilePanel() {
+  const el = document.getElementById('profilePanel');
+  if (!el) return;
+  const rawUser = localStorage.getItem('slw_user');
+  const user = rawUser ? JSON.parse(rawUser) : null;
+  const email = user?.email || 'Guest';
+  const initials = email === 'Guest' ? '?' : email.slice(0,2).toUpperCase();
+  const displayName = email.includes('@') ? email.split('@')[0] : email;
+  const trips = storage.get('trips') || [];
+  const allLegs  = trips.flatMap(t => t.legs||[]);
+  const totalKm  = Math.round(allLegs.reduce((a,l)=>a+(+l.km||0),0));
+  const totalLegs= allLegs.length;
+  const contribs = contribStorage.getAll();
+  const legKeys  = Object.keys(contribs);
+  const totalNotes = legKeys.reduce((a,k)=>a+(contribs[k]||[]).length,0);
+  const totalVotes = legKeys.reduce((a,k)=>a+(contribs[k]||[]).reduce((b,n)=>b+(n.votes||0),0),0);
+  const CONTRIB_KINDS_LIST = Object.entries(CONTRIB_KINDS);
+  const kindCounts = {};
+  CONTRIB_KINDS_LIST.forEach(([k])=>{ kindCounts[k]=0; });
+  legKeys.forEach(k=>{ (contribs[k]||[]).forEach(n=>{ if(n.kind && kindCounts[n.kind]!==undefined) kindCounts[n.kind]++; }); });
+  const totalByKind = Object.values(kindCounts).reduce((a,b)=>a+b,0);
+
+  el.innerHTML = `
+  <!-- Hero identity card -->
+  <div style="background:var(--dusk);color:var(--cream);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:16px;position:relative;overflow:hidden;display:grid;grid-template-columns:72px 1fr auto;gap:20px;align-items:center">
+    <div style="width:72px;height:72px;border-radius:50%;background:var(--moss);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:32px;border:2px solid var(--sage)">${initials}</div>
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage)">Contributor · SLW Travel</div>
+      <div style="font-family:var(--serif);font-size:28px;font-weight:300;letter-spacing:-0.3px;margin-top:2px;color:var(--cream)">${displayName} <span style="font-size:13px;color:rgba(212,227,204,0.45);font-family:var(--mono)">${email}</span></div>
+      ${user ? `<div style="font-size:12px;color:rgba(212,227,204,0.6);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap">
+        <span><i class="ph ph-map-pin" style="font-size:12px"></i> SLW Traveller</span>
+        <span><i class="ph ph-train" style="font-size:12px"></i> ${trips.length} trips planned</span>
+      </div>` : `<div style="font-size:12px;color:rgba(212,227,204,0.5);margin-top:4px"><a href="/index.html" style="color:var(--sage)">Sign in</a> to save trips and contribute</div>`}
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:rgba(212,227,204,0.45);text-transform:uppercase">Notes</div>
+      <div style="font-family:var(--serif);font-size:44px;font-weight:300;color:var(--gold);letter-spacing:-0.8px;line-height:1">${totalNotes}</div>
+      <div style="font-size:11px;color:rgba(212,227,204,0.5);margin-top:4px;font-family:var(--mono)">${totalVotes} upvotes received</div>
+    </div>
+    <div style="position:absolute;right:-40px;top:-20px;opacity:0.08;pointer-events:none">
+      <svg width="200" height="200" viewBox="0 0 140 140" fill="none"><ellipse cx="70" cy="80" rx="35" ry="30" fill="#8BAF7A"/><circle cx="70" cy="45" r="25" fill="#8BAF7A"/></svg>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="sumbar" style="margin-bottom:16px">
+    <div class="met"><div class="met-lbl">Trips planned</div><div class="met-val">${trips.length}</div></div>
+    <div class="met"><div class="met-lbl">Legs logged</div><div class="met-val">${totalLegs}</div></div>
+    <div class="met"><div class="met-lbl">Distance</div><div class="met-val">${totalKm.toLocaleString()} <span class="met-u">km</span></div></div>
+    <div class="met"><div class="met-lbl">Notes posted</div><div class="met-val">${totalNotes}</div></div>
+  </div>
+
+  <!-- Contribution mix + recent notes -->
+  <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:16px">
+    <!-- Mix -->
+    <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:12px">Contribution mix</div>
+      ${totalByKind === 0 ? `<div style="font-size:13px;color:var(--text3);padding:1rem 0;text-align:center">No notes yet.<br>Expand a leg to contribute.</div>` :
+        CONTRIB_KINDS_LIST.map(([k,v])=>`
+        <div style="display:grid;grid-template-columns:18px 1fr auto auto;gap:8px;align-items:center;padding:5px 0;border-top:0.5px dashed var(--border);font-size:12px">
+          <span style="width:10px;height:10px;border-radius:3px;background:${v.color};display:inline-block"></span>
+          <span style="color:var(--text)">${v.label}</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${kindCounts[k]}</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text2);min-width:26px;text-align:right">${totalByKind?Math.round(kindCounts[k]/totalByKind*100):0}%</span>
+        </div>`).join('')
+      }
+    </div>
+    <!-- Recent notes -->
+    <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">Your recent notes</div>
+        <span style="font-size:11px;color:var(--fern)">${totalNotes} total</span>
+      </div>
+      ${totalNotes === 0 ? `<div style="font-size:13px;color:var(--text3);padding:1rem 0;text-align:center">No notes yet. Open a leg and add one!</div>` :
+        legKeys.flatMap(k=>(contribs[k]||[]).slice(0,2).map(n=>{
+          const kd=CONTRIB_KINDS[n.kind]||CONTRIB_KINDS.tip;
+          return `<div style="display:grid;grid-template-columns:20px 1fr auto;gap:10px;padding:8px 0;border-top:0.5px dashed var(--border)">
+            <div style="width:20px;height:20px;border-radius:5px;background:${kd.bg};color:${kd.color};display:flex;align-items:center;justify-content:center;margin-top:2px"><i class="ph ${kd.icon}" style="font-size:11px"></i></div>
+            <div>
+              <div style="font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:0.3px;margin-bottom:2px">${k} · ${n.when||'just now'}</div>
+              <div style="font-size:12px;color:var(--text);line-height:1.4">${(n.text||'').slice(0,100)}${(n.text||'').length>100?'…':''}</div>
+            </div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap"><i class="ph ph-arrow-fat-up" style="font-size:10px"></i> ${n.votes||0}</div>
+          </div>`;
+        })).slice(0,5).join('')
+      }
+    </div>
+  </div>
+
+  <!-- Settings / account -->
+  <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:12px">Account</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      ${user ? `<button class="btn" onclick="signOut()">Sign out</button>` : `<a class="btn btn-primary" href="/index.html">Sign in / Create account</a>`}
+      <button class="btn" onclick="exportTrip()">Export current trip</button>
+    </div>
   </div>`;
 }
 

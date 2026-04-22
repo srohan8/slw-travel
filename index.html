@@ -3,200 +3,751 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SLW Travel — Overland Trip Planner</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>SLW Travel — Go the long way. On purpose.</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede9;
-    --text: #1a1a18; --text2: #6b6b67; --text3: #a0a09c;
-    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
-    --green: #1D9E75; --blue: #185FA5;
-    --radius: 8px; --radius-lg: 12px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1e1e1c; --bg2: #28281f; --bg3: #1a1a18;
-      --text: #e8e8e0; --text2: #9a9a90; --text3: #606058;
-      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
-    }
-  }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-  nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-bottom: 0.5px solid var(--border); background: var(--bg); }
-  .logo { font-size: 18px; font-weight: 500; color: var(--text); text-decoration: none; }
-  .logo span { color: var(--green); }
-  .hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 1.5rem; text-align: center; }
-  h1 { font-size: clamp(28px, 5vw, 48px); font-weight: 500; color: var(--text); margin-bottom: 1rem; line-height: 1.2; }
-  h1 span { color: var(--green); }
-  .sub { font-size: 16px; color: var(--text2); max-width: 500px; line-height: 1.7; margin-bottom: 2.5rem; }
-  .auth-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 380px; }
-  .auth-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 0.5px solid var(--border); }
-  .auth-tab { flex: 1; font-size: 13px; padding: 8px; cursor: pointer; border: none; background: transparent; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -0.5px; font-family: inherit; }
-  .auth-tab.active { color: var(--text); font-weight: 500; border-bottom: 2px solid var(--text); }
-  .field { margin-bottom: 12px; }
-  .field label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
-  .field input { width: 100%; font-size: 14px; padding: 8px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); outline: none; font-family: inherit; }
-  .field input:focus { border-color: var(--green); }
-  .btn-full { width: 100%; font-size: 14px; padding: 10px; border-radius: var(--radius); border: none; cursor: pointer; font-family: inherit; font-weight: 500; margin-top: 4px; }
-  .btn-primary { background: var(--green); color: #fff; }
-  .btn-primary:hover { opacity: 0.9; }
-  .btn-outline { background: transparent; border: 0.5px solid var(--border2); color: var(--text); margin-top: 8px; }
-  .btn-outline:hover { background: var(--bg2); }
-  .divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--text3); font-size: 12px; }
-  .divider::before, .divider::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
-  .msg { font-size: 12px; text-align: center; margin-top: 10px; min-height: 18px; }
-  .msg.err { color: #a32d2d; } .msg.ok { color: var(--green); }
-  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; max-width: 700px; margin: 3rem auto 0; width: 100%; padding: 0 1rem; }
-  .feat { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; }
-  .feat-icon { font-size: 20px; margin-bottom: 8px; }
-  .feat h3 { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
-  .feat p { font-size: 12px; color: var(--text2); line-height: 1.5; }
-  .skip-link { font-size: 12px; color: var(--text3); text-align: center; margin-top: 12px; cursor: pointer; }
-  .skip-link:hover { color: var(--text2); }
-  .maintenance { background: #faeeda; border: 0.5px solid rgba(133,79,11,0.3); border-radius: var(--radius); padding: 10px 16px; font-size: 13px; color: #633806; margin-bottom: 1rem; display: none; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --moss:#2D4A2D; --fern:#4A7C4A; --sage:#8BAF7A; --mist:#D4E3CC;
+  --cream:#F5F0E8; --sand:#E8DFD0; --sand2:#EDE8DC;
+  --bark:#6B4F3A; --rust:#C4622D; --dusk:#1A2B1A; --gold:#C9A84C;
+  --bg:#FAF7F2; --bg2:#F2EDE4; --bg3:var(--cream);
+  --text:#1A2B1A; --text2:#4A6040; --text3:#9AA880;
+  --border:rgba(45,74,45,0.15); --border2:rgba(45,74,45,0.3);
+  --fern-rgb:74,124,74;
+  --radius:10px; --radius-lg:16px;
+  --shadow:0 2px 8px rgba(26,43,26,0.07);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono','Courier New',monospace;
+}
+body { font-family:var(--body); background:var(--bg3); color:var(--text); min-height:100vh; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── Marketing header ─────────────────────────────────────────── */
+.mkt-nav {
+  background:var(--dusk); color:var(--cream);
+  padding:13px 22px; display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:20;
+  box-shadow:0 2px 12px rgba(26,43,26,0.2);
+}
+.mkt-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
+.mkt-logo-text { font-family:var(--serif); font-weight:300; font-size:19px; color:var(--cream); letter-spacing:-0.3px; }
+.mkt-logo-text em { font-style:italic; color:var(--sage); }
+.mkt-nav-links { display:flex; gap:22px; align-items:center; font-size:13px; }
+.mkt-nav-links span { color:rgba(212,227,204,0.55); cursor:pointer; transition:color .2s; }
+.mkt-nav-links span:hover { color:var(--cream); }
+.mkt-cta-pill {
+  background:var(--sage); color:var(--dusk); padding:6px 14px; border-radius:99px;
+  font-weight:600; font-size:12px; cursor:pointer; letter-spacing:0.2px;
+  border:none; font-family:var(--body); transition:opacity .15s;
+}
+.mkt-cta-pill:hover { opacity:0.88; }
+@media(max-width:640px){ .mkt-nav-links { display:none; } }
+
+/* ── Hero ─────────────────────────────────────────────────────── */
+.hero {
+  background:var(--dusk); color:var(--cream);
+  padding:60px 0 52px; position:relative; overflow:hidden;
+}
+.hero-inner { max-width:860px; margin:0 auto; padding:0 1.25rem; position:relative; z-index:1; }
+.hero-sloth {
+  position:absolute; right:-40px; top:16px;
+  opacity:0.18; pointer-events:none;
+}
+.hero-corner {
+  position:absolute; font-family:var(--mono); font-size:10px;
+  color:rgba(212,227,204,0.4); letter-spacing:1.5px; text-transform:uppercase;
+}
+.kicker {
+  font-family:var(--mono); font-size:10px; letter-spacing:3px;
+  text-transform:uppercase; color:var(--sage); font-weight:400;
+}
+.hero-h1 {
+  font-family:var(--serif); font-weight:300; font-size:clamp(44px,7vw,68px);
+  line-height:1.02; letter-spacing:-1.2px; margin:10px 0 18px; max-width:680px;
+}
+.hero-h1 em { font-style:italic; color:var(--sage); }
+.hero-sub { font-size:16px; line-height:1.55; color:rgba(245,240,232,0.72); max-width:460px; }
+.hero-cta { display:flex; gap:10px; align-items:center; margin-top:26px; flex-wrap:wrap; }
+.hero-btn-primary {
+  background:var(--sage); color:var(--dusk); padding:12px 22px; border-radius:99px;
+  font-weight:600; font-size:14px; cursor:pointer; letter-spacing:0.2px;
+  display:inline-flex; align-items:center; gap:8px; border:none; font-family:var(--body);
+  transition:opacity .15s;
+}
+.hero-btn-primary:hover { opacity:0.88; }
+.hero-btn-ghost {
+  color:var(--cream); padding:12px 18px; border-radius:99px;
+  border:0.5px solid rgba(245,240,232,0.3); background:none;
+  font-size:13px; cursor:pointer; font-family:var(--body); transition:border-color .2s;
+}
+.hero-btn-ghost:hover { border-color:rgba(245,240,232,0.6); }
+.hero-free-lbl {
+  font-size:11px; font-family:var(--mono); color:rgba(212,227,204,0.5);
+  letter-spacing:1px; text-transform:uppercase; margin-left:8px;
+}
+.hero-stats {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:0;
+  margin-top:52px; border-top:0.5px solid rgba(245,240,232,0.13); padding-top:18px;
+}
+.hero-stat { padding-left:18px; border-left:0.5px solid rgba(245,240,232,0.13); }
+.hero-stat:first-child { padding-left:0; border-left:none; }
+.hero-stat-n { font-family:var(--serif); font-size:28px; font-weight:300; color:var(--cream); letter-spacing:-0.5px; }
+.hero-stat-l { font-size:11px; color:rgba(212,227,204,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
+@media(max-width:600px){ .hero-stats{grid-template-columns:repeat(2,1fr);gap:10px;} .hero-stat{border:none;padding:0;} }
+
+/* ── Demo search strip ─────────────────────────────────────────── */
+.demo-strip-wrap { max-width:860px; margin:-28px auto 0; padding:0 1.25rem; position:relative; z-index:2; }
+.demo-strip {
+  background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg);
+  padding:1.1rem 1.25rem; box-shadow:0 10px 28px rgba(26,43,26,0.15);
+}
+.demo-inputs { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:center; }
+.demo-inp {
+  font-size:14px; color:var(--text); border:0.5px solid var(--border2); border-radius:var(--radius);
+  background:var(--bg2); padding:10px 13px; outline:none; font-family:var(--body); width:100%;
+}
+.demo-inp:focus { border-color:var(--fern); background:var(--bg); }
+.demo-btn {
+  background:var(--moss); color:var(--cream); border:none; border-radius:var(--radius);
+  padding:10px 18px; font-size:13px; font-weight:600; font-family:var(--body); cursor:pointer;
+  white-space:nowrap; transition:background .15s;
+}
+.demo-btn:hover { background:var(--fern); }
+.demo-chips { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; align-items:center; }
+.demo-chip {
+  font-size:11px; padding:5px 11px; border-radius:99px;
+  border:0.5px solid var(--border2); background:var(--bg2);
+  color:var(--text2); cursor:pointer; font-family:var(--body); transition:border-color .15s;
+}
+.demo-chip:hover { border-color:var(--fern); color:var(--text); }
+@media(max-width:580px){ .demo-inputs{grid-template-columns:1fr; gap:8px;} }
+
+/* ── Content sections ─────────────────────────────────────────── */
+.section { max-width:860px; margin:0 auto; padding:0 1.25rem; }
+.section-gap { margin-top:48px; }
+.section-gap-sm { margin-top:32px; }
+.pillars-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:12px; }
+.pillar-card {
+  background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg);
+  padding:1.1rem 1.2rem;
+}
+.pillar-icon {
+  width:32px; height:32px; border-radius:8px; background:var(--mist);
+  display:flex; align-items:center; justify-content:center; color:var(--moss); margin-bottom:12px;
+}
+.pillar-title { font-family:var(--serif); font-size:20px; font-weight:400; color:var(--text); line-height:1.15; margin-top:4px; letter-spacing:-0.3px; }
+.pillar-body { font-size:13px; color:var(--text2); line-height:1.5; margin-top:8px; }
+@media(max-width:600px){ .pillars-grid{grid-template-columns:1fr;} }
+
+/* ── Route gallery ─────────────────────────────────────────────── */
+.route-table {
+  background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg); overflow:hidden;
+}
+.route-row {
+  display:grid; grid-template-columns:1fr auto auto auto auto;
+  gap:14px; align-items:center; padding:14px 20px; cursor:pointer;
+  border-top:0.5px solid var(--border); transition:background .15s;
+}
+.route-row:first-child { border-top:none; }
+.route-row:hover { background:var(--bg2); }
+.route-name { font-family:var(--serif); font-size:18px; color:var(--text); letter-spacing:-0.2px; }
+.route-sub { font-size:11px; color:var(--text3); margin-top:2px; font-family:var(--mono); letter-spacing:0.3px; }
+.mode-chip {
+  width:22px; height:22px; border-radius:6px; background:var(--bg2);
+  display:flex; align-items:center; justify-content:center; color:var(--text2);
+}
+.route-stat { font-family:var(--mono); font-size:11px; color:var(--text2); text-align:right; }
+.conf-badge {
+  display:inline-flex; align-items:center; gap:4px; font-family:var(--mono);
+  font-size:11px; font-weight:500; padding:2px 8px; border-radius:99px;
+  border:0.5px solid transparent;
+}
+.conf-verified { background:#D4E3CC; color:#2D4A2D; border-color:rgba(45,74,45,0.3); }
+.conf-check    { background:#faeeda; color:#633806; border-color:rgba(133,79,11,0.3); }
+.conf-uncertain{ background:#FDF0EC; color:#8B2A00; border-color:rgba(196,98,45,0.3); }
+@media(max-width:580px){ .route-row{grid-template-columns:1fr auto;} .route-modes,.route-stat:not(:last-child){display:none;} }
+
+/* ── Field notes / testimonial ────────────────────────────────── */
+.fieldnotes {
+  background:var(--sand2); border:0.5px solid var(--border); border-radius:var(--radius-lg);
+  padding:2rem 2.25rem; display:grid; grid-template-columns:1fr 1fr; gap:28px;
+}
+.fieldnotes-quote {
+  font-family:var(--serif); font-size:26px; font-weight:300; line-height:1.25;
+  color:var(--text); margin-top:10px; letter-spacing:-0.3px;
+}
+.fieldnotes-quote em { font-style:italic; color:var(--fern); }
+.howit-step {
+  display:grid; grid-template-columns:28px 1fr; gap:10px;
+  padding-bottom:10px; margin-bottom:10px;
+}
+.howit-n { font-family:var(--mono); font-size:11px; color:var(--text3); letter-spacing:1px; }
+.howit-title { font-size:13px; color:var(--text); font-weight:500; }
+.howit-body { font-size:12px; color:var(--text2); margin-top:2px; line-height:1.4; }
+@media(max-width:640px){ .fieldnotes{grid-template-columns:1fr;} }
+
+/* ── Pricing ───────────────────────────────────────────────────── */
+.pricing-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+.price-card {
+  border-radius:var(--radius-lg); padding:1.3rem 1.4rem;
+  position:relative; overflow:hidden;
+}
+.price-card-free { background:var(--bg); border:0.5px solid var(--border); color:var(--text); }
+.price-card-pro  { background:var(--dusk); border:0.5px solid var(--dusk); color:var(--cream); }
+.price-tag { font-family:var(--serif); font-size:36px; font-weight:300; letter-spacing:-0.5px; }
+.price-period { font-size:12px; color:var(--text3); font-family:var(--mono); }
+.price-card-pro .price-period { color:rgba(212,227,204,0.5); }
+.price-feature { font-size:13px; line-height:1.7; display:flex; gap:8px; align-items:center; }
+.price-feature-free { color:var(--text2); }
+.price-feature-pro  { color:rgba(245,240,232,0.8); }
+.price-cta {
+  display:inline-block; padding:9px 18px; border-radius:99px;
+  font-size:13px; font-weight:600; cursor:pointer; margin-top:14px;
+  border:none; font-family:var(--body);
+}
+.price-cta-free { background:transparent; border:0.5px solid var(--border2); color:var(--text); }
+.price-cta-free:hover { background:var(--bg2); }
+.price-cta-pro  { background:var(--sage); color:var(--dusk); }
+.price-cta-pro:hover { opacity:0.88; }
+.pro-rec-badge {
+  position:absolute; top:14px; right:14px; font-size:10px;
+  color:var(--gold); font-family:var(--mono); letter-spacing:1.5px; text-transform:uppercase;
+  display:flex; align-items:center; gap:4px;
+}
+@media(max-width:520px){ .pricing-grid{grid-template-columns:1fr;} }
+
+/* ── Final CTA ─────────────────────────────────────────────────── */
+.final-cta {
+  background:var(--moss); color:var(--cream); border-radius:var(--radius-lg);
+  padding:40px 36px; text-align:center; position:relative; overflow:hidden;
+}
+.final-cta-h { font-family:var(--serif); font-size:36px; font-weight:300; letter-spacing:-0.5px; margin-top:6px; line-height:1.15; }
+.final-cta-h em { font-style:italic; color:var(--sage); }
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+.footer { max-width:860px; margin:32px auto 0; padding:20px 1.25rem 40px; border-top:0.5px solid var(--border); }
+.footer-inner { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+.footer-logo { font-family:var(--serif); font-size:15px; color:var(--text2); }
+.footer-logo em { font-style:italic; color:var(--fern); }
+.footer-links { display:flex; gap:18px; font-size:11px; color:var(--text3); font-family:var(--mono); letter-spacing:1px; text-transform:uppercase; }
+.footer-links span { cursor:pointer; } .footer-links span:hover { color:var(--text2); }
+.footer-copy { font-size:11px; color:var(--text3); font-family:var(--mono); }
+
+/* ── Auth modal ─────────────────────────────────────────────────── */
+.auth-overlay {
+  position:fixed; inset:0; background:rgba(13,18,13,0.55); z-index:100;
+  display:none; align-items:center; justify-content:center; padding:1.25rem;
+  animation:fadeUp .2s ease;
+}
+.auth-overlay.open { display:flex; }
+.auth-panel {
+  display:grid; grid-template-columns:1fr 1fr;
+  width:100%; max-width:780px; max-height:90vh; overflow:auto;
+  border-radius:var(--radius-lg); overflow:hidden; box-shadow:0 28px 70px rgba(13,18,13,0.4);
+}
+.auth-left {
+  background:linear-gradient(180deg,#0D120D 0%,#17231A 100%);
+  padding:44px 48px; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between; color:var(--cream);
+  min-height:480px;
+}
+.auth-left-logo { display:flex; align-items:center; gap:8px; }
+.auth-left-logo span { font-family:var(--serif); font-size:22px; font-weight:300; color:var(--cream); letter-spacing:-0.3px; }
+.auth-left-logo span em { font-style:italic; color:var(--sage); }
+.auth-left-h { font-family:var(--serif); font-size:clamp(32px,4.5vw,48px); font-weight:300; line-height:1.05; letter-spacing:-1px; margin:12px 0 18px; color:var(--cream); }
+.auth-left-h em { font-style:italic; color:var(--sage); }
+.auth-left-sub { font-size:14px; line-height:1.55; color:rgba(245,240,232,0.65); max-width:340px; }
+.auth-trust { display:flex; gap:24px; margin-top:28px; padding-top:18px; border-top:0.5px solid rgba(245,240,232,0.12); }
+.auth-trust-n { font-family:var(--serif); font-size:22px; font-weight:300; color:var(--cream); letter-spacing:-0.3px; }
+.auth-trust-l { font-size:10px; color:rgba(212,227,204,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
+.auth-bg-sloth { position:absolute; right:-60px; bottom:-30px; opacity:0.12; pointer-events:none; }
+.auth-right { background:var(--bg); padding:44px 48px; display:flex; flex-direction:column; justify-content:center; }
+.auth-tabs-row { display:flex; gap:2px; border-bottom:0.5px solid var(--border); margin-bottom:24px; }
+.auth-tab { font-size:13px; padding:10px 2px; margin-right:22px; color:var(--text3); cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; margin-bottom:-0.5px; font-family:var(--body); transition:color .15s; }
+.auth-tab.active { color:var(--text); font-weight:500; border-bottom-color:var(--fern); }
+.auth-welcome { font-family:var(--serif); font-size:28px; font-weight:300; letter-spacing:-0.4px; margin-top:4px; margin-bottom:22px; color:var(--text); line-height:1.1; }
+.auth-oauth-btn {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  padding:11px 14px; border:0.5px solid var(--border2); border-radius:10px;
+  background:var(--bg); color:var(--text); font-size:13px; font-weight:500;
+  font-family:var(--body); cursor:pointer; width:100%; transition:background .15s;
+}
+.auth-oauth-btn:hover { background:var(--bg2); }
+.auth-or { display:flex; align-items:center; gap:10px; margin:16px 0; }
+.auth-or::before, .auth-or::after { content:''; flex:1; height:1px; background:var(--border); }
+.auth-or span { font-size:10px; font-family:var(--mono); letter-spacing:2px; color:var(--text3); text-transform:uppercase; }
+.auth-field-lbl { font-family:var(--mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); font-weight:600; display:block; margin-bottom:6px; }
+.auth-inp {
+  font-size:14px; color:var(--text); border:0.5px solid var(--border2); border-radius:8px;
+  background:var(--bg); padding:11px 13px; outline:none; font-family:var(--body); width:100%;
+  transition:border-color .15s;
+}
+.auth-inp:focus { border-color:var(--fern); }
+.auth-submit {
+  margin-top:14px; padding:12px 20px; border-radius:10px; border:none;
+  background:var(--moss); color:var(--cream); font-size:14px; font-weight:600;
+  font-family:var(--body); cursor:pointer; width:100%; transition:background .15s;
+}
+.auth-submit:hover { background:var(--fern); }
+.auth-close {
+  position:absolute; top:14px; right:14px; background:rgba(245,240,232,0.08); border:none;
+  color:rgba(212,227,204,0.6); width:28px; height:28px; border-radius:50%; cursor:pointer;
+  font-size:14px; display:flex; align-items:center; justify-content:center; z-index:5;
+  font-family:var(--body);
+}
+.auth-close:hover { background:rgba(245,240,232,0.16); color:var(--cream); }
+.auth-msg { font-size:12px; text-align:center; margin-top:10px; min-height:16px; }
+.auth-msg.err { color:var(--rust); }
+.auth-msg.ok  { color:var(--fern); }
+.auth-footer-note { font-size:11px; color:var(--text3); text-align:center; margin-top:18px; line-height:1.6; }
+.auth-footer-note a { color:var(--fern); text-decoration:underline; cursor:pointer; }
+.auth-skip { font-size:12px; color:var(--text3); text-align:center; margin-top:10px; cursor:pointer; }
+.auth-skip:hover { color:var(--text2); }
+@media(max-width:640px){ .auth-panel{grid-template-columns:1fr;} .auth-left{display:none;} .auth-right{padding:32px 24px;} }
 </style>
 </head>
 <body>
 
-<nav>
-  <a class="logo" href="/"><span>SLW</span> Travel</a>
-  <span style="font-size:12px;color:var(--text3)">slwtravel.com</span>
-</nav>
+<!-- ── Marketing header ──────────────────────────────────────── -->
+<header class="mkt-nav">
+  <a class="mkt-logo" href="#">
+    <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+      <ellipse cx="14" cy="16" rx="7" ry="6" fill="#8BAF7A" opacity="0.95"/>
+      <circle cx="14" cy="9" r="5" fill="#8BAF7A" opacity="0.95"/>
+      <ellipse cx="14" cy="10" rx="3" ry="2.5" fill="#fff" opacity="0.25"/>
+      <circle cx="12.2" cy="8.5" r="1" fill="#1A2B1A"/>
+      <circle cx="15.8" cy="8.5" r="1" fill="#1A2B1A"/>
+      <path d="M12.5 11 Q14 12.5 15.5 11" stroke="#1A2B1A" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+      <path d="M7 14 Q4 12 3.5 10" stroke="#8BAF7A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M21 14 Q24 12 24.5 10" stroke="#8BAF7A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </svg>
+    <span class="mkt-logo-text">SLW <em>Travel</em></span>
+  </a>
+  <div class="mkt-nav-links">
+    <span onclick="scrollTo('.section-pillars')">How it works</span>
+    <span onclick="scrollTo('.section-routes')">Routes</span>
+    <span onclick="scrollTo('.section-pricing')">Pricing</span>
+    <span onclick="openAuth('signin')">Sign in</span>
+    <button class="mkt-cta-pill" onclick="openAuth('signup')">Start planning →</button>
+  </div>
+</header>
 
-<div class="hero">
-  <div id="maintenance" class="maintenance">We're currently under maintenance. Back soon.</div>
+<!-- ── Hero ─────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-corner" style="left:22px;top:22px">lat 41.0082 · lon 28.9784 — Istanbul</div>
+  <div class="hero-corner" style="right:22px;top:22px">v0.4 · private beta</div>
 
-  <h1>Plan your <span>overland</span> adventure</h1>
-  <p class="sub">AI-powered route planning for buses, trains, ferries and hitchhiking. Avoid conflict zones, find the best flight connections, and record your journey as you go.</p>
-
-  <div class="auth-card">
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="showTab('signin')">Sign in</button>
-      <button class="auth-tab" onclick="showTab('signup')">Create account</button>
-    </div>
-
-    <!-- Sign in -->
-    <div id="signin-panel">
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="si-email" placeholder="you@example.com" autocomplete="email"/>
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="si-pass" placeholder="••••••••" autocomplete="current-password"/>
-      </div>
-      <button class="btn-full btn-primary" onclick="signIn()">Sign in</button>
-      <div class="divider">or</div>
-      <button class="btn-full btn-outline" onclick="signInGoogle()">Continue with Google</button>
-      <div class="msg" id="si-msg"></div>
-    </div>
-
-    <!-- Sign up -->
-    <div id="signup-panel" style="display:none">
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="su-email" placeholder="you@example.com" autocomplete="email"/>
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="su-pass" placeholder="Min 8 characters" autocomplete="new-password"/>
-      </div>
-      <button class="btn-full btn-primary" onclick="signUp()">Create account</button>
-      <div class="divider">or</div>
-      <button class="btn-full btn-outline" onclick="signInGoogle()">Continue with Google</button>
-      <div class="msg" id="su-msg"></div>
-    </div>
-
-    <p class="skip-link" onclick="skipToApp()">Try without an account →</p>
+  <!-- Decorative sloth -->
+  <div class="hero-sloth">
+    <svg width="320" height="320" viewBox="0 0 140 140" fill="none">
+      <ellipse cx="70" cy="80" rx="35" ry="30" fill="#8BAF7A"/>
+      <circle cx="70" cy="45" r="25" fill="#8BAF7A"/>
+      <ellipse cx="70" cy="50" rx="15" ry="12.5" fill="#fff" opacity="0.18"/>
+      <circle cx="61" cy="42.5" r="5" fill="#1A2B1A" opacity="0.7"/>
+      <circle cx="79" cy="42.5" r="5" fill="#1A2B1A" opacity="0.7"/>
+      <path d="M65 55 Q70 59 75 55" stroke="#1A2B1A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.5"/>
+      <path d="M35 70 Q20 62 18 52" stroke="#8BAF7A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M105 70 Q120 62 122 52" stroke="#8BAF7A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    </svg>
   </div>
 
-  <div class="features">
-    <div class="feat">
-      <div class="feat-icon">🗺️</div>
-      <h3>AI route planner</h3>
-      <p>Get realistic overland routes with stops, transport modes and rough costs.</p>
+  <div class="hero-inner">
+    <div class="kicker">A planner for overland travel</div>
+    <h1 class="hero-h1">
+      Go the long way.<br>
+      <em>On purpose.</em>
+    </h1>
+    <p class="hero-sub">Trains, buses, ferries, shared taxis, the occasional hitch. SLW maps a realistic overland route between any two cities — and is honest about the legs it isn't sure about.</p>
+
+    <div class="hero-cta">
+      <button class="hero-btn-primary" onclick="openAuth('signup')">Plan your first route <span>→</span></button>
+      <button class="hero-btn-ghost" onclick="openAuth('signin')">Sign in</button>
+      <span class="hero-free-lbl">Free · 3 routes/mo</span>
     </div>
-    <div class="feat">
-      <div class="feat-icon">✈️</div>
-      <h3>Flight corridor finder</h3>
-      <p>Find the best flight routes including which regions to avoid.</p>
+
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-n">2,140</div><div class="hero-stat-l">Verified overland legs</div></div>
+      <div class="hero-stat"><div class="hero-stat-n">23</div><div class="hero-stat-l">Countries mapped</div></div>
+      <div class="hero-stat"><div class="hero-stat-n">62 days</div><div class="hero-stat-l">Median trip length</div></div>
+      <div class="hero-stat"><div class="hero-stat-n">No flights</div><div class="hero-stat-l">Ever</div></div>
     </div>
-    <div class="feat">
-      <div class="feat-icon">📓</div>
-      <h3>Trip journal</h3>
-      <p>Record your route, costs and notes as you travel. Save and share.</p>
+  </div>
+</section>
+
+<!-- ── Demo search strip ─────────────────────────────────────────── -->
+<div class="demo-strip-wrap">
+  <div class="demo-strip">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+      <span class="kicker">Try it · no account needed</span>
+      <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">results in ~4s</span>
     </div>
-    <div class="feat">
-      <div class="feat-icon">🛡️</div>
-      <h3>Safety routing</h3>
-      <p>Avoid conflict zones and get alternative routes around them.</p>
+    <div class="demo-inputs">
+      <input class="demo-inp" id="demoFrom" value="Lisbon, Portugal" placeholder="From…"/>
+      <input class="demo-inp" id="demoTo"   value="Tokyo, Japan"     placeholder="To…"/>
+      <button class="demo-btn" onclick="launchDemo()">Plan route →</button>
+    </div>
+    <div class="demo-chips">
+      <span style="font-size:11px;color:var(--text3);margin-right:4px">Or start with:</span>
+      <span class="demo-chip" onclick="setDemo('Istanbul, Turkey','Kathmandu, Nepal')">Istanbul → Kathmandu</span>
+      <span class="demo-chip" onclick="setDemo('Cape Town, South Africa','Cairo, Egypt')">Cape Town → Cairo</span>
+      <span class="demo-chip" onclick="setDemo('Bangkok, Thailand','London, UK')">Bangkok → London</span>
+      <span class="demo-chip" onclick="setDemo('Oslo, Norway','Marrakech, Morocco')">Oslo → Marrakech</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Three pillars ─────────────────────────────────────────────── -->
+<div class="section section-gap section-pillars">
+  <div class="kicker">What makes it different</div>
+  <div class="pillars-grid">
+    <div class="pillar-card">
+      <div class="pillar-icon"><i class="ph ph-check-circle" style="font-size:18px"></i></div>
+      <div class="kicker" style="color:var(--fern)">Realistic</div>
+      <div class="pillar-title">Legs we can verify, and legs we can't</div>
+      <p class="pillar-body">Every route marks each segment: verified, check locally, or uncertain. We won't pretend a border is open when it isn't.</p>
+    </div>
+    <div class="pillar-card">
+      <div class="pillar-icon"><i class="ph ph-train" style="font-size:18px"></i></div>
+      <div class="kicker" style="color:var(--fern)">Overland only</div>
+      <div class="pillar-title">Train · bus · ferry · taxi · thumb</div>
+      <p class="pillar-body">Five modes, no flights. We route through the real network — including the scrappy bits other tools skip.</p>
+    </div>
+    <div class="pillar-card">
+      <div class="pillar-icon"><i class="ph ph-warning-circle" style="font-size:18px"></i></div>
+      <div class="kicker" style="color:var(--fern)">Live</div>
+      <div class="pillar-title">Conflict and advisory data, refreshed</div>
+      <p class="pillar-body">Warnings surface at the leg level, not buried in a PDF. If the Wagah border closes, your plan knows.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Route gallery ─────────────────────────────────────────────── -->
+<div class="section section-gap section-routes">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+    <div class="kicker">Routes the community has planned</div>
+    <span style="font-size:11px;color:var(--fern);cursor:pointer" onclick="openAuth('signup')">Browse all 142 →</span>
+  </div>
+  <div class="route-table">
+    <div class="route-row" onclick="setDemoAndLaunch('Istanbul, Turkey','Kathmandu, Nepal')">
+      <div><div class="route-name">Istanbul → Kathmandu</div><div class="route-sub">via Iran, Pakistan, India</div></div>
+      <div class="route-modes" style="display:flex;gap:4px"><div class="mode-chip"><i class="ph ph-train" style="font-size:12px"></i></div><div class="mode-chip"><i class="ph ph-bus" style="font-size:12px"></i></div><div class="mode-chip"><i class="ph ph-taxi" style="font-size:12px"></i></div></div>
+      <div class="route-stat">38 days</div>
+      <div class="route-stat">€890</div>
+      <span class="conf-badge conf-verified"><i class="ph ph-check-circle" style="font-size:10px"></i> Verified</span>
+    </div>
+    <div class="route-row" onclick="setDemoAndLaunch('Lisbon, Portugal','Singapore')">
+      <div><div class="route-name">Lisbon → Singapore</div><div class="route-sub">via Trans-Siberian + Mongolia</div></div>
+      <div class="route-modes" style="display:flex;gap:4px"><div class="mode-chip"><i class="ph ph-train" style="font-size:12px"></i></div><div class="mode-chip"><i class="ph ph-boat" style="font-size:12px"></i></div><div class="mode-chip"><i class="ph ph-bus" style="font-size:12px"></i></div></div>
+      <div class="route-stat">62 days</div>
+      <div class="route-stat">€1,640</div>
+      <span class="conf-badge conf-check"><i class="ph ph-warning-circle" style="font-size:10px"></i> Check locally</span>
+    </div>
+    <div class="route-row" onclick="setDemoAndLaunch('Cape Town, South Africa','Cairo, Egypt')">
+      <div><div class="route-name">Cape Town → Cairo</div><div class="route-sub">East coast, Mozambique to Sudan</div></div>
+      <div class="route-modes" style="display:flex;gap:4px"><div class="mode-chip"><i class="ph ph-bus" style="font-size:12px"></i></div><div class="mode-chip"><i class="ph ph-boat" style="font-size:12px"></i></div><div class="mode-chip"><i class="ph ph-taxi" style="font-size:12px"></i></div></div>
+      <div class="route-stat">51 days</div>
+      <div class="route-stat">€1,120</div>
+      <span class="conf-badge conf-check"><i class="ph ph-warning-circle" style="font-size:10px"></i> Check locally</span>
+    </div>
+    <div class="route-row" onclick="setDemoAndLaunch('Oslo, Norway','Marrakech, Morocco')">
+      <div><div class="route-name">Oslo → Marrakech</div><div class="route-sub">Night trains all the way south</div></div>
+      <div class="route-modes" style="display:flex;gap:4px"><div class="mode-chip"><i class="ph ph-train" style="font-size:12px"></i></div><div class="mode-chip"><i class="ph ph-boat" style="font-size:12px"></i></div></div>
+      <div class="route-stat">14 days</div>
+      <div class="route-stat">€520</div>
+      <span class="conf-badge conf-verified"><i class="ph ph-check-circle" style="font-size:10px"></i> Verified</span>
+    </div>
+    <div class="route-row" onclick="setDemoAndLaunch('Bangkok, Thailand','London, UK')">
+      <div><div class="route-name">Bangkok → London</div><div class="route-sub">via Central Asia + Caucasus</div></div>
+      <div class="route-modes" style="display:flex;gap:4px"><div class="mode-chip"><i class="ph ph-train" style="font-size:12px"></i></div><div class="mode-chip"><i class="ph ph-bus" style="font-size:12px"></i></div><div class="mode-chip"><i class="ph ph-boat" style="font-size:12px"></i></div></div>
+      <div class="route-stat">74 days</div>
+      <div class="route-stat">€1,980</div>
+      <span class="conf-badge conf-uncertain"><i class="ph ph-question" style="font-size:10px"></i> Uncertain</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Field notes + how it works ─────────────────────────────────── -->
+<div class="section section-gap">
+  <div class="fieldnotes">
+    <div>
+      <div class="kicker" style="color:var(--bark)">Field notes</div>
+      <blockquote class="fieldnotes-quote">
+        "Finally, a planner that admits when it doesn't know.
+        I spent <em>ten minutes</em> on SLW instead of ten hours on forums."
+      </blockquote>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:18px">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--moss);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:16px">M</div>
+        <div>
+          <div style="font-size:13px;color:var(--text);font-weight:500">Mira S.</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">Berlin → Hanoi · 47 days · 2024</div>
+        </div>
+      </div>
+    </div>
+    <div style="border-left:0.5px solid var(--border);padding-left:28px">
+      <div class="kicker">How it works</div>
+      <div style="margin-top:12px">
+        <div class="howit-step" style="border-bottom:0.5px dashed var(--border)">
+          <div class="howit-n">01</div><div><div class="howit-title">Tell us where you're going</div><div class="howit-body">Two cities. Any continents.</div></div>
+        </div>
+        <div class="howit-step" style="border-bottom:0.5px dashed var(--border)">
+          <div class="howit-n">02</div><div><div class="howit-title">We plot the realistic overland route</div><div class="howit-body">Confidence marked on every leg.</div></div>
+        </div>
+        <div class="howit-step" style="border-bottom:0.5px dashed var(--border)">
+          <div class="howit-n">03</div><div><div class="howit-title">Book each leg yourself</div><div class="howit-body">We link to Rome2Rio, 12go, and local operators.</div></div>
+        </div>
+        <div class="howit-step">
+          <div class="howit-n">04</div><div><div class="howit-title">Keep a journal as you go</div><div class="howit-body">Notes sync with your route. Share or keep private.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Pricing ───────────────────────────────────────────────────── -->
+<div class="section section-gap section-pricing">
+  <div class="kicker">Pricing</div>
+  <div class="pricing-grid">
+    <div class="price-card price-card-free">
+      <div class="kicker" style="color:var(--fern)">Free</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px">
+        <div class="price-tag">€0</div>
+        <div class="price-period">forever</div>
+      </div>
+      <div style="margin-top:14px;border-top:0.5px dashed var(--border);padding-top:12px">
+        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> 3 routes per month</div>
+        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Core modes (train, bus, ferry)</div>
+        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Confidence badges</div>
+        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Basic journal</div>
+      </div>
+      <button class="price-cta price-cta-free" onclick="openAuth('signup')">Start free →</button>
+    </div>
+    <div class="price-card price-card-pro">
+      <div class="pro-rec-badge"><i class="ph ph-sparkle" style="font-size:11px"></i> Recommended</div>
+      <div class="kicker" style="color:var(--sage)">Pro</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px">
+        <div class="price-tag">€6</div>
+        <div class="price-period">per month</div>
+      </div>
+      <div style="margin-top:14px;border-top:0.5px dashed rgba(212,227,204,0.2);padding-top:12px">
+        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Unlimited routes</div>
+        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Shared taxi + hitch legs</div>
+        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Live conflict alerts</div>
+        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Offline export · GPX + PDF</div>
+        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Shared trips with editors</div>
+      </div>
+      <button class="price-cta price-cta-pro" onclick="openAuth('signup')">Try Pro free for 14 days →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Final CTA ─────────────────────────────────────────────────── -->
+<div class="section section-gap">
+  <div class="final-cta">
+    <div class="kicker" style="color:var(--sage)">Ready when you are</div>
+    <div class="final-cta-h">The slow way is the <em>only</em> way<br>to really see a place.</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap">
+      <button class="hero-btn-primary" onclick="openAuth('signup')">Plan your first route →</button>
+      <button class="hero-btn-ghost" style="border-color:rgba(212,227,204,0.25);color:var(--cream)">Read the manifesto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Footer ─────────────────────────────────────────────────────── -->
+<div class="section section-gap-sm">
+  <footer class="footer-inner" style="padding:20px 0 40px;border-top:0.5px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:8px">
+      <svg width="18" height="18" viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="16" rx="7" ry="6" fill="#4A7C4A" opacity="0.9"/><circle cx="14" cy="9" r="5" fill="#4A7C4A" opacity="0.9"/></svg>
+      <span class="footer-logo">SLW <em>Travel</em></span>
+    </div>
+    <div class="footer-links">
+      <span>Manifesto</span><span>Safety</span><span>Privacy</span><span>Contact</span>
+    </div>
+    <div class="footer-copy">© 2025 · Lisbon</div>
+  </footer>
+</div>
+
+<!-- ── Auth modal ────────────────────────────────────────────────── -->
+<div class="auth-overlay" id="authOverlay" onclick="maybeCloseAuth(event)">
+  <div class="auth-panel">
+    <!-- Left pitch -->
+    <div class="auth-left">
+      <div class="auth-left-logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <ellipse cx="14" cy="16" rx="7" ry="6" fill="#8BAF7A" opacity="0.95"/>
+          <circle cx="14" cy="9" r="5" fill="#8BAF7A" opacity="0.95"/>
+          <circle cx="12.2" cy="8.5" r="1" fill="#1A2B1A"/>
+          <circle cx="15.8" cy="8.5" r="1" fill="#1A2B1A"/>
+          <path d="M12.5 11 Q14 12.5 15.5 11" stroke="#1A2B1A" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span>SLW <em>Travel</em></span>
+      </div>
+      <div style="position:relative;z-index:1;margin-top:auto;margin-bottom:36px">
+        <div class="kicker" style="color:var(--sage)">Overland planner · Community-verified</div>
+        <h2 class="auth-left-h">Every leg<br><em>double-checked</em><br>by someone<br>who was there.</h2>
+        <p class="auth-left-sub">SLW routes are planned by an AI and verified by travellers. Join 2,400+ contributors keeping borders, prices, and schedules honest.</p>
+        <div class="auth-trust">
+          <div><div class="auth-trust-n">2,400+</div><div class="auth-trust-l">Contributors</div></div>
+          <div><div class="auth-trust-n">18,600</div><div class="auth-trust-l">Notes verified</div></div>
+          <div><div class="auth-trust-n">23</div><div class="auth-trust-l">Countries live</div></div>
+        </div>
+      </div>
+      <div class="auth-bg-sloth">
+        <svg width="320" height="320" viewBox="0 0 140 140" fill="none">
+          <ellipse cx="70" cy="80" rx="35" ry="30" fill="#8BAF7A"/>
+          <circle cx="70" cy="45" r="25" fill="#8BAF7A"/>
+        </svg>
+      </div>
+      <button class="auth-close" onclick="closeAuth()">×</button>
+    </div>
+    <!-- Right form -->
+    <div class="auth-right" style="position:relative">
+      <button class="auth-close" style="background:rgba(45,74,45,0.07);color:var(--text3);position:absolute;top:14px;right:14px" onclick="closeAuth()">×</button>
+      <div class="auth-tabs-row">
+        <button class="auth-tab active" id="atab-signin"  onclick="switchAuthTab('signin')">Sign in</button>
+        <button class="auth-tab"        id="atab-signup" onclick="switchAuthTab('signup')">Create account</button>
+      </div>
+
+      <!-- Sign in -->
+      <div id="auth-signin">
+        <div class="kicker">Welcome back</div>
+        <div class="auth-welcome">Plan the next slow one.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+          <button class="auth-oauth-btn" onclick="signInGoogle()"><i class="ph ph-google-logo" style="font-size:16px"></i> Continue with Google</button>
+          <button class="auth-oauth-btn" onclick="signInGoogle()"><i class="ph ph-apple-logo" style="font-size:16px"></i> Continue with Apple</button>
+        </div>
+        <div class="auth-or"><span>or</span></div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <label><span class="auth-field-lbl">Email</span><input class="auth-inp" type="email" id="si-email" placeholder="you@example.com" autocomplete="email"/></label>
+          <label>
+            <span class="auth-field-lbl" style="display:flex;justify-content:space-between">
+              <span>Password</span><a style="color:var(--fern);font-size:11px;cursor:pointer;text-transform:none;letter-spacing:0;font-family:var(--body)">Forgot?</a>
+            </span>
+            <input class="auth-inp" type="password" id="si-pass" placeholder="••••••••" autocomplete="current-password"/>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);margin-top:2px">
+            <input type="checkbox" checked style="accent-color:var(--fern)"> Keep me signed in
+          </label>
+          <button class="auth-submit" onclick="signIn()">Sign in →</button>
+        </div>
+        <div class="auth-msg" id="si-msg"></div>
+        <p class="auth-skip" onclick="skipToApp()">Try without an account →</p>
+      </div>
+
+      <!-- Sign up -->
+      <div id="auth-signup" style="display:none">
+        <div class="kicker">Join 2,400+ travellers</div>
+        <div class="auth-welcome">Start your slow journey.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+          <button class="auth-oauth-btn" onclick="signInGoogle()"><i class="ph ph-google-logo" style="font-size:16px"></i> Continue with Google</button>
+          <button class="auth-oauth-btn" onclick="signInGoogle()"><i class="ph ph-apple-logo" style="font-size:16px"></i> Continue with Apple</button>
+        </div>
+        <div class="auth-or"><span>or</span></div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <label><span class="auth-field-lbl">Email</span><input class="auth-inp" type="email" id="su-email" placeholder="you@example.com" autocomplete="email"/></label>
+          <label><span class="auth-field-lbl">Password</span><input class="auth-inp" type="password" id="su-pass" placeholder="Min 8 characters" autocomplete="new-password"/></label>
+          <button class="auth-submit" onclick="signUp()">Create account →</button>
+        </div>
+        <div class="auth-msg" id="su-msg"></div>
+        <p class="auth-skip" onclick="skipToApp()">Try without an account →</p>
+      </div>
+
+      <p class="auth-footer-note">
+        By continuing you agree to our <a>Terms</a> and <a>Privacy Policy</a>.<br>No flights. No data sold.
+      </p>
     </div>
   </div>
 </div>
 
 <script>
-  // Local Storage Mock for Auth
-  const getSession = () => {
-    const user = localStorage.getItem('slw_user');
-    return { data: { session: user ? JSON.parse(user) : null } };
-  };
-
-  if (getSession().data.session) {
-    window.location.href = 'app.html';
+  // ── Session check ─────────────────────────────────────────────
+  const stored = localStorage.getItem('slw_user');
+  if (stored) {
+    try { if (JSON.parse(stored)?.id) window.location.href = 'app.html'; } catch(e){}
   }
 
-  function showTab(tab) {
-    document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='signin')||(i===1&&tab==='signup')));
-    document.getElementById('signin-panel').style.display = tab==='signin' ? 'block' : 'none';
-    document.getElementById('signup-panel').style.display = tab==='signup' ? 'block' : 'none';
+  // ── Auth modal ────────────────────────────────────────────────
+  function openAuth(tab='signin') {
+    document.getElementById('authOverlay').classList.add('open');
+    switchAuthTab(tab);
   }
-
+  function closeAuth() {
+    document.getElementById('authOverlay').classList.remove('open');
+  }
+  function maybeCloseAuth(e) {
+    if (e.target === document.getElementById('authOverlay')) closeAuth();
+  }
+  function switchAuthTab(tab) {
+    document.getElementById('atab-signin').classList.toggle('active', tab==='signin');
+    document.getElementById('atab-signup').classList.toggle('active', tab==='signup');
+    document.getElementById('auth-signin').style.display = tab==='signin' ? 'block' : 'none';
+    document.getElementById('auth-signup').style.display = tab==='signup' ? 'block' : 'none';
+  }
   function setMsg(id, msg, isErr) {
     const el = document.getElementById(id);
+    if (!el) return;
     el.textContent = msg;
-    el.className = 'msg ' + (isErr ? 'err' : 'ok');
+    el.className = 'auth-msg ' + (isErr ? 'err' : 'ok');
   }
 
+  // ── Auth handlers ─────────────────────────────────────────────
   async function signIn() {
     const email = document.getElementById('si-email').value.trim();
     const pass  = document.getElementById('si-pass').value;
     if (!email || !pass) return setMsg('si-msg','Please fill in all fields', true);
-    setMsg('si-msg','Signing in...');
-    
-    // Simulating auth success for local mode
+    setMsg('si-msg','Signing in…');
     const user = { email, id: 'local-' + btoa(email) };
     localStorage.setItem('slw_user', JSON.stringify(user));
-    window.location.href = '/app.html';
+    window.location.href = 'app.html';
   }
-
   async function signUp() {
     const email = document.getElementById('su-email').value.trim();
     const pass  = document.getElementById('su-pass').value;
     if (!email || !pass) return setMsg('su-msg','Please fill in all fields', true);
-    if (pass.length < 8) return setMsg('su-msg','Password must be at least 8 characters', true);
-    setMsg('su-msg','Creating account...');
-    
+    if (pass.length < 8) return setMsg('su-msg','Password must be 8+ characters', true);
+    setMsg('su-msg','Creating account…');
     const user = { email, id: 'local-' + btoa(email) };
     localStorage.setItem('slw_user', JSON.stringify(user));
-    setMsg('su-msg','Account created locally!');
-    setTimeout(() => window.location.href = '/app.html', 1000);
+    setTimeout(() => window.location.href = 'app.html', 800);
   }
-
   async function signInGoogle() {
-    const user = { email: 'google-user@gmail.com', id: 'local-google' };
+    const user = { email: 'traveller@gmail.com', id: 'local-google' };
     localStorage.setItem('slw_user', JSON.stringify(user));
-    window.location.href = '/app.html';
+    window.location.href = 'app.html';
   }
-
   function skipToApp() {
     window.location.href = 'app.html?guest=1';
   }
 
+  // ── Demo launch ───────────────────────────────────────────────
+  function setDemo(from, to) {
+    document.getElementById('demoFrom').value = from;
+    document.getElementById('demoTo').value   = to;
+  }
+  function setDemoAndLaunch(from, to) {
+    setDemo(from, to);
+    launchDemo();
+  }
+  function launchDemo() {
+    const from = encodeURIComponent(document.getElementById('demoFrom').value);
+    const to   = encodeURIComponent(document.getElementById('demoTo').value);
+    window.location.href = `app.html?from=${from}&to=${to}`;
+  }
+
+  // ── Smooth scroll helper ──────────────────────────────────────
+  function scrollTo(sel) {
+    document.querySelector(sel)?.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  // ── Keyboard ──────────────────────────────────────────────────
   document.addEventListener('keydown', e => {
-    if (e.key !== 'Enter') return;
-    const siPanel = document.getElementById('signin-panel');
-    if (siPanel.style.display !== 'none') signIn();
-    else signUp();
+    if (e.key === 'Escape') closeAuth();
+    if (e.key === 'Enter' && document.getElementById('authOverlay').classList.contains('open')) {
+      document.getElementById('auth-signin').style.display !== 'none' ? signIn() : signUp();
+    }
   });
 </script>
 </body>
