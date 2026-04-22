@@ -4,42 +4,55 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SLW Travel — App</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg:#ffffff;--bg2:#f5f5f3;--bg3:#eeede9;
-    --text:#1a1a18;--text2:#6b6b67;--text3:#a0a09c;
-    --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
-    --info-bg:#e6f1fb;--info-text:#0c447c;--info-border:rgba(24,95,165,0.3);
-    --success-bg:#eaf3de;--success-text:#27500a;--success-border:rgba(59,109,17,0.3);
+    /* Brand palette — SLW Travel v2 */
+    --moss:#2D4A2D;--fern:#4A7C4A;--sage:#8BAF7A;
+    --cream:#F5F0E8;--sand:#E8DFD0;--sand2:#EDE8DC;
+    --bark:#6B4F3A;--rust:#C4622D;--dusk:#1A2B1A;--mist:#D4E3CC;--gold:#C9A84C;
+    /* Semantic */
+    --bg:var(--cream);--bg2:var(--sand2);--bg3:var(--sand);
+    --text:var(--dusk);--text2:#4A6040;--text3:#9AA880;
+    --border:rgba(45,74,45,0.15);--border2:rgba(45,74,45,0.3);
+    --info-bg:#EDF4E8;--info-text:var(--moss);--info-border:rgba(74,124,74,0.3);
+    --success-bg:var(--mist);--success-text:var(--moss);--success-border:rgba(45,74,45,0.3);
     --warn-bg:#faeeda;--warn-text:#633806;--warn-border:rgba(133,79,11,0.3);
-    --danger-bg:#fcebeb;--danger-text:#791f1f;--danger-border:rgba(163,45,45,0.3);
-    --green:#1D9E75;--blue:#185FA5;--amber:#BA7517;
+    --danger-bg:#FDF0EC;--danger-text:#8B2A00;--danger-border:rgba(196,98,45,0.3);
+    --green:var(--fern);--blue:#2E6FA8;--amber:#BA7517;
     --radius:10px;--radius-lg:16px;
-    --shadow: 0 2px 8px rgba(0,0,0,0.05);
+    --shadow:0 2px 8px rgba(26,43,26,0.07);
+    --serif:'Cormorant Garamond',Georgia,serif;
+    --body:'DM Sans',system-ui,sans-serif;
+    --mono:'DM Mono','Courier New',monospace;
   }
   @media(prefers-color-scheme:dark){:root{
-    --bg:#1e1e1c;--bg2:#28281f;--bg3:#1a1a18;
-    --text:#e8e8e0;--text2:#9a9a90;--text3:#606058;
-    --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
-    --info-bg:#0c2a45;--info-text:#85b7eb;--info-border:rgba(55,138,221,0.3);
-    --success-bg:#1a2e0a;--success-text:#97c459;--success-border:rgba(99,153,34,0.3);
+    --bg:#141F14;--bg2:var(--dusk);--bg3:#0E160E;
+    --text:#EDE8DF;--text2:var(--sage);--text3:#4A6040;
+    --border:rgba(139,175,122,0.12);--border2:rgba(139,175,122,0.22);
+    --info-bg:#0C1F0C;--info-text:var(--sage);--info-border:rgba(74,124,74,0.3);
+    --success-bg:#162216;--success-text:var(--sage);--success-border:rgba(74,124,74,0.3);
     --warn-bg:#2a1e08;--warn-text:#ef9f27;--warn-border:rgba(186,117,23,0.3);
-    --danger-bg:#2a0e0e;--danger-text:#f09595;--danger-border:rgba(226,75,7 laC,0.3);
-    --green:#1D9E75;--blue:#378ADD;--amber:#EF9F27;
+    --danger-bg:#2a0e0e;--danger-text:#f09595;--danger-border:rgba(196,98,45,0.3);
+    --green:var(--sage);--blue:var(--sage);--amber:#EF9F27;
   }}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;transition: background 0.3s ease;}
-  nav{display:flex;justify-content:space-between;align-items:center;padding:.75rem 1.5rem;border-bottom:0.5px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10;box-shadow: var(--shadow);}
-  .logo{font-size:18px;font-weight:600;color:var(--text);text-decoration:none;}.logo span{color:var(--green);}
-  .nav-right{display:flex;gap:12px;align-items:center;}
-  .user-badge{font-size:12px;color:var(--text2);padding:5px 12px;border:0.5px solid var(--border);border-radius:99px;background: var(--bg2);}
-  .btn{font-size:13px;padding:7px 16px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;font-family:inherit;transition: all 0.2s ease; font-weight: 500;}
-  .btn:hover{background:var(--bg2); color: var(--text); border-color: var(--text2);}
+  body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh;transition:background 0.3s ease;}
+  nav{display:flex;justify-content:space-between;align-items:center;padding:.75rem 1.5rem;border-bottom:none;background:var(--dusk);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(26,43,26,0.18);}
+  .logo{font-family:var(--serif);font-size:20px;font-weight:300;color:var(--cream);text-decoration:none;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px;}
+  .logo em{font-style:italic;color:var(--sage);}
+  .nav-right{display:flex;gap:10px;align-items:center;}
+  .user-badge{font-size:12px;color:var(--sage);padding:5px 12px;border:0.5px solid rgba(139,175,122,0.3);border-radius:99px;background:rgba(139,175,122,0.08);}
+  .btn{font-size:13px;padding:7px 16px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--body);transition:all 0.2s ease;font-weight:500;}
+  .btn:hover{background:var(--bg2);color:var(--text);border-color:var(--text2);}
   .btn:disabled{opacity:0.4;cursor:default;}
-  .btn-primary{color:var(--text);font-weight:600;background:var(--green); color: white; border-color: var(--green); box-shadow: 0 2px 4px rgba(29,158,117,0.2);}
-  .btn-primary:hover{background: #198a63; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(29,158,117,0.3);}
+  nav .btn{background:rgba(255,255,255,0.07);color:rgba(212,227,204,0.8);border-color:rgba(139,175,122,0.25);}
+  nav .btn:hover{background:rgba(255,255,255,0.14);color:var(--cream);}
+  nav select{background:rgba(255,255,255,0.07);color:rgba(212,227,204,0.8);border-color:rgba(139,175,122,0.25);}
+  .btn-primary{font-weight:600;background:var(--moss);color:var(--cream);border-color:var(--moss);box-shadow:0 2px 4px rgba(45,74,45,0.3);}
+  .btn-primary:hover{background:var(--fern);transform:translateY(-1px);box-shadow:0 4px 8px rgba(45,74,45,0.4);}
   .container{max-width:860px;margin:0 auto;padding:2rem 1.25rem;}
   .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;}
   .trip-title{font-size:24px;font-weight:600;color:var(--text);border:none;background:transparent;outline:none;width:320px;font-family:inherit; transition: color 0.2s;}
@@ -71,7 +84,7 @@
   .thinking{color:var(--text3);font-style:italic;display: flex;align-items: center;gap: 8px;}
   .thinking::before{content: ''; width: 12px; height: 12px; border: 2px solid var(--text3); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;}
   @keyframes spin { to { transform: rotate(360deg); } }
-  .sec-lbl{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem;}
+  .sec-lbl{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem;}
   .sumbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
   .met{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;box-shadow: var(--shadow);transition: transform 0.2s;}
   .met:hover{transform: translateY(-2px);}
@@ -110,15 +123,15 @@
   .tl-dt{font-size:10px;color:var(--text3);}
   .tl-leg{flex:1;position:relative;min-width:40px;}
   .tl-line{height:2px;background:var(--border);transition: background 0.3s;}
-  .tl-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:10px;background:var(--bg);border:0.5px solid var(--border);border-radius:99px;padding:2px 8px;white-space:nowrap;color:var(--text2);box-shadow: var(--shadow);}
+  .tl-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:10px;background:var(--bg);border:0.5px solid var(--border);border-radius:99px;padding:2px 8px;white-space:nowrap;color:var(--text2);box-shadow:var(--shadow);}
   .divider{border:none;border-top:0.5px solid var(--border);margin:2rem 0;}
   .noteinp{width:100%;font-size:14px;color:var(--text);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;background:var(--bg);outline:none;resize:vertical;min-height:80px;font-family:inherit;transition: border-color 0.2s;}
   .noteinp:focus{border-color: var(--green);}
   .adopt-btn{font-size:13px;padding:8px 16px;cursor:pointer;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text2);margin-top:12px;font-family:inherit;transition: all 0.2s;font-weight: 500;}
   .adopt-btn:hover{background:var(--bg2); color: var(--text); border-color: var(--text2);}
-  .warn-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:99px;background:var(--warn-bg);color:var(--warn-text);border:0.5px solid var(--warn-border);margin-bottom:8px;font-weight: 500;}
-  .cache-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:99px;background:var(--success-bg);color:var(--success-text);border:0.5px solid var(--success-border);margin-bottom:8px;font-weight:500;}
-  .conf-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;margin-top:4px;border:0.5px solid transparent;}
+  .warn-badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:99px;background:var(--warn-bg);color:var(--warn-text);border:0.5px solid var(--warn-border);margin-bottom:8px;font-weight:500;}
+  .cache-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:99px;background:var(--success-bg);color:var(--success-text);border:0.5px solid var(--success-border);margin-bottom:8px;font-weight:500;}
+  .conf-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;margin-top:4px;border:0.5px solid transparent;}
   .conf-ok  {background:var(--success-bg);color:var(--success-text);border-color:var(--success-border);}
   .conf-warn{background:var(--warn-bg);color:var(--warn-text);border-color:var(--warn-border);}
   .conf-bad {background:var(--bg2);color:var(--text3);border-color:var(--border);}
@@ -209,20 +222,20 @@
 <nav>
   <a class="logo" href="#">
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:6px">
-      <ellipse cx="14" cy="16" rx="7" ry="6" fill="var(--green)" opacity="0.9"/>
-      <circle cx="14" cy="9" r="5" fill="var(--green)" opacity="0.9"/>
-      <ellipse cx="14" cy="10" rx="3" ry="2.5" fill="#fff" opacity="0.3"/>
-      <circle cx="12.2" cy="8.5" r="1" fill="#1a1a18"/>
-      <circle cx="15.8" cy="8.5" r="1" fill="#1a1a18"/>
-      <path d="M12.5 11 Q14 12.5 15.5 11" stroke="#1a1a18" stroke-width="0.7" fill="none" stroke-linecap="round"/>
-      <path d="M7 14 Q4 12 3.5 10" stroke="var(--green)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M3.5 10 Q3 8.5 2.5 9.5" stroke="var(--text2)" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <path d="M3.5 10 Q4 8.5 4 9.8" stroke="var(--text2)" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <path d="M21 14 Q24 12 24.5 10" stroke="var(--green)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M24.5 10 Q25 8.5 24 9.5" stroke="var(--text2)" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <path d="M24.5 10 Q24 8.5 25 9.8" stroke="var(--text2)" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <ellipse cx="14" cy="16" rx="7" ry="6" fill="#8BAF7A" opacity="0.95"/>
+      <circle cx="14" cy="9" r="5" fill="#8BAF7A" opacity="0.95"/>
+      <ellipse cx="14" cy="10" rx="3" ry="2.5" fill="#fff" opacity="0.25"/>
+      <circle cx="12.2" cy="8.5" r="1" fill="#1A2B1A"/>
+      <circle cx="15.8" cy="8.5" r="1" fill="#1A2B1A"/>
+      <path d="M12.5 11 Q14 12.5 15.5 11" stroke="#1A2B1A" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+      <path d="M7 14 Q4 12 3.5 10" stroke="#8BAF7A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M3.5 10 Q3 8.5 2.5 9.5" stroke="#D4E3CC" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <path d="M3.5 10 Q4 8.5 4 9.8" stroke="#D4E3CC" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <path d="M21 14 Q24 12 24.5 10" stroke="#8BAF7A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M24.5 10 Q25 8.5 24 9.5" stroke="#D4E3CC" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <path d="M24.5 10 Q24 8.5 25 9.8" stroke="#D4E3CC" stroke-width="1" fill="none" stroke-linecap="round"/>
     </svg>
-    SLW<span>.travel</span>
+    SLW <em>Travel</em>
   </a>
   <div class="nav-right">
     <span class="user-badge" id="userBadge">Guest</span>
@@ -502,7 +515,19 @@ const MODE_ICONS = {
   flight:       'ph-airplane',
   'shared taxi':'ph-van',
 };
-const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',walking:'Walk',cycle:'Cycle',taxi:'Taxi',flight:'Flight','shared taxi':'S.Taxi'};
+const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',walking:'Walk',cycle:'Cycle',taxi:'Taxi',flight:'Flight','shared taxi':'Carpool'};
+const MODE_COLORS = {
+  bus:          '#C4622D', // rust — road, earthy
+  train:        '#2D4A2D', // moss — reliable, classic
+  hitchhike:    '#C9A84C', // gold — adventurous
+  ferry:        '#2E6FA8', // ocean blue — water
+  walk:         '#8BAF7A', // sage — natural, human pace
+  walking:      '#8BAF7A', // sage
+  cycle:        '#4A7C4A', // fern — active, green
+  taxi:         '#C9A84C', // gold — paid, quick
+  flight:       '#5B7FA6', // slate — sky
+  'shared taxi':'#8B5E3C', // bark — earthy, carpooling
+};
 
 let stops = [{name:'',date:'',days:0},{name:'',date:'',days:0}];
 let legs  = [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
@@ -1425,8 +1450,9 @@ function renderPlanSuggestion(d, fromCache = false) {
       <div id="${stayId}" class="stay-links-drop" style="display:none">
         ${showAff ? renderAccommodationLinks(ns.name) : '<div style="font-size:12px;color:var(--text3);padding:4px 0">Affiliate links disabled.</div>'}
       </div>` : '<div style="font-size:12px;color:var(--text3);font-style:italic">Last stop</div>';
-    h += `<div style="border-left:2px solid var(--green);padding-left:14px;margin:10px 0;position:relative">
-      <div class="leg-icon-dot"><i class="ph ${iconCls}"></i></div>
+    const modeColor = MODE_COLORS[leg.mode] || 'var(--fern)';
+    h += `<div style="border-left:3px solid ${modeColor};padding-left:14px;margin:10px 0;position:relative">
+      <div class="leg-icon-dot" style="background:${modeColor}"><i class="ph ${iconCls}"></i></div>
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">${leg.from} → ${leg.to}</div>
       <div class="leg-grid">
         <div class="leg-col">
@@ -1612,10 +1638,10 @@ function renderLeg(i) {
         <div class="pills" style="flex-wrap:wrap">${MODES.map(m => `<button class="mp${leg.mode===m?' on':''}" onclick="setMode(${i},'${m}')">${MI[m]}</button>`).join('')}</div>
         <button class="leg-edit-btn" style="margin-top:4px" onclick="editingLegModes.delete(${i});render()">Cancel</button>
       </div>`
-    : `<div class="leg-mode-badge" style="margin-bottom:6px">
+    : `<div class="leg-mode-badge" style="margin-bottom:6px;color:${MODE_COLORS[leg.mode]||'var(--fern)'}">
         <i class="ph ${iconCls}"></i>
         <span>${MI[leg.mode] || leg.mode}</span>
-        <button class="leg-edit-btn" onclick="editingLegModes.add(${i});render()">Edit</button>
+        <button class="leg-edit-btn" style="color:var(--text3)" onclick="editingLegModes.add(${i});render()">Edit</button>
       </div>`;
 
   // Booking links for transport
@@ -1704,7 +1730,7 @@ function renderTl() {
     const isF = i === 0, isL = i === stops.length - 1;
     const ds = s.date ? new Date(s.date + 'T00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' }) : '';
     h += `<div class="tl-stop"><div class="tl-dot${isF ? ' s' : isL ? ' e' : ''}"></div><div class="tl-nm">${s.name || '?'}</div><div class="tl-dt">${ds}</div></div>`;
-    if (!isL) { const leg = getLeg(i); h += `<div class="tl-leg"><div class="tl-line"></div><div class="tl-badge">${MI[leg.mode] || leg.mode}${leg.booked ? '<span class="tl-booked">✓</span>' : ''}</div></div>`; }
+    if (!isL) { const leg = getLeg(i); const mc = MODE_COLORS[leg.mode]; h += `<div class="tl-leg"><div class="tl-line" style="${mc?'background:'+mc+';opacity:0.35':''}"></div><div class="tl-badge" style="${mc?'color:'+mc+';border-color:'+mc+';opacity:0.9':''}">${MI[leg.mode] || leg.mode}${leg.booked ? '<span class="tl-booked">✓</span>' : ''}</div></div>`; }
   });
   el.innerHTML = h;
 }
