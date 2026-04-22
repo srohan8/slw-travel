@@ -986,7 +986,7 @@ function loadTrip(trip) {
 }
 
 // ── AI calls (via proxy) ──────────────────────────────────────────
-async function callAI(prompt, maxTokens = 4000) {
+async function callAI(prompt, maxTokens = 8000) {
   const url = PROXY_URL ? `${PROXY_URL}/api/ai` : 'https://api.anthropic.com/v1/messages';
   const headers = { 'Content-Type': 'application/json' };
   if (!PROXY_URL) {
@@ -1003,26 +1003,59 @@ async function callAI(prompt, maxTokens = 4000) {
     throw new Error(msg);
   }
   const text = d.content.map(c => c.text || '').join('');
-  // Strip markdown fences then extract the outermost {...}
+  // Strip markdown fences, extract outermost { … }
   const stripped = text.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
   const first = stripped.indexOf('{');
-  const last  = stripped.lastIndexOf('}');
-  const jsonStr = first !== -1 && last > first ? stripped.slice(first, last + 1) : stripped;
-  try {
-    return JSON.parse(jsonStr);
-  } catch {
-    console.error('AI response (parse failed):', text);
-    // Second attempt: try to patch common truncation (missing closing braces)
-    try {
-      let s = jsonStr;
-      const opens  = (s.match(/\{/g) || []).length;
-      const closes = (s.match(/\}/g) || []).length;
-      s += '}'.repeat(Math.max(0, opens - closes));
-      return JSON.parse(s);
-    } catch {
-      throw new Error('Response was not valid JSON — try again');
+  if (first === -1) throw new Error('Response was not valid JSON — try again');
+  const raw = stripped.slice(first);
+
+  // Fast path – valid JSON
+  try { return JSON.parse(raw); } catch { /* fall through */ }
+
+  // Repair path – handles truncation mid-string or mid-object
+  console.warn('AI response needed repair:', raw.slice(-120));
+  try { return _repairJson(raw); } catch {
+    throw new Error('Response was not valid JSON — try again');
+  }
+}
+
+/**
+ * Walk the raw JSON string tracking parser state.
+ * If the AI was cut off mid-string or mid-object, strip the incomplete tail
+ * and close all open arrays / objects so JSON.parse can succeed.
+ */
+function _repairJson(s) {
+  let inStr = false, esc = false;
+  const stack = []; // '{' | '['
+
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (esc)                        { esc = false; continue; }
+    if (c === '\\' && inStr)        { esc = true;  continue; }
+    if (c === '"')                  { inStr = !inStr; continue; }
+    if (inStr)                      continue;
+    if (c === '{' || c === '[')     { stack.push(c); continue; }
+    if (c === '}' || c === ']') {
+      const want = c === '}' ? '{' : '[';
+      if (stack.length && stack[stack.length - 1] === want) stack.pop();
     }
   }
+
+  if (!stack.length) return JSON.parse(s); // somehow already valid
+
+  let t = s;
+  // Drop an unterminated trailing string (find last unescaped `"`)
+  if (inStr) {
+    let qi = t.length - 1;
+    while (qi >= 0 && !(t[qi] === '"' && t[qi - 1] !== '\\')) qi--;
+    t = t.slice(0, qi);
+  }
+  // Strip trailing partial key/value: comma, colon, bare word, whitespace
+  t = t.replace(/[,\s:"a-zA-Z0-9_\-.]*$/, '').trimEnd();
+
+  // Close every open structure (innermost first)
+  const closers = [...stack].reverse().map(c => c === '{' ? '}' : ']').join('');
+  return JSON.parse(t + closers);
 }
 
 // ── Route result cache ────────────────────────────────────────────
