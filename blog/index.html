@@ -1,0 +1,114 @@
+---
+layout: null
+permalink: /blog/
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SLW Travel — Route guides & field notes</title>
+<meta name="description" content="Long-form overland route guides, border-crossing notes, and field reports from SLW Travel."/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --moss:#2D4A2D; --fern:#4A7C4A; --sage:#8BAF7A; --mist:#D4E3CC;
+  --cream:#F5F0E8; --sand:#E8DFD0;
+  --bark:#6B4F3A; --rust:#C4622D; --dusk:#1A2B1A; --gold:#C9A84C;
+  --bg:#FAF7F2; --bg3:var(--cream);
+  --text:#1A2B1A; --text2:#4A6040; --text3:#9AA880;
+  --border:rgba(45,74,45,0.15);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono','Courier New',monospace;
+}
+body { font-family:var(--body); background:var(--bg3); color:var(--text); min-height:100vh; }
+
+.mkt-nav {
+  background:var(--dusk); color:var(--cream);
+  padding:13px 22px; display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:20;
+  box-shadow:0 2px 12px rgba(26,43,26,0.2);
+}
+.mkt-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
+.mkt-logo-text { font-family:var(--serif); font-weight:300; font-size:19px; color:var(--cream); letter-spacing:-0.3px; }
+.mkt-logo-text em { font-style:italic; color:var(--sage); }
+.mkt-nav-links { display:flex; gap:22px; align-items:center; font-size:13px; }
+.mkt-nav-links a { color:rgba(212,227,204,0.55); text-decoration:none; transition:color .2s; }
+.mkt-nav-links a:hover, .mkt-nav-links a.active { color:var(--cream); }
+.mkt-cta-pill {
+  background:var(--sage); color:var(--dusk); padding:6px 14px; border-radius:99px;
+  font-weight:600; font-size:12px; cursor:pointer; letter-spacing:0.2px;
+  border:none; font-family:var(--body); text-decoration:none; display:inline-block;
+}
+@media(max-width:640px){ .mkt-nav-links a:not(.active) { display:none; } }
+
+.blog-hero { background:var(--dusk); color:var(--cream); padding:60px 22px 48px; }
+.blog-hero-inner { max-width:860px; margin:0 auto; }
+.kicker { font-family:var(--mono); font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--sage); }
+.blog-h1 { font-family:var(--serif); font-weight:300; font-size:clamp(38px,6vw,58px); line-height:1.05; letter-spacing:-1px; margin:10px 0 14px; }
+.blog-h1 em { font-style:italic; color:var(--sage); }
+.blog-sub { font-size:15px; line-height:1.55; color:rgba(245,240,232,0.72); max-width:560px; }
+
+.posts-wrap { max-width:860px; margin:0 auto; padding:48px 22px 80px; }
+.posts-list { display:flex; flex-direction:column; gap:2px; border-top:1px solid var(--border); }
+.post-card {
+  display:block; padding:24px 0; border-bottom:1px solid var(--border);
+  text-decoration:none; color:inherit; transition:padding .2s;
+}
+.post-card:hover { padding-left:8px; }
+.post-meta { font-family:var(--mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); margin-bottom:6px; }
+.post-title { font-family:var(--serif); font-weight:400; font-size:26px; line-height:1.2; color:var(--text); margin-bottom:6px; }
+.post-title em { font-style:italic; color:var(--fern); }
+.post-excerpt { font-size:14px; line-height:1.55; color:var(--text2); }
+
+.empty { padding:40px 0; text-align:center; color:var(--text3); font-size:14px; }
+
+footer { text-align:center; padding:32px; color:var(--text3); font-size:12px; font-family:var(--mono); letter-spacing:1px; }
+footer a { color:var(--fern); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<header class="mkt-nav">
+  <a class="mkt-logo" href="/">
+    <img src="/public/sloth-logo.svg" height="32" style="filter:brightness(0) invert(1);opacity:0.9"/>
+    <span class="mkt-logo-text">SLW <em>Travel</em></span>
+  </a>
+  <div class="mkt-nav-links">
+    <a href="/">Home</a>
+    <a href="/blog/" class="active">Blog</a>
+    <a href="/auth.html">Sign in</a>
+    <a class="mkt-cta-pill" href="/auth.html?tab=signup">Start planning →</a>
+  </div>
+</header>
+
+<section class="blog-hero">
+  <div class="blog-hero-inner">
+    <div class="kicker">Field notes</div>
+    <h1 class="blog-h1">Route guides, <em>slowly written.</em></h1>
+    <p class="blog-sub">Long-form guides to overland corridors — borders, buses, ferries, and the small things that make a leg work. Written by travelers, edited for people who'd rather take the long way.</p>
+  </div>
+</section>
+
+<main class="posts-wrap">
+  <div class="posts-list">
+    {% for post in site.posts %}
+    <a class="post-card" href="{{ post.url | relative_url }}">
+      <div class="post-meta">{{ post.date | date: "%Y-%m-%d" }}{% if post.tag %} · {{ post.tag }}{% endif %}</div>
+      <div class="post-title">{{ post.title }}</div>
+      {% if post.excerpt %}<div class="post-excerpt">{{ post.excerpt | strip_html | truncate: 180 }}</div>{% endif %}
+    </a>
+    {% else %}
+    <div class="empty">No posts yet.</div>
+    {% endfor %}
+  </div>
+</main>
+
+<footer>
+  <a href="/">← slw.travel</a> · go the long way, on purpose
+</footer>
+
+</body>
+</html>

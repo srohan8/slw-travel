@@ -322,7 +322,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   <div class="mkt-nav-links">
     <span onclick="scrollTo('.section-pillars')">How it works</span>
     <span onclick="scrollTo('.section-routes')">Routes</span>
-    <span onclick="scrollTo('.section-pricing')">Pricing</span>
+    <span onclick="window.location='blog/'">Blog</span>
     <span onclick="window.location='auth.html'">Sign in</span>
     <button class="mkt-cta-pill" onclick="window.location='auth.html?tab=signup'">Start planning →</button>
   </div>
@@ -486,43 +486,6 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
           <div class="howit-n">04</div><div><div class="howit-title">Keep a journal as you go</div><div class="howit-body">Notes sync with your route. Share or keep private.</div></div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ── Pricing ───────────────────────────────────────────────────── -->
-<div class="section section-gap section-pricing">
-  <div class="kicker">Pricing</div>
-  <div class="pricing-grid">
-    <div class="price-card price-card-free">
-      <div class="kicker" style="color:var(--fern)">Free</div>
-      <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px">
-        <div class="price-tag">€0</div>
-        <div class="price-period">forever</div>
-      </div>
-      <div style="margin-top:14px;border-top:0.5px dashed var(--border);padding-top:12px">
-        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> 3 routes per month</div>
-        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Core modes (train, bus, ferry)</div>
-        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Confidence badges</div>
-        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Basic journal</div>
-      </div>
-      <button class="price-cta price-cta-free" onclick="window.location='auth.html?tab=signup'">Start free →</button>
-    </div>
-    <div class="price-card price-card-pro">
-      <div class="pro-rec-badge"><i class="ph ph-sparkle" style="font-size:11px"></i> Recommended</div>
-      <div class="kicker" style="color:var(--sage)">Pro</div>
-      <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px">
-        <div class="price-tag">€6</div>
-        <div class="price-period">per month</div>
-      </div>
-      <div style="margin-top:14px;border-top:0.5px dashed rgba(212,227,204,0.2);padding-top:12px">
-        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Unlimited routes</div>
-        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Shared taxi + hitch legs</div>
-        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Live conflict alerts</div>
-        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Offline export · GPX + PDF</div>
-        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Shared trips with editors</div>
-      </div>
-      <button class="price-cta price-cta-pro" onclick="window.location='auth.html?tab=signup'">Try Pro free for 14 days →</button>
     </div>
   </div>
 </div>

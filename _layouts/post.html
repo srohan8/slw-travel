@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{{ page.title }} — SLW Travel</title>
+<meta name="description" content="{{ page.description | default: page.excerpt | strip_html | truncate: 160 }}"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --sage:#8BAF7A; --cream:#F5F0E8; --dusk:#1A2B1A; --fern:#4A7C4A;
+  --bg3:var(--cream); --text:#1A2B1A; --text2:#4A6040; --text3:#9AA880;
+  --border:rgba(45,74,45,0.15);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono','Courier New',monospace;
+}
+body { font-family:var(--body); background:var(--bg3); color:var(--text); line-height:1.6; }
+
+.mkt-nav { background:var(--dusk); color:var(--cream); padding:13px 22px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20; }
+.mkt-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
+.mkt-logo-text { font-family:var(--serif); font-weight:300; font-size:19px; color:var(--cream); }
+.mkt-logo-text em { font-style:italic; color:var(--sage); }
+.mkt-nav-links a { color:rgba(212,227,204,0.55); text-decoration:none; font-size:13px; margin-left:22px; }
+.mkt-nav-links a:hover { color:var(--cream); }
+
+article { max-width:680px; margin:0 auto; padding:60px 22px 80px; }
+.post-meta { font-family:var(--mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); margin-bottom:12px; }
+article h1 { font-family:var(--serif); font-weight:300; font-size:clamp(34px,5vw,48px); line-height:1.1; letter-spacing:-0.8px; margin-bottom:20px; }
+article h1 em { font-style:italic; color:var(--fern); }
+.post-body h2 { font-family:var(--serif); font-weight:400; font-size:26px; margin:36px 0 12px; }
+.post-body h3 { font-family:var(--serif); font-weight:400; font-size:20px; margin:28px 0 10px; }
+.post-body p { margin-bottom:18px; color:var(--text2); font-size:16px; }
+.post-body a { color:var(--fern); }
+.post-body ul, .post-body ol { margin:0 0 18px 22px; color:var(--text2); }
+.post-body li { margin-bottom:6px; }
+.post-body blockquote { border-left:3px solid var(--sage); padding:4px 16px; margin:20px 0; color:var(--text2); font-style:italic; }
+.post-body code { font-family:var(--mono); background:rgba(45,74,45,0.08); padding:1px 6px; border-radius:4px; font-size:13px; }
+.post-body pre { background:var(--dusk); color:var(--cream); padding:16px; border-radius:8px; overflow-x:auto; margin-bottom:18px; font-size:13px; }
+.post-body pre code { background:none; padding:0; color:inherit; }
+.post-body img { max-width:100%; height:auto; border-radius:8px; margin:20px 0; }
+.post-body hr { border:none; border-top:1px solid var(--border); margin:32px 0; }
+
+.back { display:inline-block; margin-bottom:28px; font-family:var(--mono); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); text-decoration:none; }
+.back:hover { color:var(--fern); }
+
+.post-tags { margin-top:36px; padding-top:20px; border-top:1px solid var(--border); font-family:var(--mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); }
+.post-tags span { display:inline-block; margin-right:10px; }
+</style>
+</head>
+<body>
+
+<header class="mkt-nav">
+  <a class="mkt-logo" href="/">
+    <img src="/public/sloth-logo.svg" height="32" style="filter:brightness(0) invert(1);opacity:0.9"/>
+    <span class="mkt-logo-text">SLW <em>Travel</em></span>
+  </a>
+  <div class="mkt-nav-links">
+    <a href="/">Home</a>
+    <a href="/blog/">Blog</a>
+  </div>
+</header>
+
+<article>
+  <a class="back" href="/blog/">← All posts</a>
+  <div class="post-meta">{{ page.date | date: "%Y-%m-%d" }}{% if page.tag %} · {{ page.tag }}{% endif %}</div>
+  <h1>{{ page.title }}</h1>
+
+  <div class="post-body">
+    {{ content }}
+  </div>
+
+  {% if page.tags and page.tags.size > 0 %}
+  <div class="post-tags">
+    {% for t in page.tags %}<span>#{{ t }}</span>{% endfor %}
+  </div>
+  {% endif %}
+</article>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+title: SLW Travel — Field notes
+description: Long-form overland route guides and field notes.
+url: "https://slw.travel"
+baseurl: ""
+
+permalink: /blog/:slug/
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  smart_quotes: lsquo,rsquo,ldquo,rdquo
+
+defaults:
+  - scope:
+      path: "_posts"
+      type: "posts"
+    values:
+      layout: "post"
+
+exclude:
+  - README.md
+  - supabase-schema.sql
+  - supabase-reset.sql
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - .claude
+  - vendor
+
+keep_files:
+  - public
