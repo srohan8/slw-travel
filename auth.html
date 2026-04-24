@@ -473,6 +473,30 @@ body {
     if (session) window.location.href = 'app.html';
   });
 
+  // ── Signup gate (admin_settings.new_signups_enabled) ───────────
+  let _signupsEnabled = true;
+  sb.from('admin_settings').select('key, value').eq('key', 'new_signups_enabled')
+    .then(({ data }) => {
+      const raw = data?.[0]?.value;
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      _signupsEnabled = parsed !== false;   // default on if missing
+      applySignupGate();
+    });
+
+  function applySignupGate() {
+    if (_signupsEnabled) return;
+    document.getElementById('tab-signup').style.display = 'none';
+    document.getElementById('panel-signup').innerHTML =
+      '<div class="kicker">Signups paused</div>' +
+      '<div class="auth-title">New accounts temporarily unavailable.</div>' +
+      '<p style="font-size:13px;color:var(--text2);line-height:1.55;margin-top:12px">We\'ve paused new sign-ups while we scale. Existing accounts are unaffected — sign in on the left. Check back soon.</p>';
+    // If URL requested signup, bounce back to signin
+    const active = document.querySelector('#panel-signup[style*="block"]');
+    if (active || new URLSearchParams(location.search).get('tab') === 'signup') {
+      switchTab('signin');
+    }
+  }
+
   // Read ?tab= param
   const urlTab = new URLSearchParams(window.location.search).get('tab');
   if (urlTab === 'signup') switchTab('signup');
@@ -508,6 +532,7 @@ body {
   }
 
   async function signUp() {
+    if (!_signupsEnabled) return setMsg('su-msg', 'New sign-ups are temporarily paused.', true);
     const email = document.getElementById('su-email').value.trim();
     const pass  = document.getElementById('su-pass').value;
     if (!email || !pass) return setMsg('su-msg', 'Please fill in all fields', true);

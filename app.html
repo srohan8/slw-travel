@@ -692,30 +692,9 @@
         </div>
       </div>
 
-      <div class="card">
-        <h3 style="font-size:15px;font-weight:600;margin:0 0 4px">Freemium &amp; limits</h3>
-        <p style="font-size:12px;color:var(--text3);margin:0 0 1rem">Enforce monthly usage limits for free users. Keep off while building your user base.</p>
-        <div class="a-row">
-          <div>
-            <div class="a-row-label">Freemium limits <span id="a-status-freemium" class="a-status a-status-off">Off</span></div>
-            <div class="a-row-desc">When on, the limits below apply to free users.</div>
-          </div>
-          <label class="a-toggle"><input type="checkbox" id="a-freemium" onchange="savePlatformSetting('freemium_enabled', this.checked); updateLimitsState()"><div class="a-toggle-track"></div><div class="a-toggle-thumb"></div></label>
-        </div>
-        <div id="a-limits-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px">
-          <div><div class="lbl" style="margin-bottom:4px">Route plans / mo</div><input class="inp" type="number" id="a-lim-routePlans" min="0" max="999" value="3"/></div>
-          <div><div class="lbl" style="margin-bottom:4px">Flight searches / mo</div><input class="inp" type="number" id="a-lim-flightSearches" min="0" max="999" value="3"/></div>
-          <div><div class="lbl" style="margin-bottom:4px">Saved trips</div><input class="inp" type="number" id="a-lim-savedTrips" min="0" max="999" value="1"/></div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
-          <button class="btn btn-primary" onclick="saveLimits()">Save limits</button>
-          <span id="a-limits-saved" style="font-size:12px;color:var(--green);opacity:0;transition:opacity 0.3s">Saved</span>
-        </div>
-      </div>
-
       <div class="card" style="border-color:rgba(163,45,45,0.3)">
         <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;color:#a32d2d">Danger zone</h3>
-        <p style="font-size:12px;color:var(--text3);margin:0 0 1rem">Turns off all limits and restrictions. Cannot be undone.</p>
+        <p style="font-size:12px;color:var(--text3);margin:0 0 1rem">Turns off all toggles (maintenance, login-required, etc). Cannot be undone.</p>
         <button class="btn" style="border-color:rgba(163,45,45,0.4);color:#a32d2d" onclick="resetPlatformSettings()">Reset platform settings to defaults</button>
       </div>
 
@@ -1854,48 +1833,26 @@ async function loadPlatformSettings() {
   _aSetToggle('login',       !!s.login_required);
   _aSetToggle('signups',     s.new_signups_enabled !== false);
   _aSetToggle('affiliates',  s.affiliate_links !== false);
-  _aSetToggle('freemium',    !!s.freemium_enabled);
-  if (s.limits?.free) {
-    document.getElementById('a-lim-routePlans').value     = s.limits.free.routePlans     ?? 3;
-    document.getElementById('a-lim-flightSearches').value = s.limits.free.flightSearches ?? 3;
-    document.getElementById('a-lim-savedTrips').value     = s.limits.free.savedTrips     ?? 1;
-  }
-  updateLimitsState();
-}
-function updateLimitsState() {
-  const on = document.getElementById('a-freemium')?.checked;
-  ['a-lim-routePlans','a-lim-flightSearches','a-lim-savedTrips'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.opacity = on ? '1' : '0.4';
-  });
 }
 async function savePlatformSetting(key, value) {
-  const uiKey = key.replace('_mode','').replace('_required','').replace('new_','').replace('_enabled','').replace('_links','').replace('maintenance','maintenance').replace('login','login').replace('signups','signups').replace('affiliate','affiliates').replace('freemium','freemium');
-  _aSetToggle(uiKey, value);
+  const uiKeyMap = {
+    maintenance_mode:    'maintenance',
+    login_required:      'login',
+    new_signups_enabled: 'signups',
+    affiliate_links:     'affiliates',
+  };
+  _aSetToggle(uiKeyMap[key] || key, value);
   const { error } = await sb.from('admin_settings').upsert({ key, value: JSON.stringify(value), updated_at: new Date().toISOString() });
   if (error) alert('Save failed: ' + error.message);
   appSettings[key] = value;
 }
-async function saveLimits() {
-  const limits = { free: {
-    routePlans:     parseInt(document.getElementById('a-lim-routePlans').value) || 3,
-    flightSearches: parseInt(document.getElementById('a-lim-flightSearches').value) || 3,
-    savedTrips:     parseInt(document.getElementById('a-lim-savedTrips').value) || 1,
-  }};
-  const { error } = await sb.from('admin_settings').upsert({ key:'limits', value: JSON.stringify(limits), updated_at: new Date().toISOString() });
-  if (error) { alert('Save failed: ' + error.message); return; }
-  const msg = document.getElementById('a-limits-saved');
-  msg.style.opacity = '1'; setTimeout(() => { msg.style.opacity = '0'; }, 2000);
-}
 async function resetPlatformSettings() {
-  if (!confirm('Reset all platform settings to defaults?')) return;
+  if (!confirm('Reset platform toggles to defaults?')) return;
   const defaults = [
-    { key:'freemium_enabled',    value: JSON.stringify(false) },
     { key:'login_required',      value: JSON.stringify(false) },
     { key:'new_signups_enabled', value: JSON.stringify(true)  },
     { key:'affiliate_links',     value: JSON.stringify(true)  },
     { key:'maintenance_mode',    value: JSON.stringify(false) },
-    { key:'limits', value: JSON.stringify({ free: { routePlans: 3, flightSearches: 3, savedTrips: 1 } }) },
   ].map(r => ({ ...r, updated_at: new Date().toISOString() }));
   const { error } = await sb.from('admin_settings').upsert(defaults);
   if (error) { alert('Reset failed: ' + error.message); return; }

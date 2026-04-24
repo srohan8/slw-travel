@@ -313,6 +313,12 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 </head>
 <body>
 
+<!-- ── Maintenance banner (hidden unless admin_settings.maintenance_mode=true) ─ -->
+<div id="maintenanceBanner" style="display:none;background:#C4622D;color:#fff;padding:10px 22px;text-align:center;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;font-weight:500;letter-spacing:0.2px">
+  <i class="ph ph-wrench" style="font-size:13px;vertical-align:-1px"></i>
+  <span id="maintenanceBannerText">Maintenance in progress — some features may be temporarily unavailable.</span>
+</div>
+
 <!-- ── Marketing header ──────────────────────────────────────── -->
 <header class="mkt-nav">
   <a class="mkt-logo" href="#">
@@ -604,6 +610,14 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   const SUPA_URL = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
   const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  // ── Maintenance banner (driven by admin_settings.maintenance_mode) ──
+  sb.from('admin_settings').select('key, value').eq('key', 'maintenance_mode')
+    .then(({ data }) => {
+      const raw = data?.[0]?.value;
+      const on = typeof raw === 'string' ? JSON.parse(raw) === true : raw === true;
+      if (on) document.getElementById('maintenanceBanner').style.display = 'block';
+    });
 
   // ── Session check: redirect if already signed in ───────────────
   sb.auth.getSession().then(({ data: { session } }) => {
