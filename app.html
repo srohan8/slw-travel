@@ -78,6 +78,30 @@
   .pill{font-size:12px;padding:5px 12px;border-radius:99px;border:0.5px solid var(--border2);color:var(--text2);cursor:pointer;background:transparent;font-family:inherit;transition: all 0.2s ease;}
   .pill:hover{border-color: var(--green); color: var(--text);}
   .pill.on{background:var(--info-bg);color:var(--info-text);border-color:var(--info-border);font-weight: 500;}
+
+  /* Admin sub-tabs */
+  .admin-subnav{display:flex;gap:4px;border-bottom:0.5px solid var(--border);margin-bottom:1.2rem;flex-wrap:wrap;}
+  .admin-subtab{font-size:13px;padding:10px 16px;background:none;border:none;color:var(--text2);cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-0.5px;transition:all 0.2s;}
+  .admin-subtab:hover{color:var(--text);}
+  .admin-subtab.active{color:var(--green);border-bottom-color:var(--green);font-weight:500;}
+  .admin-sub{display:none;}
+  .admin-sub.active{display:block;}
+
+  /* Toggle switch (reused from admin.html) */
+  .a-toggle{position:relative;width:40px;height:22px;cursor:pointer;display:inline-block;flex-shrink:0;}
+  .a-toggle input{opacity:0;width:0;height:0;}
+  .a-toggle-track{position:absolute;inset:0;background:var(--bg3);border:0.5px solid var(--border2);border-radius:99px;transition:background 0.2s;}
+  .a-toggle input:checked + .a-toggle-track{background:var(--green);border-color:var(--green);}
+  .a-toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--text2);transition:transform 0.2s, background 0.2s;pointer-events:none;}
+  .a-toggle input:checked ~ .a-toggle-thumb{transform:translateX(18px);background:#fff;}
+  .a-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:0.5px solid var(--border);}
+  .a-row:last-child{border-bottom:none;}
+  .a-row-label{font-size:13px;font-weight:500;}
+  .a-row-desc{font-size:12px;color:var(--text3);margin-top:2px;line-height:1.5;}
+  .a-status{font-size:10px;padding:2px 8px;border-radius:99px;display:inline-block;margin-left:8px;letter-spacing:0.04em;}
+  .a-status-on{background:var(--success-bg);color:var(--success-text);}
+  .a-status-off{background:var(--bg3);color:var(--text2);}
+  .a-status-warn{background:var(--warn-bg);color:var(--warn-text);}
   .avoid-pill{font-size:12px;padding:5px 12px;border-radius:99px;border:0.5px solid var(--border2);color:var(--text2);cursor:pointer;background:transparent;font-family:inherit;transition: all 0.2s ease;}
   .avoid-pill:hover{border-color: var(--danger-text); color: var(--text);}
   .avoid-pill.on{background:var(--danger-bg);color:var(--danger-text);border-color:var(--danger-border);font-weight: 500;}
@@ -525,8 +549,17 @@
   <div id="contribModal" style="display:none"></div>
 
   <!-- FLIGHTS TAB -->
-  <!-- ADMIN TAB (accessible via URL hash or admin badge) -->
+  <!-- ADMIN TAB — gated on profiles.is_admin; navbtn hidden for non-admins -->
   <div id="admin" class="panel">
+
+    <div class="admin-subnav">
+      <button class="admin-subtab active" data-sub="sites"    onclick="switchAdminSub('sites')">Booking sites</button>
+      <button class="admin-subtab"        data-sub="platform" onclick="switchAdminSub('platform')">Platform</button>
+      <button class="admin-subtab"        data-sub="advisory" onclick="switchAdminSub('advisory')">Advisory refresh</button>
+    </div>
+
+    <!-- ── Sub-tab: Booking sites ──────────────────────────────────────── -->
+    <div id="admin-sub-sites" class="admin-sub active">
 
     <!-- Booking sites manager -->
     <div class="card" style="margin-bottom:1rem">
@@ -620,6 +653,118 @@
       </div>
       <div id="adminAffTable"></div>
     </div>
+
+    </div><!-- /admin-sub-sites -->
+
+    <!-- ── Sub-tab: Platform ───────────────────────────────────────────── -->
+    <div id="admin-sub-platform" class="admin-sub">
+
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:600;margin:0 0 4px">Access &amp; visibility</h3>
+        <p style="font-size:12px;color:var(--text3);margin:0 0 1rem">Platform-wide toggles. Changes take effect immediately for all users.</p>
+        <div class="a-row">
+          <div>
+            <div class="a-row-label">Maintenance mode <span id="a-status-maintenance" class="a-status a-status-off">Off</span></div>
+            <div class="a-row-desc">Shows a maintenance banner on the landing page. App still accessible.</div>
+          </div>
+          <label class="a-toggle"><input type="checkbox" id="a-maintenance" onchange="savePlatformSetting('maintenance_mode', this.checked)"><div class="a-toggle-track"></div><div class="a-toggle-thumb"></div></label>
+        </div>
+        <div class="a-row">
+          <div>
+            <div class="a-row-label">Login required <span id="a-status-login" class="a-status a-status-off">Off</span></div>
+            <div class="a-row-desc">Forces users to sign in before accessing the app.</div>
+          </div>
+          <label class="a-toggle"><input type="checkbox" id="a-login" onchange="savePlatformSetting('login_required', this.checked)"><div class="a-toggle-track"></div><div class="a-toggle-thumb"></div></label>
+        </div>
+        <div class="a-row">
+          <div>
+            <div class="a-row-label">New signups <span id="a-status-signups" class="a-status a-status-on">On</span></div>
+            <div class="a-row-desc">Allow new users to create accounts.</div>
+          </div>
+          <label class="a-toggle"><input type="checkbox" id="a-signups" onchange="savePlatformSetting('new_signups_enabled', this.checked)"><div class="a-toggle-track"></div><div class="a-toggle-thumb"></div></label>
+        </div>
+        <div class="a-row">
+          <div>
+            <div class="a-row-label">Affiliate links <span id="a-status-affiliates" class="a-status a-status-on">On</span></div>
+            <div class="a-row-desc">Show booking-site affiliate links throughout the app.</div>
+          </div>
+          <label class="a-toggle"><input type="checkbox" id="a-affiliates" onchange="savePlatformSetting('affiliate_links', this.checked)"><div class="a-toggle-track"></div><div class="a-toggle-thumb"></div></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:600;margin:0 0 4px">Freemium &amp; limits</h3>
+        <p style="font-size:12px;color:var(--text3);margin:0 0 1rem">Enforce monthly usage limits for free users. Keep off while building your user base.</p>
+        <div class="a-row">
+          <div>
+            <div class="a-row-label">Freemium limits <span id="a-status-freemium" class="a-status a-status-off">Off</span></div>
+            <div class="a-row-desc">When on, the limits below apply to free users.</div>
+          </div>
+          <label class="a-toggle"><input type="checkbox" id="a-freemium" onchange="savePlatformSetting('freemium_enabled', this.checked); updateLimitsState()"><div class="a-toggle-track"></div><div class="a-toggle-thumb"></div></label>
+        </div>
+        <div id="a-limits-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px">
+          <div><div class="lbl" style="margin-bottom:4px">Route plans / mo</div><input class="inp" type="number" id="a-lim-routePlans" min="0" max="999" value="3"/></div>
+          <div><div class="lbl" style="margin-bottom:4px">Flight searches / mo</div><input class="inp" type="number" id="a-lim-flightSearches" min="0" max="999" value="3"/></div>
+          <div><div class="lbl" style="margin-bottom:4px">Saved trips</div><input class="inp" type="number" id="a-lim-savedTrips" min="0" max="999" value="1"/></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <button class="btn btn-primary" onclick="saveLimits()">Save limits</button>
+          <span id="a-limits-saved" style="font-size:12px;color:var(--green);opacity:0;transition:opacity 0.3s">Saved</span>
+        </div>
+      </div>
+
+      <div class="card" style="border-color:rgba(163,45,45,0.3)">
+        <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;color:#a32d2d">Danger zone</h3>
+        <p style="font-size:12px;color:var(--text3);margin:0 0 1rem">Turns off all limits and restrictions. Cannot be undone.</p>
+        <button class="btn" style="border-color:rgba(163,45,45,0.4);color:#a32d2d" onclick="resetPlatformSettings()">Reset platform settings to defaults</button>
+      </div>
+
+    </div><!-- /admin-sub-platform -->
+
+    <!-- ── Sub-tab: Advisory refresh ───────────────────────────────────── -->
+    <div id="admin-sub-advisory" class="admin-sub">
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+          <div>
+            <h3 style="font-size:15px;font-weight:600;margin:0 0 4px">Refresh status</h3>
+            <p style="font-size:12px;color:var(--text3);margin:0">Daily job pulls advisories from FCDO + Government of Canada and updates <code>conflict_zones</code>.</p>
+          </div>
+          <span class="a-status a-status-off" id="a-adv-status">—</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:12px">
+          <div>
+            <div class="lbl" style="margin-bottom:4px">Countries covered</div>
+            <div id="a-adv-count" style="font-size:18px;font-weight:500">—</div>
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:4px">Last refresh</div>
+            <div id="a-adv-lastrun" style="font-size:13px">—</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:0.5px solid var(--border);font-size:11px;color:var(--text3)">
+          Cron: <code id="a-adv-cron">0 3 * * *</code> · configured in Railway
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:600;margin:0 0 4px">API URL templates</h3>
+        <p style="font-size:12px;color:var(--text3);margin:0 0 1rem">Used by the refresh job. <code>{slug}</code> is replaced per country. Leave blank to use built-in defaults.</p>
+        <div style="margin-bottom:10px">
+          <div class="lbl" style="margin-bottom:4px">FCDO content API</div>
+          <input class="inp" type="text" id="a-adv-fcdo" placeholder="https://www.gov.uk/api/content/foreign-travel-advice/{slug}" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px"/>
+        </div>
+        <div style="margin-bottom:10px">
+          <div class="lbl" style="margin-bottom:4px">Government of Canada</div>
+          <input class="inp" type="text" id="a-adv-canada" placeholder="https://travel.gc.ca/destinations/{slug}" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px"/>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-primary" onclick="saveAdvisorySettings()">Save</button>
+          <span id="a-adv-saved" style="font-size:12px;color:var(--green);opacity:0;transition:opacity 0.3s">Saved</span>
+        </div>
+      </div>
+
+    </div><!-- /admin-sub-advisory -->
 
   </div>
 </div>
@@ -836,22 +981,35 @@ let currentTripId  = null;
 let _autoRefreshPending = false; // true while a stale-cache background re-fetch is in flight
 let appSettings    = {};
 let currentUser    = null;
+let isAdmin        = false;
 
 // ── Init ──────────────────────────────────────────────────────────
 async function init() {
   appSettings = { login_required: false, freemium_enabled: false, affiliate_links: true };
 
+  // Load admin_settings from Supabase (public-read) so platform toggles
+  // configured in the Admin panel actually take effect.
+  try {
+    const { data } = await sb.from('admin_settings').select('key, value');
+    (data || []).forEach(r => {
+      const v = typeof r.value === 'string' ? JSON.parse(r.value) : r.value;
+      appSettings[r.key] = v;
+    });
+  } catch (e) { console.warn('admin_settings load failed', e); }
+
   // Real Supabase session
   const { data: { session } } = await sb.auth.getSession();
   currentUser = session?.user || null;
+  await refreshAdminFlag();
   updateNavAuth();
 
   // Sync trips from Supabase → localStorage if signed in
   if (currentUser) await syncTripsFromCloud();
 
   // Keep auth in sync across tabs / token refresh
-  sb.auth.onAuthStateChange((_event, session) => {
+  sb.auth.onAuthStateChange(async (_event, session) => {
     currentUser = session?.user || null;
+    await refreshAdminFlag();
     updateNavAuth();
     if (currentUser) syncTripsFromCloud();
   });
@@ -869,6 +1027,11 @@ async function init() {
   updateCacheClearBtn();
   renderSavedTrips();
   updateActiveTripBar();
+
+  // Deep-link to Admin via #admin (from the admin.html redirect stub).
+  if (window.location.hash === '#admin' && isAdmin) {
+    switchTab('admin', document.getElementById('navbtn_admin'));
+  }
 
   // ── Auto-fill + auto-trigger from URL params (?from=X&to=Y&via=Z) ──
   const urlFrom = params.get('from');
@@ -1634,16 +1797,151 @@ function renderAdminSiteList() {
 
 // ── Tab switching ─────────────────────────────────────────────────
 function switchTab(id, el) {
+  if (id === 'admin' && !isAdmin) return;   // belt-and-braces — nav button is also hidden
   document.querySelectorAll('.nav-link').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const btn = el || document.getElementById('navbtn_' + id);
   if (btn) btn.classList.add('active');
   document.getElementById(id).classList.add('active');
   if (id === 'record')   { render(); }
-  if (id === 'admin')    { renderAdminTab(); }
+  if (id === 'admin')    { renderAdminTab(); switchAdminSub('sites'); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
   if (id === 'profile')  { renderProfilePanel(); }
   if (id === 'plan' && !lastSuggestion) { renderPlanLanding(); }
+}
+
+// ── Admin gating ──────────────────────────────────────────────────
+async function refreshAdminFlag() {
+  isAdmin = false;
+  if (currentUser) {
+    try {
+      const { data } = await sb.from('profiles').select('is_admin').eq('id', currentUser.id).single();
+      isAdmin = !!data?.is_admin;
+    } catch { isAdmin = false; }
+  }
+  const btn = document.getElementById('navbtn_admin');
+  if (btn) btn.style.display = isAdmin ? '' : 'none';
+  // If user was on Admin tab and lost admin (e.g. signed out), bounce them back.
+  if (!isAdmin && document.getElementById('admin')?.classList.contains('active')) {
+    switchTab('plan', document.getElementById('navbtn_plan'));
+  }
+}
+
+// ── Admin sub-tabs ────────────────────────────────────────────────
+function switchAdminSub(id) {
+  document.querySelectorAll('.admin-subtab').forEach(b => b.classList.toggle('active', b.dataset.sub === id));
+  document.querySelectorAll('.admin-sub').forEach(s => s.classList.toggle('active', s.id === 'admin-sub-' + id));
+  if (id === 'platform') loadPlatformSettings();
+  if (id === 'advisory') loadAdvisorySettings();
+}
+
+// ── Platform settings (migrated from admin.html) ──────────────────
+function _aSetToggle(key, val) {
+  const el = document.getElementById('a-' + key);
+  if (el) el.checked = val;
+  const status = document.getElementById('a-status-' + key);
+  if (status) {
+    const isWarn = key === 'maintenance';
+    status.textContent = val ? (isWarn ? 'Active' : 'On') : 'Off';
+    status.className = 'a-status ' + (val ? (isWarn ? 'a-status-warn' : 'a-status-on') : 'a-status-off');
+  }
+}
+async function loadPlatformSettings() {
+  const { data } = await sb.from('admin_settings').select('*');
+  const s = {};
+  (data || []).forEach(r => { s[r.key] = typeof r.value === 'string' ? JSON.parse(r.value) : r.value; });
+  _aSetToggle('maintenance', !!s.maintenance_mode);
+  _aSetToggle('login',       !!s.login_required);
+  _aSetToggle('signups',     s.new_signups_enabled !== false);
+  _aSetToggle('affiliates',  s.affiliate_links !== false);
+  _aSetToggle('freemium',    !!s.freemium_enabled);
+  if (s.limits?.free) {
+    document.getElementById('a-lim-routePlans').value     = s.limits.free.routePlans     ?? 3;
+    document.getElementById('a-lim-flightSearches').value = s.limits.free.flightSearches ?? 3;
+    document.getElementById('a-lim-savedTrips').value     = s.limits.free.savedTrips     ?? 1;
+  }
+  updateLimitsState();
+}
+function updateLimitsState() {
+  const on = document.getElementById('a-freemium')?.checked;
+  ['a-lim-routePlans','a-lim-flightSearches','a-lim-savedTrips'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.opacity = on ? '1' : '0.4';
+  });
+}
+async function savePlatformSetting(key, value) {
+  const uiKey = key.replace('_mode','').replace('_required','').replace('new_','').replace('_enabled','').replace('_links','').replace('maintenance','maintenance').replace('login','login').replace('signups','signups').replace('affiliate','affiliates').replace('freemium','freemium');
+  _aSetToggle(uiKey, value);
+  const { error } = await sb.from('admin_settings').upsert({ key, value: JSON.stringify(value), updated_at: new Date().toISOString() });
+  if (error) alert('Save failed: ' + error.message);
+  appSettings[key] = value;
+}
+async function saveLimits() {
+  const limits = { free: {
+    routePlans:     parseInt(document.getElementById('a-lim-routePlans').value) || 3,
+    flightSearches: parseInt(document.getElementById('a-lim-flightSearches').value) || 3,
+    savedTrips:     parseInt(document.getElementById('a-lim-savedTrips').value) || 1,
+  }};
+  const { error } = await sb.from('admin_settings').upsert({ key:'limits', value: JSON.stringify(limits), updated_at: new Date().toISOString() });
+  if (error) { alert('Save failed: ' + error.message); return; }
+  const msg = document.getElementById('a-limits-saved');
+  msg.style.opacity = '1'; setTimeout(() => { msg.style.opacity = '0'; }, 2000);
+}
+async function resetPlatformSettings() {
+  if (!confirm('Reset all platform settings to defaults?')) return;
+  const defaults = [
+    { key:'freemium_enabled',    value: JSON.stringify(false) },
+    { key:'login_required',      value: JSON.stringify(false) },
+    { key:'new_signups_enabled', value: JSON.stringify(true)  },
+    { key:'affiliate_links',     value: JSON.stringify(true)  },
+    { key:'maintenance_mode',    value: JSON.stringify(false) },
+    { key:'limits', value: JSON.stringify({ free: { routePlans: 3, flightSearches: 3, savedTrips: 1 } }) },
+  ].map(r => ({ ...r, updated_at: new Date().toISOString() }));
+  const { error } = await sb.from('admin_settings').upsert(defaults);
+  if (error) { alert('Reset failed: ' + error.message); return; }
+  loadPlatformSettings();
+}
+
+// ── Advisory settings (migrated from admin.html) ──────────────────
+async function loadAdvisorySettings() {
+  const { data } = await sb.from('admin_settings').select('*')
+    .in('key', ['fcdo_api_template','canada_api_template','advisory_refresh_cron','advisory_refresh_last_run']);
+  const s = {};
+  (data || []).forEach(r => { s[r.key] = typeof r.value === 'string' ? JSON.parse(r.value) : r.value; });
+  document.getElementById('a-adv-fcdo').value   = s.fcdo_api_template   || '';
+  document.getElementById('a-adv-canada').value = s.canada_api_template || '';
+  if (s.advisory_refresh_cron) document.getElementById('a-adv-cron').textContent = s.advisory_refresh_cron;
+
+  const { count } = await sb.from('conflict_zones').select('country_code', { count:'exact', head:true });
+  document.getElementById('a-adv-count').textContent = count ?? '—';
+
+  const { data: latest } = await sb.from('conflict_zones').select('reviewed_at').order('reviewed_at', { ascending:false }).limit(1);
+  const last = s.advisory_refresh_last_run || latest?.[0]?.reviewed_at;
+  const lastEl = document.getElementById('a-adv-lastrun');
+  const statusEl = document.getElementById('a-adv-status');
+  if (last) {
+    const d = new Date(last);
+    lastEl.textContent = d.toISOString().slice(0,10) + ' ' + d.toISOString().slice(11,16) + 'Z';
+    const ageH = (Date.now() - d.getTime()) / 3600000;
+    const healthy = ageH < 36;
+    statusEl.textContent = healthy ? 'Healthy' : 'Stale';
+    statusEl.className = 'a-status ' + (healthy ? 'a-status-on' : 'a-status-warn');
+  } else {
+    lastEl.textContent = 'Never';
+    statusEl.textContent = 'Never run';
+    statusEl.className = 'a-status a-status-off';
+  }
+}
+async function saveAdvisorySettings() {
+  const fcdo   = document.getElementById('a-adv-fcdo').value.trim();
+  const canada = document.getElementById('a-adv-canada').value.trim();
+  const { error } = await sb.from('admin_settings').upsert([
+    { key:'fcdo_api_template',   value: JSON.stringify(fcdo),   updated_at: new Date().toISOString() },
+    { key:'canada_api_template', value: JSON.stringify(canada), updated_at: new Date().toISOString() },
+  ]);
+  if (error) { alert('Save failed: ' + error.message); return; }
+  const msg = document.getElementById('a-adv-saved');
+  msg.style.opacity = '1'; setTimeout(() => { msg.style.opacity = '0'; }, 2000);
 }
 
 // ── Plan tab ──────────────────────────────────────────────────────

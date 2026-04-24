@@ -45,7 +45,7 @@ Admin access is gated by Supabase auth + a `profiles.is_admin` flag — no share
 update public.profiles set is_admin = true where email = 'you@example.com';
 ```
 
-Then sign in at `https://slwtravel.com/admin.html` with that account.
+Then sign in at `/app.html` with that account — an **Admin** tab appears in the navbar. The legacy `/admin.html` URL redirects there. The Admin tab has three sub-tabs: Booking sites, Platform (maintenance/signups/limits), and Advisory refresh (FCDO/Canada API templates + refresh status).
 
 ### 3. Proxy (Railway)
 
