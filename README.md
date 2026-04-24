@@ -37,10 +37,15 @@ slwtravel/
    - `app.html`
    - `admin.html`
 
-### 2. Admin password
+### 2. Admin access
 
-Replace `YOUR_ADMIN_PASSWORD` in `admin.html` with something strong.
-Access the admin panel at: `https://slwtravel.com/admin.html`
+Admin access is gated by Supabase auth + a `profiles.is_admin` flag — no shared password in the HTML. To grant admin access to an existing user, run in the Supabase SQL editor:
+
+```sql
+update public.profiles set is_admin = true where email = 'you@example.com';
+```
+
+Then sign in at `https://slwtravel.com/admin.html` with that account.
 
 ### 3. Proxy (Railway)
 

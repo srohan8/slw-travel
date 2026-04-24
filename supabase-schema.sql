@@ -85,6 +85,14 @@ create table if not exists public.profiles (
 -- Add location column if upgrading from older schema
 alter table public.profiles add column if not exists location text default '';
 
+-- Admin flag (used for gating admin.html and admin-only RLS writes)
+alter table public.profiles add column if not exists is_admin boolean not null default false;
+
+-- Seed known admin accounts (idempotent; matches on email).
+update public.profiles
+  set is_admin = true
+  where email in ('srohan8@gmail.com');
+
 alter table public.profiles enable row level security;
 
 drop policy if exists "Anyone can read profiles"      on public.profiles;
@@ -250,6 +258,44 @@ begin
   where id = contrib_id;
 end;
 $$;
+
+
+-- ── Admin settings (key-value, admin-writable) ───────────────────────
+-- Read-any (needed so the app can read toggles like maintenance_mode
+-- without auth); writes gated to admins only.
+create table if not exists public.admin_settings (
+  key         text        primary key,
+  value       jsonb,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.admin_settings enable row level security;
+
+drop policy if exists "Anyone can read admin_settings"  on public.admin_settings;
+drop policy if exists "Admins can insert admin_settings" on public.admin_settings;
+drop policy if exists "Admins can update admin_settings" on public.admin_settings;
+drop policy if exists "Admins can delete admin_settings" on public.admin_settings;
+
+create policy "Anyone can read admin_settings"
+  on public.admin_settings for select using (true);
+
+create policy "Admins can insert admin_settings"
+  on public.admin_settings for insert
+  with check (exists (
+    select 1 from public.profiles where id = auth.uid() and is_admin
+  ));
+
+create policy "Admins can update admin_settings"
+  on public.admin_settings for update
+  using (exists (
+    select 1 from public.profiles where id = auth.uid() and is_admin
+  ));
+
+create policy "Admins can delete admin_settings"
+  on public.admin_settings for delete
+  using (exists (
+    select 1 from public.profiles where id = auth.uid() and is_admin
+  ));
 
 
 -- ── Conflict zones (travel advisories) ───────────────────────────────

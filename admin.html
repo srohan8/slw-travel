@@ -98,9 +98,10 @@
 <div id="lock">
   <div class="lock-card">
     <h2>Admin access</h2>
-    <p>slwtravel.com control panel</p>
-    <input type="password" id="adminPass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')unlock()"/>
-    <button class="btn btn-green btn-full" onclick="unlock()">Unlock</button>
+    <p>Sign in with an admin-enabled account.</p>
+    <input type="email"    id="adminEmail" placeholder="Email"    autocomplete="username"/>
+    <input type="password" id="adminPass"  placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')unlock()"/>
+    <button class="btn btn-green btn-full" onclick="unlock()">Sign in</button>
     <div class="err-msg" id="lockErr"></div>
   </div>
 </div>
@@ -330,37 +331,57 @@
 <script>
   const SUPABASE_URL  = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
-  const ADMIN_PASSWORD = 'SLWassword1!';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  // ── Lock / unlock ───────────────────────────────────────────────
-  function unlock() {
-    const pass = document.getElementById('adminPass').value;
-    if (pass === ADMIN_PASSWORD) {
-      sessionStorage.setItem('slw_admin', '1');
-      document.getElementById('lock').style.display = 'none';
-      document.getElementById('main').style.display = 'block';
-      loadSettings();
-      loadStats();
-    } else {
-      document.getElementById('lockErr').textContent = 'Incorrect password.';
-      document.getElementById('adminPass').value = '';
-    }
+  // ── Auth gate (Supabase + profiles.is_admin) ────────────────────
+  async function isAdminUser() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return { ok: false, reason: 'no-session' };
+    const { data: prof, error } = await sb.from('profiles')
+      .select('is_admin').eq('id', user.id).single();
+    if (error || !prof) return { ok: false, reason: 'no-profile' };
+    return { ok: !!prof.is_admin, reason: prof.is_admin ? 'admin' : 'not-admin', user };
   }
 
-  function lock() {
-    sessionStorage.removeItem('slw_admin');
-    document.getElementById('lock').style.display = 'flex';
-    document.getElementById('main').style.display = 'none';
-  }
-
-  // Auto-unlock if session exists
-  if (sessionStorage.getItem('slw_admin') === '1') {
+  async function enterAdmin() {
     document.getElementById('lock').style.display = 'none';
     document.getElementById('main').style.display = 'block';
-    loadSettings();
-    loadStats();
+    await loadSettings();
+    await loadStats();
   }
+
+  async function unlock() {
+    const email = document.getElementById('adminEmail').value.trim();
+    const pass  = document.getElementById('adminPass').value;
+    const errEl = document.getElementById('lockErr');
+    errEl.textContent = '';
+    if (!email || !pass) { errEl.textContent = 'Enter email and password.'; return; }
+
+    const { error: signInErr } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (signInErr) {
+      errEl.textContent = 'Sign-in failed: ' + signInErr.message;
+      document.getElementById('adminPass').value = '';
+      return;
+    }
+    const status = await isAdminUser();
+    if (!status.ok) {
+      errEl.textContent = 'This account is not an admin.';
+      await sb.auth.signOut();
+      document.getElementById('adminPass').value = '';
+      return;
+    }
+    enterAdmin();
+  }
+
+  async function lock() {
+    await sb.auth.signOut();
+    document.getElementById('lock').style.display = 'flex';
+    document.getElementById('main').style.display = 'none';
+    document.getElementById('adminPass').value = '';
+  }
+
+  // Auto-enter if an admin session already exists
+  isAdminUser().then(status => { if (status.ok) enterAdmin(); });
 
   // ── Load settings ───────────────────────────────────────────────
   async function loadSettings() {
