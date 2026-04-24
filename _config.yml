@@ -1,7 +1,7 @@
 title: SLW Travel — Field notes
 description: Long-form overland route guides and field notes.
-url: "https://slw.travel"
-baseurl: ""
+url: "https://srohan8.github.io"
+baseurl: "/slw-travel"
 
 permalink: /blog/:slug/
 

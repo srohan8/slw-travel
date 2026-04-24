@@ -72,15 +72,15 @@ footer a { color:var(--fern); text-decoration:none; }
 <body>
 
 <header class="mkt-nav">
-  <a class="mkt-logo" href="/">
-    <img src="/public/sloth-logo.svg" height="32" style="filter:brightness(0) invert(1);opacity:0.9"/>
+  <a class="mkt-logo" href="{{ '/' | relative_url }}">
+    <img src="{{ '/public/sloth-logo.svg' | relative_url }}" height="32" style="filter:brightness(0) invert(1);opacity:0.9"/>
     <span class="mkt-logo-text">SLW <em>Travel</em></span>
   </a>
   <div class="mkt-nav-links">
-    <a href="/">Home</a>
-    <a href="/blog/" class="active">Blog</a>
-    <a href="/auth.html">Sign in</a>
-    <a class="mkt-cta-pill" href="/auth.html?tab=signup">Start planning →</a>
+    <a href="{{ '/' | relative_url }}">Home</a>
+    <a href="{{ '/blog/' | relative_url }}" class="active">Blog</a>
+    <a href="{{ '/auth.html' | relative_url }}">Sign in</a>
+    <a class="mkt-cta-pill" href="{{ '/auth.html?tab=signup' | relative_url }}">Start planning →</a>
   </div>
 </header>
 
