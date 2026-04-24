@@ -260,6 +260,61 @@
 
     </div>
 
+    <div class="sec-lbl">Advisory refresh (conflict zones)</div>
+    <div class="settings-grid">
+
+      <!-- Refresh status -->
+      <div class="setting-card">
+        <div class="setting-header">
+          <div>
+            <div class="setting-title">Refresh status</div>
+            <div class="setting-desc">Daily job pulls travel advisories from FCDO + Government of Canada and updates <code>conflict_zones</code>.</div>
+          </div>
+          <span class="setting-status status-on" id="status-advisory">—</span>
+        </div>
+        <div style="margin-top:1rem;display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+          <div>
+            <div style="color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-size:10px;margin-bottom:4px">Countries covered</div>
+            <div id="advisoryCount" style="font-size:18px;font-weight:500">—</div>
+          </div>
+          <div>
+            <div style="color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-size:10px;margin-bottom:4px">Last refresh</div>
+            <div id="advisoryLastRun" style="font-size:13px">—</div>
+          </div>
+        </div>
+        <div class="save-row" style="margin-top:1rem">
+          <div style="font-size:11px;color:var(--text2)">
+            Cron: <code id="advisoryCron">0 3 * * *</code> · configured in Railway
+          </div>
+        </div>
+      </div>
+
+      <!-- API URL templates -->
+      <div class="setting-card">
+        <div class="setting-header">
+          <div>
+            <div class="setting-title">API URL templates</div>
+            <div class="setting-desc">Used by the refresh job. <code>{slug}</code> is replaced per country. Leave blank to use built-in defaults.</div>
+          </div>
+        </div>
+        <div style="margin-top:.75rem">
+          <div class="limit-field" style="margin-bottom:10px">
+            <label>FCDO content API</label>
+            <input type="text" id="adv-fcdo" placeholder="https://www.gov.uk/api/content/foreign-travel-advice/{slug}" style="text-align:left;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px"/>
+          </div>
+          <div class="limit-field" style="margin-bottom:10px">
+            <label>Government of Canada</label>
+            <input type="text" id="adv-canada" placeholder="https://travel.gc.ca/destinations/{slug}" style="text-align:left;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px"/>
+          </div>
+        </div>
+        <div class="save-row">
+          <button class="btn" onclick="saveAdvisorySettings()">Save</button>
+          <span class="saved-msg" id="advisory-saved">Saved</span>
+        </div>
+      </div>
+
+    </div>
+
     <div class="sec-lbl">Danger zone</div>
     <div class="settings-grid">
       <div class="setting-card" style="border-color:rgba(163,45,45,0.3)">
@@ -326,6 +381,47 @@
       document.getElementById('limit-savedTrips').value    = s.limits.free.savedTrips    ?? 1;
     }
     updateLimitsState();
+
+    // ── Advisory settings ─────────────────────────────────────────
+    document.getElementById('adv-fcdo').value   = s.fcdo_api_template   || '';
+    document.getElementById('adv-canada').value = s.canada_api_template || '';
+    if (s.advisory_refresh_cron) document.getElementById('advisoryCron').textContent = s.advisory_refresh_cron;
+    loadAdvisoryStatus(s.advisory_refresh_last_run);
+  }
+
+  async function loadAdvisoryStatus(lastRunIso) {
+    const { count } = await sb.from('conflict_zones').select('country_code', { count:'exact', head:true });
+    document.getElementById('advisoryCount').textContent = count ?? '—';
+
+    const { data: latest } = await sb.from('conflict_zones')
+      .select('reviewed_at').order('reviewed_at', { ascending:false }).limit(1);
+    const last = lastRunIso || latest?.[0]?.reviewed_at;
+    const lastEl = document.getElementById('advisoryLastRun');
+    const statusEl = document.getElementById('status-advisory');
+    if (last) {
+      const d = new Date(last);
+      lastEl.textContent = d.toISOString().slice(0,10) + ' ' + d.toISOString().slice(11,16) + 'Z';
+      const ageH = (Date.now() - d.getTime()) / 3600000;
+      const healthy = ageH < 36;   // daily cron + grace
+      statusEl.textContent = healthy ? 'Healthy' : 'Stale';
+      statusEl.className = 'setting-status ' + (healthy ? 'status-on' : 'status-warn');
+    } else {
+      lastEl.textContent = 'Never';
+      statusEl.textContent = 'Never run';
+      statusEl.className = 'setting-status status-off';
+    }
+  }
+
+  async function saveAdvisorySettings() {
+    const fcdo   = document.getElementById('adv-fcdo').value.trim();
+    const canada = document.getElementById('adv-canada').value.trim();
+    await sb.from('admin_settings').upsert([
+      { key: 'fcdo_api_template',   value: JSON.stringify(fcdo),   updated_at: new Date().toISOString() },
+      { key: 'canada_api_template', value: JSON.stringify(canada), updated_at: new Date().toISOString() },
+    ]);
+    const msg = document.getElementById('advisory-saved');
+    msg.style.opacity = '1';
+    setTimeout(() => { msg.style.opacity = '0'; }, 2000);
   }
 
   function setToggle(key, val) {

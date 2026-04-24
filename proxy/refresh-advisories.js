@@ -24,6 +24,37 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+// ── Config (loaded from admin_settings, with hardcoded defaults) ────
+const DEFAULTS = {
+  fcdo_api_template:   'https://www.gov.uk/api/content/foreign-travel-advice/{slug}',
+  canada_api_template: 'https://travel.gc.ca/destinations/{slug}',
+};
+let CONFIG = { ...DEFAULTS };
+
+async function loadConfig() {
+  try {
+    const { data } = await sb.from('admin_settings')
+      .select('key, value')
+      .in('key', ['fcdo_api_template', 'canada_api_template']);
+    (data || []).forEach(r => {
+      const v = typeof r.value === 'string' ? JSON.parse(r.value) : r.value;
+      if (v && typeof v === 'string' && v.trim()) CONFIG[r.key] = v.trim();
+    });
+  } catch (e) {
+    console.warn('Could not load admin_settings; using defaults.', e.message);
+  }
+  console.log(`  FCDO   → ${CONFIG.fcdo_api_template}`);
+  console.log(`  Canada → ${CONFIG.canada_api_template}`);
+}
+
+async function recordLastRun() {
+  await sb.from('admin_settings').upsert({
+    key: 'advisory_refresh_last_run',
+    value: JSON.stringify(new Date().toISOString()),
+    updated_at: new Date().toISOString(),
+  });
+}
+
 // ── Country registry ────────────────────────────────────────────────
 // ISO-2 → { fcdoSlug, canadaSlug }. The refresh job is opt-in per country:
 // only countries listed here get refreshed. Add rows to the seed in
@@ -62,7 +93,7 @@ const FCDO_STATUS_TO_LEVEL = {
 };
 
 async function fetchFCDO(slug) {
-  const r = await fetch(`https://www.gov.uk/api/content/foreign-travel-advice/${slug}`);
+  const r = await fetch(CONFIG.fcdo_api_template.replace('{slug}', slug));
   if (!r.ok) throw new Error(`FCDO ${slug}: ${r.status}`);
   const json = await r.json();
   const alerts = json.details?.alert_status || [];
@@ -82,7 +113,7 @@ async function fetchFCDO(slug) {
 // Endpoint shape has shifted historically — verify against
 // https://travel.gc.ca/api/ before relying on it. We parse defensively.
 async function fetchCanada(slug) {
-  const url = `https://travel.gc.ca/destinations/${slug}`;
+  const url = CONFIG.canada_api_template.replace('{slug}', slug);
   const r = await fetch(url, { headers: { 'Accept':'application/json' } });
   if (!r.ok || !r.headers.get('content-type')?.includes('json')) {
     // Canada doesn't always serve JSON for the destination page; treat
@@ -118,11 +149,13 @@ async function refresh({ code, fcdo, canada }) {
 
 // ── Main ────────────────────────────────────────────────────────────
 async function main() {
+  await loadConfig();
   console.log(`Refreshing ${COUNTRIES.length} conflict zones from FCDO + Canada…`);
   for (const country of COUNTRIES) {
     await refresh(country);
     await new Promise(r => setTimeout(r, 250));   // polite pacing
   }
+  await recordLastRun();
   console.log('Done.');
 }
 
