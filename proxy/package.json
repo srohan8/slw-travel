@@ -1,0 +1,15 @@
+{
+  "name": "slw-travel-refresh-advisories",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Daily job: refresh conflict_zones from FCDO + Government of Canada.",
+  "main": "refresh-advisories.js",
+  "scripts": {
+    "refresh": "node refresh-advisories.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}

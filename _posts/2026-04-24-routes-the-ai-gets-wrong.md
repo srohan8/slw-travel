@@ -96,6 +96,6 @@ If you have made a journey recently that the app is flagging incorrectly — a l
 
 ---
 
-*All conflict zone data in the SLW Travel planner is maintained in a live database and refreshed regularly. Advisory levels are linked directly to FCDO and US State Department guidance. The app informs — it never blocks.*
+*Advisory levels in the SLW Travel planner are refreshed daily from the UK FCDO and the Government of Canada. Each flagged leg links out to the relevant FCDO, Canada, US State Department, Australia, Germany, France, and Japan advisory pages for cross-checking. Country coverage is currently ~20 high-risk and elevated-risk destinations, reviewed weekly and expanding. The app informs — it never blocks.*
 
 *Try the [SLW Travel planner](https://slwtravel.com).*

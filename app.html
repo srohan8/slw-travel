@@ -1679,6 +1679,7 @@ async function planRoute() {
   if (hit) {
     lastSuggestion = hit;
     document.getElementById('planResult').style.display = 'block';
+    await prefetchConflictZones((hit.legs || []).map(l => l.conflict?.country_code));
     renderPlanSuggestion(hit, true);
     document.getElementById('adoptBtn').style.display = 'inline-block';
     _collapseSearchForm(from, to);
@@ -1728,7 +1729,7 @@ Available transport booking sites (${siteHint}; for shared taxi/carpooling also 
 - "leg_region" — world region (Southeast Asia/Central Asia/South Asia/East Asia/Europe/Middle East/Africa/North America/Latin America/Oceania)
 - "info_sites":["Name"] — if booking_sites is empty, add research/info sites for that region
 - "confidence":"verified"|"check"|"uncertain" — verified=well-documented regular service; check=route exists but verify before booking (seasonal/irregular/suspended); uncertain=AI is not confident this connection currently operates
-- "conflict":{"level":"war"|"conflict"|"tension"|"advisory","note":"one-line reason"} — ONLY if leg passes through a flagged area; omit if safe
+- "conflict":{"level":"war"|"conflict"|"tension"|"advisory","note":"one-line reason","country_code":"ISO-2 uppercase, e.g. MM"} — ONLY if leg passes through a flagged area; country_code must be the ISO-3166-1 alpha-2 code of the country the alert applies to; omit conflict entirely if safe
 Available accommodation platforms (${accomHint}). For each stop include:
 - "accom_sites":["Name"] — platforms that work for that city/region (e.g. Agoda for SE/East Asia; Hostelworld for hostel-rich cities; omit platforms irrelevant to that destination; use empty array if only guesthouses/no platform)
 - "accom_note":"one practical sentence" — neighbourhood to stay, price level, style (e.g. "Stay in Thamel, hostels from $8" or "Guesthouses only in old town, no major platforms")
@@ -1766,6 +1767,7 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
 
     setCachedRoute(cacheKey, data, from, to);
     updateCacheClearBtn();
+    await prefetchConflictZones((data.legs || []).map(l => l.conflict?.country_code));
     renderPlanSuggestion(data, false);
     document.getElementById('adoptBtn').style.display = 'inline-block';
     updateUsageBars();
@@ -1813,6 +1815,27 @@ const CONFLICT_LEVELS = {
   advisory: { label:'Travel advisory',  cls:'conflict-advisory', icon:'ph-info' },
 };
 
+// Tier 1 (data) = FCDO + Canada — drive the level/summary via proxy/refresh-advisories.js.
+// Tier 2 (deep-link only) = State / AU / DE / FR / JP — per-country URLs for cross-checking.
+const ADVISORY_SOURCES = [
+  { label:'FCDO',      urlKey:'fcdo_url' },
+  { label:'Canada',    urlKey:'canada_url' },
+  { label:'US State',  urlKey:'state_dept_url' },
+  { label:'Australia', urlKey:'smartraveller_url' },
+  { label:'Germany',   urlKey:'germany_url' },
+  { label:'France',    urlKey:'france_url' },
+  { label:'Japan',     urlKey:'japan_url' },
+];
+const CONFLICT_ZONE_CACHE = {};   // { 'MM': {row}, ... }
+async function prefetchConflictZones(codes) {
+  const needed = [...new Set((codes || []).filter(c => c && !CONFLICT_ZONE_CACHE[c]))];
+  if (!needed.length) return;
+  try {
+    const { data } = await sb.from('conflict_zones').select('*').in('country_code', needed);
+    (data || []).forEach(r => { CONFLICT_ZONE_CACHE[r.country_code] = r; });
+  } catch (e) { console.warn('conflict_zones lookup failed', e); }
+}
+
 function renderConfidenceBadge(confidence) {
   const c = CONF[confidence] || CONF.uncertain;
   return `<span class="conf-badge ${c.cls}" title="${c.tip}"><i class="ph ${c.icon}"></i> ${c.label}</span>`;
@@ -1820,12 +1843,25 @@ function renderConfidenceBadge(confidence) {
 
 function renderConflictAlert(conflict, withLinks = true) {
   if (!conflict) return '';
-  const cl = CONFLICT_LEVELS[conflict.level] || CONFLICT_LEVELS.advisory;
-  const links = withLinks
-    ? ` <a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noopener">FCDO ↗</a>
-        <a href="https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html" target="_blank" rel="noopener">US ↗</a>`
+  const cc = (conflict.country_code || '').toUpperCase();
+  const zone = cc ? CONFLICT_ZONE_CACHE[cc] : null;
+  const level = zone?.level || conflict.level || 'advisory';
+  const note  = zone?.summary || conflict.note || '';
+  const cl = CONFLICT_LEVELS[level] || CONFLICT_LEVELS.advisory;
+
+  let links = '';
+  if (withLinks) {
+    const linksArr = zone
+      ? ADVISORY_SOURCES.map(s => zone[s.urlKey]
+          ? `<a href="${zone[s.urlKey]}" target="_blank" rel="noopener">${s.label} ↗</a>` : null
+        ).filter(Boolean)
+      : [`<a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noopener">FCDO ↗</a>`];
+    links = ' ' + linksArr.join(' ');
+  }
+  const reviewed = zone?.reviewed_at
+    ? ` <span style="opacity:0.7;font-size:11px">· Reviewed ${String(zone.reviewed_at).slice(0,10)}</span>`
     : '';
-  return `<div class="conflict-alert ${cl.cls}"><i class="ph ${cl.icon}"></i><span>${cl.label} — ${conflict.note}</span>${links}</div>`;
+  return `<div class="conflict-alert ${cl.cls}"><i class="ph ${cl.icon}"></i><span>${cl.label} — ${note}</span>${links}${reviewed}</div>`;
 }
 
 function renderPlanSuggestion(d, fromCache = false) {
