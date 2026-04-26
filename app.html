@@ -1393,6 +1393,7 @@ function renderTripViewPanel(trip, el) {
   const st        = stateOf(trip);
   const isPinned  = !!trip.pinned;
   const safeTrip  = JSON.stringify(trip).replace(/"/g,'&quot;');
+  const showAff   = appSettings.affiliate_links !== false;
 
   const legsHtml = (trip.legs||[]).map((leg, i) => {
     const from      = trip.stops[i]?.name   || '?';
@@ -1402,26 +1403,63 @@ function renderTripViewPanel(trip, el) {
     const modeTint  = MODE_TINTS[leg.mode]  || '#E0EBD6';
     const fromDate  = trip.stops[i]?.date   || '';
     const stayDays  = trip.stops[i+1]?.days || 0;
+    const arrDate   = trip.stops[i+1]?.date || '';
     const dateStr   = fromDate ? new Date(fromDate+'T00:00').toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
-    return '<div class="tv-leg-card">'
-      + '<div class="tv-leg-row">'
-        + '<div class="leg-mode-icon" style="background:' + modeColor + '"><i class="ph ' + iconCls + '"></i></div>'
-        + '<div style="flex:1;min-width:0">'
-          + '<div style="font-size:14px;font-weight:500;color:var(--text)">' + from + ' \u2192 ' + to + '</div>'
-          + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:3px;font-size:12px;font-family:var(--mono);color:var(--text3)">'
-            + '<span style="text-transform:capitalize;background:' + modeTint + ';color:' + modeColor + ';padding:1px 6px;border-radius:4px">' + (leg.mode||'') + '</span>'
-            + (leg.hours ? '<span>' + leg.hours + 'h</span>' : '')
-            + (leg.km    ? '<span>' + leg.km + ' km</span>' : '')
-            + (dateStr   ? '<span>' + dateStr + '</span>' : '')
-          + '</div>'
-        + '</div>'
-        + '<div style="text-align:right;flex-shrink:0">'
-          + (leg.cost ? '<div style="font-size:15px;font-weight:500;color:var(--text)">' + getCurrSym() + leg.cost + '</div>' : '')
-          + (leg.booked ? '<div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--fern);font-family:var(--mono);margin-top:2px">\u2713 Booked</div>' : '')
-        + '</div>'
+    const arrStr    = arrDate  ? new Date(arrDate +'T00:00').toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
+
+    // ── Journey column ──────────────────────────────────────────────
+    const journeyHtml =
+      '<div class="leg-col leg-col-b">'
+      + '<div class="leg-col-lbl">Journey</div>'
+      + '<div style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:3px">'
+        + '<span style="width:22px;height:22px;border-radius:6px;background:' + modeTint + ';color:' + modeColor + ';display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ph ' + iconCls + '" style="font-size:13px"></i></span>'
+        + '<span style="text-transform:capitalize;font-weight:500;color:' + modeColor + '">' + (leg.mode||'') + '</span>'
+        + (leg.hours ? '<span style="color:var(--text3)">\u00b7 ' + leg.hours + 'h</span>' : '')
       + '</div>'
-      + (stayDays ? '<div class="tv-stay-row"><i class="ph ph-moon" style="font-size:11px"></i> ' + stayDays + ' night' + (stayDays!==1?'s':'') + ' in ' + to + '</div>' : '')
-      + (leg.notes ? '<div class="tv-leg-notes">' + leg.notes + '</div>' : '')
+      + (leg.cost ? '<div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">' + getCurrSym() + leg.cost + '</div>' : '')
+      + '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + (leg.km ? leg.km + ' km' : '') + (leg.notes ? (leg.km ? ' \u00b7 ' : '') + leg.notes : '') + '</div>'
+      + (dateStr ? '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px">Depart ' + dateStr + '</div>' : '')
+      + (leg.booked ? '<div style="margin-top:6px;display:inline-flex;align-items:center;gap:4px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--fern);font-family:var(--mono);background:rgba(74,124,74,0.08);padding:3px 8px;border-radius:4px"><i class="ph ph-check-circle"></i> Booked</div>' : '')
+    + '</div>';
+
+    // ── Transport / booking column ───────────────────────────────────
+    let transportHtml;
+    if (leg.booked && (leg.bookingRef || leg.bookingUrl)) {
+      transportHtml = '<div class="leg-col leg-col-b">'
+        + '<div class="leg-col-lbl">Booking</div>'
+        + (leg.bookingRef ? '<div style="font-size:12px;color:var(--text2);margin-bottom:6px">Ref: <strong>' + leg.bookingRef + '</strong></div>' : '')
+        + (leg.bookingUrl ? '<a href="' + leg.bookingUrl + '" target="_blank" rel="noopener" class="search-link" style="font-size:12px">View booking \u2197</a>' : '')
+      + '</div>';
+    } else if (showAff) {
+      const sites  = leg.bookingSites || leg.booking_sites;
+      const region = leg.legRegion   || leg.leg_region;
+      const infoS  = leg.infoSites   || leg.info_sites;
+      transportHtml = '<div class="leg-col leg-col-b">'
+        + '<div class="leg-col-lbl">Transport</div>'
+        + '<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Book this leg on</div>'
+        + renderTransportLinks(leg.mode, from, to, sites, region, infoS)
+      + '</div>';
+    } else {
+      transportHtml = '<div class="leg-col leg-col-b"><div class="leg-col-lbl">Transport</div><div style="font-size:12px;color:var(--text3)">Not yet booked</div></div>';
+    }
+
+    // ── Stay column ─────────────────────────────────────────────────
+    const accomSites = trip.stops[i+1]?.accomSites || trip.stops[i+1]?.accom_sites;
+    const accomNote  = trip.stops[i+1]?.accomNote  || trip.stops[i+1]?.accom_note;
+    const stayHtml   = '<div class="leg-col leg-col-b">'
+      + '<div class="leg-col-lbl">Stay at ' + to + '</div>'
+      + (stayDays ? '<div style="font-size:12px;color:var(--text2);margin-bottom:4px">' + stayDays + ' night' + (stayDays!==1?'s':'') + '</div>' : '')
+      + (arrStr   ? '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">Arrive ' + arrStr + '</div>' : '')
+      + (showAff  ? renderAccommodationLinks(to, accomSites, accomNote) : '')
+    + '</div>';
+
+    return '<div style="margin:0 0 10px;border-left:3px solid ' + modeColor + ';padding-left:14px;position:relative">'
+      + '<div class="leg-icon-dot" style="background:' + modeColor + '"><i class="ph ' + iconCls + '"></i></div>'
+      + '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;gap:8px">'
+        + '<div style="font-size:13px;font-weight:600;color:var(--text)">' + from + ' \u2192 ' + to + '</div>'
+        + '<button class="back-btn" style="font-size:10px;letter-spacing:1px;flex-shrink:0" onclick="loadTrip(' + safeTrip + ',' + i + ')">Edit leg \u2192</button>'
+      + '</div>'
+      + '<div class="leg-grid">' + journeyHtml + transportHtml + stayHtml + '</div>'
     + '</div>';
   }).join('');
 
@@ -1511,11 +1549,12 @@ function startNewTrip() {
   render();
 }
 
-function loadTrip(trip) {
+function loadTrip(trip, openLegIndex = -1) {
   stops = trip.stops || [{name:'',date:'',days:0},{name:'',date:'',days:0}];
   legs  = trip.legs  || [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
   editingLegModes.clear();
   expandedLegs.clear();
+  if (openLegIndex >= 0) expandedLegs.add(openLegIndex);
   currentTripId = trip.id;
   document.getElementById('tripTitle').value = trip.title || '';
   document.getElementById('tripNotes').value = trip.notes || '';
