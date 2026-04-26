@@ -627,9 +627,10 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   <div id="admin" class="panel">
 
     <div class="admin-subnav">
-      <button class="admin-subtab active" data-sub="sites"    onclick="switchAdminSub('sites')">Booking sites</button>
-      <button class="admin-subtab"        data-sub="platform" onclick="switchAdminSub('platform')">Platform</button>
-      <button class="admin-subtab"        data-sub="advisory" onclick="switchAdminSub('advisory')">Advisory refresh</button>
+      <button class="admin-subtab active" data-sub="sites"     onclick="switchAdminSub('sites')">Booking sites</button>
+      <button class="admin-subtab"        data-sub="platform"  onclick="switchAdminSub('platform')">Platform</button>
+      <button class="admin-subtab"        data-sub="advisory"  onclick="switchAdminSub('advisory')">Advisory refresh</button>
+      <button class="admin-subtab"        data-sub="community" onclick="switchAdminSub('community')">Community notes</button>
     </div>
 
     <!-- ── Sub-tab: Booking sites ──────────────────────────────────────── -->
@@ -818,6 +819,29 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
       </div>
 
     </div><!-- /admin-sub-advisory -->
+
+    <!-- ── Sub-tab: Community notes ────────────────────────────────────── -->
+    <div id="admin-sub-community" class="admin-sub">
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:15px;font-weight:500;color:var(--text)">Community note review</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px">Verify, remove, or override traveller suggestions. Notes with 3+ upvotes auto-verify.</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="filterAdminContribs('flagged')"  class="admin-contrib-filter active" data-filter="flagged"  style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:0.5px solid var(--border);color:var(--text2);padding:4px 10px;border-radius:99px;cursor:pointer">🚩 Flagged</button>
+            <button onclick="filterAdminContribs('pending')"  class="admin-contrib-filter"        data-filter="pending"  style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:0.5px solid var(--border);color:var(--text2);padding:4px 10px;border-radius:99px;cursor:pointer">⏳ Pending</button>
+            <button onclick="filterAdminContribs('verified')" class="admin-contrib-filter"        data-filter="verified" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:0.5px solid var(--border);color:var(--text2);padding:4px 10px;border-radius:99px;cursor:pointer">✓ Verified</button>
+            <button onclick="filterAdminContribs('all')"      class="admin-contrib-filter"        data-filter="all"      style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:0.5px solid var(--border);color:var(--text2);padding:4px 10px;border-radius:99px;cursor:pointer">All</button>
+          </div>
+        </div>
+        <div id="admin-contrib-list" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="text-align:center;color:var(--text3);font-size:13px;padding:24px 0">Loading…</div>
+        </div>
+      </div>
+
+    </div><!-- /admin-sub-community -->
 
   </div>
 </div>
@@ -2298,8 +2322,153 @@ async function refreshAdminFlag() {
 function switchAdminSub(id) {
   document.querySelectorAll('.admin-subtab').forEach(b => b.classList.toggle('active', b.dataset.sub === id));
   document.querySelectorAll('.admin-sub').forEach(s => s.classList.toggle('active', s.id === 'admin-sub-' + id));
-  if (id === 'platform') loadPlatformSettings();
-  if (id === 'advisory') loadAdvisorySettings();
+  if (id === 'platform')  loadPlatformSettings();
+  if (id === 'advisory')  loadAdvisorySettings();
+  if (id === 'community') loadCommunityNotes();
+}
+
+// ── Admin: Community notes review ─────────────────────────────────────────
+let _adminContribFilter = 'flagged';
+
+function loadCommunityNotes() {
+  _adminContribFilter = 'flagged';
+  document.querySelectorAll('.admin-contrib-filter').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === 'flagged');
+    b.style.background = b.dataset.filter === 'flagged' ? 'var(--dusk)' : 'none';
+    b.style.color      = b.dataset.filter === 'flagged' ? 'var(--cream)' : 'var(--text2)';
+  });
+  renderAdminContribList();
+}
+
+function filterAdminContribs(filter) {
+  _adminContribFilter = filter;
+  document.querySelectorAll('.admin-contrib-filter').forEach(b => {
+    const active = b.dataset.filter === filter;
+    b.classList.toggle('active', active);
+    b.style.background = active ? 'var(--dusk)' : 'none';
+    b.style.color      = active ? 'var(--cream)' : 'var(--text2)';
+  });
+  renderAdminContribList();
+}
+
+function renderAdminContribList() {
+  const listEl = document.getElementById('admin-contrib-list');
+  if (!listEl) return;
+
+  // Gather all notes from localStorage
+  const all = contribStorage.getAll();
+  let rows = [];
+  for (const [legKey, notes] of Object.entries(all)) {
+    for (const note of (notes || [])) {
+      rows.push({ ...note, _legKey: legKey });
+    }
+  }
+
+  // Apply filter
+  if (_adminContribFilter === 'flagged') {
+    rows = rows.filter(n => n._flagged);
+  } else if (_adminContribFilter === 'pending') {
+    rows = rows.filter(n => !n._flagged && !n.confirmed && (n.votes||0) < 3 && !n._adminVerified);
+  } else if (_adminContribFilter === 'verified') {
+    rows = rows.filter(n => !n._flagged && (n._adminVerified || n.confirmed || (n.votes||0) >= 3));
+  }
+  // 'all' shows everything
+
+  if (rows.length === 0) {
+    listEl.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:13px;padding:28px 0">No notes match this filter.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = rows.map(n => renderAdminContribRow(n)).join('');
+}
+
+function renderAdminContribRow(note) {
+  const k    = CONTRIB_KINDS[note.kind] || CONTRIB_KINDS.tip;
+  const id   = note.id || '';
+  const lk   = note._legKey || '';
+  const safeLk = lk.replace(/'/g, "\\'");
+  const verified = note._adminVerified || note.confirmed || (note.votes||0) >= 3;
+  const overridden = !!note._adminOverride;
+
+  const statusBadge = note._flagged
+    ? `<span style="background:#FDF0EC;color:#C4622D;font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px">🚩 flagged</span>`
+    : verified
+    ? `<span style="background:rgba(45,74,45,0.1);color:var(--fern);font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px">✓ verified${overridden?' (override)':''}</span>`
+    : `<span style="background:rgba(0,0,0,0.05);color:var(--text3);font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px">pending</span>`;
+
+  return `<div data-note-id="${id}" style="border:0.5px solid var(--border);border-radius:8px;padding:12px 14px;background:${note._flagged ? '#FFF8F6' : 'white'}">
+    <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:${k.bg};color:${k.color};flex-shrink:0">
+        <i class="ph ${k.icon}" style="font-size:13px"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+          <span style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3)">${k.label}</span>
+          ${statusBadge}
+          <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${lk}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5;margin-bottom:4px">${note.text || '<em style="color:var(--text3)">No text</em>'}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">${note.author||'anonymous'} · ${note.when||'recently'} · 👍 ${note.votes||0} · ✓ ${note.confirmed||0}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">
+        ${!note._adminVerified && !note._flagged ? `<button onclick="adminVerifyContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:var(--fern);color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">✓ Verify</button>` : ''}
+        ${note._flagged ? `<button onclick="adminVerifyContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:var(--fern);color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">✓ Unflag &amp; verify</button>` : ''}
+        ${note.kind === 'split' && note.splitCity ? `<button onclick="adminOverrideRoute('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:#2E6FA8;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">↯ Override route</button>` : ''}
+        <button onclick="adminRemoveContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:0.5px solid #C4622D;color:#C4622D;padding:4px 10px;border-radius:4px;cursor:pointer">✕ Remove</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function adminVerifyContrib(noteId, legKey) {
+  const all = contribStorage.getAll();
+  const notes = all[legKey] || [];
+  const note = notes.find(n => n.id === noteId);
+  if (!note) return;
+  note._adminVerified = true;
+  note._flagged = false;
+  contribStorage._save(all);
+  renderAdminContribList();
+  // Refresh any visible contrib block
+  const blockId = `cb_${legKey.replace(/[^a-z0-9]/gi,'_')}`;
+  const blockEl = document.getElementById(blockId);
+  if (blockEl) blockEl.outerHTML = renderContribBlockForKey(legKey, 0);
+  // Sync to Supabase if logged in
+  if (currentUser) {
+    sb.from('contributions').update({ confirmed: true }).eq('id', noteId).catch(() => {});
+  }
+}
+
+function adminRemoveContrib(noteId, legKey) {
+  if (!confirm('Permanently remove this note? This cannot be undone.')) return;
+  const all = contribStorage.getAll();
+  if (all[legKey]) {
+    all[legKey] = all[legKey].filter(n => n.id !== noteId);
+    if (all[legKey].length === 0) delete all[legKey];
+    contribStorage._save(all);
+  }
+  renderAdminContribList();
+  const blockId = `cb_${legKey.replace(/[^a-z0-9]/gi,'_')}`;
+  const blockEl = document.getElementById(blockId);
+  if (blockEl) blockEl.outerHTML = renderContribBlockForKey(legKey, 0);
+  if (currentUser) {
+    sb.from('contributions').delete().eq('id', noteId).catch(() => {});
+  }
+}
+
+function adminOverrideRoute(noteId, legKey) {
+  const all = contribStorage.getAll();
+  const notes = all[legKey] || [];
+  const note = notes.find(n => n.id === noteId);
+  if (!note || !note.splitCity) return;
+  if (!confirm(`Apply admin route override: split "${legKey}" at "${note.splitCity}"? This will mark the suggestion as overridden.`)) return;
+  note._adminVerified = true;
+  note._adminOverride = true;
+  note._flagged = false;
+  contribStorage._save(all);
+  renderAdminContribList();
+  // Apply the split suggestion in the planner if a trip is loaded
+  applySplitSuggestion(legKey, note.splitCity, note.legIdx || 0);
 }
 
 // ── Platform settings (migrated from admin.html) ──────────────────
@@ -3198,6 +3367,8 @@ function renderContribCard(note, compact, legKey) {
     ? `<span style="font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:rgba(45,74,45,0.1);color:var(--fern);padding:1px 6px;border-radius:3px;margin-left:4px">✓ verified</span>`
     : '';
 
+  const flagBtn = `<button onclick="contribFlag(event,'${id}','${lk}')" title="Flag as inaccurate" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text3);font-size:11px;line-height:1;opacity:0.55;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.55'"><i class="ph ph-flag" style="font-size:11px"></i></button>`;
+
   // Warning and Route changed render as full-width alert banners
   if (note.kind === 'warning' || note.kind === 'route') {
     const bdrColor = note.kind === 'route' ? '#8B2A00' : '#C4622D';
@@ -3207,6 +3378,7 @@ function renderContribCard(note, compact, legKey) {
       <div style="flex:1;line-height:1.5">${note.text||''}${verBadge}
         <div style="font-size:10px;opacity:0.65;margin-top:2px;font-family:var(--mono)">${note.author||'anonymous'} · ${note.when||'recently'}</div>
       </div>
+      ${flagBtn}
     </div>`;
   }
 
@@ -3221,6 +3393,7 @@ function renderContribCard(note, compact, legKey) {
         ${city ? `<button onclick="applySplitSuggestion('${lk}','${city.replace(/'/g,"\\'")}',${note.legIdx||0})" style="margin-top:6px;font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:0.5px solid #2E6FA8;color:#2E6FA8;padding:3px 10px;border-radius:4px;cursor:pointer">Add ${city} as stop →</button>` : ''}
         <div style="font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--mono)">${note.author||'anonymous'} · ${note.when||'recently'}${verBadge}</div>
       </div>
+      ${flagBtn}
     </div>`;
   }
 
@@ -3250,6 +3423,7 @@ function renderContribCard(note, compact, legKey) {
         <i class="ph ph-check" style="font-size:11px"></i>
         <span class="contrib-conf-n">${note.confirmed||0}</span>
       </button>
+      ${flagBtn}
     </div>
   </div>`;
 }
@@ -3263,7 +3437,7 @@ function renderContribBlock(legIdx) {
 }
 
 function renderContribBlockForKey(legKey, legIdx) {
-  const items   = contribStorage.getForLeg(legKey);
+  const items   = contribStorage.getForLeg(legKey).filter(n => !n._flagged);
   const blockId = `cb_${legKey.replace(/[^a-z0-9]/gi,'_')}`;
   const safeKey = legKey.replace(/'/g,"\\'");
 
@@ -3313,11 +3487,17 @@ function toggleContribBlock(id) {
 function contribUpvote(e, noteId, legKey) {
   e.stopPropagation();
   contribStorage.upvote(noteId, legKey).then(() => {
-    // Update the vote count in-place without full re-render
     const btn = e.currentTarget;
     const counter = btn?.querySelector('.contrib-votes-n');
-    if (counter) counter.textContent = parseInt(counter.textContent||'0') + 1;
+    const newCount = parseInt(counter?.textContent||'0') + 1;
+    if (counter) counter.textContent = newCount;
     btn.style.color = 'var(--fern)';
+    // At 3 votes the note becomes community-verified — re-render to show badge
+    if (newCount >= 3) {
+      const blockId = `cb_${legKey.replace(/[^a-z0-9]/gi,'_')}`;
+      const blockEl = document.getElementById(blockId);
+      if (blockEl) blockEl.outerHTML = renderContribBlockForKey(legKey, 0);
+    }
   });
 }
 
@@ -3329,6 +3509,29 @@ function contribConfirm(e, noteId, legKey) {
     const counter = btn?.querySelector('.contrib-conf-n');
     if (counter) counter.textContent = parseInt(counter.textContent||'0') + 1;
   });
+}
+
+function contribFlag(e, noteId, legKey) {
+  e.stopPropagation();
+  if (!confirm('Flag this note as inaccurate? It will be hidden until an admin reviews it.')) return;
+  // Mark locally and hide
+  const all = contribStorage.getAll();
+  const note = (all[legKey]||[]).find(n => n.id === noteId);
+  if (note) { note._flagged = true; contribStorage._save(all); }
+  // Fade out then re-render block without the flagged note
+  const card = e.currentTarget.closest('.contrib-card, [style*="git-branch"], [style*="warning"]') || e.currentTarget.parentElement;
+  if (card) { card.style.transition = 'opacity .3s'; card.style.opacity = '0.2'; }
+  setTimeout(() => {
+    const blockId = `cb_${legKey.replace(/[^a-z0-9]/gi,'_')}`;
+    const blockEl = document.getElementById(blockId);
+    if (blockEl) blockEl.outerHTML = renderContribBlockForKey(legKey, 0);
+  }, 350);
+  // Send flag to Supabase (table may not exist yet — fail silently)
+  if (currentUser) {
+    sb.from('contribution_flags')
+      .insert({ contribution_id: noteId, user_id: currentUser.id })
+      .catch(() => {});
+  }
 }
 
 // ── Contribute modal ──────────────────────────────────────────────────
