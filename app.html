@@ -1489,6 +1489,7 @@ function renderTripViewPanel(trip, el) {
         + '</div>'
       + '</div>'
       + '<div class="leg-grid">' + journeyHtml + transportHtml + stayHtml + '</div>'
+      + renderContribBlockForKey(from + '\u2192' + to, i)
     + '</div>';
   }).join('');
 
@@ -3399,7 +3400,21 @@ async function submitContrib() {
     source: _contribModalState.source,
   });
   closeContribModal();
-  renderSegs(); // refresh to show new note
+
+  // Refresh the contrib block in-place wherever it currently lives in the DOM
+  const { legKey, legIdx } = _contribModalState;
+  const blockId = `cb_${legKey.replace(/[^a-z0-9]/gi,'_')}`;
+  const blockEl = document.getElementById(blockId);
+  if (blockEl) blockEl.outerHTML = renderContribBlockForKey(legKey, legIdx);
+
+  // If the trip view panel is open, re-render it so the new note appears there too
+  if (viewingTripId) {
+    const trip = (storage.get('trips')||[]).find(t => t.id === viewingTripId);
+    const panelEl = document.getElementById('mytripsPanel');
+    if (trip && panelEl) renderTripViewPanel(trip, panelEl);
+  }
+
+  renderSegs(); // keep record tab in sync
 }
 
 // ── Plan landing: hero + corridors + recent ───────────────────────────
