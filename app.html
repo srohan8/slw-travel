@@ -65,8 +65,9 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   .btn-primary{font-weight:600;background:var(--moss);color:var(--cream);border-color:var(--moss);box-shadow:0 2px 4px rgba(45,74,45,0.3);}
   .btn-primary:hover{background:var(--fern);transform:translateY(-1px);box-shadow:0 4px 8px rgba(45,74,45,0.4);}
   .container{max-width:860px;margin:0 auto;padding:2rem 1.25rem;}
-  .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;background:transparent;outline:none;width:320px;letter-spacing:-0.3px;transition:color .2s;}
-  .trip-title:focus{color:var(--fern);}
+  .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;border-bottom:1.5px solid var(--border2);background:transparent;outline:none;width:100%;letter-spacing:-0.3px;transition:color .2s,border-color .2s;padding-bottom:3px;cursor:text;}
+  .trip-title:hover{border-bottom-color:var(--sage);}
+  .trip-title:focus{color:var(--fern);border-bottom-color:var(--fern);}
   .trip-title::placeholder{color:var(--text3);font-weight:300;}
   .panel{display:none;animation: fadeIn 0.3s ease;}.panel.active{display:block;}
   @media(max-width:700px){.nav-links{display:none;}}
@@ -235,7 +236,8 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   .leg-col .stay-toggle{margin-top:2px;}
   @media(max-width:640px){.leg-grid{grid-template-columns:1fr;}}
 
-  .save-trip-bar{display:flex;gap:8px;align-items:center;padding:10px 0;margin-bottom:.5rem;}
+  .save-trip-bar{display:flex;flex-direction:column;gap:6px;padding:10px 0;margin-bottom:.5rem;}
+  .save-trip-row{display:flex;gap:8px;align-items:center;}
   .save-status{font-size:12px;color:var(--text3);}
   .usage-bar{font-size:12px;color:var(--text2);margin-bottom:14px;padding:8px 12px;background:var(--bg2);border-radius:var(--radius);display:flex;justify-content:space-between;align-items:center;}
   .usage-bar.warn{background:var(--warn-bg);color:var(--warn-text);}
@@ -564,10 +566,12 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
     </div>
 
     <div class="save-trip-bar">
-      <button class="back-btn" id="tripEditBack" style="display:none;margin-right:4px" onclick="returnToTripView()">← Back</button>
-      <input class="trip-title" placeholder="Name your trip..." value="My overland journey" id="tripTitle" style="flex:1"/>
-      <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
-      <span class="save-status" id="saveStatus"></span>
+      <button class="back-btn" id="tripEditBack" style="display:none" onclick="returnToTripView()">← Back to trip</button>
+      <div class="save-trip-row">
+        <input class="trip-title" placeholder="Name your trip..." id="tripTitle" title="Click to rename" style="flex:1"/>
+        <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
+        <span class="save-status" id="saveStatus"></span>
+      </div>
     </div>
     <div id="bookingProgress"></div>
     <div class="sumbar">
@@ -1125,7 +1129,7 @@ async function saveCurrentTrip() {
   statusEl.textContent = 'Saving...';
 
   const typedTitle = document.getElementById('tripTitle').value.trim();
-  const defaultTitles = ['', 'My overland journey', 'Untitled trip'];
+  const defaultTitles = ['', 'Untitled trip'];
   let autoTitle = typedTitle;
   if (defaultTitles.includes(typedTitle)) {
     const from = stops[0]?.name, to = stops[stops.length - 1]?.name;
