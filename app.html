@@ -1065,7 +1065,8 @@ async function syncTripsFromCloud() {
 }
 
 async function saveCurrentTrip() {
-  document.getElementById('saveStatus').textContent = 'Saving...';
+  const statusEl = document.getElementById('saveStatus');
+  statusEl.textContent = 'Saving...';
 
   const typedTitle = document.getElementById('tripTitle').value.trim();
   const defaultTitles = ['', 'My overland journey', 'Untitled trip'];
@@ -1088,36 +1089,31 @@ async function saveCurrentTrip() {
     updated_at: new Date().toISOString()
   };
 
-  // Always save locally
+  // Save locally — always immediate, never blocks
   let trips = storage.get('trips');
   const idx = trips.findIndex(t => t.id === tripData.id);
   if (idx !== -1) trips[idx] = tripData; else trips.push(tripData);
   storage.set('trips', trips);
   currentTripId = tripData.id;
 
-  // Also save to Supabase if signed in
-  if (currentUser) {
-    try {
-      const { error } = await sb.from('trips').upsert({
-        id:         tripData.id,
-        user_id:    currentUser.id,
-        title:      tripData.title,
-        data:       tripData,          // full blob in jsonb column
-        updated_at: tripData.updated_at
-      }, { onConflict: 'id' });
-      if (error) throw error;
-      document.getElementById('saveStatus').textContent = 'Saved ✓';
-    } catch(e) {
-      console.warn('Cloud save failed, kept local:', e.message);
-      document.getElementById('saveStatus').textContent = 'Saved locally ✓';
-    }
-  } else {
-    document.getElementById('saveStatus').textContent = 'Saved locally ✓';
-  }
-
+  // Update UI right after local save — don't wait for cloud
+  statusEl.textContent = 'Saved ✓';
   renderSavedTrips();
   updateActiveTripBar();
-  setTimeout(() => document.getElementById('saveStatus').textContent = '', 2500);
+  setTimeout(() => { if (statusEl.textContent === 'Saved ✓') statusEl.textContent = ''; }, 2500);
+
+  // Cloud sync fires in background — UI is never held hostage by it
+  if (currentUser) {
+    sb.from('trips').upsert({
+      id:         tripData.id,
+      user_id:    currentUser.id,
+      title:      tripData.title,
+      data:       tripData,
+      updated_at: tripData.updated_at
+    }, { onConflict: 'id' })
+    .then(({ error }) => { if (error) console.warn('Cloud sync failed:', error.message); })
+    .catch(e => console.warn('Cloud sync failed:', e.message));
+  }
 }
 
 
