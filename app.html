@@ -455,6 +455,7 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   </a>
   <div class="nav-utils">
     <button class="nav-link active" id="navbtn_plan"    onclick="switchTab('plan',this)">Search</button>
+    <button class="nav-link"        id="navbtn_record"  onclick="switchTab('record',this)">Planner</button>
     <button class="nav-link"        id="navbtn_mytrips" onclick="switchTab('mytrips',this)">My Trips</button>
     <button class="nav-link"        id="navbtn_profile" onclick="switchTab('profile',this)">Profile</button>
     <button class="nav-link"        id="navbtn_admin"   onclick="switchTab('admin',this)">Admin</button>
@@ -572,6 +573,11 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
         <input class="trip-title" placeholder="Name your trip..." id="tripTitle" title="Click to rename" style="flex:1"/>
         <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
         <span class="save-status" id="saveStatus"></span>
+      </div>
+      <!-- Trip-level default transport mode -->
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0 2px;flex-wrap:wrap">
+        <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0">Default transport</span>
+        <div id="tripDefaultModePicker" style="display:flex;flex-wrap:wrap;gap:4px"></div>
       </div>
     </div>
     <div id="bookingProgress"></div>
@@ -876,7 +882,7 @@ const AFF = {
 };
 
 // ── App state ─────────────────────────────────────────────────────
-const MODES = ['bus','train','hitchhike','ferry','walk','cycle','taxi','flight','shared taxi'];
+const MODES = ['bus','train','hitchhike','ferry','walk','cycle','motorbike','car','taxi','flight','shared taxi'];
 const MODE_ICONS = {
   bus:          'ph-bus',
   train:        'ph-train',
@@ -885,11 +891,13 @@ const MODE_ICONS = {
   walk:         'ph-person-simple-walk',
   walking:      'ph-person-simple-walk',
   cycle:        'ph-bicycle',
+  motorbike:    'ph-motorcycle',
+  car:          'ph-car',
   taxi:         'ph-taxi',
   flight:       'ph-airplane',
   'shared taxi':'ph-van',
 };
-const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',walking:'Walk',cycle:'Cycle',taxi:'Taxi',flight:'Flight','shared taxi':'Carpool'};
+const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',walking:'Walk',cycle:'Cycle',motorbike:'Moto',car:'Car/RV',taxi:'Taxi',flight:'Flight','shared taxi':'Carpool'};
 const MODE_COLORS = {
   bus:          '#C4622D', // rust — road, earthy
   train:        '#2D4A2D', // moss — reliable, classic
@@ -898,6 +906,8 @@ const MODE_COLORS = {
   walk:         '#8BAF7A', // sage — natural, human pace
   walking:      '#8BAF7A', // sage
   cycle:        '#4A7C4A', // fern — active, green
+  motorbike:    '#8B5E3C', // bark — rugged, overland
+  car:          '#6B5B45', // earth — road trip
   taxi:         '#C9A84C', // gold — paid, quick
   flight:       '#5B7FA6', // slate — sky
   'shared taxi':'#8B5E3C', // bark — earthy, carpooling
@@ -907,6 +917,7 @@ const MODE_COLORS = {
 const MODE_TINTS = {
   bus:'#F0E6D8', train:'#E0EBD6', ferry:'#E0EAF2', hitchhike:'#FBE3D4',
   walk:'#E8F0E0', walking:'#E8F0E0', cycle:'#E0EBD6',
+  motorbike:'#F0E6D8', car:'#F0EBE0',
   taxi:'#F6ECCE', flight:'#E8EFF5', 'shared taxi':'#F0E6D8',
 };
 
@@ -1049,6 +1060,7 @@ function _timeAgo(iso) {
 
 let stops = [{name:'',date:'',days:0},{name:'',date:'',days:0}];
 let legs  = [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
+let tripDefaultMode = 'bus'; // trip-level transport default; individual legs can override
 let editingLegModes = new Set(); // indices of legs currently showing mode picker
 let expandedLegs   = new Set(); // indices of legs currently showing detail panel
 let pace  = 'slow';
@@ -1176,6 +1188,7 @@ async function saveCurrentTrip() {
   const tripData = {
     id: currentTripId || 'trip-' + Date.now(),
     title: autoTitle, stops, legs,
+    defaultMode: tripDefaultMode || 'bus',
     notes:    document.getElementById('tripNotes').value,
     budget:   document.getElementById('budgInp').value,
     currency: document.getElementById('currSel').value,
@@ -1605,6 +1618,7 @@ function updateActiveTripBar() {
 function startNewTrip() {
   const hasContent = stops.some(s => s.name) || currentTripId;
   if (hasContent && !confirm('Start a new trip? Unsaved changes to the current trip will be lost.')) return;
+  tripDefaultMode = 'bus';
   stops = [{name:'',date:'',days:0},{name:'',date:'',days:0}];
   legs  = [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
   editingLegModes.clear();
@@ -1626,6 +1640,7 @@ function startNewTrip() {
 }
 
 function loadTrip(trip, openLegIndex = -1) {
+  tripDefaultMode = trip.defaultMode || (trip.legs?.[0]?.mode) || 'bus';
   stops = trip.stops || [{name:'',date:'',days:0},{name:'',date:'',days:0}];
   legs  = trip.legs  || [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
   editingLegModes.clear();
@@ -3016,6 +3031,7 @@ function autoFillDates(fromIdx) {
 function render() {
   if (currentTripId || stops.some(s => s.name)) _tripDirty = true;
   renderSegs(); renderTl(); updateSum(); renderBookingProgress(); renderBudgetBar();
+  renderTripDefaultModePicker();
   if (lastSuggestion) renderPlanSuggestion(lastSuggestion, lastSuggestion._from_cache || false);
 }
 
@@ -4170,14 +4186,37 @@ function setMode(i, m)  {
   editingLegModes.delete(i);
   render();
 }
+
+function setTripDefaultMode(m) {
+  const hasEdits = legs.some(leg => leg.mode !== tripDefaultMode);
+  if (hasEdits) {
+    if (!confirm('Some legs have been set to a different transport mode. Reset all legs to ' + (MI[m] || m) + '?')) return;
+  }
+  tripDefaultMode = m;
+  legs.forEach(leg => { leg.mode = m; });
+  render();
+}
+
+function renderTripDefaultModePicker() {
+  const el = document.getElementById('tripDefaultModePicker');
+  if (!el) return;
+  el.innerHTML = MODES.map(m => {
+    const active = tripDefaultMode === m;
+    const icon   = MODE_ICONS[m] || 'ph-circle';
+    const label  = MI[m] || m;
+    return `<button class="mp${active?' on':''}" onclick="setTripDefaultMode('${m}')" title="${label}" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 9px">
+      <i class="ph ${icon}" style="font-size:12px"></i>${label}
+    </button>`;
+  }).join('');
+}
 function addStop() {
   stops.push({ name: '', date: '', days: 0 });
-  legs.push({ mode: 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
+  legs.push({ mode: tripDefaultMode || 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
   render();
 }
 function insertStop(i) {
   stops.splice(i + 1, 0, { name: '', date: '', days: 0 });
-  legs.splice(i + 1, 0, { mode: legs[i]?.mode || 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
+  legs.splice(i + 1, 0, { mode: tripDefaultMode || legs[i]?.mode || 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
   render();
 }
 function removeStop(i) {
