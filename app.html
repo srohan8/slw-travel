@@ -888,12 +888,12 @@ const MODE_TINTS = {
 
 // Community contribution kinds
 const CONTRIB_KINDS = {
-  price:    { icon:'ph-tag',           color:'#6B4F3A', bg:'#F4EADE', label:'Price update' },
-  schedule: { icon:'ph-clock-clockwise',color:'#2E6FA8', bg:'#EDF4F9', label:'Schedule tip' },
-  border:   { icon:'ph-shield-warning', color:'#C4622D', bg:'#FDF0EC', label:'Border note' },
-  tip:      { icon:'ph-lightbulb',     color:'#6B5410', bg:'#FDF6E3', label:'Local tip' },
-  confirmed:{ icon:'ph-check-circle',  color:'#2D4A2D', bg:'#D4E3CC', label:'Confirmed working' },
-  warning:  { icon:'ph-warning',       color:'#C4622D', bg:'#FDF0EC', label:'Heads up' },
+  tip:      { icon:'ph-lightbulb',         color:'#6B5410', bg:'#FDF6E3', label:'Tip' },
+  warning:  { icon:'ph-warning-circle',    color:'#C4622D', bg:'#FDF0EC', label:'Warning' },
+  cost:     { icon:'ph-receipt',           color:'#6B4F3A', bg:'#F4EADE', label:'Cost update' },
+  route:    { icon:'ph-x-circle',          color:'#8B2A00', bg:'#FFF0EC', label:'Route changed' },
+  split:    { icon:'ph-git-branch',        color:'#2E6FA8', bg:'#EDF4F9', label:'Split here' },
+  transport:{ icon:'ph-swap',              color:'#2D4A2D', bg:'#E8F0E0', label:'Transport fix' },
 };
 
 // Popular corridors for plan landing (curated real overland routes)
@@ -1646,6 +1646,39 @@ function splitLeg(trip, legIdx) {
       if (rows[legIdx + 1]) rows[legIdx + 1].querySelector('input')?.focus();
     }
   }, 50);
+}
+
+// Apply a community-suggested split — loads the trip in edit mode and pre-fills the new stop
+function applySplitSuggestion(legKey, splitCity, legIdx) {
+  const fromCity = legKey.split('→')[0];
+  const toCity   = legKey.split('→')[1];
+
+  // Try to find the trip in My Trips that contains this leg
+  let trip = null, foundIdx = -1;
+  if (viewingTripId) {
+    trip = (storage.get('trips')||[]).find(t => t.id === viewingTripId);
+    if (trip) {
+      foundIdx = (trip.stops||[]).findIndex((s,i) =>
+        s.name === fromCity && trip.stops[i+1]?.name === toCity
+      );
+    }
+  }
+  if (!trip || foundIdx < 0) {
+    alert(`Load the trip in the editor first, then use Split leg on the ${fromCity} → ${toCity} leg to add ${splitCity} as a stop.`);
+    return;
+  }
+  loadTrip(trip, foundIdx);
+  setTimeout(() => {
+    insertStop(foundIdx);
+    stops[foundIdx + 1].name = splitCity;
+    expandedLegs.add(foundIdx + 1);
+    render();
+    // Focus the new stop's input
+    setTimeout(() => {
+      const inputs = document.querySelectorAll('#segs .sinp-lg');
+      if (inputs[foundIdx + 1]) inputs[foundIdx + 1].focus();
+    }, 80);
+  }, 60);
 }
 
 // ── AI calls (via proxy) ──────────────────────────────────────────
@@ -3160,39 +3193,63 @@ function renderContribCard(note, compact, legKey) {
   const k   = CONTRIB_KINDS[note.kind] || CONTRIB_KINDS.tip;
   const id  = note.id || '';
   const lk  = (legKey||'').replace(/'/g,"\\'");
+  const verified = note.confirmed || (note.votes||0) >= 3;
+  const verBadge = verified
+    ? `<span style="font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:rgba(45,74,45,0.1);color:var(--fern);padding:1px 6px;border-radius:3px;margin-left:4px">✓ verified</span>`
+    : '';
+
+  // Warning and Route changed render as full-width alert banners
+  if (note.kind === 'warning' || note.kind === 'route') {
+    const bdrColor = note.kind === 'route' ? '#8B2A00' : '#C4622D';
+    const bgColor  = note.kind === 'route' ? '#FFF0EC' : '#FDF0EC';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;background:${bgColor};border:0.5px solid ${bdrColor}30;border-left:3px solid ${bdrColor};border-radius:0 6px 6px 0;padding:8px 10px;margin:4px 0;font-size:12px;color:${bdrColor}">
+      <i class="ph ${k.icon}" style="font-size:14px;flex-shrink:0;margin-top:1px"></i>
+      <div style="flex:1;line-height:1.5">${note.text||''}${verBadge}
+        <div style="font-size:10px;opacity:0.65;margin-top:2px;font-family:var(--mono)">${note.author||'anonymous'} · ${note.when||'recently'}</div>
+      </div>
+    </div>`;
+  }
+
+  // Split here renders as an actionable suggestion card
+  if (note.kind === 'split') {
+    const city = note.splitCity || '';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;background:#EDF4F9;border:0.5px solid #2E6FA830;border-radius:6px;padding:8px 10px;margin:4px 0">
+      <i class="ph ph-git-branch" style="font-size:14px;color:#2E6FA8;flex-shrink:0;margin-top:1px"></i>
+      <div style="flex:1;min-width:0">
+        ${city ? `<div style="font-size:12px;font-weight:600;color:#2E6FA8;margin-bottom:2px">Split at ${city}</div>` : ''}
+        <div style="font-size:12px;color:var(--text2);line-height:1.5">${note.text||''}</div>
+        ${city ? `<button onclick="applySplitSuggestion('${lk}','${city.replace(/'/g,"\\'")}',${note.legIdx||0})" style="margin-top:6px;font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:0.5px solid #2E6FA8;color:#2E6FA8;padding:3px 10px;border-radius:4px;cursor:pointer">Add ${city} as stop →</button>` : ''}
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--mono)">${note.author||'anonymous'} · ${note.when||'recently'}${verBadge}</div>
+      </div>
+    </div>`;
+  }
+
+  // Default card (tip, cost, transport)
   if (compact) {
     return `<div class="contrib-card-compact">
       <div class="contrib-icon-sm" style="background:${k.bg};color:${k.color}"><i class="ph ${k.icon}" style="font-size:11px"></i></div>
-      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)">
-        <span style="font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:${k.color};font-weight:600;margin-right:6px">${k.label}</span>${note.text}
-      </div>
-      <span style="font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap">${note.author||''} · ${note.when||''}</span>
-      <span style="display:flex;align-items:center;gap:2px;color:var(--text3);cursor:pointer" onclick="contribUpvote(event,'${id}','${lk}')">
-        <i class="ph ph-arrow-fat-up" style="font-size:11px"></i><span class="contrib-votes-n">${note.votes||0}</span>
-      </span>
+      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-size:12px;flex:1">${note.text||''}</div>
+      <div style="font-size:10px;color:var(--text3);white-space:nowrap;font-family:var(--mono)">${note.when||''}</div>
+      ${verBadge}
     </div>`;
   }
   return `<div class="contrib-card">
-    <div class="contrib-icon" style="background:${k.bg};color:${k.color}"><i class="ph ${k.icon}" style="font-size:12px"></i></div>
-    <div style="min-width:0">
-      <div style="display:flex;gap:6px;align-items:center;margin-bottom:2px;flex-wrap:wrap">
-        <span style="font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:${k.color};font-weight:600">${k.label}</span>
-        <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">· ${note.author||'anonymous'}</span>
-        <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">· ${note.when||''}</span>
-        ${note.confirmed_count ? `<span style="font-size:10px;color:var(--fern);font-family:var(--mono);display:inline-flex;align-items:center;gap:2px"><i class="ph ph-shield-check" style="font-size:10px"></i>${note.confirmed_count}× confirmed</span>` : ''}
+    <div class="contrib-card-top">
+      <div class="contrib-icon-sm" style="background:${k.bg};color:${k.color}"><i class="ph ${k.icon}" style="font-size:11px"></i></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:2px">${k.label}${verBadge} · ${note.author||'anonymous'} · ${note.when||'recently'}</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.55">${note.text||''}</div>
       </div>
-      <div style="font-size:12.5px;color:var(--text);line-height:1.5">${note.text}</div>
-      ${note.source ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;font-style:italic">${note.source}</div>` : ''}
     </div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
-      <div class="contrib-votes" onclick="contribUpvote(event,'${id}','${lk}')">
-        <i class="ph ph-arrow-fat-up" style="font-size:14px"></i>
+    <div class="contrib-card-actions">
+      <button class="contrib-vote-btn" onclick="contribUpvote(event,'${id}','${lk}')">
+        <i class="ph ph-thumbs-up" style="font-size:11px"></i>
         <span class="contrib-votes-n">${note.votes||0}</span>
-      </div>
-      <div class="contrib-votes" style="font-size:10px" title="Confirm this is still accurate" onclick="contribConfirm(event,'${id}','${lk}')">
-        <i class="ph ph-shield-check" style="font-size:12px"></i>
-        <span class="contrib-conf-n">${note.confirmed_count||0}</span>
-      </div>
+      </button>
+      <button class="contrib-vote-btn" onclick="contribConfirm(event,'${id}','${lk}')" title="Confirm this is still accurate">
+        <i class="ph ph-check" style="font-size:11px"></i>
+        <span class="contrib-conf-n">${note.confirmed||0}</span>
+      </button>
     </div>
   </div>`;
 }
@@ -3275,24 +3332,19 @@ function contribConfirm(e, noteId, legKey) {
 }
 
 // ── Contribute modal ──────────────────────────────────────────────────
-let _contribModalState = { legIdx:0, legKey:'', kind:'tip', source:'I did this leg' };
+let _contribModalState = { legIdx:0, legKey:'', kind:'tip' };
 
 function showContribModal(legIdx, legKey) {
   const from = stops[legIdx]?.name || legKey.split('→')[0] || '?';
   const to   = stops[legIdx+1]?.name || legKey.split('→')[1] || '?';
   const leg  = getLeg(legIdx);
-  _contribModalState = { legIdx, legKey, kind:'tip', source:'I did this leg' };
+  _contribModalState = { legIdx, legKey, kind:'tip' };
 
   const kindsHtml = Object.entries(CONTRIB_KINDS).map(([k,v]) =>
     `<span class="contrib-kind-pill${k==='tip'?' active':''}" id="ck_${k}"
       style="border-color:${k==='tip'?v.color:'var(--border2)'};background:${k==='tip'?v.bg:'transparent'};color:${k==='tip'?v.color:'var(--text2)'}"
       onclick="selectContribKind('${k}')"
       ><i class="ph ${v.icon}" style="font-size:12px"></i> ${v.label}</span>`
-  ).join('');
-
-  const sourcesHtml = ['I did this leg','Heard from another traveller','Operator / official source','I work in the area'].map(s =>
-    `<span class="contrib-source-pill${s==='I did this leg'?' active':''}" id="cs_${s.replace(/[^a-z]/gi,'_')}"
-      onclick="selectContribSource('${s}')">${s}</span>`
   ).join('');
 
   const modeColor = MODE_COLORS[leg.mode] || 'var(--fern)';
@@ -3304,8 +3356,8 @@ function showContribModal(legIdx, legKey) {
       <div class="contrib-modal-hdr">
         <div style="width:34px;height:34px;border-radius:8px;background:rgba(139,175,122,0.15);color:var(--sage);display:flex;align-items:center;justify-content:center"><i class="ph ph-users-three" style="font-size:18px"></i></div>
         <div style="flex:1">
-          <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);font-weight:400">Contribute a note</div>
-          <div style="font-family:var(--serif);font-size:20px;font-weight:400;letter-spacing:-0.2px;margin-top:2px;color:var(--cream)">Help the next traveller on this leg</div>
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);font-weight:400">Suggest a change</div>
+          <div style="font-family:var(--serif);font-size:20px;font-weight:400;letter-spacing:-0.2px;margin-top:2px;color:var(--cream)">Help the next traveller</div>
         </div>
         <span onclick="closeContribModal()" style="color:rgba(245,240,232,0.5);cursor:pointer;padding:6px;display:flex;align-items:center"><i class="ph ph-x" style="font-size:18px"></i></span>
       </div>
@@ -3320,23 +3372,32 @@ function showContribModal(legIdx, legKey) {
       </div>
       <div class="contrib-modal-body">
         <div style="margin-bottom:16px">
-          <div class="contrib-field-lbl">What kind of note?</div>
+          <div class="contrib-field-lbl">What are you reporting?</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">${kindsHtml}</div>
         </div>
+
+        <!-- Split-here city field — only shown for 'split' kind -->
+        <div id="contribSplitCityRow" style="display:none;margin-bottom:14px">
+          <div class="contrib-field-lbl">Intermediate city to add <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-family:var(--body)">· required for split</span></div>
+          <input class="contrib-inp" id="contribSplitCity" placeholder="e.g. Wagah Border, Amritsar"/>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Name the stop that should be inserted between ${from} and ${to}.</div>
+        </div>
+
         <div style="margin-bottom:14px">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-            <div class="contrib-field-lbl">Your note</div>
+            <div class="contrib-field-lbl" id="contribNoteLbl">Your note</div>
             <div id="contribCharCount" style="font-size:11px;color:var(--text3);font-family:var(--mono)">0 / 400</div>
           </div>
-          <textarea class="contrib-textarea" id="contribText" maxlength="400" rows="4" placeholder="First-person observations only. What did you see, pay, or experience?"
+          <textarea class="contrib-textarea" id="contribText" maxlength="400" rows="4" id="contribNoteLbl"
+            placeholder="First-hand observations only. What did you actually experience?"
             oninput="document.getElementById('contribCharCount').textContent=this.value.length+' / 400'"></textarea>
           <div style="font-size:11px;color:var(--text3);margin-top:5px;display:flex;gap:5px;align-items:center">
-            <i class="ph ph-info" style="font-size:11px"></i> First-person only. No affiliate links. Other travellers will vote on this.
+            <i class="ph ph-info" style="font-size:11px"></i> First-person only. No affiliate links. Others will upvote or verify this.
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
           <div>
-            <div class="contrib-field-lbl">When were you there? <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-family:var(--body)">· optional</span></div>
+            <div class="contrib-field-lbl">When? <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-family:var(--body)">· optional</span></div>
             <input class="contrib-inp" id="contribWhen" placeholder="e.g. March 2025"/>
           </div>
           <div>
@@ -3344,15 +3405,11 @@ function showContribModal(legIdx, legKey) {
             <input class="contrib-inp" id="contribAuthor" placeholder="@handle or anonymous"/>
           </div>
         </div>
-        <div style="margin-bottom:18px">
-          <div class="contrib-field-lbl">How do you know?</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">${sourcesHtml}</div>
-        </div>
       </div>
       <div class="contrib-modal-footer">
-        <div style="font-size:11px;color:var(--text3);flex:1;line-height:1.5">Your note goes live immediately. Other travellers can upvote or flag it.</div>
+        <div style="font-size:11px;color:var(--text3);flex:1;line-height:1.5">Goes live immediately. Others can upvote, verify, or flag it.</div>
         <button class="btn" onclick="closeContribModal()">Cancel</button>
-        <button class="btn btn-primary" id="contribSubmitBtn" onclick="submitContrib()"><i class="ph ph-paper-plane-tilt" style="font-size:12px"></i> Post note</button>
+        <button class="btn btn-primary" id="contribSubmitBtn" onclick="submitContrib()"><i class="ph ph-paper-plane-tilt" style="font-size:12px"></i> Submit</button>
       </div>
     </div>
   </div>`;
@@ -3371,14 +3428,23 @@ function selectContribKind(k) {
       el.style.borderColor = 'var(--border2)'; el.style.background = 'transparent'; el.style.color = 'var(--text2)';
     }
   });
-}
 
-function selectContribSource(s) {
-  _contribModalState.source = s;
-  document.querySelectorAll('.contrib-source-pill').forEach(el => {
-    const isActive = el.textContent.trim() === s;
-    el.classList.toggle('active', isActive);
-  });
+  // Show/hide split city input
+  const splitRow = document.getElementById('contribSplitCityRow');
+  if (splitRow) splitRow.style.display = k === 'split' ? 'block' : 'none';
+
+  // Update placeholder based on kind
+  const ta = document.getElementById('contribText');
+  if (!ta) return;
+  const placeholders = {
+    tip:      'First-hand tip. What made this leg easier or more interesting?',
+    warning:  'What should travellers watch out for? Be specific.',
+    cost:     'What did you actually pay, and when? e.g. "Paid $18 in March 2025, price board at bus stand."',
+    route:    'What changed? e.g. "Samjhauta Express suspended since 2019. Cross at Wagah on foot then take a bus."',
+    split:    'Why split here? What does the intermediate stop enable?',
+    transport:'What is the actual transport? e.g. "Shared jeep, not a bus — leaves from the market square at 7am."',
+  };
+  ta.placeholder = placeholders[k] || 'First-hand observations only.';
 }
 
 function closeContribModal() {
@@ -3393,11 +3459,20 @@ async function submitContrib() {
   const author = document.getElementById('contribAuthor')?.value.trim()
                || currentUser?.email?.split('@')[0] || 'anonymous';
   const btn = document.getElementById('contribSubmitBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ph ph-circle-notch" style="font-size:12px;animation:spin 1s linear infinite"></i> Posting…'; }
+  const splitCity = _contribModalState.kind === 'split'
+    ? (document.getElementById('contribSplitCity')?.value.trim() || '')
+    : '';
+  if (_contribModalState.kind === 'split' && !splitCity) {
+    alert('Please enter the intermediate city name for the split.');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-paper-plane-tilt" style="font-size:12px"></i> Submit'; }
+    return;
+  }
   await contribStorage.addToLeg(_contribModalState.legKey, {
-    kind:   _contribModalState.kind,
+    kind:     _contribModalState.kind,
     text, when, author,
-    source: _contribModalState.source,
+    splitCity,
+    legIdx:   _contribModalState.legIdx,
   });
   closeContribModal();
 
