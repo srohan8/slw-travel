@@ -417,6 +417,13 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   .back-btn:hover{color:var(--fern);}
   .coll-select{font-family:var(--body);font-size:13px;border:0.5px solid var(--border);border-radius:var(--radius);padding:5px 10px;background:var(--bg);color:var(--text);cursor:pointer;outline:none;}
 
+  /* ── Trip date inputs ─────────────────────────────── */
+  .date-inp{font-family:var(--mono);font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius);padding:4px 8px;background:var(--bg);color:var(--text);outline:none;cursor:pointer;}
+  .date-inp:focus{border-color:var(--fern);}
+  .trip-dates-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:12px 0 14px;border-bottom:0.5px solid var(--border);margin-bottom:14px;}
+  .trip-date-group{display:flex;gap:7px;align-items:center;}
+  .trip-date-lbl{font-size:10px;font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;color:var(--text3);}
+
   /* ── Budget progress bar ────────────────────────────── */
   .budget-bar-wrap{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-top:8px;}
   .budget-bar-kicker{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--fern);font-weight:400;white-space:nowrap;}
@@ -557,6 +564,7 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
     </div>
 
     <div class="save-trip-bar">
+      <button class="back-btn" id="tripEditBack" style="display:none;margin-right:4px" onclick="returnToTripView()">← Back</button>
       <input class="trip-title" placeholder="Name your trip..." value="My overland journey" id="tripTitle" style="flex:1"/>
       <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
       <span class="save-status" id="saveStatus"></span>
@@ -567,6 +575,18 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
       <div class="met"><div class="met-lbl">Days</div><div class="met-val" id="sumDays">—</div></div>
       <div class="met"><div class="met-lbl">Cost</div><div class="met-val" id="sumCost">0 <span class="met-u" id="sumCurr">USD</span></div></div>
       <div class="met"><div class="met-lbl">Distance</div><div class="met-val" id="sumDist">0 <span class="met-u">km</span></div></div>
+    </div>
+    <div class="trip-dates-row">
+      <div class="trip-date-group">
+        <span class="trip-date-lbl">Start</span>
+        <input type="date" id="tripStartDate" class="date-inp" onchange="applyTripDates()"/>
+      </div>
+      <span style="color:var(--border);font-size:16px">—</span>
+      <div class="trip-date-group">
+        <span class="trip-date-lbl">End</span>
+        <input type="date" id="tripEndDate" class="date-inp" onchange="applyTripDates()"/>
+      </div>
+      <span id="tripDateHint" style="font-size:11px;color:var(--text3);font-family:var(--mono)"></span>
     </div>
     <div class="sec-lbl">Route</div>
     <div class="segs" id="segs"></div>
@@ -1008,6 +1028,7 @@ let lastSuggestion = null;
 let currentTripId     = null;
 let currentTripSubTab = 'mytrips'; // mytrips | saved | collections
 let viewingTripId     = null;      // null = list view, string = viewing this trip
+let _fromTripView     = false;     // true when edit was launched from trip view panel
 let _autoRefreshPending = false; // true while a stale-cache background re-fetch is in flight
 let appSettings    = {};
 let currentUser    = null;
@@ -1476,9 +1497,15 @@ function startNewTrip() {
   editingLegModes.clear();
   expandedLegs.clear();
   currentTripId = null;
+  _fromTripView = false;
   document.getElementById('tripTitle').value = '';
   document.getElementById('tripNotes').value = '';
   document.getElementById('budgInp').value   = '';
+  const backBtn = document.getElementById('tripEditBack');
+  if (backBtn) backBtn.style.display = 'none';
+  const sd = document.getElementById('tripStartDate'); if (sd) sd.value = '';
+  const ed = document.getElementById('tripEndDate');   if (ed) ed.value = '';
+  document.getElementById('tripDateHint').textContent = '';
   updateActiveTripBar();
   renderSavedTrips();
   render();
@@ -1494,10 +1521,23 @@ function loadTrip(trip) {
   document.getElementById('tripNotes').value = trip.notes || '';
   document.getElementById('budgInp').value   = trip.budget || '';
   if (trip.currency) document.getElementById('currSel').value = trip.currency;
-  // Switch to My trip tab
+  // Show back button (we came from a trip view)
+  _fromTripView = true;
+  const backBtn = document.getElementById('tripEditBack');
+  if (backBtn) backBtn.style.display = '';
+  // Sync trip-level date inputs
+  syncTripDateInputs();
+  // Switch to edit tab
   switchTab('record', document.getElementById('navbtn_record'));
   updateActiveTripBar();
   render();
+}
+
+function returnToTripView() {
+  if (currentTripId) {
+    openTripView(currentTripId);
+    switchTab('mytrips', document.getElementById('navbtn_mytrips'));
+  }
 }
 
 // ── AI calls (via proxy) ──────────────────────────────────────────
@@ -2083,7 +2123,17 @@ function switchTab(id, el) {
   if (id === 'admin')    { renderAdminTab(); switchAdminSub('sites'); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
   if (id === 'profile')  { renderProfilePanel(); }
-  if (id === 'plan' && !lastSuggestion) { renderPlanLanding(); }
+  if (id === 'plan') {
+    const from = document.getElementById('pFrom')?.value?.trim();
+    const to   = document.getElementById('pTo')?.value?.trim();
+    if (from && to) {
+      // Form already has a route — hide the landing grid, let the form speak
+      const lg = document.getElementById('planLandingGrid');
+      if (lg) lg.style.display = 'none';
+    } else if (!lastSuggestion) {
+      renderPlanLanding();
+    }
+  }
 }
 
 // ── Admin gating ──────────────────────────────────────────────────
@@ -2897,6 +2947,80 @@ function updateSum() {
     bel.style.color = rem >= 0 ? 'var(--text2)' : 'var(--danger-text)';
     bel.textContent = rem >= 0 ? `${getCurrSym()}${Math.round(rem)} remaining` : `${getCurrSym()}${Math.round(Math.abs(rem))} over budget`;
   } else bel.textContent = '';
+  syncTripDateInputs();
+}
+
+// ── Trip-level start/end date helpers ────────────────────────────────
+function syncTripDateInputs() {
+  const sd = document.getElementById('tripStartDate');
+  const ed = document.getElementById('tripEndDate');
+  const ht = document.getElementById('tripDateHint');
+  if (!sd || !ed) return;
+  // Reflect first and last stop dates into the inputs (without overwriting user edits)
+  const firstDate = stops[0]?.date || '';
+  const lastDate  = stops[stops.length-1]?.date || '';
+  if (firstDate && !sd.value) sd.value = firstDate;
+  if (lastDate  && !ed.value) ed.value = lastDate;
+  // Show computed span hint
+  if (sd.value && ed.value) {
+    const diff = Math.round((new Date(ed.value+'T00:00') - new Date(sd.value+'T00:00')) / 864e5);
+    ht.textContent = diff > 0 ? diff + ' day' + (diff!==1?'s':'') : '';
+  } else {
+    ht.textContent = '';
+  }
+}
+
+function applyTripDates() {
+  const sdEl = document.getElementById('tripStartDate');
+  const edEl = document.getElementById('tripEndDate');
+  if (!sdEl?.value) return;
+
+  const startDate = new Date(sdEl.value + 'T00:00');
+
+  // If end date is set, redistribute days across stops proportionally
+  if (edEl?.value) {
+    const endDate   = new Date(edEl.value + 'T00:00');
+    const totalDays = Math.round((endDate - startDate) / 864e5);
+    if (totalDays > 0 && stops.length > 1) {
+      const existingTotal = stops.slice(0, -1).reduce((a,s)=>a+(+s.days||0), 0);
+      const distribute = stops.length - 1; // number of gaps (legs)
+      if (existingTotal > 0) {
+        // Scale existing days proportionally
+        const scale = totalDays / existingTotal;
+        let assigned = 0;
+        stops.slice(0, -1).forEach((s, i) => {
+          if (i < distribute - 1) {
+            s.days = Math.max(1, Math.round((+s.days||1) * scale));
+            assigned += s.days;
+          } else {
+            s.days = Math.max(1, totalDays - assigned); // last leg gets the remainder
+          }
+        });
+      } else {
+        // Distribute evenly
+        const perLeg = Math.max(1, Math.floor(totalDays / distribute));
+        stops.slice(0, -1).forEach(s => { s.days = perLeg; });
+      }
+    }
+  }
+
+  // Propagate dates forward from start
+  let cur = new Date(startDate);
+  stops.forEach((s, i) => {
+    s.date = cur.toISOString().slice(0, 10);
+    cur = new Date(cur.getTime() + Math.max(1, +s.days||1) * 864e5);
+  });
+
+  // Sync end date input to reflect actual last stop date
+  const edCalc = stops[stops.length-1]?.date;
+  if (edCalc && edEl && !edEl.value) edEl.value = edCalc;
+
+  document.getElementById('tripDateHint').textContent =
+    sdEl.value && (edEl?.value) ?
+      Math.round((new Date(edEl.value+'T00:00') - new Date(sdEl.value+'T00:00'))/864e5) + ' days' : '';
+
+  render();
+  updateSum();
 }
 
 function toggleLegExpand(i) {
