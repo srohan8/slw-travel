@@ -7,7 +7,7 @@
 <script src="https://app.minnal.io/track/7c00ae17-46ed-4f8a-9276-84b122dd2ff5.js"></script>
 <script>
 !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ai Ri init Vi Yi Rr zi Gi Zi capture calculateEventProperties en register register_once register_for_session unregister unregister_for_session sn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync an identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty rn Ki createPersonProfile setInternalOrTestUser nn $i hn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Xi debug Mr tn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'});}
+function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only',disable_session_recording:true,autocapture:false});}
 (function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -1034,6 +1034,14 @@ let currentTripSubTab = 'mytrips'; // mytrips | saved | collections
 let viewingTripId     = null;      // null = list view, string = viewing this trip
 let _fromTripView     = false;     // true when edit was launched from trip view panel
 let _autoRefreshPending = false; // true while a stale-cache background re-fetch is in flight
+let _tripDirty = false;
+
+window.addEventListener('beforeunload', function(e) {
+  if (_tripDirty) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 let appSettings    = {};
 let currentUser    = null;
 let isAdmin        = false;
@@ -1163,6 +1171,7 @@ async function saveCurrentTrip() {
 
   // Update UI right after local save — don't wait for cloud
   statusEl.textContent = 'Saved ✓';
+  _tripDirty = false;
   renderSavedTrips();
   updateActiveTripBar();
   setTimeout(() => { if (statusEl.textContent === 'Saved ✓') statusEl.textContent = ''; }, 2500);
@@ -1440,7 +1449,6 @@ function renderTripViewPanel(trip, el) {
       const infoS  = leg.infoSites   || leg.info_sites;
       transportHtml = '<div class="leg-col leg-col-b">'
         + '<div class="leg-col-lbl">Transport</div>'
-        + '<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Book this leg on</div>'
         + renderTransportLinks(leg.mode, from, to, sites, region, infoS)
       + '</div>';
     } else {
@@ -1499,10 +1507,13 @@ function renderTripViewPanel(trip, el) {
 
   ${legsHtml ? '<div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:10px">Legs</div><div class="tv-legs-list">' + legsHtml + '</div>' : ''}
 
-  ${trip.notes ? `<div style="margin-top:1.5rem">
+  <div style="margin-top:1.5rem">
     <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:8px">Notes</div>
-    <div style="font-size:14px;color:var(--text2);line-height:1.65;white-space:pre-wrap;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px">${trip.notes}</div>
-  </div>` : ''}
+    <textarea id="tvNotes" rows="4" placeholder="Add trip notes, reminders, visa tips…" style="width:100%;font-size:14px;color:var(--text2);line-height:1.65;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-family:var(--body);resize:vertical;outline:none;transition:border-color .2s">${trip.notes||''}</textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:6px">
+      <button class="btn btn-primary" style="font-size:12px;padding:5px 14px" onclick="saveTripViewNotes('${trip.id}')">Save notes</button>
+    </div>
+  </div>
 
   <div style="margin-top:1.5rem;padding-top:1rem;border-top:0.5px solid var(--border)">
     <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Organise</div>
@@ -1515,6 +1526,23 @@ function renderTripViewPanel(trip, el) {
       <button class="btn" style="font-size:11px;padding:5px 12px;color:var(--rust);border-color:rgba(196,98,45,0.3)" onclick="deleteTrip('${trip.id}')">Delete trip</button>
     </div>
   </div>`;
+}
+
+function saveTripViewNotes(tripId) {
+  const notes = document.getElementById('tvNotes')?.value || '';
+  const trips = storage.get('trips') || [];
+  const idx = trips.findIndex(t => t.id === tripId);
+  if (idx === -1) return;
+  trips[idx].notes = notes;
+  storage.set('trips', trips);
+  if (currentUser) {
+    sb.from('trips').upsert({ id: tripId, user_id: currentUser.id, data: trips[idx], updated_at: new Date().toISOString() }, { onConflict: 'id' })
+      .then(() => {}).catch(e => console.warn('notes sync:', e.message));
+  }
+  // Flash feedback
+  const btn = event.target;
+  btn.textContent = 'Saved ✓';
+  setTimeout(() => { btn.textContent = 'Save notes'; }, 2000);
 }
 
 function updateActiveTripBar() {
@@ -1540,6 +1568,7 @@ function startNewTrip() {
   expandedLegs.clear();
   currentTripId = null;
   _fromTripView = false;
+  _tripDirty = false;
   document.getElementById('tripTitle').value = '';
   document.getElementById('tripNotes').value = '';
   document.getElementById('budgInp').value   = '';
@@ -1560,6 +1589,7 @@ function loadTrip(trip, openLegIndex = -1) {
   expandedLegs.clear();
   if (openLegIndex >= 0) expandedLegs.add(openLegIndex);
   currentTripId = trip.id;
+  _tripDirty = false;
   document.getElementById('tripTitle').value = trip.title || '';
   document.getElementById('tripNotes').value = trip.notes || '';
   document.getElementById('budgInp').value   = trip.budget || '';
@@ -2326,7 +2356,6 @@ async function planRoute() {
     document.getElementById('planResult').style.display = 'block';
     await prefetchConflictZones((hit.legs || []).map(l => l.conflict?.country_code));
     renderPlanSuggestion(hit, true);
-    document.getElementById('adoptBtn').style.display = 'inline-block';
     _collapseSearchForm(from, to);
     return;
   }
@@ -2414,7 +2443,6 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
     updateCacheClearBtn();
     await prefetchConflictZones((data.legs || []).map(l => l.conflict?.country_code));
     renderPlanSuggestion(data, false);
-    document.getElementById('adoptBtn').style.display = 'inline-block';
     updateUsageBars();
   } catch (e) {
     console.error('planRoute error:', e);
@@ -2510,6 +2538,7 @@ function renderConflictAlert(conflict, withLinks = true) {
 }
 
 function renderPlanSuggestion(d, fromCache = false) {
+  document.getElementById('adoptBtn').style.display = 'none';
   const showAff = appSettings.affiliate_links !== false;
 
   // ── Summary strip ────────────────────────────────────
@@ -2532,6 +2561,9 @@ function renderPlanSuggestion(d, fromCache = false) {
   }
 
   let h = '';
+  h += `<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:0.5px solid var(--border)">
+  <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="adoptRoute()">Add to My Trips →</button>
+</div>`;
   if (fromCache) {
     const sub = d._subset_of ? ` <span style="opacity:0.7;font-weight:400">— sliced from ${d._subset_of}</span>` : '';
     const noRegion = d.legs?.some(l => !l.leg_region);
@@ -2577,7 +2609,6 @@ function renderPlanSuggestion(d, fromCache = false) {
         </div>
         <div class="leg-col leg-col-b">
           <div class="leg-col-lbl">Transport</div>
-          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Book this leg on</div>
           ${transportCol || '<div style="font-size:12px;color:var(--text3)">No links for this leg</div>'}
         </div>
         <div class="leg-col leg-col-b">
@@ -2589,6 +2620,9 @@ function renderPlanSuggestion(d, fromCache = false) {
     </div>`;
   });
   h += `<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2)">Total: ~${d.total_days} days · ~${fmtCost(d.total_cost_usd)}</div>`;
+  h += `<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border)">
+  <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="adoptRoute()">Add to My Trips →</button>
+</div>`;
   document.getElementById('planResult').innerHTML = h;
 }
 
@@ -2730,6 +2764,7 @@ function autoFillDates(fromIdx) {
 }
 
 function render() {
+  if (currentTripId || stops.some(s => s.name)) _tripDirty = true;
   renderSegs(); renderTl(); updateSum(); renderBookingProgress(); renderBudgetBar();
   if (lastSuggestion) renderPlanSuggestion(lastSuggestion, lastSuggestion._from_cache || false);
 }
@@ -3805,7 +3840,14 @@ function insertStop(i) {
   legs.splice(i + 1, 0, { mode: legs[i]?.mode || 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
   render();
 }
-function removeStop(i)  { stops.splice(i, 1); if (i < legs.length) legs.splice(i, 1); editingLegModes.delete(i); render(); }
+function removeStop(i) {
+  const stopName = stops[i]?.name || 'this stop';
+  if (!confirm(`Remove ${stopName} and the leg leading to it? This can't be undone.`)) return;
+  stops.splice(i, 1);
+  if (i < legs.length) legs.splice(i, 1);
+  editingLegModes.delete(i);
+  render();
+}
 
 function exportTrip() {
   const title = document.getElementById('tripTitle').value;
