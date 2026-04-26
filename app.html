@@ -383,6 +383,39 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
     .mytrips-table-row > *:nth-child(n+2):not(:last-child){display:none;}
     .mytrips-yearly{grid-template-columns:repeat(2,1fr);}
   }
+  .mytrips-ftab.active{border-bottom-color:var(--fern)!important;}
+
+  /* ── Trip cards (Saved tab) ───────────────────────── */
+  .trip-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;}
+  .trip-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px;cursor:pointer;transition:box-shadow .2s;}
+  .trip-card:hover{box-shadow:0 4px 16px rgba(26,43,26,0.1);}
+
+  /* ── Pin / bookmark button ────────────────────────── */
+  .pin-btn{background:none;border:none;cursor:pointer;font-size:15px;color:var(--text3);padding:2px 4px;line-height:1;transition:color .15s;flex-shrink:0;}
+  .pin-btn:hover,.pin-btn.pinned{color:var(--rust);}
+
+  /* ── Collection badge ─────────────────────────────── */
+  .coll-badge{display:inline-block;font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:rgba(74,124,74,0.1);color:var(--fern);border-radius:4px;padding:2px 7px;margin-left:4px;}
+
+  /* ── Collections tab ──────────────────────────────── */
+  .coll-group{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:10px;}
+  .coll-group-hdr{display:flex;justify-content:space-between;align-items:center;padding:11px 18px;background:var(--bg2);border-bottom:0.5px solid var(--border);}
+  .coll-group-name{font-family:var(--serif);font-size:18px;font-weight:400;color:var(--text);}
+  .coll-trip-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-top:0.5px solid var(--border);cursor:pointer;transition:background .15s;}
+  .coll-trip-row:hover{background:var(--bg2);}
+  .coll-trip-row:first-of-type{border-top:none;}
+
+  /* ── Trip view (read-only detail) ─────────────────── */
+  .tv-legs-list{display:flex;flex-direction:column;gap:6px;}
+  .tv-leg-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+  .tv-leg-row{display:flex;align-items:flex-start;gap:12px;}
+  .tv-stay-row{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);letter-spacing:0.5px;}
+  .tv-leg-notes{font-size:12px;color:var(--text2);margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);font-style:italic;line-height:1.5;}
+
+  /* ── Back button + collection select ─────────────── */
+  .back-btn{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);background:none;border:none;cursor:pointer;padding:0;}
+  .back-btn:hover{color:var(--fern);}
+  .coll-select{font-family:var(--body);font-size:13px;border:0.5px solid var(--border);border-radius:var(--radius);padding:5px 10px;background:var(--bg);color:var(--text);cursor:pointer;outline:none;}
 
   /* ── Budget progress bar ────────────────────────────── */
   .budget-bar-wrap{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-top:8px;}
@@ -972,7 +1005,9 @@ let expandedLegs   = new Set(); // indices of legs currently showing detail pane
 let pace  = 'slow';
 let prefModes = ['bus','train'];
 let lastSuggestion = null;
-let currentTripId  = null;
+let currentTripId     = null;
+let currentTripSubTab = 'mytrips'; // mytrips | saved | collections
+let viewingTripId     = null;      // null = list view, string = viewing this trip
 let _autoRefreshPending = false; // true while a stale-cache background re-fetch is in flight
 let appSettings    = {};
 let currentUser    = null;
@@ -1092,6 +1127,11 @@ async function saveCurrentTrip() {
   // Save locally — always immediate, never blocks
   let trips = storage.get('trips');
   const idx = trips.findIndex(t => t.id === tripData.id);
+  // Carry forward user metadata not managed in the planner editor
+  if (idx !== -1) {
+    tripData.pinned     = trips[idx].pinned     ?? false;
+    tripData.collection = trips[idx].collection ?? null;
+  }
   if (idx !== -1) trips[idx] = tripData; else trips.push(tripData);
   storage.set('trips', trips);
   currentTripId = tripData.id;
@@ -1158,15 +1198,260 @@ function goToMyTrips() {
 function toggleTripsDrawer() { goToMyTrips(); }
 function renderSavedTrips()  { renderMyTripsPanel(); }
 
+// ── Sub-tab + view navigation ────────────────────────────────────────
+function switchTripSubTab(tab) {
+  currentTripSubTab = tab;
+  viewingTripId = null;
+  renderMyTripsPanel();
+}
+
+function openTripView(tripId) {
+  viewingTripId = tripId;
+  renderMyTripsPanel();
+}
+
+function closeTripView() {
+  viewingTripId = null;
+  renderMyTripsPanel();
+}
+
+// ── Pin / bookmark ───────────────────────────────────────────────────
+function togglePin(tripId, ev) {
+  ev.stopPropagation();
+  const trips = storage.get('trips');
+  const idx = trips.findIndex(t => t.id === tripId);
+  if (idx === -1) return;
+  trips[idx].pinned = !trips[idx].pinned;
+  storage.set('trips', trips);
+  if (currentUser) {
+    sb.from('trips').upsert({id:tripId, user_id:currentUser.id, data:trips[idx], updated_at:new Date().toISOString()},{onConflict:'id'})
+      .catch(e => console.warn('Pin sync:', e.message));
+  }
+  renderMyTripsPanel();
+}
+
+// ── Collections ──────────────────────────────────────────────────────
+function assignCollection(tripId, value) {
+  if (value === '__new__') {
+    const name = prompt('Collection name:');
+    if (!name?.trim()) { renderMyTripsPanel(); return; }
+    value = name.trim();
+  }
+  const trips = storage.get('trips');
+  const idx = trips.findIndex(t => t.id === tripId);
+  if (idx === -1) return;
+  trips[idx].collection = value || null;
+  storage.set('trips', trips);
+  if (currentUser) {
+    sb.from('trips').upsert({id:tripId, user_id:currentUser.id, data:trips[idx], updated_at:new Date().toISOString()},{onConflict:'id'})
+      .catch(e => console.warn('Collection sync:', e.message));
+  }
+  viewingTripId = tripId; // stay on view after assigning
+  renderMyTripsPanel();
+}
+
+function promptNewCollection() {
+  const name = prompt('New collection name:');
+  if (!name?.trim()) return;
+  alert('Collection \u201c' + name.trim() + '\u201d ready \u2014 open any trip and assign it from the Organise section.');
+}
+
+// ── Delete ───────────────────────────────────────────────────────────
 async function deleteTrip(id) {
-  if (!confirm('Delete this trip?')) return;
+  if (!confirm('Delete this trip? This cannot be undone.')) return;
   storage.set('trips', storage.get('trips').filter(t => t.id !== id));
   if (currentTripId === id) { currentTripId = null; updateActiveTripBar(); }
   if (currentUser) {
     try { await sb.from('trips').delete().eq('id', id).eq('user_id', currentUser.id); }
     catch(e) { console.warn('Cloud delete failed:', e.message); }
   }
+  viewingTripId = null;
   renderSavedTrips();
+}
+
+// ── Saved tab renderer ───────────────────────────────────────────────
+function renderSavedContent(trips) {
+  const pinned = trips.filter(t => t.pinned);
+  if (!pinned.length) {
+    return `<div style="text-align:center;padding:3rem 1rem;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg)">
+      <div style="font-size:28px;margin-bottom:12px;color:var(--text3)">\u2661</div>
+      <div style="font-family:var(--serif);font-size:24px;font-weight:300;color:var(--text)">Nothing saved yet.</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:8px;line-height:1.6">Hit \u2661 on any trip in All trips to bookmark it here.</div>
+    </div>`;
+  }
+  const cards = pinned.map(t => {
+    const sc    = t.stops?.length || 0;
+    const route = sc >= 2 ? (t.stops[0].name||'?') + ' \u2192 ' + (t.stops[sc-1].name||'?') : t.title||'Untitled';
+    const cost  = t.legs ? getCurrSym() + Math.round(t.legs.reduce((a,l)=>a+(+l.cost||0),0)) : '\u2014';
+    const km    = t.legs ? Math.round(t.legs.reduce((a,l)=>a+(+l.km||0),0)) : 0;
+    const st    = stateOf(t);
+    return '<div class="trip-card" onclick="openTripView(\'' + t.id + '\')">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+        + '<div style="min-width:0">'
+          + '<div style="font-family:var(--serif);font-size:18px;font-weight:400;color:var(--text);line-height:1.2">' + route + '</div>'
+          + (t.title && t.title !== route ? '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px">' + t.title + '</div>' : '')
+        + '</div>'
+        + '<button class="pin-btn pinned" onclick="togglePin(\'' + t.id + '\',event)" title="Unsave" style="font-size:18px">\u2665</button>'
+      + '</div>'
+      + '<div style="display:flex;gap:14px;margin-top:14px;font-size:12px;color:var(--text2);font-family:var(--mono)">'
+        + '<span>' + sc + ' stop' + (sc!==1?'s':'') + '</span>'
+        + (km ? '<span>' + km + ' km</span>' : '')
+        + '<span>' + cost + '</span>'
+      + '</div>'
+      + (t.collection ? '<div style="margin-top:8px"><span class="coll-badge">' + t.collection + '</span></div>' : '')
+      + '<div style="margin-top:12px">'
+        + '<span class="status-pill" style="border:0.5px solid ' + st.color + ';color:' + st.color + ';background:' + st.color + '14">' + st.label + '</span>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+  return '<div class="trip-cards-grid">' + cards + '</div>';
+}
+
+// ── Collections tab renderer ─────────────────────────────────────────
+function renderCollectionsContent(trips) {
+  const grouped = {};
+  trips.forEach(t => {
+    const key = t.collection || '__none__';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(t);
+  });
+  const names = Object.keys(grouped).filter(k => k !== '__none__').sort();
+  const uncollected = grouped['__none__'] || [];
+
+  let html = '<div style="display:flex;justify-content:flex-end;margin-bottom:1rem">'
+    + '<button class="btn" onclick="promptNewCollection()" style="font-size:12px">+ New collection</button>'
+    + '</div>';
+
+  if (!names.length && !trips.length) {
+    return html + `<div style="text-align:center;padding:3rem 1rem;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg)">
+      <div style="font-family:var(--serif);font-size:24px;font-weight:300;color:var(--text)">No collections yet.</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:8px;line-height:1.6">Group trips into named collections \u2014 \u201cBalkans 2027\u201d, \u201cWeekend escapes\u201d, etc.</div>
+    </div>`;
+  }
+
+  names.forEach(name => {
+    const cts = grouped[name];
+    html += '<div class="coll-group">'
+      + '<div class="coll-group-hdr">'
+        + '<span class="coll-group-name">' + name + '</span>'
+        + '<span style="font-size:12px;color:var(--text3);font-family:var(--mono)">' + cts.length + ' trip' + (cts.length!==1?'s':'') + '</span>'
+      + '</div>'
+      + cts.map(collTripRow).join('')
+    + '</div>';
+  });
+
+  if (uncollected.length) {
+    html += '<div class="coll-group" style="margin-top:' + (names.length?'8px':'0') + '">'
+      + '<div class="coll-group-hdr">'
+        + '<span class="coll-group-name" style="color:var(--text3)">Uncollected</span>'
+        + '<span style="font-size:12px;color:var(--text3);font-family:var(--mono)">' + uncollected.length + ' trip' + (uncollected.length!==1?'s':'') + '</span>'
+      + '</div>'
+      + uncollected.map(collTripRow).join('')
+    + '</div>';
+  }
+  return html;
+}
+
+function collTripRow(t) {
+  const sc    = t.stops?.length || 0;
+  const route = sc >= 2 ? (t.stops[0].name||'?') + ' \u2192 ' + (t.stops[sc-1].name||'?') : t.title||'Untitled';
+  const st    = stateOf(t);
+  return '<div class="coll-trip-row" onclick="openTripView(\'' + t.id + '\')">'
+    + '<div style="flex:1;font-family:var(--serif);font-size:16px;color:var(--text)">' + route + '</div>'
+    + '<span class="status-pill" style="border:0.5px solid ' + st.color + ';color:' + st.color + ';background:' + st.color + '14;flex-shrink:0">' + st.label + '</span>'
+  + '</div>';
+}
+
+// ── Trip view (read-only detail panel) ───────────────────────────────
+function renderTripViewPanel(trip, el) {
+  const sc        = trip.stops?.length || 0;
+  const route     = sc >= 2 ? (trip.stops[0].name||'?') + ' \u2192 ' + (trip.stops[sc-1].name||'?') : trip.title||'Untitled';
+  const totalCost = (trip.legs||[]).reduce((a,l)=>a+(+l.cost||0), 0);
+  const totalKm   = (trip.legs||[]).reduce((a,l)=>a+(+l.km||0), 0);
+  const totalDays = (trip.stops||[]).reduce((a,s)=>a+(+s.days||0), 0);
+  const st        = stateOf(trip);
+  const isPinned  = !!trip.pinned;
+  const safeTrip  = JSON.stringify(trip).replace(/"/g,'&quot;');
+
+  const legsHtml = (trip.legs||[]).map((leg, i) => {
+    const from      = trip.stops[i]?.name   || '?';
+    const to        = trip.stops[i+1]?.name || '?';
+    const iconCls   = MODE_ICONS[leg.mode]  || 'ph-path';
+    const modeColor = MODE_COLORS[leg.mode] || 'var(--fern)';
+    const modeTint  = MODE_TINTS[leg.mode]  || '#E0EBD6';
+    const fromDate  = trip.stops[i]?.date   || '';
+    const stayDays  = trip.stops[i+1]?.days || 0;
+    const dateStr   = fromDate ? new Date(fromDate+'T00:00').toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
+    return '<div class="tv-leg-card">'
+      + '<div class="tv-leg-row">'
+        + '<div class="leg-mode-icon" style="background:' + modeColor + '"><i class="ph ' + iconCls + '"></i></div>'
+        + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:14px;font-weight:500;color:var(--text)">' + from + ' \u2192 ' + to + '</div>'
+          + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:3px;font-size:12px;font-family:var(--mono);color:var(--text3)">'
+            + '<span style="text-transform:capitalize;background:' + modeTint + ';color:' + modeColor + ';padding:1px 6px;border-radius:4px">' + (leg.mode||'') + '</span>'
+            + (leg.hours ? '<span>' + leg.hours + 'h</span>' : '')
+            + (leg.km    ? '<span>' + leg.km + ' km</span>' : '')
+            + (dateStr   ? '<span>' + dateStr + '</span>' : '')
+          + '</div>'
+        + '</div>'
+        + '<div style="text-align:right;flex-shrink:0">'
+          + (leg.cost ? '<div style="font-size:15px;font-weight:500;color:var(--text)">' + getCurrSym() + leg.cost + '</div>' : '')
+          + (leg.booked ? '<div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--fern);font-family:var(--mono);margin-top:2px">\u2713 Booked</div>' : '')
+        + '</div>'
+      + '</div>'
+      + (stayDays ? '<div class="tv-stay-row"><i class="ph ph-moon" style="font-size:11px"></i> ' + stayDays + ' night' + (stayDays!==1?'s':'') + ' in ' + to + '</div>' : '')
+      + (leg.notes ? '<div class="tv-leg-notes">' + leg.notes + '</div>' : '')
+    + '</div>';
+  }).join('');
+
+  const allCollections = [...new Set((storage.get('trips')||[]).map(t=>t.collection).filter(Boolean))];
+  const collOpts = allCollections.map(c =>
+    '<option value="' + c + '"' + (trip.collection===c?' selected':'') + '>' + c + '</option>'
+  ).join('');
+
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap">
+    <button class="back-btn" onclick="closeTripView()">\u2190 All trips</button>
+    <div style="flex:1"></div>
+    <button class="pin-btn${isPinned?' pinned':''}" onclick="togglePin('${trip.id}',event)" style="font-size:20px" title="${isPinned?'Unsave':'Save'}">${isPinned?'\u2665':'\u2661'}</button>
+    <button class="btn btn-primary" onclick="loadTrip(${safeTrip})">Edit trip \u2192</button>
+  </div>
+
+  <div style="margin-bottom:1.25rem">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:6px">Route</div>
+    <div style="font-family:var(--serif);font-size:clamp(22px,4vw,32px);font-weight:300;letter-spacing:-0.5px;color:var(--text);line-height:1.15">${route}</div>
+    ${trip.title && trip.title !== route ? '<div style="font-size:12px;color:var(--text3);margin-top:4px;font-family:var(--mono)">' + trip.title + '</div>' : ''}
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center">
+    <span class="status-pill" style="border:0.5px solid ${st.color};color:${st.color};background:${st.color}14">${st.label}</span>
+    ${trip.collection ? '<span class="coll-badge">' + trip.collection + '</span>' : ''}
+  </div>
+
+  <div class="sumbar" style="margin-bottom:1.5rem">
+    <div class="met"><div class="met-lbl">Stops</div><div class="met-val">${sc}</div></div>
+    <div class="met"><div class="met-lbl">Days</div><div class="met-val">${totalDays||'\u2014'}</div></div>
+    <div class="met"><div class="met-lbl">Cost</div><div class="met-val">${getCurrSym()}${Math.round(totalCost)} <span class="met-u">${trip.currency||'USD'}</span></div></div>
+    <div class="met"><div class="met-lbl">Distance</div><div class="met-val">${Math.round(totalKm)} <span class="met-u">km</span></div></div>
+  </div>
+
+  ${legsHtml ? '<div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:10px">Legs</div><div class="tv-legs-list">' + legsHtml + '</div>' : ''}
+
+  ${trip.notes ? `<div style="margin-top:1.5rem">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:8px">Notes</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.65;white-space:pre-wrap;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px">${trip.notes}</div>
+  </div>` : ''}
+
+  <div style="margin-top:1.5rem;padding-top:1rem;border-top:0.5px solid var(--border)">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Organise</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <select class="coll-select" onchange="assignCollection('${trip.id}',this.value)">
+        <option value="">No collection</option>
+        ${collOpts}
+        <option value="__new__">+ New collection\u2026</option>
+      </select>
+      <button class="btn" style="font-size:11px;padding:5px 12px;color:var(--rust);border-color:rgba(196,98,45,0.3)" onclick="deleteTrip('${trip.id}')">Delete trip</button>
+    </div>
+  </div>`;
 }
 
 function updateActiveTripBar() {
@@ -2952,90 +3237,107 @@ function renderBudgetBar() {
 }
 
 // ── My Trips panel ────────────────────────────────────────────────────
+// ── Trip status helper (module-level so all sub-renderers can use it) ──
+function stateOf(t) {
+  const ls = t.legs || [];
+  const allBooked = ls.length && ls.every(l => l.booked);
+  const anyBooked = ls.some(l => l.booked);
+  if (allBooked)  return { label:'Confirmed',   cls:'confirmed', color:'#2D4A2D' };
+  if (anyBooked)  return { label:'In progress', cls:'progress',  color:'#C9A84C' };
+  const hasStops = (t.stops||[]).some(s => s.name);
+  if (hasStops)   return { label:'Planned',     cls:'planned',   color:'#4A7C4A' };
+  return             { label:'Draft',        cls:'draft',     color:'#9AA880' };
+}
+
 function renderMyTripsPanel() {
   const el = document.getElementById('mytripsPanel');
   if (!el) return;
-  const trips = (storage.get('trips') || []).slice().reverse();
 
-  const stateOf = (t) => {
-    const ls = t.legs || [];
-    const allBooked = ls.length && ls.every(l => l.booked);
-    const anyBooked = ls.some(l => l.booked);
-    if (allBooked)  return { label:'Confirmed',   cls:'confirmed', color:'#2D4A2D' };
-    if (anyBooked)  return { label:'In progress', cls:'progress',  color:'#C9A84C' };
-    const hasStops = (t.stops||[]).some(s => s.name);
-    if (hasStops)   return { label:'Planned',     cls:'planned',   color:'#4A7C4A' };
-    return             { label:'Draft',        cls:'draft',     color:'#9AA880' };
-  };
-
-  if (!trips.length) {
-    el.innerHTML = `<div class="mytrips-hdr">
-      <div>
-        <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern)">Your journeys</div>
-        <div class="mytrips-serif-title">My <em>trips</em></div>
-      </div>
-      <button class="btn btn-primary" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New trip</button>
-    </div>
-    <div style="text-align:center;padding:3rem 1rem;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg)">
-      <div style="font-family:var(--serif);font-size:28px;font-weight:300;color:var(--text);letter-spacing:-0.3px">No trips yet.<br><em style="color:var(--fern)">Start slow.</em></div>
-      <div style="font-size:13px;color:var(--text2);margin-top:12px;line-height:1.7;max-width:380px;margin-left:auto;margin-right:auto">Pick two places. We'll map the trains, buses, and ferries between them.</div>
-      <div style="margin-top:20px;display:flex;gap:10px;justify-content:center">
-        <button class="btn btn-primary" onclick="switchTab('plan',document.getElementById('navbtn_plan'))">Plan a route</button>
-      </div>
-    </div>`;
-    return;
+  // Trip detail view takes over the whole panel
+  if (viewingTripId) {
+    const trip = (storage.get('trips')||[]).find(t => t.id === viewingTripId);
+    if (trip) { renderTripViewPanel(trip, el); return; }
+    viewingTripId = null; // trip was deleted — fall through to list
   }
 
-  const rowsHtml = trips.map(t => {
-    const sc = t.stops?.length || 0;
-    const route = sc >= 2 ? `${t.stops[0].name||'?'} → ${t.stops[sc-1].name||'?'}` : t.title||'Untitled';
-    const sub   = [t.title, t.legs?.length ? t.legs.length + ' legs' : ''].filter(Boolean).join(' · ');
-    const dates = t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : '—';
-    const cost  = t.legs ? getCurrSym() + Math.round(t.legs.reduce((a,l)=>a+(+l.cost||0),0)) : '—';
-    const dist  = t.legs ? Math.round(t.legs.reduce((a,l)=>a+(+l.km||0),0)) + ' km' : '—';
-    const st    = stateOf(t);
-    const isAct = t.id === currentTripId;
-    const safeT = JSON.stringify(t).replace(/"/g,'&quot;');
-    return `<div class="mytrips-table-row" onclick="loadTrip(${safeT})">
-      <div>
-        <div class="mytrips-row-title">${route}${isAct?' <span style="font-size:11px;color:var(--fern)">●</span>':''}</div>
-        <div class="mytrips-row-sub">${sub}</div>
-      </div>
-      <div style="font-size:12px;color:var(--text2);font-family:var(--mono)">${dates}</div>
-      <div style="font-size:13px;color:var(--text2)">${sc} <span style="color:var(--text3);font-size:11px">· ${dist}</span></div>
-      <div style="font-size:12px;color:var(--text2);font-family:var(--mono)">${cost}</div>
-      <span class="status-pill" style="border:0.5px solid ${st.color};color:${st.color};background:${st.color}14">${st.label}</span>
-    </div>`;
-  }).join('');
+  const trips = (storage.get('trips') || []).slice().reverse();
 
-  // Yearly stats
-  const allLegs  = trips.flatMap(t => t.legs||[]);
-  const totalKm  = Math.round(allLegs.reduce((a,l)=>a+(+l.km||0),0));
-  const totalDays= trips.reduce((a,t)=> {
-    const ds = (t.stops||[]).map(s=>s.date?new Date(s.date+'T00:00'):null).filter(Boolean);
-    if (ds.length>=2) return a + Math.round((ds[ds.length-1]-ds[0])/864e5);
-    return a;
-  }, 0);
-
-  el.innerHTML = `<div class="mytrips-hdr">
+  const subTabs = `<div class="mytrips-hdr">
     <div>
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern)">Your journeys</div>
       <div class="mytrips-serif-title">My <em>trips</em></div>
     </div>
     <button class="btn btn-primary" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New trip</button>
   </div>
-  <div class="mytrips-table">
-    <div class="mytrips-table-hdr">
-      <span>Trip</span><span>Saved</span><span>Stops</span><span>Spent</span><span>Status</span>
-    </div>
-    ${rowsHtml}
-  </div>
-  <div class="mytrips-yearly">
-    <div class="met"><div class="met-lbl">Trips</div><div class="met-val">${trips.length}</div></div>
-    <div class="met"><div class="met-lbl">Total km</div><div class="met-val">${totalKm.toLocaleString()} <span class="met-u">km</span></div></div>
-    <div class="met"><div class="met-lbl">Days on road</div><div class="met-val">${totalDays||'—'}</div></div>
-    <div class="met"><div class="met-lbl">CO₂ saved</div><div class="met-val" style="font-size:13px;padding-top:4px;font-family:var(--mono)">vs flights</div></div>
+  <div class="mytrips-filter-tabs">
+    <button class="mytrips-ftab${currentTripSubTab==='mytrips'?' active':''}" onclick="switchTripSubTab('mytrips')">All trips</button>
+    <button class="mytrips-ftab${currentTripSubTab==='saved'?' active':''}" onclick="switchTripSubTab('saved')">♡ Saved</button>
+    <button class="mytrips-ftab${currentTripSubTab==='collections'?' active':''}" onclick="switchTripSubTab('collections')">Collections</button>
   </div>`;
+
+  let content = '';
+  if      (currentTripSubTab === 'saved')       content = renderSavedContent(trips);
+  else if (currentTripSubTab === 'collections') content = renderCollectionsContent(trips);
+  else                                          content = renderTripListContent(trips);
+
+  el.innerHTML = subTabs + content;
+}
+
+function renderTripListContent(trips) {
+  if (!trips.length) {
+    return `<div style="text-align:center;padding:3rem 1rem;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg)">
+      <div style="font-family:var(--serif);font-size:28px;font-weight:300;color:var(--text);letter-spacing:-0.3px">No trips yet.<br><em style="color:var(--fern)">Start slow.</em></div>
+      <div style="font-size:13px;color:var(--text2);margin-top:12px;line-height:1.7;max-width:380px;margin-left:auto;margin-right:auto">Pick two places. We'll map the trains, buses, and ferries between them.</div>
+      <div style="margin-top:20px;display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-primary" onclick="switchTab('plan',document.getElementById('navbtn_plan'))">Plan a route</button>
+      </div>
+    </div>`;
+  }
+
+  const rowsHtml = trips.map(t => {
+    const sc       = t.stops?.length || 0;
+    const route    = sc >= 2 ? (t.stops[0].name||'?') + ' \u2192 ' + (t.stops[sc-1].name||'?') : t.title||'Untitled';
+    const sub      = [t.title, t.legs?.length ? t.legs.length + ' legs' : ''].filter(Boolean).join(' \u00b7 ');
+    const dates    = t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : '\u2014';
+    const cost     = t.legs ? getCurrSym() + Math.round(t.legs.reduce((a,l)=>a+(+l.cost||0),0)) : '\u2014';
+    const dist     = t.legs ? Math.round(t.legs.reduce((a,l)=>a+(+l.km||0),0)) + ' km' : '\u2014';
+    const st       = stateOf(t);
+    const isAct    = t.id === currentTripId;
+    const isPinned = !!t.pinned;
+    const collBadge = t.collection ? '<span class="coll-badge">' + t.collection + '</span>' : '';
+    return '<div class="mytrips-table-row" onclick="openTripView(\'' + t.id + '\')">'
+      + '<div>'
+        + '<div class="mytrips-row-title">' + route + (isAct ? ' <span style="font-size:11px;color:var(--fern)">\u25cf</span>' : '') + '</div>'
+        + '<div class="mytrips-row-sub">' + sub + collBadge + '</div>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--text2);font-family:var(--mono)">' + dates + '</div>'
+      + '<div style="font-size:13px;color:var(--text2)">' + sc + ' <span style="color:var(--text3);font-size:11px">\u00b7 ' + dist + '</span></div>'
+      + '<div style="font-size:12px;color:var(--text2);font-family:var(--mono)">' + cost + '</div>'
+      + '<div style="display:flex;align-items:center;gap:6px">'
+        + '<span class="status-pill" style="border:0.5px solid ' + st.color + ';color:' + st.color + ';background:' + st.color + '14">' + st.label + '</span>'
+        + '<button class="pin-btn' + (isPinned ? ' pinned' : '') + '" onclick="togglePin(\'' + t.id + '\',event)" title="' + (isPinned ? 'Unsave' : 'Save') + '">' + (isPinned ? '\u2665' : '\u2661') + '</button>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+
+  const allLegs   = trips.flatMap(t => t.legs||[]);
+  const totalKm   = Math.round(allLegs.reduce((a,l)=>a+(+l.km||0),0));
+  const totalDays = trips.reduce((a,t) => {
+    const ds = (t.stops||[]).map(s=>s.date?new Date(s.date+'T00:00'):null).filter(Boolean);
+    if (ds.length>=2) return a + Math.round((ds[ds.length-1]-ds[0])/864e5);
+    return a;
+  }, 0);
+
+  return '<div class="mytrips-table">'
+    + '<div class="mytrips-table-hdr"><span>Trip</span><span>Updated</span><span>Stops</span><span>Cost</span><span>Status</span></div>'
+    + rowsHtml
+  + '</div>'
+  + '<div class="mytrips-yearly">'
+    + '<div class="met"><div class="met-lbl">Trips</div><div class="met-val">' + trips.length + '</div></div>'
+    + '<div class="met"><div class="met-lbl">Total km</div><div class="met-val">' + totalKm.toLocaleString() + ' <span class="met-u">km</span></div></div>'
+    + '<div class="met"><div class="met-lbl">Days on road</div><div class="met-val">' + (totalDays||'\u2014') + '</div></div>'
+    + '<div class="met"><div class="met-lbl">CO\u2082 saved</div><div class="met-val" style="font-size:13px;padding-top:4px;font-family:var(--mono)">vs flights</div></div>'
+  + '</div>';
 }
 
 async function renderProfilePanel() {
