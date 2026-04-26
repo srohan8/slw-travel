@@ -393,8 +393,9 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   .trip-card:hover{box-shadow:0 4px 16px rgba(26,43,26,0.1);}
 
   /* ── Pin / bookmark button ────────────────────────── */
-  .pin-btn{background:none;border:none;cursor:pointer;font-size:15px;color:var(--text3);padding:2px 4px;line-height:1;transition:color .15s;flex-shrink:0;}
-  .pin-btn:hover,.pin-btn.pinned{color:var(--rust);}
+  .pin-btn{background:none;border:none;cursor:pointer;font-size:22px;color:var(--text3);padding:2px 6px;line-height:1;transition:color .15s,transform .1s;flex-shrink:0;}
+  .pin-btn:hover{color:var(--rust);transform:scale(1.15);}
+  .pin-btn.pinned{color:var(--rust);}
 
   /* ── Collection badge ─────────────────────────────── */
   .coll-badge{display:inline-block;font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:rgba(74,124,74,0.1);color:var(--fern);border-radius:4px;padding:2px 7px;margin-left:4px;}
@@ -453,7 +454,7 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
     SLW <em>Travel</em>
   </a>
   <div class="nav-utils">
-    <button class="nav-link active" id="navbtn_plan"    onclick="switchTab('plan',this)">Planner</button>
+    <button class="nav-link active" id="navbtn_plan"    onclick="switchTab('plan',this)">Search</button>
     <button class="nav-link"        id="navbtn_mytrips" onclick="switchTab('mytrips',this)">My Trips</button>
     <button class="nav-link"        id="navbtn_profile" onclick="switchTab('profile',this)">Profile</button>
     <button class="nav-link"        id="navbtn_admin"   onclick="switchTab('admin',this)">Admin</button>
@@ -546,7 +547,7 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
     <!-- Summary strip (shown with results) -->
     <div id="planSummaryStrip" style="display:none"></div>
     <div id="planResult" class="result-box" style="display:none"></div>
-    <button class="adopt-btn" id="adoptBtn" style="display:none" onclick="adoptRoute()">Add this route to My trip →</button>
+    <button class="adopt-btn" id="adoptBtn" style="display:none" onclick="adoptRoute()">Add to my trip planner →</button>
   </div>
 
   <!-- RECORD TAB -->
@@ -1255,8 +1256,16 @@ function togglePin(tripId, ev) {
   const trips = storage.get('trips');
   const idx = trips.findIndex(t => t.id === tripId);
   if (idx === -1) return;
-  trips[idx].pinned = !trips[idx].pinned;
+  const newPinned = !trips[idx].pinned;
+  trips[idx].pinned = newPinned;
   storage.set('trips', trips);
+  // Immediate DOM update — no re-render flash
+  const btn = ev.currentTarget;
+  if (btn) {
+    btn.innerHTML = newPinned ? '<i class="ph-fill ph-heart"></i>' : '<i class="ph ph-heart"></i>';
+    btn.classList.toggle('pinned', newPinned);
+    btn.title = newPinned ? 'Unsave' : 'Save';
+  }
   if (currentUser) {
     sb.from('trips').upsert({id:tripId, user_id:currentUser.id, data:trips[idx], updated_at:new Date().toISOString()},{onConflict:'id'})
       .catch(e => console.warn('Pin sync:', e.message));
@@ -1287,7 +1296,12 @@ function assignCollection(tripId, value) {
 function promptNewCollection() {
   const name = prompt('New collection name:');
   if (!name?.trim()) return;
-  alert('Collection \u201c' + name.trim() + '\u201d ready \u2014 open any trip and assign it from the Organise section.');
+  // Persist so it appears in all trip dropdowns
+  try {
+    const colls = JSON.parse(localStorage.getItem('slw_collections') || '[]');
+    if (!colls.includes(name.trim())) { colls.push(name.trim()); localStorage.setItem('slw_collections', JSON.stringify(colls)); }
+  } catch(e) {}
+  renderMyTripsPanel();
 }
 
 // ── Delete ───────────────────────────────────────────────────────────
@@ -1308,9 +1322,9 @@ function renderSavedContent(trips) {
   const pinned = trips.filter(t => t.pinned);
   if (!pinned.length) {
     return `<div style="text-align:center;padding:3rem 1rem;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg)">
-      <div style="font-size:28px;margin-bottom:12px;color:var(--text3)">\u2661</div>
+      <div style="font-size:36px;margin-bottom:12px;color:var(--text3)"><i class="ph ph-heart"></i></div>
       <div style="font-family:var(--serif);font-size:24px;font-weight:300;color:var(--text)">Nothing saved yet.</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:8px;line-height:1.6">Hit \u2661 on any trip in All trips to bookmark it here.</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:8px;line-height:1.6">Tap <i class="ph ph-heart" style="vertical-align:-2px"></i> on any trip to bookmark it here.</div>
     </div>`;
   }
   const cards = pinned.map(t => {
@@ -1325,7 +1339,7 @@ function renderSavedContent(trips) {
           + '<div style="font-family:var(--serif);font-size:18px;font-weight:400;color:var(--text);line-height:1.2">' + route + '</div>'
           + (t.title && t.title !== route ? '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px">' + t.title + '</div>' : '')
         + '</div>'
-        + '<button class="pin-btn pinned" onclick="togglePin(\'' + t.id + '\',event)" title="Unsave" style="font-size:18px">\u2665</button>'
+        + '<button class="pin-btn pinned" onclick="togglePin(\'' + t.id + '\',event)" title="Unsave"><i class="ph-fill ph-heart"></i></button>'
       + '</div>'
       + '<div style="display:flex;gap:14px;margin-top:14px;font-size:12px;color:var(--text2);font-family:var(--mono)">'
         + '<span>' + sc + ' stop' + (sc!==1?'s':'') + '</span>'
@@ -1469,13 +1483,17 @@ function renderTripViewPanel(trip, el) {
       + '<div class="leg-icon-dot" style="background:' + modeColor + '"><i class="ph ' + iconCls + '"></i></div>'
       + '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;gap:8px">'
         + '<div style="font-size:13px;font-weight:600;color:var(--text)">' + from + ' \u2192 ' + to + '</div>'
-        + '<button class="back-btn" style="font-size:10px;letter-spacing:1px;flex-shrink:0" onclick="loadTrip(' + safeTrip + ',' + i + ')">Edit leg \u2192</button>'
+        + '<div style="display:flex;gap:8px;flex-shrink:0">'
+          + '<button class="back-btn" style="font-size:10px;letter-spacing:1px" onclick="splitLeg(' + safeTrip + ',' + i + ')">Split leg</button>'
+          + '<button class="back-btn" style="font-size:10px;letter-spacing:1px" onclick="loadTrip(' + safeTrip + ',' + i + ')">Edit leg \u2192</button>'
+        + '</div>'
       + '</div>'
       + '<div class="leg-grid">' + journeyHtml + transportHtml + stayHtml + '</div>'
     + '</div>';
   }).join('');
 
-  const allCollections = [...new Set((storage.get('trips')||[]).map(t=>t.collection).filter(Boolean))];
+  const standaloneColls = (() => { try { return JSON.parse(localStorage.getItem('slw_collections') || '[]'); } catch(e) { return []; } })();
+  const allCollections = [...new Set([...standaloneColls, ...(storage.get('trips')||[]).map(t=>t.collection).filter(Boolean)])];
   const collOpts = allCollections.map(c =>
     '<option value="' + c + '"' + (trip.collection===c?' selected':'') + '>' + c + '</option>'
   ).join('');
@@ -1483,7 +1501,7 @@ function renderTripViewPanel(trip, el) {
   el.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap">
     <button class="back-btn" onclick="closeTripView()">\u2190 All trips</button>
     <div style="flex:1"></div>
-    <button class="pin-btn${isPinned?' pinned':''}" onclick="togglePin('${trip.id}',event)" style="font-size:20px" title="${isPinned?'Unsave':'Save'}">${isPinned?'\u2665':'\u2661'}</button>
+    <button class="pin-btn${isPinned?' pinned':''}" onclick="togglePin('${trip.id}',event)" title="${isPinned?'Unsave':'Save'}">${isPinned?'<i class="ph-fill ph-heart"></i>':'<i class="ph ph-heart"></i>'}</button>
     <button class="btn btn-primary" onclick="loadTrip(${safeTrip})">Edit trip \u2192</button>
   </div>
 
@@ -1611,6 +1629,22 @@ function returnToTripView() {
     openTripView(currentTripId);
     switchTab('mytrips', document.getElementById('navbtn_mytrips'));
   }
+}
+
+// Split a leg: load the trip in edit mode then insert a blank stop between leg i and i+1
+function splitLeg(trip, legIdx) {
+  loadTrip(trip, legIdx);
+  setTimeout(() => {
+    insertStop(legIdx);
+    expandedLegs.add(legIdx + 1); // expand the new blank leg
+    render();
+    // Scroll the new stop into view
+    const segsEl = document.getElementById('segs');
+    if (segsEl) {
+      const rows = segsEl.querySelectorAll('.stop-city-row');
+      if (rows[legIdx + 1]) rows[legIdx + 1].querySelector('input')?.focus();
+    }
+  }, 50);
 }
 
 // ── AI calls (via proxy) ──────────────────────────────────────────
@@ -2396,6 +2430,19 @@ async function planRoute() {
     }[pace] || '';
     const accomSites = _readAllSites().filter(s => s.enabled !== false && s.category === 'accommodation').map(s => s.name);
     const accomHint  = accomSites.join(', ');
+
+    // Gather any cached traveller contributions to prioritise in the AI response
+    const allContribs = contribStorage.getAll();
+    const contribLines = [];
+    Object.entries(allContribs).forEach(([key, items]) => {
+      (items||[]).slice(0, 3).forEach(n => {
+        if (n.text) contribLines.push(`[${key}] (${n.kind||'tip'}) ${n.text}`);
+      });
+    });
+    const contribContext = contribLines.length
+      ? `\n\nPrevious verified traveller notes — treat these as ground-truth and incorporate where relevant:\n${contribLines.join('\n')}`
+      : '';
+
     const data = await callAI(`You are an expert overland travel planner. Suggest a practical overland route from ${from} to ${to}${via ? ' via ' + via : ''}.
 ${paceGuide} Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}${hitchNote ? '\n' + hitchNote : ''}
 Available transport booking sites (${siteHint}; for shared taxi/carpooling also consider BlaBlaCar in Europe/LatAm/South Asia). For each leg include:
@@ -2409,7 +2456,7 @@ Available accommodation platforms (${accomHint}). For each stop include:
 - "accom_note":"one practical sentence" — neighbourhood to stay, price level, style (e.g. "Stay in Thamel, hostels from $8" or "Guesthouses only in old town, no major platforms")
 Respond with ONLY a single raw JSON object — no markdown fences, no preamble, no commentary. Start with { and end with }. Schema:
 {"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"sightseeing tip","accom_sites":["Booking.com","Hostelworld"],"accom_note":"Stay near the old town, budget options from $12"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"],"info_sites":[],"confidence":"verified","conflict":{"level":"tension","note":"border area caution"}}],"total_days":14,"total_cost_usd":200}
-Include ALL stops and ALL legs for the complete route. Do not truncate.`);
+Include ALL stops and ALL legs for the complete route. Do not truncate.${contribContext}`);
     lastSuggestion = data;
 
     // Auto-register AI-suggested booking sites; accumulate regions onto existing ones
@@ -2562,7 +2609,7 @@ function renderPlanSuggestion(d, fromCache = false) {
 
   let h = '';
   h += `<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:0.5px solid var(--border)">
-  <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="adoptRoute()">Add to My Trips →</button>
+  <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="adoptRoute()">Add to my trip planner →</button>
 </div>`;
   if (fromCache) {
     const sub = d._subset_of ? ` <span style="opacity:0.7;font-weight:400">— sliced from ${d._subset_of}</span>` : '';
@@ -2621,7 +2668,7 @@ function renderPlanSuggestion(d, fromCache = false) {
   });
   h += `<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2)">Total: ~${d.total_days} days · ~${fmtCost(d.total_cost_usd)}</div>`;
   h += `<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border)">
-  <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="adoptRoute()">Add to My Trips →</button>
+  <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="adoptRoute()">Add to my trip planner →</button>
 </div>`;
   document.getElementById('planResult').innerHTML = h;
 }
@@ -3473,7 +3520,7 @@ function renderMyTripsPanel() {
   </div>
   <div class="mytrips-filter-tabs">
     <button class="mytrips-ftab${currentTripSubTab==='mytrips'?' active':''}" onclick="switchTripSubTab('mytrips')">All trips</button>
-    <button class="mytrips-ftab${currentTripSubTab==='saved'?' active':''}" onclick="switchTripSubTab('saved')">♡ Saved</button>
+    <button class="mytrips-ftab${currentTripSubTab==='saved'?' active':''}" onclick="switchTripSubTab('saved')"><i class="ph ph-heart" style="font-size:12px;vertical-align:-1px"></i> Saved</button>
     <button class="mytrips-ftab${currentTripSubTab==='collections'?' active':''}" onclick="switchTripSubTab('collections')">Collections</button>
   </div>`;
 
@@ -3517,7 +3564,7 @@ function renderTripListContent(trips) {
       + '<div style="font-size:12px;color:var(--text2);font-family:var(--mono)">' + cost + '</div>'
       + '<div style="display:flex;align-items:center;gap:6px">'
         + '<span class="status-pill" style="border:0.5px solid ' + st.color + ';color:' + st.color + ';background:' + st.color + '14">' + st.label + '</span>'
-        + '<button class="pin-btn' + (isPinned ? ' pinned' : '') + '" onclick="togglePin(\'' + t.id + '\',event)" title="' + (isPinned ? 'Unsave' : 'Save') + '">' + (isPinned ? '\u2665' : '\u2661') + '</button>'
+        + '<button class="pin-btn' + (isPinned ? ' pinned' : '') + '" onclick="togglePin(\'' + t.id + '\',event)" title="' + (isPinned ? 'Unsave' : 'Save') + '">' + (isPinned ? '<i class="ph-fill ph-heart"></i>' : '<i class="ph ph-heart"></i>') + '</button>'
       + '</div>'
     + '</div>';
   }).join('');
