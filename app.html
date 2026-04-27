@@ -2845,7 +2845,11 @@ const STATIC_CONFLICT_CITIES = {
 function inferConflictFromCities(fromCity, toCity) {
   const match = (name) => {
     if (!name) return null;
-    return STATIC_CONFLICT_CITIES[name.trim().toLowerCase()] || null;
+    const full = name.trim().toLowerCase();
+    // Try full name first, then just the city part before any comma
+    // Handles both "Khartoum" and "Khartoum, Sudan" formats
+    const cityOnly = full.split(',')[0].trim();
+    return STATIC_CONFLICT_CITIES[full] || STATIC_CONFLICT_CITIES[cityOnly] || null;
   };
   return match(fromCity) || match(toCity) || null;
 }
