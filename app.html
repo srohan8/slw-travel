@@ -66,12 +66,35 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   .nav-utils select{font-size:12px;background:rgba(255,255,255,0.07);color:rgba(212,227,204,0.8);border:0.5px solid rgba(139,175,122,0.25);border-radius:var(--radius);padding:5px 8px;outline:none;font-family:inherit;cursor:pointer;}
   .btn-primary{font-weight:600;background:var(--fern);color:var(--cream);border-color:var(--fern);box-shadow:0 2px 4px rgba(45,74,45,0.3);}
   .btn-primary:hover{background:#3D6B3D;transform:translateY(-1px);box-shadow:0 4px 8px rgba(45,74,45,0.4);}
-  .container{max-width:860px;margin:0 auto;padding:2rem 1.25rem;}
+  .container{max-width:1400px;margin:0 auto;padding:0 1.5rem;}
   .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;border-bottom:1.5px solid var(--border2);background:transparent;outline:none;width:100%;letter-spacing:-0.3px;transition:color .2s,border-color .2s;padding-bottom:3px;cursor:text;}
   .trip-title:hover{border-bottom-color:var(--sage);}
   .trip-title:focus{color:var(--fern);border-bottom-color:var(--fern);}
   .trip-title::placeholder{color:var(--text3);font-weight:300;}
-  .panel{display:none;animation: fadeIn 0.3s ease;}.panel.active{display:block;}
+  .panel{display:none;animation: fadeIn 0.3s ease;}.panel.active{display:flex;flex-direction:column;}
+  #mytrips.panel.active,#profile.panel.active,#admin.panel.active{padding-top:2rem;padding-bottom:2rem;}
+  /* ── Search tab 2-col layout ── */
+  #plan-layout{display:flex;align-items:flex-start;gap:0;flex:1;min-height:0;}
+  #plan-sidebar{width:360px;flex-shrink:0;overflow-y:auto;max-height:calc(100vh - 60px);padding:1.5rem 1.25rem 2rem 0;border-right:0.5px solid var(--border);position:sticky;top:60px;align-self:flex-start;}
+  #plan-main{flex:1;min-width:0;padding:1.5rem 0 2rem 1.5rem;}
+  /* ── Planner tab 2-col layout ── */
+  #record-layout{display:flex;align-items:flex-start;gap:0;flex:1;min-height:0;}
+  #record-left{width:460px;flex-shrink:0;overflow-y:auto;height:calc(100vh - 60px);padding:1.5rem 1.25rem 2rem 0;border-right:0.5px solid var(--border);}
+  #record-right{flex:1;min-width:0;padding:1.5rem 0 2rem 1.5rem;position:sticky;top:60px;align-self:flex-start;height:calc(100vh - 60px);overflow-y:auto;}
+  @media(min-width:900px){
+    #plannerMap{height:calc(100vh - 100px) !important;}
+    .plan-hero{padding:1.25rem 1rem 1rem;}
+    .plan-hero-sloth{display:none;}
+    .plan-hero-title{font-size:clamp(22px,2.5vw,30px);}
+  }
+  @media(max-width:900px){
+    #plan-layout,#record-layout{flex-direction:column;}
+    #plan-sidebar{width:100%;max-height:none;overflow-y:visible;position:static;padding:1.5rem 0 1rem;border-right:none;border-bottom:0.5px solid var(--border);}
+    #plan-main{padding:1rem 0 2rem;}
+    #record-left{width:100%;height:auto;overflow-y:visible;padding:1rem 0;border-right:none;}
+    #record-right{width:100%;position:static;height:auto;padding:0 0 2rem;}
+    #plannerMap{height:260px !important;}
+  }
   @media(max-width:700px){.nav-links{display:none;}}
   @media(max-width:500px){.nav-utils .btn:not(.btn-primary){display:none;}}
   @keyframes fadeIn { from {opacity:0; transform: translateY(5px);} to {opacity:1; transform: translateY(0);} }
@@ -477,20 +500,8 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   <div id="plan" class="panel active">
     <div id="plan-usage" class="usage-bar" style="display:none"></div>
 
-    <!-- Hero + landing (hidden when results shown) -->
-    <div id="planLanding">
-      <div class="plan-hero">
-        <div class="plan-hero-sloth">
-          <img src="public/sloth-logo.svg" width="260" style="filter:brightness(0) invert(1);opacity:0.3"/>
-        </div>
-        <div class="plan-hero-kicker">Overland planner · no flights, ever</div>
-        <div class="plan-hero-title">Where do you want<br>to go <em>slowly?</em></div>
-        <div class="plan-hero-sub">Trains, buses, ferries, hitchhikes. We'll map a realistic route and tell you which legs we're not sure about.</div>
-      </div>
-    </div>
-
-    <!-- Compact "edit search" bar — shown only when results are visible -->
-    <div id="planEditBar" style="display:none;margin-bottom:10px">
+    <!-- Compact "edit search" bar — shown only when results are visible, full-width above 2-col -->
+    <div id="planEditBar" style="display:none;padding:0.75rem 0 0.5rem">
       <div class="plan-edit-bar">
         <i class="ph ph-pencil-simple" style="color:var(--text3);font-size:14px;flex-shrink:0"></i>
         <span id="planEditBarLabel" style="flex:1;font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
@@ -499,64 +510,84 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
       </div>
     </div>
 
-    <!-- Full search form (collapsed after first search) -->
-    <div id="planSearchForm">
-    <div class="card">
-      <div class="form-row">
-        <span class="lbl">From</span>
-        <input class="inp" id="pFrom" placeholder="e.g. Tbilisi"/>
-        <div class="vsep"></div>
-        <span class="lbl">To</span>
-        <input class="inp" id="pTo" placeholder="e.g. Kathmandu"/>
-      </div>
-      <div class="form-row">
-        <span class="lbl">Via</span>
-        <input class="inp" id="pVia" placeholder="Countries or cities to pass through (optional)"/>
-      </div>
-      <div class="form-row">
-        <span class="lbl">Budget</span>
-        <input class="inp" id="pBudget" placeholder="e.g. $500" style="max-width:120px"/>
-        <div class="vsep"></div>
-        <span class="lbl">Pace</span>
-        <div class="pills" id="pacePills">
-          <button class="pill on" onclick="togglePace(this,'slow')">Slow</button>
-          <button class="pill" onclick="togglePace(this,'moderate')">Moderate</button>
-          <button class="pill" onclick="togglePace(this,'fast')">Fast</button>
+    <div id="plan-layout">
+      <!-- LEFT SIDEBAR: hero + search form -->
+      <div id="plan-sidebar">
+        <!-- Hero + landing (hidden when results shown) -->
+        <div id="planLanding">
+          <div class="plan-hero">
+            <div class="plan-hero-sloth">
+              <img src="public/sloth-logo.svg" width="260" style="filter:brightness(0) invert(1);opacity:0.3"/>
+            </div>
+            <div class="plan-hero-kicker">Overland planner · no flights, ever</div>
+            <div class="plan-hero-title">Where do you want<br>to go <em>slowly?</em></div>
+            <div class="plan-hero-sub">Trains, buses, ferries, hitchhikes. We'll map a realistic route and tell you which legs we're not sure about.</div>
+          </div>
         </div>
-      </div>
-      <div class="form-row" style="flex-direction:column;gap:6px">
-        <span class="lbl" style="padding-top:0">Prefer</span>
-        <div class="pills" id="modePills">
-          <button class="pill on" onclick="toggleMode(this,'bus')">Bus</button>
-          <button class="pill on" onclick="toggleMode(this,'train')">Train</button>
-          <button class="pill" onclick="toggleMode(this,'hitchhike')">Hitchhike</button>
-          <button class="pill" onclick="toggleMode(this,'ferry')">Ferry</button>
-          <button class="pill" onclick="toggleMode(this,'shared taxi')">Shared taxi</button>
-          <button class="pill" onclick="toggleMode(this,'walking')">Walking</button>
+
+        <!-- Full search form (collapsed after first search on mobile; stays visible on desktop) -->
+        <div id="planSearchForm">
+        <div class="card">
+          <div class="form-row">
+            <span class="lbl">From</span>
+            <input class="inp" id="pFrom" placeholder="e.g. Tbilisi"/>
+            <div class="vsep"></div>
+            <span class="lbl">To</span>
+            <input class="inp" id="pTo" placeholder="e.g. Kathmandu"/>
+          </div>
+          <div class="form-row">
+            <span class="lbl">Via</span>
+            <input class="inp" id="pVia" placeholder="Countries or cities to pass through (optional)"/>
+          </div>
+          <div class="form-row">
+            <span class="lbl">Budget</span>
+            <input class="inp" id="pBudget" placeholder="e.g. $500" style="max-width:120px"/>
+            <div class="vsep"></div>
+            <span class="lbl">Pace</span>
+            <div class="pills" id="pacePills">
+              <button class="pill on" onclick="togglePace(this,'slow')">Slow</button>
+              <button class="pill" onclick="togglePace(this,'moderate')">Moderate</button>
+              <button class="pill" onclick="togglePace(this,'fast')">Fast</button>
+            </div>
+          </div>
+          <div class="form-row" style="flex-direction:column;gap:6px">
+            <span class="lbl" style="padding-top:0">Prefer</span>
+            <div class="pills" id="modePills">
+              <button class="pill on" onclick="toggleMode(this,'bus')">Bus</button>
+              <button class="pill on" onclick="toggleMode(this,'train')">Train</button>
+              <button class="pill" onclick="toggleMode(this,'hitchhike')">Hitchhike</button>
+              <button class="pill" onclick="toggleMode(this,'ferry')">Ferry</button>
+              <button class="pill" onclick="toggleMode(this,'shared taxi')">Shared taxi</button>
+              <button class="pill" onclick="toggleMode(this,'walking')">Walking</button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
-      <span style="font-size:12px;color:var(--text3)">Free to use · No account needed</span>
-    </div>
-    </div><!-- end #planSearchForm -->
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
+          <span style="font-size:12px;color:var(--text3)">Free to use · No account needed</span>
+        </div>
+        </div><!-- end #planSearchForm -->
+      </div><!-- /#plan-sidebar -->
 
-    <!-- Landing: popular corridors + recent trips (shown when no result) -->
-    <div id="planLandingGrid" style="display:block">
-      <!-- filled by renderPlanLanding() -->
-    </div>
+      <!-- RIGHT MAIN: landing grid + results -->
+      <div id="plan-main">
+        <!-- Landing: popular corridors + recent trips (shown when no result) -->
+        <div id="planLandingGrid" style="display:block">
+          <!-- filled by renderPlanLanding() -->
+        </div>
 
-    <!-- Summary strip (shown with results) -->
-    <div id="planSummaryStrip" style="display:none"></div>
-    <div id="planResult" class="result-box" style="display:none"></div>
-    <button class="adopt-btn" id="adoptBtn" style="display:none" onclick="adoptRoute()">Add to my trip planner →</button>
+        <!-- Summary strip + route suggestions (shown with results) -->
+        <div id="planSummaryStrip" style="display:none"></div>
+        <div id="planResult" class="result-box" style="display:none"></div>
+        <button class="adopt-btn" id="adoptBtn" style="display:none" onclick="adoptRoute()">Add to my trip planner →</button>
+      </div><!-- /#plan-main -->
+    </div><!-- /#plan-layout -->
   </div>
 
   <!-- RECORD TAB -->
   <div id="record" class="panel">
 
-    <!-- Active trip context bar -->
+    <!-- Active trip context bar — full-width above 2-col -->
     <div class="trip-header-row" id="activeTripBar" style="display:none">
       <div class="trip-header-left">
         <i class="ph ph-map-trifold" style="color:var(--success-text);font-size:16px;flex-shrink:0"></i>
@@ -569,63 +600,73 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
       </div>
     </div>
 
-    <div class="save-trip-bar">
-      <button class="back-btn" id="tripEditBack" style="display:none" onclick="returnToTripView()">← Back to trip</button>
-      <div class="save-trip-row">
-        <input class="trip-title" placeholder="Name your trip..." id="tripTitle" title="Click to rename" style="flex:1"/>
-        <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
-        <span class="save-status" id="saveStatus"></span>
-      </div>
-      <!-- Trip-level default transport mode -->
-      <div style="display:flex;align-items:center;gap:8px;padding:6px 0 2px;flex-wrap:wrap">
-        <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0">Default transport</span>
-        <div id="tripDefaultModePicker" style="display:flex;flex-wrap:wrap;gap:4px"></div>
-      </div>
-    </div>
-    <div id="bookingProgress"></div>
-    <div class="sumbar">
-      <div class="met"><div class="met-lbl">Stops</div><div class="met-val" id="sumStops">0</div></div>
-      <div class="met"><div class="met-lbl">Days</div><div class="met-val" id="sumDays">—</div></div>
-      <div class="met"><div class="met-lbl">Cost</div><div class="met-val" id="sumCost">0 <span class="met-u" id="sumCurr">USD</span></div></div>
-      <div class="met"><div class="met-lbl">Distance</div><div class="met-val" id="sumDist">0 <span class="met-u">km</span></div></div>
-    </div>
-    <div class="trip-dates-row">
-      <div class="trip-date-group">
-        <span class="trip-date-lbl">Start</span>
-        <input type="date" id="tripStartDate" class="date-inp" onchange="applyTripDates()"/>
-      </div>
-      <span style="color:var(--border);font-size:16px">—</span>
-      <div class="trip-date-group">
-        <span class="trip-date-lbl">End</span>
-        <input type="date" id="tripEndDate" class="date-inp" onchange="applyTripDates()"/>
-      </div>
-      <span id="tripDateHint" style="font-size:11px;color:var(--text3);font-family:var(--mono)"></span>
-    </div>
-    <!-- ── Route map ─────────────────────────────────────────────── -->
-    <div id="plannerMapWrap" style="margin:0 0 16px;border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--bg2);border-bottom:0.5px solid var(--border)">
-        <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)"><i class="ph ph-map-pin" style="font-size:11px;margin-right:3px"></i>Route map</span>
-        <button id="plannerMapToggle" onclick="togglePlannerMap()" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 0">Hide</button>
-      </div>
-      <div id="plannerMap" style="height:260px;width:100%;position:relative;background:var(--bg2)">
-        <div id="plannerMapMsg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;font-style:italic;z-index:500;pointer-events:none;background:var(--bg2)">Add stops to see them on the map</div>
-      </div>
-    </div>
+    <div id="record-layout">
+      <!-- LEFT COLUMN: trip controls + stop editor (independently scrollable) -->
+      <div id="record-left">
+        <div class="save-trip-bar">
+          <button class="back-btn" id="tripEditBack" style="display:none" onclick="returnToTripView()">← Back to trip</button>
+          <div class="save-trip-row">
+            <input class="trip-title" placeholder="Name your trip..." id="tripTitle" title="Click to rename" style="flex:1"/>
+            <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
+            <span class="save-status" id="saveStatus"></span>
+          </div>
+          <!-- Trip-level default transport mode -->
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0 2px;flex-wrap:wrap">
+            <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0">Default transport</span>
+            <div id="tripDefaultModePicker" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+          </div>
+        </div>
+        <div id="bookingProgress"></div>
+        <div class="sumbar">
+          <div class="met"><div class="met-lbl">Stops</div><div class="met-val" id="sumStops">0</div></div>
+          <div class="met"><div class="met-lbl">Days</div><div class="met-val" id="sumDays">—</div></div>
+          <div class="met"><div class="met-lbl">Cost</div><div class="met-val" id="sumCost">0 <span class="met-u" id="sumCurr">USD</span></div></div>
+          <div class="met"><div class="met-lbl">Distance</div><div class="met-val" id="sumDist">0 <span class="met-u">km</span></div></div>
+        </div>
+        <div class="trip-dates-row">
+          <div class="trip-date-group">
+            <span class="trip-date-lbl">Start</span>
+            <input type="date" id="tripStartDate" class="date-inp" onchange="applyTripDates()"/>
+          </div>
+          <span style="color:var(--border);font-size:16px">—</span>
+          <div class="trip-date-group">
+            <span class="trip-date-lbl">End</span>
+            <input type="date" id="tripEndDate" class="date-inp" onchange="applyTripDates()"/>
+          </div>
+          <span id="tripDateHint" style="font-size:11px;color:var(--text3);font-family:var(--mono)"></span>
+        </div>
 
-    <div class="sec-lbl">Route</div>
-    <div class="segs" id="segs"></div>
-    <div class="add-row"><button class="add-b" onclick="addStop()">+ Add stop</button></div>
-    <div style="margin-top:1.25rem"><div class="sec-lbl">Timeline</div><div class="tl-track" id="tl"></div></div>
-    <hr class="divider"/>
-    <div class="sec-lbl">Notes</div>
-    <textarea class="noteinp" id="tripNotes" placeholder="Visas, border crossings, tips, contacts..."></textarea>
-    <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
-      <span style="font-size:13px;color:var(--text2)">Budget</span>
-      <input style="font-size:13px;border:none;background:transparent;outline:none;color:var(--text);width:80px;font-family:inherit" type="number" id="budgInp" oninput="updateSum();renderBudgetBar()" placeholder="0"/>
-      <span id="budgCurr" style="font-size:13px;color:var(--text2)">USD</span>
-      <span id="budgStatus" style="font-size:12px;color:var(--text2);margin-left:4px"></span>
-    </div>
-    <div id="budgetBar"></div>
+        <div class="sec-lbl">Route</div>
+        <div class="segs" id="segs"></div>
+        <div class="add-row"><button class="add-b" onclick="addStop()">+ Add stop</button></div>
+
+        <hr class="divider"/>
+        <div class="sec-lbl">Notes</div>
+        <textarea class="noteinp" id="tripNotes" placeholder="Visas, border crossings, tips, contacts..."></textarea>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+          <span style="font-size:13px;color:var(--text2)">Budget</span>
+          <input style="font-size:13px;border:none;background:transparent;outline:none;color:var(--text);width:80px;font-family:inherit" type="number" id="budgInp" oninput="updateSum();renderBudgetBar()" placeholder="0"/>
+          <span id="budgCurr" style="font-size:13px;color:var(--text2)">USD</span>
+          <span id="budgStatus" style="font-size:12px;color:var(--text2);margin-left:4px"></span>
+        </div>
+        <div id="budgetBar"></div>
+      </div><!-- /#record-left -->
+
+      <!-- RIGHT COLUMN: map (tall, sticky) + timeline -->
+      <div id="record-right">
+        <!-- ── Route map ───────────────────────────────────────── -->
+        <div id="plannerMapWrap" style="margin:0 0 16px;border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--bg2);border-bottom:0.5px solid var(--border)">
+            <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)"><i class="ph ph-map-pin" style="font-size:11px;margin-right:3px"></i>Route map</span>
+            <button id="plannerMapToggle" onclick="togglePlannerMap()" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 0">Hide</button>
+          </div>
+          <div id="plannerMap" style="height:260px;width:100%;position:relative;background:var(--bg2)">
+            <div id="plannerMapMsg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;font-style:italic;z-index:500;pointer-events:none;background:var(--bg2)">Add stops to see them on the map</div>
+          </div>
+        </div>
+        <div style="margin-top:0"><div class="sec-lbl">Timeline</div><div class="tl-track" id="tl"></div></div>
+      </div><!-- /#record-right -->
+    </div><!-- /#record-layout -->
   </div>
 
   <!-- MY TRIPS TAB -->
@@ -2342,7 +2383,7 @@ function switchTab(id, el) {
   const btn = el || document.getElementById('navbtn_' + id);
   if (btn) btn.classList.add('active');
   document.getElementById(id).classList.add('active');
-  if (id === 'record')   { render(); }
+  if (id === 'record')   { render(); setTimeout(() => { if (_mapInstance) _mapInstance.invalidateSize(); }, 80); }
   if (id === 'admin')    { renderAdminTab(); switchAdminSub('sites'); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
   if (id === 'profile')  { renderProfilePanel(); }
@@ -2761,13 +2802,17 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.${contrib
 }
 
 // ── Search form show/hide ─────────────────────────────────────────────
+function _isDesktop() { return window.innerWidth >= 900; }
+
 function _collapseSearchForm(from, to) {
   const form = document.getElementById('planSearchForm');
   const bar  = document.getElementById('planEditBar');
   const lbl  = document.getElementById('planEditBarLabel');
-  if (form) form.style.display = 'none';
-  if (bar)  bar.style.display  = 'block';
-  if (lbl)  lbl.textContent    = `${from} → ${to}`;
+  // On desktop the form stays visible in the sidebar — only collapse on mobile
+  if (!_isDesktop() && form) form.style.display = 'none';
+  // Edit bar is only useful on mobile (desktop always shows the form)
+  if (bar)  bar.style.display = _isDesktop() ? 'none' : 'block';
+  if (lbl)  lbl.textContent   = `${from} → ${to}`;
 }
 
 function openPlanSearch() {
@@ -4519,6 +4564,14 @@ function exportTrip() {
 
 // ── Start ─────────────────────────────────────────────────────────
 init();
+
+// Invalidate Leaflet map size on window resize (handles 2-col ↔ 1-col breakpoint crossing)
+window.addEventListener('resize', () => {
+  if (_mapInstance && document.getElementById('record')?.classList.contains('active')) {
+    clearTimeout(window._mapResizeTimer);
+    window._mapResizeTimer = setTimeout(() => _mapInstance.invalidateSize(), 150);
+  }
+});
 </script>
 </body>
 </html>
