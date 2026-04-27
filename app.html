@@ -129,6 +129,57 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   }
   @media(max-width:700px){.nav-links{display:none;}}
   @media(max-width:500px){.nav-utils .btn:not(.btn-primary){display:none;}}
+
+  /* ── Mobile bottom tab bar (true app feel) ── */
+  .mobile-tabbar{ display:none; }
+  @media(max-width:700px){
+    body{ padding-bottom:calc(60px + env(safe-area-inset-bottom, 0px)); }
+    nav{ padding:10px 14px; }
+    .nav-utils .nav-link{ display:none; }
+    .nav-utils select#currSel{ display:none; }
+    .container{ padding:1rem 0.9rem 1.25rem; }
+    /* Bottom tab bar */
+    .mobile-tabbar{
+      display:flex; position:fixed; left:0; right:0; bottom:0; z-index:950;
+      background:var(--bg); border-top:0.5px solid var(--border);
+      padding:6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+      box-shadow:0 -2px 12px rgba(20,30,20,0.08);
+    }
+    .mobile-tabbar button{
+      flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+      background:none; border:none; cursor:pointer; padding:6px 4px; min-height:46px;
+      color:var(--text3); font-family:var(--body); font-size:10px; letter-spacing:0.3px;
+      transition:color .15s;
+    }
+    .mobile-tabbar button i{ font-size:22px; line-height:1; }
+    .mobile-tabbar button.active{ color:var(--fern); }
+    .mobile-tabbar button:active{ transform:scale(0.94); }
+    /* Larger tap targets on mobile */
+    .btn{ min-height:40px; padding:9px 16px; }
+    .pill{ padding:7px 14px; }
+    /* Floating map → bottom sheet on mobile */
+    #plannerMapWrap{
+      right:0 !important; left:0 !important; bottom:60px !important;
+      width:100vw !important; max-width:100vw !important;
+      border-radius:14px 14px 0 0; border-left:none; border-right:none; border-bottom:none;
+      box-shadow:0 -8px 24px rgba(20,30,20,0.18);
+    }
+    #plannerMapWrap.pmw-pill{
+      left:auto !important; right:14px !important; bottom:calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+      width:auto !important; border-radius:99px;
+    }
+    #plannerMapWrap.pmw-expanded{
+      inset:0 !important; right:0 !important; bottom:0 !important;
+      border-radius:0; width:100vw !important;
+    }
+    #plannerMapWrap.pmw-expanded #plannerMap{ height:calc(100vh - 36px) !important; }
+    .pmw-resize{ display:none !important; } /* no resize handle on mobile */
+    /* Sticky-bottom CTAs / nav float should clear the tab bar */
+    body.pmw-expanded-on .mobile-tabbar{ display:none; }
+  }
+  @media(max-width:700px) and (display-mode:standalone){
+    body{ padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px)); }
+  }
   @keyframes fadeIn { from {opacity:0; transform: translateY(5px);} to {opacity:1; transform: translateY(0);} }
   .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.2rem;box-shadow: var(--shadow);}
   .form-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;}
@@ -2397,6 +2448,10 @@ function switchTab(id, el) {
   const btn = el || document.getElementById('navbtn_' + id);
   if (btn) btn.classList.add('active');
   document.getElementById(id).classList.add('active');
+  // Sync mobile bottom tab bar
+  document.querySelectorAll('.mobile-tabbar button').forEach(b => b.classList.remove('active'));
+  const mtab = document.getElementById('mtab_' + id);
+  if (mtab) mtab.classList.add('active');
   if (id === 'record')   { render(); }
   if (id === 'admin')    { renderAdminTab(); switchAdminSub('sites'); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
@@ -4717,5 +4772,13 @@ init();
     <div id="plannerMapMsg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;font-style:italic;z-index:500;pointer-events:none;background:var(--bg2)">Add stops to see them on the map</div>
   </div>
 </div>
+
+<!-- ── Mobile bottom tab bar (only visible on small screens) ── -->
+<nav class="mobile-tabbar" aria-label="Primary">
+  <button id="mtab_plan" class="active"   onclick="switchTab('plan',document.getElementById('navbtn_plan'))"><i class="ph ph-magnifying-glass"></i><span>Search</span></button>
+  <button id="mtab_record"  onclick="switchTab('record',document.getElementById('navbtn_record'))"><i class="ph ph-path"></i><span>Planner</span></button>
+  <button id="mtab_mytrips" onclick="switchTab('mytrips',document.getElementById('navbtn_mytrips'))"><i class="ph ph-suitcase-rolling"></i><span>Trips</span></button>
+  <button id="mtab_profile" onclick="switchTab('profile',document.getElementById('navbtn_profile'))"><i class="ph ph-user"></i><span>Profile</span></button>
+</nav>
 </body>
 </html>
