@@ -3153,7 +3153,7 @@ function render() {
 }
 
 function renderSegs() {
-  const el = document.getElementById('segs'); let h = '';
+  const el = document.getElementById('segs'); if (!el) return; let h = '';
   stops.forEach((s, i) => {
     const isF = i === 0, isL = i === stops.length - 1;
 
@@ -3356,7 +3356,7 @@ function renderStayBookingRecord(stopIdx) {
 }
 
 function renderTl() {
-  const el = document.getElementById('tl'); let h = '';
+  const el = document.getElementById('tl'); if (!el) return; let h = '';
   stops.forEach((s, i) => {
     const isF = i === 0, isL = i === stops.length - 1;
     const ds = s.date ? new Date(s.date + 'T00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' }) : '';
@@ -3390,24 +3390,32 @@ function renderBookingProgress() {
 }
 
 function updateSum() {
-  document.getElementById('sumStops').textContent = stops.length;
-  document.getElementById('sumCurr').textContent  = getCurr();
-  document.getElementById('budgCurr').textContent = getCurr();
+  const set = (id, val, html) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (html) el.innerHTML = val; else el.textContent = val;
+  };
+  set('sumStops', stops.length);
+  set('sumCurr',  getCurr());
+  set('budgCurr', getCurr());
   const tc = legs.reduce((a, l) => a + (+l.cost || 0), 0);
   const tk = legs.reduce((a, l) => a + (+l.km   || 0), 0);
-  document.getElementById('sumCost').innerHTML = Math.round(tc) + ' <span class="met-u">' + getCurr() + '</span>';
-  document.getElementById('sumDist').innerHTML = Math.round(tk) + ' <span class="met-u">km</span>';
+  set('sumCost', Math.round(tc) + ' <span class="met-u">' + getCurr() + '</span>', true);
+  set('sumDist', Math.round(tk) + ' <span class="met-u">km</span>', true);
   const dates = stops.map(s => s.date ? new Date(s.date + 'T00:00') : null).filter(Boolean);
   let days = '—';
   if (dates.length >= 2) { const d = (dates[dates.length - 1] - dates[0]) / 864e5; if (!isNaN(d)) days = Math.round(d); }
-  document.getElementById('sumDays').textContent = days;
-  const budg = +(document.getElementById('budgInp').value) || 0;
-  const bel  = document.getElementById('budgStatus');
-  if (budg > 0) {
-    const rem = budg - tc;
-    bel.style.color = rem >= 0 ? 'var(--text2)' : 'var(--danger-text)';
-    bel.textContent = rem >= 0 ? `${getCurrSym()}${Math.round(rem)} remaining` : `${getCurrSym()}${Math.round(Math.abs(rem))} over budget`;
-  } else bel.textContent = '';
+  set('sumDays', days);
+  const budgEl = document.getElementById('budgInp');
+  const bel    = document.getElementById('budgStatus');
+  if (budgEl && bel) {
+    const budg = +(budgEl.value) || 0;
+    if (budg > 0) {
+      const rem = budg - tc;
+      bel.style.color = rem >= 0 ? 'var(--text2)' : 'var(--danger-text)';
+      bel.textContent = rem >= 0 ? `${getCurrSym()}${Math.round(rem)} remaining` : `${getCurrSym()}${Math.round(Math.abs(rem))} over budget`;
+    } else bel.textContent = '';
+  }
   syncTripDateInputs();
 }
 
