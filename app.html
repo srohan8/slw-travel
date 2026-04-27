@@ -94,6 +94,18 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   }
   #plannerMapWrap .pmw-head button:hover{ color:var(--text); background:rgba(45,74,45,0.06); }
   #plannerMap{ height:280px; width:100%; position:relative; background:var(--bg2); }
+  /* Resize handle (top-left corner — widget is docked bottom-right) */
+  .pmw-resize{
+    position:absolute; top:0; left:0; width:16px; height:16px; z-index:10;
+    cursor:nwse-resize; touch-action:none;
+    background:linear-gradient(135deg, transparent 0 6px, var(--text3) 6px 7px, transparent 7px 9px, var(--text3) 9px 10px, transparent 10px);
+    opacity:0.55; transition:opacity .15s;
+  }
+  .pmw-resize:hover{ opacity:1; }
+  #plannerMapWrap.pmw-expanded .pmw-resize,
+  #plannerMapWrap.pmw-pill .pmw-resize{ display:none; }
+  body.pmw-resizing{ user-select:none; cursor:nwse-resize !important; }
+  body.pmw-resizing *{ pointer-events:none; }
   #plannerMapWrap.pmw-expanded{
     width:auto; inset:5vh 5vw; right:5vw; bottom:5vh;
     box-shadow:0 16px 48px rgba(20,30,20,0.35);
@@ -4436,6 +4448,82 @@ function setMapState(next) {
 // Back-compat shim — older onclicks may still call this
 function togglePlannerMap() { setMapState(_mapState === 'pill' ? 'docked' : 'pill'); }
 
+// ── Floating map: drag-to-resize (handle at top-left, anchored bottom-right) ──
+let _pmwResize = null;
+function pmwStartResize(ev) {
+  if (_mapState !== 'docked') return;
+  const wrap = document.getElementById('plannerMapWrap');
+  const mapEl = document.getElementById('plannerMap');
+  if (!wrap || !mapEl) return;
+  ev.preventDefault();
+  const t = ev.touches ? ev.touches[0] : ev;
+  const r = wrap.getBoundingClientRect();
+  _pmwResize = {
+    startX: t.clientX, startY: t.clientY,
+    startW: r.width,   startH: r.height,
+    headH:  wrap.querySelector('.pmw-head')?.offsetHeight || 36,
+  };
+  document.body.classList.add('pmw-resizing');
+  window.addEventListener('mousemove', pmwOnResize, { passive:false });
+  window.addEventListener('mouseup',   pmwEndResize);
+  window.addEventListener('touchmove', pmwOnResize, { passive:false });
+  window.addEventListener('touchend',  pmwEndResize);
+}
+function pmwOnResize(ev) {
+  if (!_pmwResize) return;
+  ev.preventDefault();
+  const t  = ev.touches ? ev.touches[0] : ev;
+  const dx = _pmwResize.startX - t.clientX;   // dragging left grows width
+  const dy = _pmwResize.startY - t.clientY;   // dragging up grows height
+  const w  = Math.min(window.innerWidth  * 0.9, Math.max(260, _pmwResize.startW + dx));
+  const h  = Math.min(window.innerHeight * 0.9, Math.max(200, _pmwResize.startH + dy));
+  const wrap  = document.getElementById('plannerMapWrap');
+  const mapEl = document.getElementById('plannerMap');
+  if (wrap)  { wrap.style.width  = w + 'px'; wrap.style.transition = 'none'; }
+  if (mapEl) {  mapEl.style.height = (h - _pmwResize.headH) + 'px'; }
+}
+function pmwEndResize() {
+  if (!_pmwResize) return;
+  _pmwResize = null;
+  document.body.classList.remove('pmw-resizing');
+  window.removeEventListener('mousemove', pmwOnResize);
+  window.removeEventListener('mouseup',   pmwEndResize);
+  window.removeEventListener('touchmove', pmwOnResize);
+  window.removeEventListener('touchend',  pmwEndResize);
+  const wrap  = document.getElementById('plannerMapWrap');
+  const mapEl = document.getElementById('plannerMap');
+  // Persist
+  try {
+    localStorage.setItem('slw_map_size', JSON.stringify({
+      w: wrap?.style.width || '',
+      h: mapEl?.style.height || '',
+    }));
+  } catch(e) {}
+  // Restore transition + nudge Leaflet
+  setTimeout(() => {
+    if (wrap) wrap.style.transition = '';
+    if (_mapInstance) { try { _mapInstance.invalidateSize(); } catch(e) {} }
+  }, 50);
+}
+// Restore saved size on load
+(function restoreMapSize(){
+  try {
+    const saved = JSON.parse(localStorage.getItem('slw_map_size') || 'null');
+    if (!saved) return;
+    const apply = () => {
+      const wrap  = document.getElementById('plannerMapWrap');
+      const mapEl = document.getElementById('plannerMap');
+      if (wrap  && saved.w) wrap.style.width   = saved.w;
+      if (mapEl && saved.h) mapEl.style.height = saved.h;
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', apply);
+    } else {
+      apply();
+    }
+  } catch(e) {}
+})();
+
 async function updatePlannerMap() {
   // Concurrency guard — if already running, mark a pending update and bail
   if (_mapUpdating) { _mapNeedsUpdate = true; return; }
@@ -4614,6 +4702,7 @@ init();
 <!-- ── Global floating map widget (used by Planner editor + Trip view) ── -->
 <div id="pmw-backdrop" onclick="setMapState('docked')"></div>
 <div id="plannerMapWrap">
+  <div class="pmw-resize" title="Drag to resize" onmousedown="pmwStartResize(event)" ontouchstart="pmwStartResize(event)"></div>
   <div class="pmw-head">
     <span class="pmw-title" style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)">
       <i class="ph ph-map-pin" style="font-size:11px;margin-right:3px"></i>Route map
