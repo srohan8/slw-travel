@@ -1293,6 +1293,11 @@ function switchTripSubTab(tab) {
 function openTripView(tripId) {
   viewingTripId = tripId;
   renderMyTripsPanel();
+  // Prefetch conflict zone enrichment for this trip's legs
+  const trip = (storage.get('trips')||[]).find(t => t.id === tripId);
+  if (trip?.legs) {
+    prefetchConflictZones(trip.legs.map(l => l.conflict?.country_code).filter(Boolean));
+  }
 }
 
 function closeTripView() {
@@ -1529,6 +1534,7 @@ function renderTripViewPanel(trip, el) {
       + (showAff  ? renderAccommodationLinks(to, accomSites, accomNote) : '')
     + '</div>';
 
+    const conflictHtml = renderConflictAlert(leg.conflict, true);
     return '<div style="margin:0 0 10px;border-left:3px solid ' + modeColor + ';padding-left:14px;position:relative">'
       + '<div class="leg-icon-dot" style="background:' + modeColor + '"><i class="ph ' + iconCls + '"></i></div>'
       + '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;gap:8px">'
@@ -1538,6 +1544,7 @@ function renderTripViewPanel(trip, el) {
           + '<button class="back-btn" style="font-size:10px;letter-spacing:1px" onclick="loadTrip(' + safeTrip + ',' + i + ')">Edit leg \u2192</button>'
         + '</div>'
       + '</div>'
+      + (conflictHtml ? conflictHtml : '')
       + '<div class="leg-grid">' + journeyHtml + transportHtml + stayHtml + '</div>'
       + renderContribBlockForKey(from + '\u2192' + to, i)
     + '</div>';
@@ -2681,7 +2688,7 @@ Available transport booking sites (${siteHint}; for shared taxi/carpooling also 
 - "leg_region" — world region (Southeast Asia/Central Asia/South Asia/East Asia/Europe/Middle East/Africa/North America/Latin America/Oceania)
 - "info_sites":["Name"] — if booking_sites is empty, add research/info sites for that region
 - "confidence":"verified"|"check"|"uncertain" — verified=well-documented regular service; check=route exists but verify before booking (seasonal/irregular/suspended); uncertain=AI is not confident this connection currently operates
-- "conflict":{"level":"war"|"conflict"|"tension"|"advisory","note":"one-line reason","country_code":"ISO-2 uppercase, e.g. MM"} — ONLY if leg passes through a flagged area; country_code must be the ISO-3166-1 alpha-2 code of the country the alert applies to; omit conflict entirely if safe
+- "conflict":{"level":"war"|"conflict"|"tension"|"advisory","note":"one-line reason","country_code":"ISO-2 uppercase, e.g. MM"} — MANDATORY if leg passes through ANY of these countries (use the specified level): SD=war (Sudan civil war), YE=war (Yemen civil war), MM=war (Myanmar junta conflict), AF=war (Afghanistan), SY=war (Syria), SS=conflict (South Sudan), LY=conflict (Libya), IQ=conflict (Iraq, certain regions), SO=conflict (Somalia), CF=conflict (Central African Republic), ML=conflict (Mali, northern regions), NI=tension (Nicaragua), BY=tension (Belarus), RU=conflict (Russia, active war), UA=conflict (Ukraine, eastern regions), IR=tension (Iran sanctions/unrest), KP=advisory (North Korea). Also flag any other leg you assess as passing through an active conflict or travel-advisory area. country_code must be the ISO-3166-1 alpha-2 code of the PRIMARY risk country; omit conflict only if the leg is genuinely safe
 Available accommodation platforms (${accomHint}). For each stop include:
 - "accom_sites":["Name"] — platforms that work for that city/region (e.g. Agoda for SE/East Asia; Hostelworld for hostel-rich cities; omit platforms irrelevant to that destination; use empty array if only guesthouses/no platform)
 - "accom_note":"one practical sentence" — neighbourhood to stay, price level, style (e.g. "Stay in Thamel, hostels from $8" or "Guesthouses only in old town, no major platforms")
