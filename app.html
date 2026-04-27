@@ -1221,7 +1221,7 @@ async function init() {
     currentUser = session?.user || null;
     await refreshAdminFlag();
     updateNavAuth();
-    if (currentUser) syncTripsFromCloud();
+    if (currentUser) await syncTripsFromCloud();
   });
 
   const params = new URLSearchParams(window.location.search);
@@ -1257,6 +1257,9 @@ async function init() {
 }
 
 // ── Cloud sync helpers ────────────────────────────────────────────
+// Bidirectional: pulls cloud trips → local, AND pushes local-only trips
+// (or local trips newer than cloud) up to Supabase. This is what lets a
+// user's data survive logout/login and cross-device sign-in.
 async function syncTripsFromCloud() {
   if (!currentUser) return;
   try {
@@ -1266,15 +1269,62 @@ async function syncTripsFromCloud() {
       .eq('user_id', currentUser.id)
       .order('updated_at', { ascending: false });
     if (error) throw error;
-    if (data && data.length) {
-      // Merge: cloud wins for same-id trips
-      const local = storage.get('trips');
-      const cloudIds = new Set(data.map(t => t.id));
-      const merged = [
-        ...data.map(t => ({ ...t.data, id: t.id, updated_at: t.updated_at })),
-        ...local.filter(t => !cloudIds.has(t.id))
-      ];
-      storage.set('trips', merged);
+
+    const cloud = data || [];
+    const local = storage.get('trips') || [];
+    const cloudById = new Map(cloud.map(t => [t.id, t]));
+    const localById = new Map(local.map(t => [t.id, t]));
+
+    // 1) Pull: build merged list — cloud wins when both exist and cloud is newer,
+    //    otherwise keep local copy (preserves unsynced edits).
+    const allIds = new Set([...cloudById.keys(), ...localById.keys()]);
+    const merged = [];
+    for (const id of allIds) {
+      const c = cloudById.get(id);
+      const l = localById.get(id);
+      if (c && l) {
+        const cAt = new Date(c.updated_at || 0).getTime();
+        const lAt = new Date(l.updated_at || 0).getTime();
+        merged.push(lAt > cAt
+          ? l
+          : { ...c.data, id: c.id, updated_at: c.updated_at });
+      } else if (c) {
+        merged.push({ ...c.data, id: c.id, updated_at: c.updated_at });
+      } else if (l) {
+        merged.push(l);
+      }
+    }
+    storage.set('trips', merged);
+
+    // 2) Push: any local trip that's missing from cloud, or newer than cloud,
+    //    gets upserted. This rescues trips whose original upsert silently
+    //    failed (offline, RLS hiccup, page closed before the request finished).
+    const toPush = merged.filter(t => {
+      const c = cloudById.get(t.id);
+      if (!c) return true;
+      const cAt = new Date(c.updated_at || 0).getTime();
+      const tAt = new Date(t.updated_at || 0).getTime();
+      return tAt > cAt;
+    });
+    if (toPush.length) {
+      const rows = toPush.map(t => ({
+        id:         t.id,
+        user_id:    currentUser.id,
+        title:      t.title || 'Untitled trip',
+        data:       t,
+        updated_at: t.updated_at || new Date().toISOString()
+      }));
+      try {
+        const { error: upErr } = await sb.from('trips').upsert(rows, { onConflict: 'id' });
+        if (upErr) console.warn('Backfill push failed:', upErr.message);
+      } catch (e) { console.warn('Backfill push exception:', e.message); }
+    }
+
+    // 3) Re-render so the UI reflects the merged state.
+    try { renderSavedTrips(); } catch(e) {}
+    try { updateActiveTripBar(); } catch(e) {}
+    if (typeof viewingTripId !== 'undefined' && viewingTripId) {
+      try { updatePlannerMap(); } catch(e) {}
     }
   } catch(e) { console.warn('syncTripsFromCloud:', e.message); }
 }
