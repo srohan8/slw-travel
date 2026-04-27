@@ -1675,6 +1675,12 @@ function startNewTrip() {
 }
 
 function loadTrip(trip, openLegIndex = -1) {
+  // If a string ID was passed (legacy), resolve to full trip object
+  if (typeof trip === 'string') {
+    const found = (storage.get('trips') || []).find(t => t.id === trip);
+    if (!found) return;
+    trip = found;
+  }
   tripDefaultMode = trip.defaultMode || (trip.legs?.[0]?.mode) || 'bus';
   stops = trip.stops || [{name:'',date:'',days:0},{name:'',date:'',days:0}];
   legs  = trip.legs  || [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
@@ -1697,6 +1703,8 @@ function loadTrip(trip, openLegIndex = -1) {
   switchTab('record', document.getElementById('navbtn_record'));
   updateActiveTripBar();
   render();
+  // Ensure map updates after tab transition completes (belt-and-suspenders)
+  setTimeout(() => { if (!_mapUpdating) updatePlannerMap(); }, 900);
 }
 
 function returnToTripView() {
@@ -4231,7 +4239,8 @@ async function renderProfilePanel() {
                         : bookedCount > 0 ? 'In progress' : 'Draft';
             const stateColor = state === 'Planned' ? 'var(--gold)'
                              : state === 'In progress' ? 'var(--fern)' : 'var(--text3)';
-            return `<div style="padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);cursor:pointer" onclick="loadTrip('${t.id}')">
+            const safeT = JSON.stringify(t).replace(/"/g,'&quot;');
+            return `<div style="padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);cursor:pointer" onclick="loadTrip(${safeT})">
               <div style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:${stateColor};margin-bottom:4px">${state}</div>
               <div style="font-family:var(--serif);font-size:16px;color:var(--text);letter-spacing:-0.2px">${t.title||'Untitled'}</div>
               <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px">${legCount} legs${bookedCount?' · '+bookedCount+' booked':''}</div>
@@ -4303,6 +4312,8 @@ let _geoLastReq   = 0;
 let _mapInstance  = null;
 let _mapVisible   = true;
 let _mapUpdateTimer = null;
+let _mapUpdating  = false;  // concurrency guard
+let _mapNeedsUpdate = false; // queued update while one is running
 let _mapMarkers   = [];
 let _mapLines     = [];
 
@@ -4350,11 +4361,12 @@ function togglePlannerMap() {
 }
 
 async function updatePlannerMap() {
+  // Concurrency guard — if already running, mark a pending update and bail
+  if (_mapUpdating) { _mapNeedsUpdate = true; return; }
+
   const mapEl = document.getElementById('plannerMap');
   const msgEl = document.getElementById('plannerMapMsg');
   if (!mapEl || !_mapVisible) return;
-  // Only update when Planner tab is active
-  if (!document.getElementById('record')?.classList.contains('active')) return;
 
   const namedStops = stops.filter(s => s.name?.trim());
   if (namedStops.length < 2) {
@@ -4365,25 +4377,46 @@ async function updatePlannerMap() {
 
   // Lazy-init Leaflet map
   if (!_mapInstance) {
-    if (typeof L === 'undefined') return; // not loaded yet
-    _mapInstance = L.map(mapEl, { zoomControl: true, scrollWheelZoom: false, attributionControl: true });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(_mapInstance);
+    if (typeof L === 'undefined') {
+      // Leaflet not loaded yet — retry in 800ms
+      if (msgEl) { msgEl.style.display = 'flex'; msgEl.textContent = 'Loading map…'; }
+      setTimeout(updatePlannerMap, 800);
+      return;
+    }
+    try {
+      _mapInstance = L.map(mapEl, { zoomControl: true, scrollWheelZoom: false, attributionControl: true });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(_mapInstance);
+    } catch(e) {
+      console.warn('Leaflet init error:', e.message);
+      return;
+    }
   } else {
-    _mapInstance.invalidateSize();
+    try { _mapInstance.invalidateSize(); } catch(e) {}
   }
 
   // Clear previous markers + lines
-  _mapMarkers.forEach(m => m.remove()); _mapMarkers = [];
-  _mapLines.forEach(l => l.remove());   _mapLines   = [];
+  try { _mapMarkers.forEach(m => m.remove()); } catch(e) {} _mapMarkers = [];
+  try { _mapLines.forEach(l => l.remove()); } catch(e) {}   _mapLines   = [];
 
   // Geocode all stops in parallel (cache makes repeats instant)
   if (msgEl) { msgEl.style.display = 'flex'; msgEl.textContent = 'Locating stops…'; }
-  const geoResults = await Promise.all(stops.map(s => geocodeStop(s.name)));
+  _mapUpdating = true;
+  _mapNeedsUpdate = false;
+  let geoResults;
+  try {
+    geoResults = await Promise.all(stops.map(s => geocodeStop(s.name)));
+  } catch(e) {
+    geoResults = stops.map(() => null);
+  }
+  _mapUpdating = false;
   const coords = geoResults.map(geo => geo ? [geo.lat, geo.lon] : null);
   if (msgEl) msgEl.style.display = 'none';
+
+  // If another update was queued while we were geocoding, run it now
+  if (_mapNeedsUpdate) { schedulePlannerMapUpdate(); return; }
 
   // Draw leg lines (colored by transport mode)
   for (let i = 0; i < stops.length - 1; i++) {
@@ -4416,9 +4449,9 @@ async function updatePlannerMap() {
   // Fit map to show all plotted stops
   const valid = coords.filter(Boolean);
   if (valid.length >= 2) {
-    _mapInstance.fitBounds(L.latLngBounds(valid), { padding: [28, 28], maxZoom: 10 });
+    try { _mapInstance.fitBounds(L.latLngBounds(valid), { padding: [28, 28], maxZoom: 10 }); } catch(e) {}
   } else if (valid.length === 1) {
-    _mapInstance.setView(valid[0], 7);
+    try { _mapInstance.setView(valid[0], 7); } catch(e) {}
   }
 }
 
