@@ -13,6 +13,8 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -599,6 +601,17 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
       </div>
       <span id="tripDateHint" style="font-size:11px;color:var(--text3);font-family:var(--mono)"></span>
     </div>
+    <!-- ── Route map ─────────────────────────────────────────────── -->
+    <div id="plannerMapWrap" style="margin:0 0 16px;border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--bg2);border-bottom:0.5px solid var(--border)">
+        <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)"><i class="ph ph-map-pin" style="font-size:11px;margin-right:3px"></i>Route map</span>
+        <button id="plannerMapToggle" onclick="togglePlannerMap()" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 0">Hide</button>
+      </div>
+      <div id="plannerMap" style="height:260px;width:100%;position:relative;background:var(--bg2)">
+        <div id="plannerMapMsg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;font-style:italic;z-index:500;pointer-events:none;background:var(--bg2)">Add stops to see them on the map</div>
+      </div>
+    </div>
+
     <div class="sec-lbl">Route</div>
     <div class="segs" id="segs"></div>
     <div class="add-row"><button class="add-b" onclick="addStop()">+ Add stop</button></div>
@@ -3032,6 +3045,7 @@ function render() {
   if (currentTripId || stops.some(s => s.name)) _tripDirty = true;
   renderSegs(); renderTl(); updateSum(); renderBookingProgress(); renderBudgetBar();
   renderTripDefaultModePicker();
+  schedulePlannerMapUpdate();
   if (lastSuggestion) renderPlanSuggestion(lastSuggestion, lastSuggestion._from_cache || false);
 }
 
@@ -3059,7 +3073,7 @@ function renderSegs() {
         <div class="stop-card">
           <div class="stop-city-row">
             <input class="sinp-lg" placeholder="City / place" value="${s.name}"
-              oninput="stops[${i}].name=this.value;renderTl();updateSum()"/>
+              oninput="stops[${i}].name=this.value;renderTl();updateSum();schedulePlannerMapUpdate()"/>
             ${stops.length > 2 ? `<button class="rm" onclick="removeStop(${i})">×</button>` : ''}
           </div>
           <div class="stop-date-row">
@@ -4185,6 +4199,142 @@ function setMode(i, m)  {
   legs[i].mode = m;
   editingLegModes.delete(i);
   render();
+}
+
+// ── Planner map (Leaflet + OpenStreetMap / Nominatim) ─────────────────────
+const GEO_CACHE_KEY = 'slw_geo_cache';
+let _geoCache     = {};
+let _geoLastReq   = 0;
+let _mapInstance  = null;
+let _mapVisible   = true;
+let _mapUpdateTimer = null;
+let _mapMarkers   = [];
+let _mapLines     = [];
+
+(function _initGeoCache() {
+  try { _geoCache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY) || '{}'); } catch(e) {}
+})();
+
+async function geocodeStop(name) {
+  if (!name?.trim()) return null;
+  const key = name.trim().toLowerCase();
+  const cached = _geoCache[key];
+  if (cached && (Date.now() - cached.ts) < 30 * 24 * 60 * 60 * 1000) return cached;
+  // Respect Nominatim's 1 req/sec policy
+  const wait = 1100 - (Date.now() - _geoLastReq);
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  _geoLastReq = Date.now();
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1&accept-language=en`,
+      { headers: { 'User-Agent': 'SLW-Travel-Planner/1.0' } }
+    );
+    const data = await res.json();
+    if (data?.[0]) {
+      const result = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), ts: Date.now() };
+      _geoCache[key] = result;
+      try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch(e) {}
+      return result;
+    }
+  } catch(e) { console.warn('Geocode failed:', name, e.message); }
+  return null;
+}
+
+function schedulePlannerMapUpdate() {
+  clearTimeout(_mapUpdateTimer);
+  _mapUpdateTimer = setTimeout(updatePlannerMap, 700);
+}
+
+function togglePlannerMap() {
+  _mapVisible = !_mapVisible;
+  const wrap = document.getElementById('plannerMapWrap');
+  const btn  = document.getElementById('plannerMapToggle');
+  if (wrap) wrap.style.display = _mapVisible ? '' : 'none';
+  if (btn)  btn.textContent = _mapVisible ? 'Hide' : 'Show map';
+  if (_mapVisible) {
+    setTimeout(() => {
+      if (_mapInstance) _mapInstance.invalidateSize();
+      updatePlannerMap();
+    }, 60);
+  }
+}
+
+async function updatePlannerMap() {
+  const mapEl = document.getElementById('plannerMap');
+  const msgEl = document.getElementById('plannerMapMsg');
+  if (!mapEl || !_mapVisible) return;
+  // Only update when Planner tab is active
+  if (!document.getElementById('record')?.classList.contains('active')) return;
+
+  const namedStops = stops.filter(s => s.name?.trim());
+  if (namedStops.length < 2) {
+    if (msgEl) { msgEl.style.display = 'flex'; msgEl.textContent = namedStops.length < 1 ? 'Add stops to see them on the map' : 'Add at least 2 stops to see the route'; }
+    return;
+  }
+  if (msgEl) msgEl.style.display = 'none';
+
+  // Lazy-init Leaflet map
+  if (!_mapInstance) {
+    if (typeof L === 'undefined') return; // not loaded yet
+    _mapInstance = L.map(mapEl, { zoomControl: true, scrollWheelZoom: false, attributionControl: true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(_mapInstance);
+  } else {
+    _mapInstance.invalidateSize();
+  }
+
+  // Clear previous markers + lines
+  _mapMarkers.forEach(m => m.remove()); _mapMarkers = [];
+  _mapLines.forEach(l => l.remove());   _mapLines   = [];
+
+  // Geocode every stop (null for unnamed / failed)
+  const coords = [];
+  for (let i = 0; i < stops.length; i++) {
+    if (stops[i].name?.trim()) {
+      const geo = await geocodeStop(stops[i].name);
+      coords.push(geo ? [geo.lat, geo.lon] : null);
+    } else {
+      coords.push(null);
+    }
+  }
+
+  // Draw leg lines (colored by transport mode)
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (!coords[i] || !coords[i + 1]) continue;
+    const mode  = legs[i]?.mode || 'bus';
+    const color = MODE_COLORS[mode] || '#8BAF7A';
+    const dash  = mode === 'flight' ? '8 10' : (mode === 'walk' || mode === 'cycle' || mode === 'motorbike') ? '4 6' : null;
+    const line  = L.polyline([coords[i], coords[i + 1]], { color, weight: 3, opacity: 0.82, dashArray: dash })
+      .addTo(_mapInstance);
+    _mapLines.push(line);
+  }
+
+  // Draw numbered stop markers
+  for (let i = 0; i < stops.length; i++) {
+    if (!coords[i]) continue;
+    const isFirst = i === 0;
+    const isLast  = i === stops.length - 1;
+    const bg = isFirst ? '#4A7C4A' : isLast ? '#C4622D' : '#2D4A2D';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:22px;height:22px;border-radius:50%;background:${bg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'DM Sans',sans-serif;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.28)">${i + 1}</div>`,
+      iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -14],
+    });
+    const s = stops[i];
+    const popup = `<div style="font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.4"><strong>${s.name}</strong>${s.days ? `<br><span style="color:#4A6040;font-size:11px">${s.days} day${s.days > 1 ? 's' : ''}</span>` : ''}</div>`;
+    const marker = L.marker(coords[i], { icon }).bindPopup(popup).addTo(_mapInstance);
+    _mapMarkers.push(marker);
+  }
+
+  // Fit map to show all plotted stops
+  const valid = coords.filter(Boolean);
+  if (valid.length >= 2) {
+    _mapInstance.fitBounds(L.latLngBounds(valid), { padding: [28, 28], maxZoom: 10 });
+  } else if (valid.length === 1) {
+    _mapInstance.setView(valid[0], 7);
+  }
 }
 
 function setTripDefaultMode(m) {
