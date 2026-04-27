@@ -1388,6 +1388,19 @@ function renderSavedContent(trips) {
     const cost  = t.legs ? getCurrSym() + Math.round(t.legs.reduce((a,l)=>a+(+l.cost||0),0)) : '\u2014';
     const km    = t.legs ? Math.round(t.legs.reduce((a,l)=>a+(+l.km||0),0)) : 0;
     const st    = stateOf(t);
+    // Check for conflict on any leg (structured field or static city lookup)
+    const conflictLegs = (t.legs||[]).filter((leg, i) => {
+      if (leg.conflict) return true;
+      const from = t.stops[i]?.name; const to = t.stops[i+1]?.name;
+      return !!(inferConflictFromCities(from, to));
+    });
+    const hasWar      = conflictLegs.some((leg, i) => {
+      const c = leg.conflict || inferConflictFromCities(t.stops[(t.legs||[]).indexOf(leg)]?.name, t.stops[(t.legs||[]).indexOf(leg)+1]?.name);
+      return c?.level === 'war';
+    });
+    const conflictBadge = conflictLegs.length
+      ? '<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-family:var(--mono);letter-spacing:0.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;margin-left:4px;background:' + (hasWar ? 'var(--danger-bg)' : 'var(--warn-bg)') + ';color:' + (hasWar ? 'var(--danger-text)' : 'var(--warn-text)') + '"><i class="ph ph-warning" style="font-size:10px"></i>' + (hasWar ? 'Do not travel' : 'Travel advisory') + '</span>'
+      : '';
     return '<div class="trip-card" onclick="openTripView(\'' + t.id + '\')">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
         + '<div style="min-width:0">'
@@ -1396,13 +1409,14 @@ function renderSavedContent(trips) {
         + '</div>'
         + '<button class="pin-btn pinned" onclick="togglePin(\'' + t.id + '\',event)" title="Unsave"><i class="ph-fill ph-heart"></i></button>'
       + '</div>'
-      + '<div style="display:flex;gap:14px;margin-top:14px;font-size:12px;color:var(--text2);font-family:var(--mono)">'
+      + (conflictBadge ? '<div style="margin-top:8px">' + conflictBadge + '</div>' : '')
+      + '<div style="display:flex;gap:14px;margin-top:10px;font-size:12px;color:var(--text2);font-family:var(--mono)">'
         + '<span>' + sc + ' stop' + (sc!==1?'s':'') + '</span>'
         + (km ? '<span>' + km + ' km</span>' : '')
         + '<span>' + cost + '</span>'
       + '</div>'
       + (t.collection ? '<div style="margin-top:8px"><span class="coll-badge">' + t.collection + '</span></div>' : '')
-      + '<div style="margin-top:12px">'
+      + '<div style="margin-top:10px">'
         + '<span class="status-pill" style="border:0.5px solid ' + st.color + ';color:' + st.color + ';background:' + st.color + '14">' + st.label + '</span>'
       + '</div>'
     + '</div>';
@@ -1534,7 +1548,8 @@ function renderTripViewPanel(trip, el) {
       + (showAff  ? renderAccommodationLinks(to, accomSites, accomNote) : '')
     + '</div>';
 
-    const conflictHtml = renderConflictAlert(leg.conflict, true);
+    const conflictData = leg.conflict || inferConflictFromCities(from, to);
+    const conflictHtml = renderConflictAlert(conflictData, true);
     return '<div style="margin:0 0 10px;border-left:3px solid ' + modeColor + ';padding-left:14px;position:relative">'
       + '<div class="leg-icon-dot" style="background:' + modeColor + '"><i class="ph ' + iconCls + '"></i></div>'
       + '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;gap:8px">'
@@ -2692,8 +2707,9 @@ Available transport booking sites (${siteHint}; for shared taxi/carpooling also 
 Available accommodation platforms (${accomHint}). For each stop include:
 - "accom_sites":["Name"] — platforms that work for that city/region (e.g. Agoda for SE/East Asia; Hostelworld for hostel-rich cities; omit platforms irrelevant to that destination; use empty array if only guesthouses/no platform)
 - "accom_note":"one practical sentence" — neighbourhood to stay, price level, style (e.g. "Stay in Thamel, hostels from $8" or "Guesthouses only in old town, no major platforms")
+Stop names MUST include the country — format: "City, Country" (e.g. "Khartoum, Sudan", "Sana'a, Yemen", "Bangkok, Thailand"). This helps with geocoding and makes the route unambiguous.
 Respond with ONLY a single raw JSON object — no markdown fences, no preamble, no commentary. Start with { and end with }. Schema:
-{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City","days":2,"notes":"sightseeing tip","accom_sites":["Booking.com","Hostelworld"],"accom_note":"Stay near the old town, budget options from $12"}],"legs":[{"from":"A","to":"B","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"],"info_sites":[],"confidence":"verified","conflict":{"level":"tension","note":"border area caution"}}],"total_days":14,"total_cost_usd":200}
+{"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City, Country","days":2,"notes":"sightseeing tip","accom_sites":["Booking.com","Hostelworld"],"accom_note":"Stay near the old town, budget options from $12"}],"legs":[{"from":"A, Country","to":"B, Country","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"],"info_sites":[],"confidence":"verified","conflict":{"level":"tension","note":"border area caution","country_code":"MM"}}],"total_days":14,"total_cost_usd":200}
 Include ALL stops and ALL legs for the complete route. Do not truncate.${contribContext}`);
     lastSuggestion = data;
 
@@ -2766,6 +2782,74 @@ const CONF = {
   check:     { label:'Check before booking', cls:'conf-warn', icon:'ph-warning-circle',  tip:'Route exists but may be seasonal, irregular, or recently suspended. Verify current schedules before booking.' },
   uncertain: { label:'Uncertain',            cls:'conf-bad',  icon:'ph-question',        tip:"AI isn't confident this connection currently operates. Research carefully before relying on it." },
 };
+// Static city→conflict lookup — fallback for trips saved before AI prompt fix
+const STATIC_CONFLICT_CITIES = {
+  // Sudan
+  'khartoum':{'country_code':'SD','level':'war','note':'Sudan civil war — do not travel'},
+  'omdurman':{'country_code':'SD','level':'war','note':'Sudan civil war — do not travel'},
+  'wadi halfa':{'country_code':'SD','level':'war','note':'Sudan civil war — do not travel'},
+  'port sudan':{'country_code':'SD','level':'war','note':'Sudan civil war — do not travel'},
+  'kassala':{'country_code':'SD','level':'war','note':'Sudan civil war — do not travel'},
+  'atbara':{'country_code':'SD','level':'war','note':'Sudan civil war — do not travel'},
+  // Yemen
+  "sana'a":{'country_code':'YE','level':'war','note':'Yemen civil war — do not travel'},
+  'sanaa':{'country_code':'YE','level':'war','note':'Yemen civil war — do not travel'},
+  'aden':{'country_code':'YE','level':'war','note':'Yemen civil war — do not travel'},
+  'hodeidah':{'country_code':'YE','level':'war','note':'Yemen civil war — do not travel'},
+  'taiz':{'country_code':'YE','level':'war','note':'Yemen civil war — do not travel'},
+  'mukalla':{'country_code':'YE','level':'war','note':'Yemen civil war — do not travel'},
+  // Afghanistan
+  'kabul':{'country_code':'AF','level':'war','note':'Afghanistan — do not travel'},
+  'kandahar':{'country_code':'AF','level':'war','note':'Afghanistan — do not travel'},
+  'herat':{'country_code':'AF','level':'war','note':'Afghanistan — do not travel'},
+  'mazar-i-sharif':{'country_code':'AF','level':'war','note':'Afghanistan — do not travel'},
+  'jalalabad':{'country_code':'AF','level':'war','note':'Afghanistan — do not travel'},
+  // Myanmar
+  'yangon':{'country_code':'MM','level':'war','note':'Myanmar military conflict — high risk'},
+  'mandalay':{'country_code':'MM','level':'war','note':'Myanmar military conflict — high risk'},
+  'naypyidaw':{'country_code':'MM','level':'war','note':'Myanmar military conflict — high risk'},
+  // Syria
+  'damascus':{'country_code':'SY','level':'conflict','note':'Syria — high risk area'},
+  'aleppo':{'country_code':'SY','level':'conflict','note':'Syria — high risk area'},
+  'homs':{'country_code':'SY','level':'conflict','note':'Syria — high risk area'},
+  // Libya
+  'tripoli':{'country_code':'LY','level':'conflict','note':'Libya — high risk, active fighting'},
+  'benghazi':{'country_code':'LY','level':'conflict','note':'Libya — high risk area'},
+  // South Sudan
+  'juba':{'country_code':'SS','level':'conflict','note':'South Sudan — high risk area'},
+  // Somalia
+  'mogadishu':{'country_code':'SO','level':'conflict','note':'Somalia — do not travel'},
+  'kismayo':{'country_code':'SO','level':'conflict','note':'Somalia — do not travel'},
+  // Iraq
+  'baghdad':{'country_code':'IQ','level':'conflict','note':'Iraq — high risk, check current advisories'},
+  'mosul':{'country_code':'IQ','level':'conflict','note':'Iraq — high risk area'},
+  'fallujah':{'country_code':'IQ','level':'conflict','note':'Iraq — high risk area'},
+  'kirkuk':{'country_code':'IQ','level':'conflict','note':'Iraq — high risk area'},
+  // Ukraine conflict zones
+  'donetsk':{'country_code':'UA','level':'war','note':'Ukraine — active war zone'},
+  'luhansk':{'country_code':'UA','level':'war','note':'Ukraine — active war zone'},
+  'mariupol':{'country_code':'UA','level':'war','note':'Ukraine — active war zone'},
+  'kherson':{'country_code':'UA','level':'conflict','note':'Ukraine — conflict zone'},
+  'zaporizhzhia':{'country_code':'UA','level':'conflict','note':'Ukraine — conflict zone'},
+  'bakhmut':{'country_code':'UA','level':'war','note':'Ukraine — active war zone'},
+  // Mali
+  'timbuktu':{'country_code':'ML','level':'conflict','note':'Mali northern region — do not travel'},
+  'gao':{'country_code':'ML','level':'conflict','note':'Mali — active conflict zone'},
+  'kidal':{'country_code':'ML','level':'conflict','note':'Mali — do not travel'},
+  // Central African Republic
+  'bangui':{'country_code':'CF','level':'conflict','note':'Central African Republic — high risk'},
+  // North Korea
+  'pyongyang':{'country_code':'KP','level':'advisory','note':'North Korea — all travel strongly discouraged'},
+};
+
+function inferConflictFromCities(fromCity, toCity) {
+  const match = (name) => {
+    if (!name) return null;
+    return STATIC_CONFLICT_CITIES[name.trim().toLowerCase()] || null;
+  };
+  return match(fromCity) || match(toCity) || null;
+}
+
 const CONFLICT_LEVELS = {
   war:      { label:'Do not travel',    cls:'conflict-war',      icon:'ph-prohibit' },
   conflict: { label:'High risk area',   cls:'conflict-high',     icon:'ph-warning' },
@@ -4227,14 +4311,9 @@ async function geocodeStop(name) {
   const key = name.trim().toLowerCase();
   const cached = _geoCache[key];
   if (cached && (Date.now() - cached.ts) < 30 * 24 * 60 * 60 * 1000) return cached;
-  // Respect Nominatim's 1 req/sec policy
-  const wait = 1100 - (Date.now() - _geoLastReq);
-  if (wait > 0) await new Promise(r => setTimeout(r, wait));
-  _geoLastReq = Date.now();
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1&accept-language=en`,
-      { headers: { 'User-Agent': 'SLW-Travel-Planner/1.0' } }
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1&accept-language=en`
     );
     const data = await res.json();
     if (data?.[0]) {
@@ -4296,16 +4375,11 @@ async function updatePlannerMap() {
   _mapMarkers.forEach(m => m.remove()); _mapMarkers = [];
   _mapLines.forEach(l => l.remove());   _mapLines   = [];
 
-  // Geocode every stop (null for unnamed / failed)
-  const coords = [];
-  for (let i = 0; i < stops.length; i++) {
-    if (stops[i].name?.trim()) {
-      const geo = await geocodeStop(stops[i].name);
-      coords.push(geo ? [geo.lat, geo.lon] : null);
-    } else {
-      coords.push(null);
-    }
-  }
+  // Geocode all stops in parallel (cache makes repeats instant)
+  if (msgEl) { msgEl.style.display = 'flex'; msgEl.textContent = 'Locating stops…'; }
+  const geoResults = await Promise.all(stops.map(s => geocodeStop(s.name)));
+  const coords = geoResults.map(geo => geo ? [geo.lat, geo.lon] : null);
+  if (msgEl) msgEl.style.display = 'none';
 
   // Draw leg lines (colored by transport mode)
   for (let i = 0; i < stops.length - 1; i++) {
