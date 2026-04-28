@@ -177,7 +177,7 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
     #record{ padding:0.75rem 0.9rem 1.5rem; }
     /* Bottom tab bar */
     .mobile-tabbar{
-      display:flex; position:fixed; left:0; right:0; bottom:0; z-index:950;
+      display:flex; position:fixed; top:auto; height:auto; left:0; right:0; bottom:0; z-index:950;
       background:var(--bg); border-top:0.5px solid var(--border);
       padding:6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
       box-shadow:0 -2px 12px rgba(20,30,20,0.08);
