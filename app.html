@@ -1238,9 +1238,16 @@ async function init() {
   renderSavedTrips();
   updateActiveTripBar();
 
-  // Deep-link to Admin via #admin (from the admin.html redirect stub).
-  if (window.location.hash === '#admin' && isAdmin) {
-    switchTab('admin', document.getElementById('navbtn_admin'));
+  // Restore last-active tab from URL hash (preferred, shareable) or localStorage.
+  const validTabs = ['plan', 'record', 'mytrips', 'profile', 'admin'];
+  let savedTab = (window.location.hash || '').replace(/^#/, '');
+  if (!validTabs.includes(savedTab)) {
+    try { savedTab = localStorage.getItem('slw_active_tab') || ''; } catch (e) { savedTab = ''; }
+  }
+  if (savedTab && validTabs.includes(savedTab) && savedTab !== 'plan') {
+    if (savedTab !== 'admin' || isAdmin) {
+      switchTab(savedTab, document.getElementById('navbtn_' + savedTab));
+    }
   }
 
   // ── Auto-fill + auto-trigger from URL params (?from=X&to=Y&via=Z) ──
@@ -2530,6 +2537,15 @@ function switchTab(id, el) {
       renderPlanLanding();
     }
   }
+
+  // Persist current tab so refreshes / new tabs land back here
+  try { localStorage.setItem('slw_active_tab', id); } catch (e) {}
+  try {
+    const targetHash = '#' + id;
+    if (location.hash !== targetHash) {
+      history.replaceState(null, '', location.pathname + location.search + targetHash);
+    }
+  } catch (e) {}
 }
 
 // ── Admin gating ──────────────────────────────────────────────────
@@ -4790,6 +4806,15 @@ function exportTrip() {
   a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/plain' }));
   a.download = (title || 'trip') + '.txt'; a.click();
 }
+
+// ── Tab back/forward navigation ───────────────────────────────────
+window.addEventListener('hashchange', () => {
+  const id = (location.hash || '').replace(/^#/, '');
+  if (['plan','record','mytrips','profile','admin'].includes(id)) {
+    if (id === 'admin' && !isAdmin) return;
+    switchTab(id, document.getElementById('navbtn_' + id));
+  }
+});
 
 // ── Map resize handler ────────────────────────────────────────────
 window.addEventListener('resize', () => {
