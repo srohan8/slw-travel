@@ -4675,17 +4675,18 @@ async function geocodeStop(name) {
   const key = name.trim().toLowerCase();
   const cached = _geoCache[key];
   if (cached && (Date.now() - cached.ts) < 30 * 24 * 60 * 60 * 1000) return cached;
-  // Nominatim policy: max 1 req/sec. Throttle to avoid CORS-less rate-limit responses.
-  const wait = Math.max(0, 1100 - (Date.now() - _geoLastReq));
-  if (wait > 0) await new Promise(r => setTimeout(r, wait));
-  _geoLastReq = Date.now();
+  // Use Photon (komoot) — same OSM/Nominatim data, CORS-enabled for all origins,
+  // no strict rate limit.  Nominatim enforces 1 req/sec and omits CORS headers on
+  // 429s, which breaks direct browser fetches from GitHub Pages.
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1&accept-language=en`
+      `https://photon.komoot.io/api/?q=${encodeURIComponent(name)}&limit=1&lang=en`
     );
     const data = await res.json();
-    if (data?.[0]) {
-      const result = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), ts: Date.now() };
+    const feat = data?.features?.[0];
+    if (feat) {
+      const [lon, lat] = feat.geometry.coordinates;
+      const result = { lat, lon, ts: Date.now() };
       _geoCache[key] = result;
       try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch(e) {}
       return result;
@@ -4855,15 +4856,13 @@ async function updatePlannerMap() {
   try { _mapMarkers.forEach(m => m.remove()); } catch(e) {} _mapMarkers = [];
   try { _mapLines.forEach(l => l.remove()); } catch(e) {}   _mapLines   = [];
 
-  // Geocode stops sequentially — Nominatim allows 1 req/sec; parallel calls cause rate-limit
-  // responses that lack CORS headers, breaking the fetch. Cached stops return instantly anyway.
+  // Geocode all stops in parallel — Photon (komoot) has no strict rate limit and is CORS-enabled.
   if (msgEl) { msgEl.style.display = 'flex'; msgEl.textContent = 'Locating stops…'; }
   _mapUpdating = true;
   _mapNeedsUpdate = false;
   let geoResults;
   try {
-    geoResults = [];
-    for (const s of srcStops) geoResults.push(await geocodeStop(s.name));
+    geoResults = await Promise.all(srcStops.map(s => geocodeStop(s.name)));
   } catch(e) {
     geoResults = srcStops.map(() => null);
   }
