@@ -1484,6 +1484,7 @@ async function saveCurrentTrip() {
   // Cloud sync fires in background — UI is never held hostage by it
   // Guard: only push if id is a valid UUID (legacy 'trip-XXXXXX' ids will fail the DB column type)
   const _isUUID = id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  console.log(`[slw] 💾 Save: id=${tripData.id} | user=${currentUser?.id || 'NOT LOGGED IN'} | isUUID=${_isUUID(tripData.id)}`);
   if (currentUser && _isUUID(tripData.id)) {
     sb.from('trips').upsert({
       id:         tripData.id,
@@ -1492,7 +1493,10 @@ async function saveCurrentTrip() {
       data:       tripData,
       updated_at: tripData.updated_at
     }, { onConflict: 'id' })
-    .then(({ error }) => { if (error) console.warn('Cloud sync failed:', error.message); })
+    .then(({ error }) => {
+      if (error) console.warn('[slw] ☁️ Cloud sync failed:', error.message, error);
+      else console.log(`[slw] ☁️ Cloud sync OK: ${tripData.title}`);
+    })
     .catch(e => console.warn('Cloud sync failed:', e.message));
   }
 }
