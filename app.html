@@ -7,7 +7,10 @@
 <script src="https://app.minnal.io/track/7c00ae17-46ed-4f8a-9276-84b122dd2ff5.js"></script>
 <script>
 !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ai Ri init Vi Yi Rr zi Gi Zi capture calculateEventProperties en register register_once register_for_session unregister unregister_for_session sn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync an identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty rn Ki createPersonProfile setInternalOrTestUser nn $i hn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Xi debug Mr tn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only',disable_session_recording:true,autocapture:false});}
+function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'always',disable_session_recording:false,autocapture:true});}
+function phIdentify(user){try{if(window.posthog&&user)posthog.identify(user.id,{email:user.email});}catch(e){}}
+function phReset(){try{if(window.posthog)posthog.reset();}catch(e){}}
+function phCapture(event,props){try{if(window.posthog)posthog.capture(event,props||{});}catch(e){}}
 (function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
 // ── Tab pre-restore: avoid flash of Search panel before init() restores saved tab ──
 (function(){
@@ -1298,16 +1301,19 @@ async function init() {
   currentUser = session?.user || null;
   await refreshAdminFlag();
   updateNavAuth();
+  phIdentify(currentUser);
 
   // Sync trips from Supabase → localStorage if signed in
   if (currentUser) await syncTripsFromCloud();
 
   // Keep auth in sync across tabs / token refresh
   sb.auth.onAuthStateChange(async (_event, session) => {
+    const prev = currentUser?.id;
     currentUser = session?.user || null;
     await refreshAdminFlag();
     updateNavAuth();
-    if (currentUser) await syncTripsFromCloud();
+    if (currentUser) { if (currentUser.id !== prev) phIdentify(currentUser); await syncTripsFromCloud(); }
+    else phReset();
   });
 
   const params = new URLSearchParams(window.location.search);
@@ -1508,6 +1514,7 @@ function updateNavAuth() {
 }
 
 async function signOut() {
+    phReset();
     await sb.auth.signOut();
     window.location.href = 'index.html';
 }
@@ -2954,6 +2961,7 @@ async function planRoute() {
   const cacheKey = buildCacheKey(from, to, via, budget, pace, prefModes);
   const hit = getCachedRoute(cacheKey) || findSubsetRoute(from, to, pace, prefModes);
   if (hit) {
+    console.log(`[slw] ⚡ Cache hit: ${from} → ${to}`);
     lastSuggestion = hit;
     const resEl = document.getElementById('planResult');
     resEl.style.display = 'block';
@@ -3005,6 +3013,8 @@ async function planRoute() {
       ? `\n\nPrevious verified traveller notes — treat these as ground-truth and incorporate where relevant:\n${contribLines.join('\n')}`
       : '';
 
+    console.log(`[slw] 🤖 AI route search: ${from} → ${to}${via ? ' via ' + via : ''} | pace: ${pace} | modes: ${prefModes.join(', ')||'any'}${budget ? ' | budget: ' + budget : ''}`);
+    phCapture('route_searched', { from, to, via: via||null, pace, modes: prefModes, budget: budget||null });
     const data = await callAI(`You are an expert overland travel planner. Suggest a practical overland route from ${from} to ${to}${via ? ' via ' + via : ''}.
 ${paceGuide} Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}${hitchNote ? '\n' + hitchNote : ''}
 Available transport booking sites (${siteHint}; for shared taxi/carpooling also consider BlaBlaCar in Europe/LatAm/South Asia). For each leg include:
@@ -3021,6 +3031,7 @@ Respond with ONLY a single raw JSON object — no markdown fences, no preamble, 
 {"summary":"2-3 sentence overview","warnings":["max 2 visa/border warnings"],"stops":[{"name":"City, Country","days":2,"notes":"sightseeing tip","accom_sites":["Booking.com","Hostelworld"],"accom_note":"Stay near the old town, budget options from $12"}],"legs":[{"from":"A, Country","to":"B, Country","mode":"bus","hours":6,"cost_usd":12,"km":280,"notes":"tip","leg_region":"Southeast Asia","booking_sites":["Busbud"],"info_sites":[],"confidence":"verified","conflict":{"level":"tension","note":"border area caution","country_code":"MM"}}],"total_days":14,"total_cost_usd":200}
 Include ALL stops and ALL legs for the complete route. Do not truncate.${contribContext}`);
     lastSuggestion = data;
+    console.log(`[slw] ✅ AI response: ${data.stops?.length||0} stops, ${data.legs?.length||0} legs, ~${data.total_days}d, ~$${data.total_cost_usd}`, data);
 
     // Auto-register AI-suggested booking sites; accumulate regions onto existing ones
     {
