@@ -3072,11 +3072,14 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.${contrib
 
     setCachedRoute(cacheKey, data, from, to);
     updateCacheClearBtn();
+    console.log('[slw] 🗺️ prefetching conflict zones...');
     await prefetchConflictZones((data.legs || []).map(l => l.conflict?.country_code));
+    console.log('[slw] 🎨 calling renderPlanSuggestion...');
     renderPlanSuggestion(data, false);
+    console.log('[slw] ✅ renderPlanSuggestion done');
     updateUsageBars();
   } catch (e) {
-    console.error('planRoute error:', e);
+    console.error('[slw] ❌ planRoute error:', e);
     res.innerHTML = `<span style="color:var(--danger-text)">Could not get a suggestion — ${e.message || 'unknown error'}. Try again.</span>`;
   }
   btn.disabled = false; btn.textContent = 'Suggest route ↗';
@@ -3241,6 +3244,7 @@ function renderConflictAlert(conflict, withLinks = true) {
 }
 
 function renderPlanSuggestion(d, fromCache = false) {
+  console.log('[slw] 🎨 renderPlanSuggestion start — stops:', d?.stops?.length, 'legs:', d?.legs?.length);
   document.getElementById('adoptBtn').style.display = 'none';
   const showAff = appSettings.affiliate_links !== false;
 
