@@ -520,6 +520,9 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   .export-pill{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:border-color .15s,color .15s;font-family:var(--mono);}
   .export-pill:hover{border-color:var(--fern);color:var(--fern);}
   .export-pill i{font-size:13px;}
+  .import-gpx-btn{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:99px;border:0.5px dashed var(--border2);color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;}
+  .import-gpx-btn:hover{border-color:var(--fern);color:var(--fern);}
+  .import-gpx-btn i{font-size:13px;}
   /* Print-only rendering for Export PDF */
   body:not(.printing) #printRoot{display:none;}
   #printRoot{padding:0;color:#222;background:#fff;font-family:var(--body);}
@@ -740,6 +743,11 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
       <div style="display:flex;align-items:center;gap:8px;padding:6px 0 2px;flex-wrap:wrap">
         <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0">Default transport</span>
         <div id="tripDefaultModePicker" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        <span style="flex:1"></span>
+        <label class="import-gpx-btn pmw-noprint" title="Import stops from a .gpx file">
+          <i class="ph ph-upload-simple"></i> Import GPX
+          <input type="file" id="gpxFileInput" accept=".gpx,application/gpx+xml" style="display:none" onchange="importGPXFile(this)">
+        </label>
       </div>
     </div>
     <div id="bookingProgress"></div>
@@ -4990,6 +4998,107 @@ ${rtepts}
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ── GPX Import ────────────────────────────────────────────────────
+function importGPXFile(input) {
+  const file = input.files?.[0];
+  input.value = ''; // allow re-selecting the same file
+  if (!file) return;
+  const hasData = stops.some(s => s.name) || currentTripId;
+  if (hasData && !confirm('Replace current trip data with the imported GPX?')) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try { _parseAndApplyGPX(e.target.result, file.name); }
+    catch (err) { alert('Could not parse GPX file: ' + err.message); }
+  };
+  reader.readAsText(file);
+}
+
+function _parseAndApplyGPX(xmlText, filename) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'application/xml');
+  if (doc.querySelector('parsererror')) throw new Error('Invalid XML');
+
+  // Prefer named wpt → rtept → trkpt; within each set prefer named points
+  let pts = [...doc.querySelectorAll('wpt')];
+  if (!pts.length) pts = [...doc.querySelectorAll('rtept')];
+  if (!pts.length) pts = [...doc.querySelectorAll('trkpt')];
+  if (!pts.length) { alert('No waypoints found in this GPX file.'); return; }
+
+  // Use named-only subset if any have names; else use all
+  const named = pts.filter(p => p.querySelector('name')?.textContent?.trim());
+  const points = named.length ? named : pts;
+
+  // Haversine distance in km between two {lat,lon} objects
+  const haversineKm = (a, b) => {
+    const R = 6371, rad = d => d * Math.PI / 180;
+    const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
+    const x = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  };
+
+  const newStops = [], coords = [], now = Date.now();
+  points.forEach((p, idx) => {
+    const lat = parseFloat(p.getAttribute('lat'));
+    const lon = parseFloat(p.getAttribute('lon'));
+    const rawName = p.querySelector('name')?.textContent?.trim() || '';
+    const desc    = p.querySelector('desc')?.textContent?.trim() || '';
+    const daysMatch = desc.match(/^(\d+)\s*day/i);
+    const days = daysMatch ? parseInt(daysMatch[1]) : 0;
+    const name = rawName || ('Stop ' + (idx + 1));
+    newStops.push({ name, date: '', days, accomSites: [], accomNote: '' });
+    coords.push({ lat, lon });
+    // Seed geo-cache so GPX re-export needs no Nominatim calls
+    if (!isNaN(lat) && !isNaN(lon)) {
+      const key = name.trim().toLowerCase();
+      _geoCache[key] = { lat, lon, ts: now };
+    }
+  });
+  try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch (e) {}
+
+  // Build legs with haversine km between consecutive stops
+  const newLegs = [];
+  for (let i = 0; i < newStops.length - 1; i++) {
+    const km = (!isNaN(coords[i].lat) && !isNaN(coords[i + 1].lat))
+      ? Math.round(haversineKm(coords[i], coords[i + 1]))
+      : 0;
+    newLegs.push({
+      mode: tripDefaultMode || 'bus', cost: 0, km,
+      hours: 0, notes: '',
+      booked: false, bookingRef: '', bookingUrl: '',
+      bookingSites: [], infoSites: [], legRegion: '', confidence: 'uncertain', conflict: null
+    });
+  }
+
+  // Apply to global editor state
+  stops = newStops;
+  legs  = newLegs;
+  tripSummary  = '';
+  tripWarnings = [];
+  currentTripId = null;
+  editingLegModes.clear();
+  expandedLegs.clear();
+  _tripDirty = true;
+
+  // Auto-title: GPX metadata → track/route name → filename
+  const metaName = doc.querySelector('metadata > name')?.textContent?.trim()
+                || doc.querySelector('trk > name')?.textContent?.trim()
+                || doc.querySelector('rte > name')?.textContent?.trim()
+                || '';
+  document.getElementById('tripTitle').value =
+    metaName || filename.replace(/\.gpx$/i, '').replace(/[_-]+/g, ' ');
+
+  switchTab('record', document.getElementById('navbtn_record'));
+  updateActiveTripBar();
+  render();
+
+  // Brief status confirmation
+  const st = document.getElementById('saveStatus');
+  if (st) {
+    st.textContent = `Imported ${newStops.length} stop${newStops.length !== 1 ? 's' : ''} from GPX`;
+    setTimeout(() => { if (st.textContent.startsWith('Imported')) st.textContent = ''; }, 3000);
+  }
 }
 
 // ── Tab back/forward navigation ───────────────────────────────────
