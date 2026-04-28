@@ -722,6 +722,8 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
           oninput="document.getElementById('tripTitle').value=this.value"/>
       </div>
       <div class="trip-header-right">
+        <button id="editorExportPDF" class="export-pill pmw-noprint" onclick="exportTripPDF(currentTripId)" title="Open print dialog (Save as PDF)" style="display:none"><i class="ph ph-file-pdf"></i> PDF</button>
+        <button id="editorExportGPX" class="export-pill pmw-noprint" onclick="exportTripGPX(currentTripId)" title="Download GPX waypoints + route" style="display:none"><i class="ph ph-map-trifold"></i> GPX</button>
         <button class="btn" style="font-size:11px" onclick="goToMyTrips()">My Trips</button>
         <button class="btn" style="font-size:11px" onclick="startNewTrip()">+ New</button>
       </div>
@@ -1867,13 +1869,19 @@ function updateActiveTripBar() {
   const bar  = document.getElementById('activeTripBar');
   const name = document.getElementById('activeTripName');
   if (!bar || !name) return;
+  const pdfBtn = document.getElementById('editorExportPDF');
+  const gpxBtn = document.getElementById('editorExportGPX');
   if (currentTripId) {
     const trip = storage.get('trips').find(t => t.id === currentTripId);
     const title = trip?.title || document.getElementById('tripTitle').value || 'Untitled trip';
     name.value = title;
     bar.style.display = 'flex';
+    if (pdfBtn) pdfBtn.style.display = '';
+    if (gpxBtn) gpxBtn.style.display = '';
   } else {
     bar.style.display = 'none';
+    if (pdfBtn) pdfBtn.style.display = 'none';
+    if (gpxBtn) gpxBtn.style.display = 'none';
   }
 }
 
