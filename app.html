@@ -3178,8 +3178,8 @@ function renderPlanSuggestion(d, fromCache = false) {
     const noRegion = d.legs?.some(l => !l.leg_region);
     if (noRegion && !_autoRefreshPending) {
       _autoRefreshPending = true;
-      // Silent background refresh — no badge for non-admins
-      if (isAdmin) h += `<span class="cache-badge" style="color:var(--text3)">⟳ Updating route data…</span><br>`;
+      // Genuine user-facing status — shown to everyone
+      h += `<span class="cache-badge" style="color:var(--text3)">⟳ Updating route data…</span><br>`;
       setTimeout(() => { clearRouteCache(); planRoute(); }, 0);
     } else if (isAdmin) {
       // "From cache" is dev/diagnostic info — only show to admins
