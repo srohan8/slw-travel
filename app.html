@@ -4620,6 +4620,7 @@ async function saveProfileSettings() {
     _applyPrefCurrency(currency);
     if (status) { status.textContent = 'Saved ✓'; setTimeout(()=>{ if(status) status.textContent=''; }, 2500); }
     updateNavAuth();
+    renderProfilePanel(); // refresh hero card + initials with updated name
   } catch(e) {
     if (status) status.textContent = 'Error: ' + e.message;
   }
