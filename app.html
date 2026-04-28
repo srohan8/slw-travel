@@ -1644,7 +1644,7 @@ function renderSavedContent(trips) {
   const cards = pinned.map(t => {
     const sc    = t.stops?.length || 0;
     const route = sc >= 2 ? (t.stops[0].name||'?') + ' \u2192 ' + (t.stops[sc-1].name||'?') : t.title||'Untitled';
-    const cost  = t.legs ? getCurrSym() + Math.round(t.legs.reduce((a,l)=>a+(+l.cost||0),0)) : '\u2014';
+    const cost  = t.legs ? _currSymFor(t.currency||'USD') + Math.round(t.legs.reduce((a,l)=>a+(+l.cost||0),0)) : '\u2014';
     const km    = t.legs ? Math.round(t.legs.reduce((a,l)=>a+(+l.km||0),0)) : 0;
     const st    = stateOf(t);
     // Check for conflict on any leg (structured field or static city lookup)
@@ -1771,7 +1771,7 @@ function renderTripViewPanel(trip, el) {
         + '<span style="text-transform:capitalize;font-weight:500;color:' + modeColor + '">' + (leg.mode||'') + '</span>'
         + (leg.hours ? '<span style="color:var(--text3)">\u00b7 ' + leg.hours + 'h</span>' : '')
       + '</div>'
-      + (leg.cost ? '<div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">' + getCurrSym() + leg.cost + '</div>' : '')
+      + (leg.cost ? '<div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">' + _currSymFor(trip.currency||'USD') + leg.cost + '</div>' : '')
       + '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + (leg.km ? leg.km + ' km' : '') + (leg.notes ? (leg.km ? ' \u00b7 ' : '') + leg.notes : '') + '</div>'
       + (dateStr ? '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px">Depart ' + dateStr + '</div>' : '')
       + (leg.booked ? '<div style="margin-top:6px;display:inline-flex;align-items:center;gap:4px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--fern);font-family:var(--mono);background:rgba(74,124,74,0.08);padding:3px 8px;border-radius:4px"><i class="ph ph-check-circle"></i> Booked</div>' : '')
@@ -1854,7 +1854,7 @@ function renderTripViewPanel(trip, el) {
   <div class="sumbar" style="margin-bottom:1.5rem">
     <div class="met"><div class="met-lbl">Stops</div><div class="met-val">${sc}</div></div>
     <div class="met"><div class="met-lbl">Days</div><div class="met-val">${totalDays||'\u2014'}</div></div>
-    <div class="met"><div class="met-lbl">Cost</div><div class="met-val">${getCurrSym()}${Math.round(totalCost)} <span class="met-u">${trip.currency||'USD'}</span></div></div>
+    <div class="met"><div class="met-lbl">Cost</div><div class="met-val">${_currSymFor(trip.currency||'USD')}${Math.round(totalCost)} <span class="met-u">${trip.currency||'USD'}</span></div></div>
     <div class="met"><div class="met-lbl">Distance</div><div class="met-val">${Math.round(totalKm)} <span class="met-u">km</span></div></div>
   </div>
 
@@ -4287,7 +4287,7 @@ function renderTripListContent(trips) {
     const route    = sc >= 2 ? (t.stops[0].name||'?') + ' \u2192 ' + (t.stops[sc-1].name||'?') : t.title||'Untitled';
     const sub      = [t.title, t.legs?.length ? t.legs.length + ' legs' : ''].filter(Boolean).join(' \u00b7 ');
     const dates    = t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : '\u2014';
-    const cost     = t.legs ? getCurrSym() + Math.round(t.legs.reduce((a,l)=>a+(+l.cost||0),0)) : '\u2014';
+    const cost     = t.legs ? _currSymFor(t.currency||'USD') + Math.round(t.legs.reduce((a,l)=>a+(+l.cost||0),0)) : '\u2014';
     const dist     = t.legs ? Math.round(t.legs.reduce((a,l)=>a+(+l.km||0),0)) + ' km' : '\u2014';
     const st       = stateOf(t);
     const isAct    = t.id === currentTripId;
