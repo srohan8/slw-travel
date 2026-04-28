@@ -8,9 +8,9 @@
 <script>
 !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ai Ri init Vi Yi Rr zi Gi Zi capture calculateEventProperties en register register_once register_for_session unregister unregister_for_session sn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync an identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty rn Ki createPersonProfile setInternalOrTestUser nn $i hn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Xi debug Mr tn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
 function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'always',disable_session_recording:false,autocapture:true});}
-function phIdentify(user){try{if(window.posthog&&user){posthog.identify(user.id,{email:user.email});console.log('[slw] 📊 PostHog identify:',user.id,user.email);}else{console.log('[slw] 📊 PostHog identify skipped — no user or posthog not loaded');}}catch(e){console.warn('[slw] 📊 PostHog identify error:',e);}}
-function phReset(){try{if(window.posthog){posthog.reset();console.log('[slw] 📊 PostHog reset');}else{console.log('[slw] 📊 PostHog reset skipped — not loaded');}}catch(e){console.warn('[slw] 📊 PostHog reset error:',e);}}
-function phCapture(event,props){try{if(window.posthog){posthog.capture(event,props||{});console.log('[slw] 📊 PostHog capture:',event,props||{});}else{console.log('[slw] 📊 PostHog capture skipped (not loaded):',event);}}catch(e){console.warn('[slw] 📊 PostHog capture error:',e);}}
+function phIdentify(user){try{if(window.posthog&&typeof posthog.identify==='function'&&user){posthog.identify(user.id,{email:user.email});console.log('[slw] 📊 PostHog identify:',user.id,user.email);}else{console.log('[slw] 📊 PostHog identify skipped — not ready or blocked');}}catch(e){console.warn('[slw] 📊 PostHog identify error:',e);}}
+function phReset(){try{if(window.posthog&&typeof posthog.reset==='function'){posthog.reset();console.log('[slw] 📊 PostHog reset');}else{console.log('[slw] 📊 PostHog reset skipped — not ready or blocked');}}catch(e){console.warn('[slw] 📊 PostHog reset error:',e);}}
+function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture==='function'){posthog.capture(event,props||{});console.log('[slw] 📊 PostHog capture:',event,props||{});}else{console.log('[slw] 📊 PostHog capture skipped (blocked/not loaded):',event);}}catch(e){console.warn('[slw] 📊 PostHog capture error:',e);}}
 (function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
 // ── Tab pre-restore: avoid flash of Search panel before init() restores saved tab ──
 (function(){
@@ -4675,6 +4675,10 @@ async function geocodeStop(name) {
   const key = name.trim().toLowerCase();
   const cached = _geoCache[key];
   if (cached && (Date.now() - cached.ts) < 30 * 24 * 60 * 60 * 1000) return cached;
+  // Nominatim policy: max 1 req/sec. Throttle to avoid CORS-less rate-limit responses.
+  const wait = Math.max(0, 1100 - (Date.now() - _geoLastReq));
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  _geoLastReq = Date.now();
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1&accept-language=en`
@@ -4851,13 +4855,15 @@ async function updatePlannerMap() {
   try { _mapMarkers.forEach(m => m.remove()); } catch(e) {} _mapMarkers = [];
   try { _mapLines.forEach(l => l.remove()); } catch(e) {}   _mapLines   = [];
 
-  // Geocode all stops in parallel (cache makes repeats instant)
+  // Geocode stops sequentially — Nominatim allows 1 req/sec; parallel calls cause rate-limit
+  // responses that lack CORS headers, breaking the fetch. Cached stops return instantly anyway.
   if (msgEl) { msgEl.style.display = 'flex'; msgEl.textContent = 'Locating stops…'; }
   _mapUpdating = true;
   _mapNeedsUpdate = false;
   let geoResults;
   try {
-    geoResults = await Promise.all(srcStops.map(s => geocodeStop(s.name)));
+    geoResults = [];
+    for (const s of srcStops) geoResults.push(await geocodeStop(s.name));
   } catch(e) {
     geoResults = srcStops.map(() => null);
   }
