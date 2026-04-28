@@ -1,15 +1,18 @@
 {
-  "name": "slw-travel-refresh-advisories",
+  "name": "slw-travel-proxy",
   "version": "1.0.0",
   "type": "module",
   "private": true,
-  "description": "Daily job: refresh conflict_zones from FCDO + Government of Canada.",
-  "main": "refresh-advisories.js",
+  "description": "AI proxy server + daily conflict-zone refresh cron for slw.travel",
+  "main": "server.js",
   "scripts": {
+    "start":   "node server.js",
     "refresh": "node refresh-advisories.js"
   },
   "engines": { "node": ">=18" },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
+    "@supabase/supabase-js": "^2.39.0",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
   }
 }
