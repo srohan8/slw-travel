@@ -623,7 +623,7 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
     <button class="nav-link"        id="navbtn_profile" onclick="switchTab('profile',this)">Profile</button>
     <button class="nav-link"        id="navbtn_admin"   onclick="switchTab('admin',this)">Admin</button>
     <div class="nav-vsep"></div>
-    <select id="currSel" onchange="render()">
+    <select id="currSel" onchange="render()" style="display:none" aria-hidden="true">
       <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option><option>AUD</option><option>CAD</option><option>JPY</option><option>THB</option>
     </select>
     <span class="user-badge" id="userBadge" style="cursor:pointer" onclick="currentUser?switchTab('profile',document.getElementById('navbtn_profile')):window.location.href='auth.html'">Guest</span>
@@ -1263,8 +1263,25 @@ let currentUser    = null;
 let isAdmin        = false;
 
 // ── Init ──────────────────────────────────────────────────────────
+// ── Global currency preference ────────────────────────────────────
+// Drives getCurr() / getCurrSym() / convertCost() everywhere in the app.
+// Source of truth: profiles.preferred_currency (Supabase) + slw_pref_currency (localStorage fallback).
+const PREF_CURRENCY_KEY = 'slw_pref_currency';
+function _applyPrefCurrency(code) {
+  if (!code) return;
+  const sel = document.getElementById('currSel');
+  if (sel) sel.value = code;
+  try { localStorage.setItem(PREF_CURRENCY_KEY, code); } catch (e) {}
+  try { render(); } catch (e) {}
+}
+
 async function init() {
   appSettings = { login_required: false, freemium_enabled: false, affiliate_links: true };
+  // Apply saved currency preference before anything renders
+  try {
+    const saved = localStorage.getItem(PREF_CURRENCY_KEY);
+    if (saved) { const s = document.getElementById('currSel'); if (s) s.value = saved; }
+  } catch (e) {}
 
   // Load admin_settings from Supabase (public-read) so platform toggles
   // configured in the Admin panel actually take effect.
@@ -4339,7 +4356,11 @@ async function renderProfilePanel() {
   if (user) {
     try {
       const { data } = await sb.from('profiles').select('*').eq('id', user.id).single();
-      if (data) profile = data;
+      if (data) {
+        profile = data;
+        // Apply saved currency preference from profile
+        if (data.preferred_currency) _applyPrefCurrency(data.preferred_currency);
+      }
     } catch { /* ignore */ }
   }
   const displayName = profile.display_name || email.split('@')[0] || 'Traveller';
@@ -4561,6 +4582,12 @@ async function renderProfilePanel() {
         <label style="font-size:11px;color:var(--text3);font-family:var(--mono);display:block;margin-bottom:5px">Email</label>
         <input class="inp" value="${email}" disabled style="width:100%;opacity:0.55;cursor:not-allowed"/>
       </div>
+      <div>
+        <label style="font-size:11px;color:var(--text3);font-family:var(--mono);display:block;margin-bottom:5px">Currency</label>
+        <select id="profCurrency" class="inp" style="width:100%" onchange="_applyPrefCurrency(this.value)">
+          ${['USD','EUR','GBP','INR','AUD','CAD','JPY','THB'].map(c=>`<option value="${c}"${getCurr()===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="btn btn-primary" onclick="saveProfileSettings()">Save changes</button>
@@ -4581,12 +4608,16 @@ async function renderProfilePanel() {
 async function saveProfileSettings() {
   const name     = document.getElementById('profName')?.value.trim();
   const location = document.getElementById('profLocation')?.value.trim();
+  const currency = document.getElementById('profCurrency')?.value || getCurr();
   const status   = document.getElementById('profSaveStatus');
   if (!currentUser) return;
   if (status) status.textContent = 'Saving…';
   try {
-    const { error } = await sb.from('profiles').update({ display_name: name, location }).eq('id', currentUser.id);
+    const { error } = await sb.from('profiles')
+      .update({ display_name: name, location, preferred_currency: currency })
+      .eq('id', currentUser.id);
     if (error) throw error;
+    _applyPrefCurrency(currency);
     if (status) { status.textContent = 'Saved ✓'; setTimeout(()=>{ if(status) status.textContent=''; }, 2500); }
     updateNavAuth();
   } catch(e) {
