@@ -1172,8 +1172,9 @@ const contribStorage = {
         .order('votes', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) {
-        // Remove from fetched so it can retry once the DB schema is corrected
-        this._fetched.delete(key);
+        // Keep key in _fetched — do NOT delete it, or every render retries and floods Supabase with 400s.
+        // The contributions feature will silently show nothing until the DB schema is fixed & page is reloaded.
+        console.warn('[slw] contributions fetch error (will not retry this session):', key, error.message);
         return;
       }
       if (!data?.length) return;
