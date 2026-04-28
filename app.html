@@ -517,6 +517,26 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   .mytrips-row-title{font-family:var(--serif);font-size:17px;color:var(--text);}
   .mytrips-row-sub{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono);}
   .status-pill{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:99px;text-align:center;white-space:nowrap;display:inline-block;}
+  .export-pill{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:border-color .15s,color .15s;font-family:var(--mono);}
+  .export-pill:hover{border-color:var(--fern);color:var(--fern);}
+  .export-pill i{font-size:13px;}
+  .import-gpx-btn{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:99px;border:0.5px dashed var(--border2);color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;}
+  .import-gpx-btn:hover{border-color:var(--fern);color:var(--fern);}
+  .import-gpx-btn i{font-size:13px;}
+  /* Print-only rendering for Export PDF */
+  body:not(.printing) #printRoot{display:none;}
+  #printRoot{padding:0;color:#222;background:#fff;font-family:var(--body);}
+  #printRoot h1{font-family:var(--serif);font-weight:300;font-size:28px;margin-bottom:6px;color:#1d2c1d;}
+  #printRoot h3{font-family:var(--serif);font-weight:400;font-size:16px;margin:18px 0 6px;color:#1d2c1d;}
+  #printRoot .pr-meta{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#666;margin-bottom:8px;}
+  #printRoot table{width:100%;border-collapse:collapse;margin-top:10px;}
+  #printRoot th,#printRoot td{text-align:left;padding:6px 8px;border-bottom:0.5px solid #ddd;font-size:12px;color:#222;}
+  #printRoot th{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#666;font-weight:500;}
+  @media print{
+    body.printing > *:not(#printRoot){display:none !important;}
+    body.printing #printRoot{display:block !important;padding:0;}
+    @page{margin:18mm 14mm;}
+  }
   .mytrips-yearly{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:1.5rem;}
   @media(max-width:640px){
     .mytrips-table-hdr{grid-template-columns:1fr 90px;}
@@ -705,6 +725,8 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
           oninput="document.getElementById('tripTitle').value=this.value"/>
       </div>
       <div class="trip-header-right">
+        <button id="editorExportPDF" class="export-pill pmw-noprint" onclick="exportTripPDF(currentTripId)" title="Open print dialog (Save as PDF)" style="display:none"><i class="ph ph-file-pdf"></i> PDF</button>
+        <button id="editorExportGPX" class="export-pill pmw-noprint" onclick="exportTripGPX(currentTripId)" title="Download GPX waypoints + route" style="display:none"><i class="ph ph-map-trifold"></i> GPX</button>
         <button class="btn" style="font-size:11px" onclick="goToMyTrips()">My Trips</button>
         <button class="btn" style="font-size:11px" onclick="startNewTrip()">+ New</button>
       </div>
@@ -721,6 +743,11 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
       <div style="display:flex;align-items:center;gap:8px;padding:6px 0 2px;flex-wrap:wrap">
         <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0">Default transport</span>
         <div id="tripDefaultModePicker" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        <span style="flex:1"></span>
+        <label class="import-gpx-btn pmw-noprint" title="Import stops from a .gpx file">
+          <i class="ph ph-upload-simple"></i> Import GPX
+          <input type="file" id="gpxFileInput" accept=".gpx,application/gpx+xml" style="display:none" onchange="importGPXFile(this)">
+        </label>
       </div>
     </div>
     <div id="bookingProgress"></div>
@@ -1211,6 +1238,8 @@ let expandedLegs   = new Set(); // indices of legs currently showing detail pane
 let pace  = 'slow';
 let prefModes = ['bus','train'];
 let lastSuggestion = null;
+let tripSummary  = '';   // AI-generated overview text — persisted with the trip
+let tripWarnings = [];   // AI-generated warning badges — persisted with the trip
 let currentTripId     = null;
 let currentTripSubTab = 'mytrips'; // mytrips | saved | collections
 let viewingTripId     = null;      // null = list view, string = viewing this trip
@@ -1396,6 +1425,8 @@ async function saveCurrentTrip() {
     notes:    document.getElementById('tripNotes').value,
     budget:   document.getElementById('budgInp').value,
     currency: document.getElementById('currSel').value,
+    summary:  tripSummary  || '',
+    warnings: tripWarnings || [],
     updated_at: new Date().toISOString()
   };
 
@@ -1787,6 +1818,9 @@ function renderTripViewPanel(trip, el) {
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center">
     <span class="status-pill" style="border:0.5px solid ${st.color};color:${st.color};background:${st.color}14">${st.label}</span>
     ${trip.collection ? '<span class="coll-badge">' + trip.collection + '</span>' : ''}
+    <span style="flex:1"></span>
+    <button class="export-pill" onclick="exportTripPDF('${trip.id}')" title="Open print dialog (Save as PDF)"><i class="ph ph-file-pdf"></i> Export PDF</button>
+    <button class="export-pill" onclick="exportTripGPX('${trip.id}')" title="Download GPX waypoints + route"><i class="ph ph-map-trifold"></i> GPX</button>
   </div>
 
   <div class="sumbar" style="margin-bottom:1.5rem">
@@ -1795,6 +1829,9 @@ function renderTripViewPanel(trip, el) {
     <div class="met"><div class="met-lbl">Cost</div><div class="met-val">${getCurrSym()}${Math.round(totalCost)} <span class="met-u">${trip.currency||'USD'}</span></div></div>
     <div class="met"><div class="met-lbl">Distance</div><div class="met-val">${Math.round(totalKm)} <span class="met-u">km</span></div></div>
   </div>
+
+  ${trip.summary ? `<p style="color:var(--text);font-size:14px;line-height:1.65;margin-bottom:${trip.warnings?.length?'10px':'1.5rem'}">${_slwEsc(trip.summary)}</p>` : ''}
+  ${trip.warnings?.length ? `<div style="margin-bottom:1.5rem">${trip.warnings.map(w=>`<span class="warn-badge">${_slwEsc(w)}</span>`).join(' ')}</div>` : ''}
 
   ${legsHtml ? '<div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:10px">Legs</div><div class="tv-legs-list">' + legsHtml + '</div>' : ''}
 
@@ -1840,13 +1877,19 @@ function updateActiveTripBar() {
   const bar  = document.getElementById('activeTripBar');
   const name = document.getElementById('activeTripName');
   if (!bar || !name) return;
+  const pdfBtn = document.getElementById('editorExportPDF');
+  const gpxBtn = document.getElementById('editorExportGPX');
   if (currentTripId) {
     const trip = storage.get('trips').find(t => t.id === currentTripId);
     const title = trip?.title || document.getElementById('tripTitle').value || 'Untitled trip';
     name.value = title;
     bar.style.display = 'flex';
+    if (pdfBtn) pdfBtn.style.display = '';
+    if (gpxBtn) gpxBtn.style.display = '';
   } else {
     bar.style.display = 'none';
+    if (pdfBtn) pdfBtn.style.display = 'none';
+    if (gpxBtn) gpxBtn.style.display = 'none';
   }
 }
 
@@ -1882,8 +1925,10 @@ function loadTrip(trip, openLegIndex = -1) {
     trip = found;
   }
   tripDefaultMode = trip.defaultMode || (trip.legs?.[0]?.mode) || 'bus';
-  stops = trip.stops || [{name:'',date:'',days:0},{name:'',date:'',days:0}];
-  legs  = trip.legs  || [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
+  stops       = trip.stops    || [{name:'',date:'',days:0},{name:'',date:'',days:0}];
+  legs        = trip.legs     || [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
+  tripSummary  = trip.summary  || '';
+  tripWarnings = trip.warnings || [];
   editingLegModes.clear();
   expandedLegs.clear();
   if (openLegIndex >= 0) expandedLegs.add(openLegIndex);
@@ -3240,6 +3285,8 @@ function renderPlanSuggestion(d, fromCache = false) {
 function adoptRoute() {
   if (!lastSuggestion) return;
   const d = lastSuggestion; stops = []; legs = []; editingLegModes.clear();
+  tripSummary  = d.summary  || '';
+  tripWarnings = d.warnings || [];
   currentTripId = null;   // always creates a new trip on next save
   expandedLegs.clear();
   if (d.stops?.length) {
@@ -4846,6 +4893,212 @@ function exportTrip() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/plain' }));
   a.download = (title || 'trip') + '.txt'; a.click();
+}
+
+// ── Trip exports: PDF (via browser print) + GPX ───────────────────────
+function _slwEsc(str) {
+  return String(str || '').replace(/[<>&"']/g, ch => ({ '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[ch]));
+}
+function _currSymFor(code) {
+  return { USD:'$', EUR:'€', GBP:'£', INR:'₹', AUD:'A$', CAD:'C$', JPY:'¥', THB:'฿' }[code] || '$';
+}
+
+function exportTripPDF(tripId) {
+  const trip = (storage.get('trips') || []).find(t => t.id === tripId);
+  if (!trip) return;
+  let root = document.getElementById('printRoot');
+  if (!root) { root = document.createElement('div'); root.id = 'printRoot'; document.body.appendChild(root); }
+  const stops = Array.isArray(trip.stops) ? trip.stops : [];
+  const legs  = Array.isArray(trip.legs)  ? trip.legs  : [];
+  const route = (stops[0]?.name || '?') + ' → ' + (stops[stops.length - 1]?.name || '?');
+  const totalCost = legs.reduce((s, l) => s + (+l.cost || 0), 0);
+  const totalKm   = legs.reduce((s, l) => s + (+l.km || 0), 0);
+  const totalDays = stops.reduce((s, x) => s + (+x.days || 0), 0);
+  const sym = _currSymFor(trip.currency || 'USD');
+  const legsRows = legs.map((l, i) => {
+    const from = stops[i]?.name || '?';
+    const to   = stops[i + 1]?.name || '?';
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${_slwEsc(from)} → ${_slwEsc(to)}</td>
+      <td>${_slwEsc((typeof MI !== 'undefined' && MI[l.mode]) || l.mode || '—')}</td>
+      <td>${l.km ? l.km + ' km' : '—'}</td>
+      <td>${l.hours ? l.hours + ' h' : '—'}</td>
+      <td>${l.cost ? sym + l.cost : '—'}</td>
+    </tr>`;
+  }).join('');
+  root.innerHTML = `
+    <h1>${_slwEsc(trip.title || route)}</h1>
+    <div class="pr-meta">${_slwEsc(route)}${trip.collection ? ' · ' + _slwEsc(trip.collection) : ''}</div>
+    <div class="pr-meta">${stops.length} stops · ${totalDays || '—'} days · ${Math.round(totalKm)} km · ${sym}${Math.round(totalCost)} ${_slwEsc(trip.currency || 'USD')}</div>
+    ${legsRows ? `<table>
+      <thead><tr><th>#</th><th>Leg</th><th>Mode</th><th>Distance</th><th>Time</th><th>Cost</th></tr></thead>
+      <tbody>${legsRows}</tbody>
+    </table>` : ''}
+    ${trip.notes ? `<h3>Notes</h3><div style="white-space:pre-wrap;font-size:12px;color:#333">${_slwEsc(trip.notes)}</div>` : ''}
+    <div class="pr-meta" style="margin-top:24px">slw.travel · go the long way, on purpose</div>`;
+  document.body.classList.add('printing');
+  const cleanup = () => {
+    document.body.classList.remove('printing');
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(() => { try { window.print(); } catch(e) { cleanup(); } }, 50);
+  // Failsafe in case afterprint never fires (some mobile browsers)
+  setTimeout(cleanup, 30000);
+}
+
+async function exportTripGPX(tripId) {
+  const trip = (storage.get('trips') || []).find(t => t.id === tripId);
+  if (!trip || !trip.stops || !trip.stops.length) {
+    alert('Trip has no stops to export.');
+    return;
+  }
+  const named = trip.stops.filter(s => s.name && s.name.trim());
+  if (!named.length) {
+    alert('Trip has no named stops to export.');
+    return;
+  }
+  let coords;
+  try {
+    coords = await Promise.all(named.map(s => geocodeStop(s.name)));
+  } catch (e) {
+    alert('Could not look up stop coordinates. Open the trip in the map first to cache them, then try again.');
+    return;
+  }
+  const validCount = coords.filter(Boolean).length;
+  if (!validCount) {
+    alert('Could not resolve coordinates for any stop. Open the trip in the map and try again.');
+    return;
+  }
+  const wpts = named.map((s, i) => {
+    const c = coords[i];
+    if (!c) return '';
+    return `  <wpt lat="${c.lat}" lon="${c.lon}"><name>${_slwEsc((i + 1) + '. ' + s.name)}</name>${s.days ? `<desc>${s.days} day${s.days > 1 ? 's' : ''}</desc>` : ''}</wpt>`;
+  }).filter(Boolean).join('\n');
+  const rtepts = named.map((s, i) => {
+    const c = coords[i]; if (!c) return '';
+    return `    <rtept lat="${c.lat}" lon="${c.lon}"><name>${_slwEsc(s.name)}</name></rtept>`;
+  }).filter(Boolean).join('\n');
+  const titleSafe = _slwEsc(trip.title || 'Trip');
+  const gpx =
+`<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="slw.travel" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>${titleSafe}</name></metadata>
+${wpts}
+  <rte><name>${titleSafe}</name>
+${rtepts}
+  </rte>
+</gpx>`;
+  const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (trip.title || 'trip').replace(/[^a-z0-9-_]+/gi, '_') + '.gpx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ── GPX Import ────────────────────────────────────────────────────
+function importGPXFile(input) {
+  const file = input.files?.[0];
+  input.value = ''; // allow re-selecting the same file
+  if (!file) return;
+  const hasData = stops.some(s => s.name) || currentTripId;
+  if (hasData && !confirm('Replace current trip data with the imported GPX?')) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try { _parseAndApplyGPX(e.target.result, file.name); }
+    catch (err) { alert('Could not parse GPX file: ' + err.message); }
+  };
+  reader.readAsText(file);
+}
+
+function _parseAndApplyGPX(xmlText, filename) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'application/xml');
+  if (doc.querySelector('parsererror')) throw new Error('Invalid XML');
+
+  // Prefer named wpt → rtept → trkpt; within each set prefer named points
+  let pts = [...doc.querySelectorAll('wpt')];
+  if (!pts.length) pts = [...doc.querySelectorAll('rtept')];
+  if (!pts.length) pts = [...doc.querySelectorAll('trkpt')];
+  if (!pts.length) { alert('No waypoints found in this GPX file.'); return; }
+
+  // Use named-only subset if any have names; else use all
+  const named = pts.filter(p => p.querySelector('name')?.textContent?.trim());
+  const points = named.length ? named : pts;
+
+  // Haversine distance in km between two {lat,lon} objects
+  const haversineKm = (a, b) => {
+    const R = 6371, rad = d => d * Math.PI / 180;
+    const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
+    const x = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  };
+
+  const newStops = [], coords = [], now = Date.now();
+  points.forEach((p, idx) => {
+    const lat = parseFloat(p.getAttribute('lat'));
+    const lon = parseFloat(p.getAttribute('lon'));
+    const rawName = p.querySelector('name')?.textContent?.trim() || '';
+    const desc    = p.querySelector('desc')?.textContent?.trim() || '';
+    const daysMatch = desc.match(/^(\d+)\s*day/i);
+    const days = daysMatch ? parseInt(daysMatch[1]) : 0;
+    const name = rawName || ('Stop ' + (idx + 1));
+    newStops.push({ name, date: '', days, accomSites: [], accomNote: '' });
+    coords.push({ lat, lon });
+    // Seed geo-cache so GPX re-export needs no Nominatim calls
+    if (!isNaN(lat) && !isNaN(lon)) {
+      const key = name.trim().toLowerCase();
+      _geoCache[key] = { lat, lon, ts: now };
+    }
+  });
+  try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch (e) {}
+
+  // Build legs with haversine km between consecutive stops
+  const newLegs = [];
+  for (let i = 0; i < newStops.length - 1; i++) {
+    const km = (!isNaN(coords[i].lat) && !isNaN(coords[i + 1].lat))
+      ? Math.round(haversineKm(coords[i], coords[i + 1]))
+      : 0;
+    newLegs.push({
+      mode: tripDefaultMode || 'bus', cost: 0, km,
+      hours: 0, notes: '',
+      booked: false, bookingRef: '', bookingUrl: '',
+      bookingSites: [], infoSites: [], legRegion: '', confidence: 'uncertain', conflict: null
+    });
+  }
+
+  // Apply to global editor state
+  stops = newStops;
+  legs  = newLegs;
+  tripSummary  = '';
+  tripWarnings = [];
+  currentTripId = null;
+  editingLegModes.clear();
+  expandedLegs.clear();
+  _tripDirty = true;
+
+  // Auto-title: GPX metadata → track/route name → filename
+  const metaName = doc.querySelector('metadata > name')?.textContent?.trim()
+                || doc.querySelector('trk > name')?.textContent?.trim()
+                || doc.querySelector('rte > name')?.textContent?.trim()
+                || '';
+  document.getElementById('tripTitle').value =
+    metaName || filename.replace(/\.gpx$/i, '').replace(/[_-]+/g, ' ');
+
+  switchTab('record', document.getElementById('navbtn_record'));
+  updateActiveTripBar();
+  render();
+
+  // Brief status confirmation
+  const st = document.getElementById('saveStatus');
+  if (st) {
+    st.textContent = `Imported ${newStops.length} stop${newStops.length !== 1 ? 's' : ''} from GPX`;
+    setTimeout(() => { if (st.textContent.startsWith('Imported')) st.textContent = ''; }, 3000);
+  }
 }
 
 // ── Tab back/forward navigation ───────────────────────────────────
