@@ -2091,6 +2091,24 @@ async function callAI(prompt, maxTokens = 8000) {
     const msg = d.error?.message || `HTTP ${r.status}`;
     throw new Error(msg);
   }
+  // Log token usage to localStorage for admin Usage & Cost tab
+  if (d.usage) {
+    try {
+      const PRICES = { input: 3, output: 15, cache_read: 0.3, cache_write: 3.75 }; // $ per MTok
+      const u = d.usage;
+      const cost = (
+        (u.input_tokens               || 0) * PRICES.input       +
+        (u.output_tokens              || 0) * PRICES.output      +
+        (u.cache_read_input_tokens    || 0) * PRICES.cache_read  +
+        (u.cache_creation_input_tokens|| 0) * PRICES.cache_write
+      ) / 1_000_000;
+      const log = JSON.parse(localStorage.getItem('slw_usage_log') || '[]');
+      log.push({ ts: Date.now(), model: d.model || 'claude-sonnet-4', ...u, cost_usd: cost });
+      // Keep last 500 entries
+      if (log.length > 500) log.splice(0, log.length - 500);
+      localStorage.setItem('slw_usage_log', JSON.stringify(log));
+    } catch(e) {}
+  }
   const text = d.content.map(c => c.text || '').join('');
   // Strip markdown fences, extract outermost { … }
   const stripped = text.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
@@ -2728,86 +2746,81 @@ function switchAdminSub(id) {
 }
 
 // ── Admin: Usage & Cost ───────────────────────────────────────────────────
-async function loadUsageStats() {
+// Token usage is logged to localStorage on every callAI() response.
+// Prices: Sonnet 4 — $3/MTok input, $15/MTok output, $0.30 cache read, $3.75 cache write.
+function loadUsageStats() {
   const el = document.getElementById('usageContent');
   if (!el) return;
   const days = parseInt(document.getElementById('usageDays')?.value || '30');
-  el.innerHTML = '<span style="color:var(--text3)">Loading…</span>';
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
 
-  try {
-    const ending   = new Date().toISOString();
-    const starting = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-    const params   = new URLSearchParams({ starting_at: starting, ending_at: ending, bucket_width: '1d' });
-    const res  = await fetch(`${PROXY_URL}/api/usage?${params}`);
-    const json = await res.json();
+  let log = [];
+  try { log = JSON.parse(localStorage.getItem('slw_usage_log') || '[]'); } catch(e) {}
+  const entries = log.filter(e => e.ts >= cutoff);
 
-    if (!res.ok) {
-      el.innerHTML = `<span style="color:var(--danger-text)">Error: ${json?.error?.message || res.status}</span>`;
-      return;
-    }
+  if (!entries.length) {
+    el.innerHTML = '<span style="color:var(--text3)">No searches recorded in this period yet — usage is tracked from your browser after each AI route search.</span>';
+    return;
+  }
 
-    const buckets = json.data || [];
-    if (!buckets.length) { el.innerHTML = '<span style="color:var(--text3)">No usage data for this period.</span>'; return; }
+  // Aggregate
+  let grandTotal = 0, totalIn = 0, totalOut = 0, totalSearches = 0;
+  const byModel = {}, byDay = {};
+  entries.forEach(e => {
+    grandTotal += e.cost_usd || 0;
+    totalIn    += e.input_tokens  || 0;
+    totalOut   += e.output_tokens || 0;
+    totalSearches++;
+    const m = e.model || 'unknown';
+    byModel[m] = (byModel[m] || 0) + (e.cost_usd || 0);
+    const day = new Date(e.ts).toISOString().slice(0, 10);
+    byDay[day] = (byDay[day] || 0) + (e.cost_usd || 0);
+  });
 
-    // Aggregate totals and per-day rows
-    let grandTotal = 0;
-    const byModel  = {};
-    const dailyRows = buckets.map(bucket => {
-      const dayTotal = (bucket.results || []).reduce((s, r) => s + parseFloat(r.amount || 0), 0);
-      grandTotal += dayTotal;
-      (bucket.results || []).forEach(r => {
-        const m = r.model || 'unknown';
-        byModel[m] = (byModel[m] || 0) + parseFloat(r.amount || 0);
-      });
-      const date = bucket.starting_at ? bucket.starting_at.slice(0, 10) : '—';
-      return `<tr><td>${date}</td><td style="text-align:right;font-family:var(--mono)">$${dayTotal.toFixed(4)}</td></tr>`;
-    }).join('');
+  const modelRows = Object.entries(byModel).sort((a,b)=>b[1]-a[1])
+    .map(([m,c]) => `<tr><td style="padding:4px 6px;border-bottom:0.5px solid var(--border)">${m}</td><td style="text-align:right;padding:4px 6px;border-bottom:0.5px solid var(--border);font-family:var(--mono)">$${c.toFixed(5)}</td></tr>`)
+    .join('');
 
-    const modelRows = Object.entries(byModel)
-      .sort((a, b) => b[1] - a[1])
-      .map(([m, cost]) => `<tr><td>${m}</td><td style="text-align:right;font-family:var(--mono)">$${cost.toFixed(4)}</td></tr>`)
-      .join('');
+  const dailyRows = Object.entries(byDay).sort((a,b)=>a[0]<b[0]?1:-1)
+    .map(([d,c]) => `<tr><td style="padding:4px 6px;border-bottom:0.5px solid var(--border)">${d}</td><td style="text-align:right;padding:4px 6px;border-bottom:0.5px solid var(--border);font-family:var(--mono)">$${c.toFixed(5)}</td></tr>`)
+    .join('');
 
-    el.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
-        <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px">
-          <div style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Total (${days}d)</div>
-          <div style="font-size:24px;font-weight:300;color:var(--text);font-family:var(--serif)">$${grandTotal.toFixed(4)}</div>
-        </div>
-        <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px">
-          <div style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Avg / day</div>
-          <div style="font-size:24px;font-weight:300;color:var(--text);font-family:var(--serif)">$${(grandTotal / days).toFixed(4)}</div>
-        </div>
+  const th = `style="text-align:left;padding:4px 6px;border-bottom:0.5px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0.5px"`;
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.2rem">
+      ${[
+        ['Total cost', '$'+grandTotal.toFixed(5)],
+        ['Searches',   totalSearches],
+        ['Avg / search', '$'+(grandTotal/totalSearches).toFixed(5)],
+        ['Input tokens',  (totalIn/1000).toFixed(1)+'k'],
+        ['Output tokens', (totalOut/1000).toFixed(1)+'k'],
+      ].map(([l,v])=>`<div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px">
+        <div style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:4px">${l}</div>
+        <div style="font-size:20px;font-weight:300;color:var(--text);font-family:var(--serif)">${v}</div>
+      </div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div>
+        <div style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">By model</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr><th ${th}>Model</th><th ${th} style="text-align:right">Cost</th></tr></thead>
+          <tbody>${modelRows}</tbody>
+        </table>
       </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-        <div>
-          <div style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">By model</div>
+      <div>
+        <div style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Daily (newest first)</div>
+        <div style="max-height:260px;overflow-y:auto">
           <table style="width:100%;border-collapse:collapse;font-size:12px">
-            <thead><tr>
-              <th style="text-align:left;padding:4px 6px;border-bottom:0.5px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0.5px">Model</th>
-              <th style="text-align:right;padding:4px 6px;border-bottom:0.5px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0.5px">Cost (USD)</th>
-            </tr></thead>
-            <tbody>${modelRows}</tbody>
+            <thead><tr><th ${th}>Date</th><th ${th} style="text-align:right">Cost</th></tr></thead>
+            <tbody>${dailyRows}</tbody>
           </table>
         </div>
-        <div>
-          <div style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Daily breakdown</div>
-          <div style="max-height:280px;overflow-y:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
-              <thead><tr>
-                <th style="text-align:left;padding:4px 6px;border-bottom:0.5px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0.5px">Date</th>
-                <th style="text-align:right;padding:4px 6px;border-bottom:0.5px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0.5px">Cost (USD)</th>
-              </tr></thead>
-              <tbody>${dailyRows}</tbody>
-            </table>
-          </div>
-        </div>
       </div>
-      <div style="margin-top:10px;font-size:11px;color:var(--text3)">Source: Anthropic Admin API · amounts in USD</div>`;
-  } catch (e) {
-    el.innerHTML = `<span style="color:var(--danger-text)">Failed to load: ${e.message}</span>`;
-  }
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--text3)">Tracked in this browser · Sonnet 4 pricing · last ${entries.length} searches in ${days}d window
+      <button onclick="if(confirm('Clear usage log?')){localStorage.removeItem('slw_usage_log');loadUsageStats();}" style="margin-left:10px;font-size:11px;background:none;border:none;color:var(--text3);cursor:pointer;text-decoration:underline">Clear log</button>
+    </div>`;
 }
 
 // ── Admin: Community notes review ─────────────────────────────────────────
