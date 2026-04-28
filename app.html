@@ -2118,7 +2118,8 @@ function updateCacheClearBtn() {
   const btn = document.getElementById('cacheClearBtn');
   if (!btn) return;
   const count = Object.keys(_readCache()).length;
-  btn.style.display = count > 0 ? 'inline-block' : 'none';
+  // Cache controls are dev/diagnostic — admins only
+  btn.style.display = (isAdmin && count > 0) ? 'inline-block' : 'none';
   const span = document.getElementById('cacheCount');
   if (span) span.textContent = count;
 }
@@ -2869,25 +2870,26 @@ async function planRoute() {
   const via    = document.getElementById('pVia').value.trim();
   const budget = document.getElementById('pBudget').value.trim();
 
-  // ── Cache lookup ──────────────────────────────────────────────────
-  const cacheKey = buildCacheKey(from, to, via, budget, pace, prefModes);
-  const hit = getCachedRoute(cacheKey) || findSubsetRoute(from, to, pace, prefModes);
-  if (hit) {
-    lastSuggestion = hit;
-    document.getElementById('planResult').style.display = 'block';
-    await prefetchConflictZones((hit.legs || []).map(l => l.conflict?.country_code));
-    renderPlanSuggestion(hit, true);
-    _collapseSearchForm(from, to);
-    return;
-  }
-  // ── End cache lookup ──────────────────────────────────────────────
-
-  // Hide landing, show result area
+  // Hide landing immediately — same UX whether the result comes from cache or AI
   const lg = document.getElementById('planLandingGrid');
   if (lg) lg.style.display = 'none';
   const hl = document.getElementById('planLanding');
   if (hl) hl.style.display = 'none';
   _collapseSearchForm(from, to);
+
+  // ── Cache lookup ──────────────────────────────────────────────────
+  const cacheKey = buildCacheKey(from, to, via, budget, pace, prefModes);
+  const hit = getCachedRoute(cacheKey) || findSubsetRoute(from, to, pace, prefModes);
+  if (hit) {
+    lastSuggestion = hit;
+    const resEl = document.getElementById('planResult');
+    resEl.style.display = 'block';
+    await prefetchConflictZones((hit.legs || []).map(l => l.conflict?.country_code));
+    renderPlanSuggestion(hit, true);
+    try { resEl.scrollIntoView({ behavior:'smooth', block:'start' }); } catch(e) {}
+    return;
+  }
+  // ── End cache lookup ──────────────────────────────────────────────
 
   const btn    = document.getElementById('planBtn');
   btn.disabled = true; btn.textContent = 'Planning...';
@@ -3176,9 +3178,11 @@ function renderPlanSuggestion(d, fromCache = false) {
     const noRegion = d.legs?.some(l => !l.leg_region);
     if (noRegion && !_autoRefreshPending) {
       _autoRefreshPending = true;
-      h += `<span class="cache-badge" style="color:var(--text3)">⟳ Updating route data…</span><br>`;
+      // Silent background refresh — no badge for non-admins
+      if (isAdmin) h += `<span class="cache-badge" style="color:var(--text3)">⟳ Updating route data…</span><br>`;
       setTimeout(() => { clearRouteCache(); planRoute(); }, 0);
-    } else {
+    } else if (isAdmin) {
+      // "From cache" is dev/diagnostic info — only show to admins
       h += `<span class="cache-badge">⚡ From cache${sub}</span><br>`;
     }
     updateCacheClearBtn();
