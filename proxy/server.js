@@ -68,4 +68,32 @@ app.post('/api/ai', async (req, res) => {
   }
 });
 
+// ── GET /api/usage — Anthropic cost report (Admin API key required) ──────────
+app.get('/api/usage', async (req, res) => {
+  const adminKey = process.env.ANTHROPIC_ADMIN_KEY;
+  if (!adminKey) {
+    return res.status(500).json({ error: { message: 'ANTHROPIC_ADMIN_KEY not configured on proxy' } });
+  }
+
+  const ending   = req.query.ending_at   || new Date().toISOString();
+  const starting = req.query.starting_at || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const width    = req.query.bucket_width || '1d';
+
+  const params = new URLSearchParams({ starting_at: starting, ending_at: ending, bucket_width: width });
+
+  try {
+    const upstream = await fetch(`https://api.anthropic.com/v1/organizations/cost_report?${params}`, {
+      headers: {
+        'anthropic-version': '2023-06-01',
+        'x-api-key': adminKey,
+      },
+    });
+    const data = await upstream.json();
+    res.status(upstream.status).json(data);
+  } catch (err) {
+    console.error('Usage API error:', err);
+    res.status(502).json({ error: { message: 'Upstream request failed: ' + err.message } });
+  }
+});
+
 app.listen(PORT, () => console.log(`slw-travel-proxy listening on :${PORT}`));
