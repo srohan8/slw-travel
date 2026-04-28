@@ -1168,7 +1168,12 @@ const contribStorage = {
         .eq('leg_key', key)
         .order('votes', { ascending: false })
         .order('created_at', { ascending: false });
-      if (error || !data?.length) return;
+      if (error) {
+        // Remove from fetched so it can retry once the DB schema is corrected
+        this._fetched.delete(key);
+        return;
+      }
+      if (!data?.length) return;
 
       const all = this.getAll();
       const existingIds = new Set((all[key]||[]).map(n => n.id));
@@ -1372,7 +1377,11 @@ async function syncTripsFromCloud() {
     // 2) Push: any local trip that's missing from cloud, or newer than cloud,
     //    gets upserted. This rescues trips whose original upsert silently
     //    failed (offline, RLS hiccup, page closed before the request finished).
+    //    Only attempt trips with valid UUIDs — legacy 'trip-XXXXXX' ids will
+    //    fail the uuid column type check and are silently skipped.
+    const _isUUID = id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     const toPush = merged.filter(t => {
+      if (!_isUUID(t.id)) return false;
       const c = cloudById.get(t.id);
       if (!c) return true;
       const cAt = new Date(c.updated_at || 0).getTime();
@@ -1419,7 +1428,7 @@ async function saveCurrentTrip() {
   }
 
   const tripData = {
-    id: currentTripId || 'trip-' + Date.now(),
+    id: currentTripId || crypto.randomUUID(),
     title: autoTitle, stops, legs,
     defaultMode: tripDefaultMode || 'bus',
     notes:    document.getElementById('tripNotes').value,
@@ -1450,7 +1459,9 @@ async function saveCurrentTrip() {
   setTimeout(() => { if (statusEl.textContent === 'Saved ✓') statusEl.textContent = ''; }, 2500);
 
   // Cloud sync fires in background — UI is never held hostage by it
-  if (currentUser) {
+  // Guard: only push if id is a valid UUID (legacy 'trip-XXXXXX' ids will fail the DB column type)
+  const _isUUID = id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  if (currentUser && _isUUID(tripData.id)) {
     sb.from('trips').upsert({
       id:         tripData.id,
       user_id:    currentUser.id,
