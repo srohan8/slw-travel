@@ -9,6 +9,21 @@
 !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ai Ri init Vi Yi Rr zi Gi Zi capture calculateEventProperties en register register_once register_for_session unregister unregister_for_session sn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync an identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty rn Ki createPersonProfile setInternalOrTestUser nn $i hn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Xi debug Mr tn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
 function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only',disable_session_recording:true,autocapture:false});}
 (function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
+// ── Tab pre-restore: avoid flash of Search panel before init() restores saved tab ──
+(function(){
+  try {
+    var valid = ['plan','record','mytrips','profile','admin'];
+    var t = (location.hash||'').replace(/^#/, '');
+    if (valid.indexOf(t) === -1) {
+      try { t = localStorage.getItem('slw_active_tab') || ''; } catch(e) { t = ''; }
+    }
+    if (t && t !== 'plan' && valid.indexOf(t) !== -1) {
+      document.documentElement.classList.add('tab-restoring');
+      // Failsafe: if init() never completes, never leave the user staring at a spinner
+      setTimeout(function(){ document.documentElement.classList.remove('tab-restoring'); }, 4000);
+    }
+  } catch(e) {}
+})();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -72,6 +87,23 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   .trip-title:focus{color:var(--fern);border-bottom-color:var(--fern);}
   .trip-title::placeholder{color:var(--text3);font-weight:300;}
   .panel{display:none;animation: fadeIn 0.3s ease;}.panel.active{display:block;}
+
+  /* ── Tab restore loader (prevents Search-panel flash on refresh) ── */
+  html.tab-restoring .panel{ display:none !important; }
+  html.tab-restoring nav { visibility:hidden; }
+  .app-loader{
+    display:none; position:fixed; inset:0; z-index:9000;
+    align-items:center; justify-content:center;
+    background:var(--bg3);
+  }
+  html.tab-restoring .app-loader{ display:flex; }
+  .app-loader-dot{
+    width:36px; height:36px; border-radius:50%;
+    border:2.5px solid var(--border);
+    border-top-color:var(--fern);
+    animation: app-spin 0.7s linear infinite;
+  }
+  @keyframes app-spin { to { transform: rotate(360deg); } }
 
   /* ── Floating map widget ── */
   #plannerMapWrap{
@@ -545,6 +577,9 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
 </style>
 </head>
 <body>
+
+<!-- ── App loader (covers screen until init() restores the saved tab) ── -->
+<div class="app-loader" aria-hidden="true"><div class="app-loader-dot"></div></div>
 
 <!-- ── Cookie consent banner ── -->
 <div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#2D4A2D;color:#F5F0E8;padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
@@ -1249,6 +1284,8 @@ async function init() {
       switchTab(savedTab, document.getElementById('navbtn_' + savedTab));
     }
   }
+  // Restore complete — drop the loader
+  document.documentElement.classList.remove('tab-restoring');
 
   // ── Auto-fill + auto-trigger from URL params (?from=X&to=Y&via=Z) ──
   const urlFrom = params.get('from');
