@@ -169,12 +169,18 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
   .mobile-tabbar{ display:none; }
   @media(max-width:700px){
     body{ padding-bottom:calc(60px + env(safe-area-inset-bottom, 0px)); }
-    nav{ padding:10px 14px; }
+    /* Fix nav: position:fixed guarantees it stays pinned on all panels/scroll contexts */
+    nav{ padding:10px 14px; position:fixed; top:0; left:0; right:0; z-index:960; }
+    /* Push content below the fixed nav (~54px tall on mobile) */
+    .container{ padding:calc(54px + 0.75rem) 0.9rem 1.25rem; }
     .nav-utils .nav-link{ display:none; }
     .nav-utils select#currSel{ display:none; }
-    .container{ padding:1rem 0.9rem 1.25rem; }
-    /* Panels without .container wrapper — add equivalent padding on mobile */
-    #record, #profile, #mytrips{ padding:0.75rem 0.9rem 1.5rem; }
+    /* Panels inside .container get extra side/bottom padding on mobile */
+    #record, #profile, #mytrips{ padding:0 0.9rem 1.5rem; }
+    /* Search form: wrap rows so Budget+Pace/From+To don't overflow */
+    .form-row{ flex-wrap:wrap; gap:8px 12px; }
+    .form-row .lbl{ flex-basis:100%; min-width:unset; padding-top:0; }
+    .form-row .vsep{ display:none; }
     /* Bottom tab bar */
     .mobile-tabbar{
       display:flex; position:fixed; top:auto; height:auto; left:0; right:0; bottom:0; z-index:950;
@@ -216,6 +222,24 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
   }
   @media(max-width:700px) and (display-mode:standalone){
     body{ padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px)); }
+  }
+
+  /* ── Profile panel responsive layout classes ──────────── */
+  .prof-hero { background:var(--dusk);color:var(--cream);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:16px;position:relative;overflow:hidden;display:grid;grid-template-columns:72px 1fr auto;gap:20px;align-items:center; }
+  .prof-grid-4 { display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px; }
+  .prof-grid-2 { display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-bottom:16px; }
+  .prof-grid-2r { display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:16px; }
+  .prof-grid-3 { display:grid;grid-template-columns:repeat(3,1fr);gap:10px; }
+  .prof-form-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px; }
+  @media(max-width:700px){
+    .prof-hero { padding:18px 18px; grid-template-columns:52px 1fr; gap:14px; }
+    .prof-hero-karma { grid-column:1/-1; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+    .prof-hero-karma > .prof-karma-val { font-size:32px !important; }
+    .prof-grid-4 { grid-template-columns:repeat(2,1fr); }
+    .prof-grid-2,
+    .prof-grid-2r { grid-template-columns:1fr; }
+    .prof-grid-3 { grid-template-columns:repeat(2,1fr); }
+    .prof-form-grid { grid-template-columns:1fr; }
   }
   @keyframes fadeIn { from {opacity:0; transform: translateY(5px);} to {opacity:1; transform: translateY(0);} }
   .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.2rem;box-shadow: var(--shadow);}
@@ -4566,9 +4590,9 @@ async function renderProfilePanel() {
   el.innerHTML = `
 
   <!-- ── Hero identity card ───────────────────────────── -->
-  <div style="background:var(--dusk);color:var(--cream);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:16px;position:relative;overflow:hidden;display:grid;grid-template-columns:72px 1fr auto;gap:20px;align-items:center">
-    <div style="width:72px;height:72px;border-radius:50%;background:var(--moss);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:32px;font-weight:400;border:2px solid var(--sage);flex-shrink:0">${initials}</div>
-    <div style="min-width:0">
+  <div class="prof-hero">
+    <div style="width:72px;height:72px;border-radius:50%;background:var(--moss);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:32px;font-weight:400;border:2px solid var(--sage);flex-shrink:0;grid-row:1">${initials}</div>
+    <div style="min-width:0;grid-row:1">
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage)">Contributor${memberSince?' · since '+memberSince:''}</div>
       <div style="font-family:var(--serif);font-size:28px;font-weight:300;letter-spacing:-0.3px;margin-top:2px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
         ${displayName} <span style="font-size:13px;color:rgba(212,227,204,0.45);font-family:var(--mono);letter-spacing:0.5px">${handle}</span>
@@ -4578,9 +4602,9 @@ async function renderProfilePanel() {
         <span style="display:inline-flex;align-items:center;gap:4px"><i class="ph ph-map-trifold" style="font-size:12px"></i> ${trips.length} trips planned</span>
       </div>
     </div>
-    <div style="text-align:right;flex-shrink:0">
+    <div class="prof-hero-karma" style="flex-shrink:0">
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:rgba(212,227,204,0.5);text-transform:uppercase">Karma</div>
-      <div style="font-family:var(--serif);font-size:44px;font-weight:300;color:var(--gold);letter-spacing:-0.8px;line-height:1">${karma.toLocaleString()}</div>
+      <div class="prof-karma-val" style="font-family:var(--serif);font-size:44px;font-weight:300;color:var(--gold);letter-spacing:-0.8px;line-height:1">${karma.toLocaleString()}</div>
       <div style="font-size:11px;color:rgba(212,227,204,0.5);margin-top:4px;font-family:var(--mono)">${totalVotes} upvotes received</div>
     </div>
     <div style="position:absolute;right:-40px;top:-20px;opacity:0.08;pointer-events:none">
@@ -4589,7 +4613,7 @@ async function renderProfilePanel() {
   </div>
 
   <!-- ── 4-stat row ───────────────────────────────────── -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+  <div class="prof-grid-4">
     ${[
       ['Notes posted', totalNotes,              'across '+legKeys.length+' legs'],
       ['Upvotes received', totalVotes,          totalNotes ? (totalVotes/totalNotes).toFixed(1)+' avg' : '0 avg'],
@@ -4604,7 +4628,7 @@ async function renderProfilePanel() {
   </div>
 
   <!-- ── Karma breakdown + Badges ─────────────────────── -->
-  <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-bottom:16px">
+  <div class="prof-grid-2">
 
     <!-- Karma breakdown -->
     <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
@@ -4641,7 +4665,7 @@ async function renderProfilePanel() {
   </div>
 
   <!-- ── Contribution mix (donut) + Recent notes ───────── -->
-  <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:16px">
+  <div class="prof-grid-2r">
 
     <!-- Donut -->
     <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
@@ -4700,7 +4724,7 @@ async function renderProfilePanel() {
     </div>
     ${trips.length === 0
       ? `<div style="font-size:13px;color:var(--text3);padding:1rem 0;text-align:center">No trips yet — plan one in the Planner!</div>`
-      : `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      : `<div class="prof-grid-3">
           ${trips.slice(0,3).map(t=>{
             const legCount = (t.legs||[]).length;
             const bookedCount = (t.legs||[]).filter(l=>l.booked).length;
@@ -4721,7 +4745,7 @@ async function renderProfilePanel() {
   <!-- ── Account settings ──────────────────────────────── -->
   <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;margin-bottom:16px">
     <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:14px">Account settings</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <div class="prof-form-grid">
       <div>
         <label style="font-size:11px;color:var(--text3);font-family:var(--mono);display:block;margin-bottom:5px">Display name</label>
         <input id="profName" class="inp" value="${displayName}" placeholder="Your name" style="width:100%"/>
