@@ -93,6 +93,9 @@ create table if not exists public.profiles (
 -- Add location column if upgrading from older schema
 alter table public.profiles add column if not exists location text default '';
 
+-- Add preferred_currency column if upgrading from older schema
+alter table public.profiles add column if not exists preferred_currency text not null default 'USD';
+
 -- Admin flag (used for gating admin.html and admin-only RLS writes)
 alter table public.profiles add column if not exists is_admin boolean not null default false;
 
