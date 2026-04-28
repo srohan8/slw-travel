@@ -173,6 +173,8 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
     .nav-utils .nav-link{ display:none; }
     .nav-utils select#currSel{ display:none; }
     .container{ padding:1rem 0.9rem 1.25rem; }
+    /* Planner panel has no .container wrapper — add equivalent padding on mobile */
+    #record{ padding:0.75rem 0.9rem 1.5rem; }
     /* Bottom tab bar */
     .mobile-tabbar{
       display:flex; position:fixed; left:0; right:0; bottom:0; z-index:950;
@@ -2628,6 +2630,9 @@ function renderAdminSiteList() {
 // ── Tab switching ─────────────────────────────────────────────────
 function switchTab(id, el) {
   if (id === 'admin' && !isAdmin) return;   // belt-and-braces — nav button is also hidden
+  // Reset scroll on every tab switch — panels share the body scroll container,
+  // so switching from a long panel leaves the viewport scrolled past the new one.
+  window.scrollTo(0, 0);
   document.querySelectorAll('.nav-link').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const btn = el || document.getElementById('navbtn_' + id);
