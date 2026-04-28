@@ -2770,20 +2770,45 @@ function switchAdminSub(id) {
 }
 
 // ── Admin: Usage & Cost ───────────────────────────────────────────────────
-// Token usage is logged to localStorage on every callAI() response.
-// Prices: Sonnet 4 — $3/MTok input, $15/MTok output, $0.30 cache read, $3.75 cache write.
-function loadUsageStats() {
+// Primary source: Supabase api_usage_log (written by proxy, all users).
+// Fallback: localStorage slw_usage_log (written client-side, own browser only).
+async function loadUsageStats() {
   const el = document.getElementById('usageContent');
   if (!el) return;
-  const days = parseInt(document.getElementById('usageDays')?.value || '30');
-  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  const days   = parseInt(document.getElementById('usageDays')?.value || '30');
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  el.innerHTML = '<span style="color:var(--text3)">Loading…</span>';
 
-  let log = [];
-  try { log = JSON.parse(localStorage.getItem('slw_usage_log') || '[]'); } catch(e) {}
-  const entries = log.filter(e => e.ts >= cutoff);
+  // Try Supabase first (all-users data)
+  let entries = [];
+  let source  = 'Supabase (all users)';
+  try {
+    const { data, error } = await sb
+      .from('api_usage_log')
+      .select('created_at,model,input_tokens,output_tokens,cache_read_input_tokens,cache_creation_input_tokens,cost_usd')
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(1000);
+    if (!error && data?.length) {
+      entries = data.map(r => ({
+        ts:           new Date(r.created_at).getTime(),
+        model:        r.model,
+        input_tokens: r.input_tokens,
+        output_tokens:r.output_tokens,
+        cost_usd:     parseFloat(r.cost_usd),
+      }));
+    } else if (error) {
+      throw new Error(error.message);
+    }
+  } catch(e) {
+    // Fall back to localStorage (own browser only)
+    source = 'localStorage (this browser only — add SUPABASE_SERVICE_KEY to Railway proxy)';
+    const cutoffMs = Date.now() - days * 24 * 60 * 60 * 1000;
+    try { entries = (JSON.parse(localStorage.getItem('slw_usage_log')||'[]')).filter(e=>e.ts>=cutoffMs); } catch(_) {}
+  }
 
   if (!entries.length) {
-    el.innerHTML = '<span style="color:var(--text3)">No searches recorded in this period yet — usage is tracked from your browser after each AI route search.</span>';
+    el.innerHTML = '<span style="color:var(--text3)">No searches recorded in this period yet.</span>';
     return;
   }
 
@@ -2842,8 +2867,8 @@ function loadUsageStats() {
         </div>
       </div>
     </div>
-    <div style="margin-top:10px;font-size:11px;color:var(--text3)">Tracked in this browser · Sonnet 4 pricing · last ${entries.length} searches in ${days}d window
-      <button onclick="if(confirm('Clear usage log?')){localStorage.removeItem('slw_usage_log');loadUsageStats();}" style="margin-left:10px;font-size:11px;background:none;border:none;color:var(--text3);cursor:pointer;text-decoration:underline">Clear log</button>
+    <div style="margin-top:10px;font-size:11px;color:var(--text3)">Source: ${source} · Sonnet 4 pricing · ${entries.length} searches in ${days}d window
+      <button onclick="if(confirm('Clear local usage log?')){localStorage.removeItem('slw_usage_log');loadUsageStats();}" style="margin-left:10px;font-size:11px;background:none;border:none;color:var(--text3);cursor:pointer;text-decoration:underline">Clear local log</button>
     </div>`;
 }
 
