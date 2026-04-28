@@ -173,8 +173,8 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
     .nav-utils .nav-link{ display:none; }
     .nav-utils select#currSel{ display:none; }
     .container{ padding:1rem 0.9rem 1.25rem; }
-    /* Planner panel has no .container wrapper — add equivalent padding on mobile */
-    #record{ padding:0.75rem 0.9rem 1.5rem; }
+    /* Panels without .container wrapper — add equivalent padding on mobile */
+    #record, #profile, #mytrips{ padding:0.75rem 0.9rem 1.5rem; }
     /* Bottom tab bar */
     .mobile-tabbar{
       display:flex; position:fixed; top:auto; height:auto; left:0; right:0; bottom:0; z-index:950;
@@ -4478,6 +4478,12 @@ async function renderProfilePanel() {
   const el = document.getElementById('profilePanel');
   if (!el) return;
 
+  // Show a skeleton immediately so the panel is never blank while the async
+  // Supabase fetch runs. Replaced with real content once data arrives.
+  el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--text3);font-family:var(--mono);font-size:12px;letter-spacing:1px">Loading profile…</div>';
+
+  try {
+
   // ── Data ──────────────────────────────────────────────────────────
   const user   = currentUser;
   const email  = user?.email || '';
@@ -4749,6 +4755,13 @@ async function renderProfilePanel() {
     <span style="flex:1"></span>
     <span style="color:var(--rust);cursor:pointer" onclick="signOut()">Sign out</span>
   </div>`;
+
+  } catch(err) {
+    console.error('[slw] renderProfilePanel error:', err);
+    el.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--danger-text);font-size:13px">
+      Could not load profile. <button class="btn" style="margin-left:8px" onclick="renderProfilePanel()">Retry</button>
+    </div>`;
+  }
 }
 
 async function saveProfileSettings() {
