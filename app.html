@@ -814,6 +814,7 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
       <button class="admin-subtab"        data-sub="platform"  onclick="switchAdminSub('platform')">Platform</button>
       <button class="admin-subtab"        data-sub="advisory"  onclick="switchAdminSub('advisory')">Advisory refresh</button>
       <button class="admin-subtab"        data-sub="community" onclick="switchAdminSub('community')">Community notes</button>
+      <button class="admin-subtab"        data-sub="usage"     onclick="switchAdminSub('usage')">Usage &amp; Cost</button>
     </div>
 
     <!-- ── Sub-tab: Booking sites ──────────────────────────────────────── -->
@@ -1025,6 +1026,24 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
       </div>
 
     </div><!-- /admin-sub-community -->
+
+    <!-- ── Sub-tab: Usage & Cost ────────────────────────────────────────── -->
+    <div id="admin-sub-usage" class="admin-sub">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+          <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0">Anthropic API — Usage &amp; Cost</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="usageDays" class="inp" style="width:auto;font-size:12px;padding:4px 8px" onchange="loadUsageStats()">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+            <button class="btn" style="font-size:12px;padding:5px 12px" onclick="loadUsageStats()">↺ Refresh</button>
+          </div>
+        </div>
+        <div id="usageContent" style="font-size:13px;color:var(--text2)">Click "Usage &amp; Cost" to load.</div>
+      </div>
+    </div><!-- /admin-sub-usage -->
 
   </div>
 </div>
@@ -2705,6 +2724,90 @@ function switchAdminSub(id) {
   if (id === 'platform')  loadPlatformSettings();
   if (id === 'advisory')  loadAdvisorySettings();
   if (id === 'community') loadCommunityNotes();
+  if (id === 'usage')     loadUsageStats();
+}
+
+// ── Admin: Usage & Cost ───────────────────────────────────────────────────
+async function loadUsageStats() {
+  const el = document.getElementById('usageContent');
+  if (!el) return;
+  const days = parseInt(document.getElementById('usageDays')?.value || '30');
+  el.innerHTML = '<span style="color:var(--text3)">Loading…</span>';
+
+  try {
+    const ending   = new Date().toISOString();
+    const starting = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    const params   = new URLSearchParams({ starting_at: starting, ending_at: ending, bucket_width: '1d' });
+    const res  = await fetch(`${PROXY_URL}/api/usage?${params}`);
+    const json = await res.json();
+
+    if (!res.ok) {
+      el.innerHTML = `<span style="color:var(--danger-text)">Error: ${json?.error?.message || res.status}</span>`;
+      return;
+    }
+
+    const buckets = json.data || [];
+    if (!buckets.length) { el.innerHTML = '<span style="color:var(--text3)">No usage data for this period.</span>'; return; }
+
+    // Aggregate totals and per-day rows
+    let grandTotal = 0;
+    const byModel  = {};
+    const dailyRows = buckets.map(bucket => {
+      const dayTotal = (bucket.results || []).reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+      grandTotal += dayTotal;
+      (bucket.results || []).forEach(r => {
+        const m = r.model || 'unknown';
+        byModel[m] = (byModel[m] || 0) + parseFloat(r.amount || 0);
+      });
+      const date = bucket.starting_at ? bucket.starting_at.slice(0, 10) : '—';
+      return `<tr><td>${date}</td><td style="text-align:right;font-family:var(--mono)">$${dayTotal.toFixed(4)}</td></tr>`;
+    }).join('');
+
+    const modelRows = Object.entries(byModel)
+      .sort((a, b) => b[1] - a[1])
+      .map(([m, cost]) => `<tr><td>${m}</td><td style="text-align:right;font-family:var(--mono)">$${cost.toFixed(4)}</td></tr>`)
+      .join('');
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+        <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px">
+          <div style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Total (${days}d)</div>
+          <div style="font-size:24px;font-weight:300;color:var(--text);font-family:var(--serif)">$${grandTotal.toFixed(4)}</div>
+        </div>
+        <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px">
+          <div style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Avg / day</div>
+          <div style="font-size:24px;font-weight:300;color:var(--text);font-family:var(--serif)">$${(grandTotal / days).toFixed(4)}</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div>
+          <div style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">By model</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr>
+              <th style="text-align:left;padding:4px 6px;border-bottom:0.5px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0.5px">Model</th>
+              <th style="text-align:right;padding:4px 6px;border-bottom:0.5px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0.5px">Cost (USD)</th>
+            </tr></thead>
+            <tbody>${modelRows}</tbody>
+          </table>
+        </div>
+        <div>
+          <div style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Daily breakdown</div>
+          <div style="max-height:280px;overflow-y:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead><tr>
+                <th style="text-align:left;padding:4px 6px;border-bottom:0.5px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0.5px">Date</th>
+                <th style="text-align:right;padding:4px 6px;border-bottom:0.5px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0.5px">Cost (USD)</th>
+              </tr></thead>
+              <tbody>${dailyRows}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3)">Source: Anthropic Admin API · amounts in USD</div>`;
+  } catch (e) {
+    el.innerHTML = `<span style="color:var(--danger-text)">Failed to load: ${e.message}</span>`;
+  }
 }
 
 // ── Admin: Community notes review ─────────────────────────────────────────
