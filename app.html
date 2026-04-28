@@ -1593,8 +1593,13 @@ function togglePin(tripId, ev) {
     btn.title = newPinned ? 'Unsave' : 'Save';
   }
   if (currentUser) {
-    sb.from('trips').upsert({id:tripId, user_id:currentUser.id, data:trips[idx], updated_at:new Date().toISOString()},{onConflict:'id'})
-      .catch(e => console.warn('Pin sync:', e.message));
+    (async () => {
+      const { error } = await sb.from('trips').upsert(
+        { id: tripId, user_id: currentUser.id, data: trips[idx], updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      );
+      if (error) console.warn('Pin sync:', error.message);
+    })();
   }
   renderMyTripsPanel();
 }
