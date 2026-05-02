@@ -173,8 +173,8 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
     nav{ padding:10px 14px; position:fixed; top:0; left:0; right:0; z-index:960; }
     /* Push content below the fixed nav (~54px tall on mobile) */
     .container{ padding:calc(54px + 0.75rem) 0.9rem 1.25rem; }
-    .nav-utils .nav-link{ display:none; }
-    .nav-utils select#currSel{ display:none; }
+    /* Hide all nav utilities — bottom tabbar + Profile tab handle everything */
+    .nav-utils{ display:none; }
     /* Panels inside .container get extra side/bottom padding on mobile */
     #record, #profile, #mytrips{ padding:0 0.9rem 1.5rem; }
     /* Search form: wrap rows so Budget+Pace/From+To don't overflow */
@@ -240,6 +240,21 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
     .prof-grid-2r { grid-template-columns:1fr; }
     .prof-grid-3 { grid-template-columns:repeat(2,1fr); }
     .prof-form-grid { grid-template-columns:1fr; }
+  }
+
+  /* ── Mobile collapsible section cards ─────────────────── */
+  /* Desktop: header hidden, sections always expanded, layout unchanged */
+  .mc-header{ display:none; }
+  .mc-toggle{ background:none;border:none;cursor:pointer;color:var(--text3);display:flex;align-items:center;padding:0;flex-shrink:0; }
+  .mc-toggle i{ font-size:14px;transition:transform .25s; }
+  @media(max-width:700px){
+    .mc-header{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:8px 2px; margin-bottom:8px; cursor:pointer; user-select:none;
+    }
+    .mc-header-label{ font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3); }
+    .mc-wrap.mc-is-collapsed .mc-toggle i{ transform:rotate(-90deg); }
+    .mc-wrap.mc-is-collapsed .mc-body{ display:none; }
   }
   @keyframes fadeIn { from {opacity:0; transform: translateY(5px);} to {opacity:1; transform: translateY(0);} }
   .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.2rem;box-shadow: var(--shadow);}
@@ -3998,6 +4013,12 @@ function toggleLegExpand(i) {
   renderSegs();
 }
 
+function toggleMobileCard(btn) {
+  const wrap = btn.closest('.mc-wrap');
+  if (!wrap) return;
+  wrap.classList.toggle('mc-is-collapsed');
+}
+
 // ── Contrib block / card renderers ───────────────────────────────────
 function renderContribCard(note, compact, legKey) {
   const k   = CONTRIB_KINDS[note.kind] || CONTRIB_KINDS.tip;
@@ -4638,6 +4659,12 @@ async function renderProfilePanel() {
   </div>
 
   <!-- ── 4-stat row ───────────────────────────────────── -->
+  <div class="mc-wrap">
+    <div class="mc-header" onclick="this.querySelector('button').click()">
+      <span class="mc-header-label">Activity</span>
+      <button class="mc-toggle" onclick="event.stopPropagation();toggleMobileCard(this)"><i class="ph ph-caret-down"></i></button>
+    </div>
+    <div class="mc-body">
   <div class="prof-grid-4">
     ${[
       ['Notes posted', totalNotes,              'across '+legKeys.length+' legs'],
@@ -4651,8 +4678,16 @@ async function renderProfilePanel() {
         <div style="font-size:11px;color:var(--text3);margin-top:4px">${sub}</div>
       </div>`).join('')}
   </div>
+    </div>
+  </div>
 
   <!-- ── Karma breakdown + Badges ─────────────────────── -->
+  <div class="mc-wrap">
+    <div class="mc-header" onclick="this.querySelector('button').click()">
+      <span class="mc-header-label">Karma &amp; Badges</span>
+      <button class="mc-toggle" onclick="event.stopPropagation();toggleMobileCard(this)"><i class="ph ph-caret-down"></i></button>
+    </div>
+    <div class="mc-body">
   <div class="prof-grid-2">
 
     <!-- Karma breakdown -->
@@ -4688,8 +4723,16 @@ async function renderProfilePanel() {
       </div>
     </div>
   </div>
+    </div>
+  </div>
 
   <!-- ── Contribution mix (donut) + Recent notes ───────── -->
+  <div class="mc-wrap">
+    <div class="mc-header" onclick="this.querySelector('button').click()">
+      <span class="mc-header-label">Contributions</span>
+      <button class="mc-toggle" onclick="event.stopPropagation();toggleMobileCard(this)"><i class="ph ph-caret-down"></i></button>
+    </div>
+    <div class="mc-body">
   <div class="prof-grid-2r">
 
     <!-- Donut -->
@@ -4740,9 +4783,17 @@ async function renderProfilePanel() {
       }
     </div>
   </div>
+    </div>
+  </div>
 
   <!-- ── Trips strip ───────────────────────────────────── -->
-  <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;margin-bottom:16px">
+  <div class="mc-wrap">
+    <div class="mc-header" onclick="this.querySelector('button').click()">
+      <span class="mc-header-label">Trips</span>
+      <button class="mc-toggle" onclick="event.stopPropagation();toggleMobileCard(this)"><i class="ph ph-caret-down"></i></button>
+    </div>
+    <div class="mc-body">
+  <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;margin-bottom:0">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">Trips · ${trips.length} total</div>
       <span style="font-size:11px;color:var(--fern);cursor:pointer" onclick="switchTab('mytrips',document.getElementById('navbtn_mytrips'))">Open My Trips →</span>
@@ -4766,9 +4817,17 @@ async function renderProfilePanel() {
           }).join('')}
         </div>`}
   </div>
+    </div>
+  </div>
 
   <!-- ── Account settings ──────────────────────────────── -->
-  <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;margin-bottom:16px">
+  <div class="mc-wrap">
+    <div class="mc-header" onclick="this.querySelector('button').click()">
+      <span class="mc-header-label">Account settings</span>
+      <button class="mc-toggle" onclick="event.stopPropagation();toggleMobileCard(this)"><i class="ph ph-caret-down"></i></button>
+    </div>
+    <div class="mc-body">
+  <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;margin-bottom:0">
     <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:14px">Account settings</div>
     <div class="prof-form-grid">
       <div>
@@ -4795,11 +4854,11 @@ async function renderProfilePanel() {
       <span id="profSaveStatus" style="font-size:12px;color:var(--text3)"></span>
     </div>
   </div>
+    </div>
+  </div>
 
   <!-- ── Settings row ─────────────────────────────────── -->
   <div style="display:flex;gap:12px;font-size:12px;color:var(--text3);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:12px 0 24px;border-top:0.5px solid var(--border);flex-wrap:wrap">
-    <span style="color:var(--fern);cursor:pointer" onclick="document.getElementById('prof-settings-section').scrollIntoView({behavior:'smooth'})">Account settings</span>
-    <span>·</span>
     <span style="color:var(--fern);cursor:pointer" onclick="exportTrip()">Export data</span>
     <span style="flex:1"></span>
     <span style="color:var(--rust);cursor:pointer" onclick="signOut()">Sign out</span>
