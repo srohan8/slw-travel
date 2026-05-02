@@ -3794,7 +3794,7 @@ function renderLeg(i) {
   // Elevation profile — lazy-loaded; empty div is filled by _loadPendingElevations()
   const _ea = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
   const elevRow = leg.mode !== 'ferry' && fromCity && toCity
-    ? `<div id="elev_${i}" class="leg-elev-row" data-from="${_ea(fromCity)}" data-to="${_ea(toCity)}"></div>`
+    ? `<div id="elev_${i}" class="leg-elev-row" data-from="${_ea(fromCity)}" data-to="${_ea(toCity)}" data-mode="${leg.mode||''}"></div>`
     : '';
 
   // Stay section — collapsible sub-panel
@@ -4980,21 +4980,56 @@ async function _drainElevQueue() {
   _elevRunning = false;
 }
 
+// OSRM profile for each mode (road-matched geometry).
+// Modes not listed here fall back to straight-line interpolation.
+const _ELEV_OSRM_PROFILE = {
+  bus: 'driving', car: 'driving', taxi: 'driving', 'shared taxi': 'driving',
+  hitchhike: 'driving', motorbike: 'driving', cycle: 'cycling', walk: 'foot',
+};
+
 // Called after renderSegs() — finds all empty elevation divs and queues fetches
 function _loadPendingElevations() {
   document.querySelectorAll('.leg-elev-row').forEach(div => {
     if (div.innerHTML.trim()) return; // already rendered or loading
     const from = div.dataset.from;
     const to   = div.dataset.to;
+    const mode = div.dataset.mode || '';
     if (!from || !to) return;
-    const id = div.id;
-    // Mark as queued so re-renders don't double-enqueue
     div.innerHTML = '<!-- queued -->';
-    _enqueueElev(() => _fetchAndRenderElevation(id, from, to));
+    _enqueueElev(() => _fetchAndRenderElevation(div.id, from, to, mode));
   });
 }
 
-async function _fetchAndRenderElevation(divId, fromCity, toCity) {
+// Interpolate N evenly-spaced points along an OSRM GeoJSON polyline [[lon,lat],...]
+function _samplePolyline(coords, n) {
+  if (!coords?.length) return [];
+  if (coords.length <= n) return coords.map(([lon, lat]) => ({ lat, lon }));
+  const hkm = (a, b) => {
+    const R = 6371, φ1 = a[1]*Math.PI/180, φ2 = b[1]*Math.PI/180;
+    const dφ = (b[1]-a[1])*Math.PI/180, dλ = (b[0]-a[0])*Math.PI/180;
+    const s = Math.sin(dφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+  };
+  const cum = [0];
+  for (let i = 1; i < coords.length; i++) cum.push(cum[i-1] + hkm(coords[i-1], coords[i]));
+  const total = cum[cum.length - 1];
+  const result = [];
+  for (let k = 0; k < n; k++) {
+    const target = (k / (n - 1)) * total;
+    let j = cum.findIndex(d => d >= target);
+    if (j <= 0) { result.push({ lat: coords[0][1], lon: coords[0][0] }); continue; }
+    if (j >= coords.length) j = coords.length - 1;
+    const seg = cum[j] - cum[j-1];
+    const t   = seg > 0 ? (target - cum[j-1]) / seg : 0;
+    result.push({
+      lat: coords[j-1][1] + (coords[j][1]   - coords[j-1][1]) * t,
+      lon: coords[j-1][0] + (coords[j][0]   - coords[j-1][0]) * t,
+    });
+  }
+  return result;
+}
+
+async function _fetchAndRenderElevation(divId, fromCity, toCity, mode) {
   const div = document.getElementById(divId);
   if (!div) return; // leg collapsed / re-rendered away
 
@@ -5002,30 +5037,48 @@ async function _fetchAndRenderElevation(divId, fromCity, toCity) {
   const [c1, c2] = await Promise.all([geocodeStop(fromCity), geocodeStop(toCity)]);
   if (!c1 || !c2) { div.innerHTML = ''; return; }
 
-  // 2. Check elevation cache
-  const cKey = `elev:${c1.lat.toFixed(4)},${c1.lon.toFixed(4)}:${c2.lat.toFixed(4)},${c2.lon.toFixed(4)}`;
+  // 2. Determine routing profile & cache key
+  const profile = _ELEV_OSRM_PROFILE[mode] || null; // null → straight-line
+  const cKey    = `elev:${profile||'sl'}:${c1.lat.toFixed(4)},${c1.lon.toFixed(4)}:${c2.lat.toFixed(4)},${c2.lon.toFixed(4)}`;
+
   if (_geoCache[cKey]?.elevs) {
     const freshDiv = document.getElementById(divId);
     if (freshDiv) _renderElevRow(freshDiv, _geoCache[cKey].elevs, divId);
     return;
   }
 
-  // 3. Interpolate 20 points along the straight-line path
-  const N = 20;
-  const pts = Array.from({ length: N }, (_, j) => {
-    const t   = j / (N - 1);
-    return `${(c1.lat + (c2.lat - c1.lat) * t).toFixed(5)},${(c1.lon + (c2.lon - c1.lon) * t).toFixed(5)}`;
-  });
+  // 3. Get sample points — road geometry (OSRM) or straight-line fallback
+  let samplePts = null;
+  if (profile) {
+    try {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/${profile}/${c1.lon.toFixed(5)},${c1.lat.toFixed(5)};${c2.lon.toFixed(5)},${c2.lat.toFixed(5)}?overview=full&geometries=geojson`;
+      const r = await fetch(osrmUrl);
+      if (r.ok) {
+        const rj = await r.json();
+        const coords = rj.routes?.[0]?.geometry?.coordinates; // [[lon,lat],...]
+        if (coords?.length >= 2) samplePts = _samplePolyline(coords, 30);
+      }
+    } catch(e) { /* fall through to straight-line */ }
+  }
+  if (!samplePts) {
+    // Straight-line: train, flight, or OSRM unavailable
+    const N = 20;
+    samplePts = Array.from({ length: N }, (_, j) => {
+      const t = j / (N - 1);
+      return { lat: c1.lat + (c2.lat - c1.lat) * t, lon: c1.lon + (c2.lon - c1.lon) * t };
+    });
+  }
 
-  // 4. Fetch from Open-Topo-Data
+  // 4. Fetch elevations from Open-Topo-Data
   try {
-    const res  = await fetch(`https://api.opentopodata.org/v1/srtm90m?locations=${pts.join('|')}`);
+    const locs = samplePts.map(p => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`).join('|');
+    const res  = await fetch(`https://api.opentopodata.org/v1/srtm90m?locations=${locs}`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
     const elevs = (json.results || []).map(r => r.elevation ?? null).filter(e => e !== null);
     if (elevs.length < 2) throw new Error('no data');
 
-    // Cache permanently (elevation doesn't change)
+    // Cache permanently (elevation is static)
     _geoCache[cKey] = { elevs, ts: Date.now() };
     try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch(e) {}
 
@@ -5572,7 +5625,17 @@ Schema:
 
 Rules:
 - Keep stop names EXACTLY as given. Add country suffix only if clearly missing (e.g. "Bangkok" → "Bangkok, Thailand").
-- km/hours/cost_usd: estimate realistically if 0; keep existing value if non-zero.
+- km/hours/cost_usd: estimate realistically if 0; keep existing value if non-zero. km should reflect actual road/rail distance, not straight-line.
+- mode: keep exactly as given unless it is clearly wrong (e.g. "bus" for a transoceanic leg). Do NOT change mode just because a different transport exists.
+- booking_sites: choose platforms appropriate for that mode AND region:
+  • bus → Busbud, FlixBus (Europe), 12go.asia (SE Asia), RedBus (South/SE Asia), Distribuidora (LatAm), etc.
+  • train → Omio, Rail Europe, 12go.asia (Asia), IRCTC (India), etc.
+  • flight → Google Flights, Skyscanner, Kiwi.com
+  • shared taxi / hitchhike → BlaBlaCar (Europe/LatAm), or info_sites with local carpooling resources
+  • ferry → Direct operator sites (e.g. Stena Line, DFDS), Rome2Rio
+  • cycle / walk / motorbike → empty array (no booking needed)
+  • car → none (own vehicle); or rental sites (Rentalcars.com, Sixt) if context implies rental
+- info_sites: research/info sites when booking_sites is empty (e.g. Seat61 for trains, WikiVoyage)
 - confidence: "verified"=well-documented regular service; "check"=verify before booking; "uncertain"=unsure.
 - conflict: only include if leg actually passes through a conflict/advisory zone; otherwise null.
 - accom_sites: only platforms that work for that city/region.
