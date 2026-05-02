@@ -827,6 +827,7 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
     <div class="segs" id="segs"></div>
     <div class="add-row"><button class="add-b" onclick="addStop()">+ Add stop</button></div>
     <div style="margin-top:1.25rem"><div class="sec-lbl">Timeline</div><div class="tl-track" id="tl"></div></div>
+    <div id="plannerElev" style="margin-top:8px"></div>
     <hr class="divider"/>
     <div class="sec-lbl">Notes</div>
     <textarea class="noteinp" id="tripNotes" placeholder="Visas, border crossings, tips, contacts..."></textarea>
@@ -1948,6 +1949,8 @@ function renderTripViewPanel(trip, el) {
 
   ${legsHtml ? '<div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:10px">Legs</div><div class="tv-legs-list">' + legsHtml + '</div>' : ''}
 
+  <div id="tvElev_${trip.id}" style="margin:12px 0 4px"></div>
+
   <div style="margin-top:1.5rem">
     <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:8px">Notes</div>
     <textarea id="tvNotes" rows="4" placeholder="Add trip notes, reminders, visa tips…" style="width:100%;font-size:14px;color:var(--text2);line-height:1.65;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-family:var(--body);resize:vertical;outline:none;transition:border-color .2s">${trip.notes||''}</textarea>
@@ -1967,6 +1970,8 @@ function renderTripViewPanel(trip, el) {
       <button class="btn" style="font-size:11px;padding:5px 12px;color:var(--rust);border-color:rgba(196,98,45,0.3)" onclick="deleteTrip('${trip.id}')">Delete trip</button>
     </div>
   </div>`;
+  // Elevation profile — async, fires after innerHTML is set
+  if ((trip.stops?.length || 0) >= 2) renderTripElevation(trip.stops, trip.legs || [], 'tvElev_' + trip.id);
 }
 
 function saveTripViewNotes(tripId) {
@@ -3480,6 +3485,7 @@ function renderPlanSuggestion(d, fromCache = false) {
   }
   h += `<p style="color:var(--text);margin-bottom:10px">${d.summary}</p>`;
   if (d.warnings?.length) { d.warnings.forEach(w => { h += `<span class="warn-badge">${w}</span><br>`; }); h += '<br>'; }
+  h += `<div id="planElev" style="margin:4px 0 12px"></div>`;
   d.legs.forEach((leg, i) => {
     const ns = d.stops[i + 1];
     const iconCls    = MODE_ICONS[leg.mode] || 'ph-path';
@@ -3526,6 +3532,8 @@ function renderPlanSuggestion(d, fromCache = false) {
   <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="adoptRoute()">Add to my trip planner →</button>
 </div>`;
   document.getElementById('planResult').innerHTML = h;
+  // Full-route elevation strip below the summary
+  if ((d.stops?.length || 0) >= 2) renderTripElevation(d.stops, d.legs || [], 'planElev');
 }
 
 function adoptRoute() {
@@ -3673,6 +3681,15 @@ function render() {
   renderTripDefaultModePicker();
   schedulePlannerMapUpdate();
   if (lastSuggestion) renderPlanSuggestion(lastSuggestion, lastSuggestion._from_cache || false);
+  // Full-route elevation strip below the timeline (debounced — only fires after stops settle)
+  if (stops.filter(s => s.name).length >= 2) schedulePlannerElevUpdate();
+  else { const pe = document.getElementById('plannerElev'); if (pe) pe.innerHTML = ''; }
+}
+
+let _plannerElevTimer = null;
+function schedulePlannerElevUpdate() {
+  clearTimeout(_plannerElevTimer);
+  _plannerElevTimer = setTimeout(() => renderTripElevation(stops, legs, 'plannerElev'), 1200);
 }
 
 function renderSegs() {
@@ -5130,6 +5147,160 @@ function _renderElevRow(div, elevs, divId) {
       <path d="${pathD}" fill="url(#${gid})" stroke="var(--fern)" stroke-width="1.2" stroke-linejoin="round"/>
     </svg>
     <div class="leg-elev-stats">${stats}</div>`;
+}
+
+// ── Full-route elevation profile (planner strip / trip view / route suggestion) ──
+// One continuous SVG spanning all legs, with stop markers and gain/loss stats.
+// Uses the same OSRM road-matching + Open-Topo-Data pipeline as per-leg profiles.
+
+async function renderTripElevation(stopsArr, legsArr, elId) {
+  const el = document.getElementById(elId);
+  if (!el || stopsArr.length < 2 || !legsArr.length) { if (el) el.innerHTML = ''; return; }
+
+  // Skip re-render if stops haven't changed and we already have an SVG
+  const stopHash = stopsArr.map(s => s.name).filter(Boolean).join('|');
+  if (!stopHash) { el.innerHTML = ''; return; }
+  if (el.dataset.stopsHash === stopHash && el.querySelector('svg')) return;
+  el.dataset.stopsHash = stopHash;
+
+  el.innerHTML = `<div style="font-size:9px;color:var(--text3);font-family:var(--mono);padding:3px 0;letter-spacing:0.5px">LOADING ELEVATION…</div>`;
+
+  // 1. Geocode all stops (parallel — instant from cache)
+  const coords = await Promise.all(stopsArr.map(s => geocodeStop(s.name || '')));
+
+  // 2. Get sample points per leg (road-matched or straight-line)
+  const ptsPerLeg = Math.max(5, Math.min(15, Math.floor(90 / legsArr.length)));
+  const allPts  = [];   // {lat, lon}
+  const stopIdxs = [0]; // index in allPts where each stop falls
+
+  for (let i = 0; i < legsArr.length; i++) {
+    const c1 = coords[i], c2 = coords[i + 1];
+    if (!c1 || !c2) { stopIdxs.push(allPts.length || 0); continue; }
+
+    const mode    = legsArr[i]?.mode || '';
+    const profile = _ELEV_OSRM_PROFILE[mode] || null;
+    let pts = null;
+
+    if (profile) {
+      try {
+        const r = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${c1.lon.toFixed(5)},${c1.lat.toFixed(5)};${c2.lon.toFixed(5)},${c2.lat.toFixed(5)}?overview=full&geometries=geojson`);
+        if (r.ok) {
+          const rj = await r.json();
+          const rc = rj.routes?.[0]?.geometry?.coordinates;
+          if (rc?.length >= 2) pts = _samplePolyline(rc, ptsPerLeg);
+        }
+      } catch(e) { /* fall through */ }
+    }
+    if (!pts) {
+      pts = Array.from({ length: ptsPerLeg }, (_, j) => {
+        const t = j / (ptsPerLeg - 1);
+        return { lat: c1.lat + (c2.lat - c1.lat) * t, lon: c1.lon + (c2.lon - c1.lon) * t };
+      });
+    }
+
+    // Stitch — skip first pt of each leg after the first (= last pt of previous leg)
+    const startIdx = allPts.length === 0 ? 0 : 1;
+    allPts.push(...pts.slice(startIdx));
+    stopIdxs.push(allPts.length - 1);
+
+    if (i < legsArr.length - 1) await new Promise(r => setTimeout(r, 180)); // throttle OSRM ~5 req/s
+  }
+
+  if (allPts.length < 2) { const fe = document.getElementById(elId); if (fe) fe.innerHTML = ''; return; }
+
+  // 3. Fetch all elevations in one request (cap at 100 pts)
+  const pts100 = allPts.slice(0, 100);
+  const locs   = pts100.map(p => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`).join('|');
+  let elevs = [];
+  try {
+    const res  = await fetch(`https://api.opentopodata.org/v1/srtm90m?locations=${locs}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    elevs = (json.results || []).map(r => r.elevation ?? null);
+  } catch(e) {
+    const fe = document.getElementById(elId);
+    if (fe) fe.innerHTML = '';
+    return;
+  }
+
+  const freshEl = document.getElementById(elId);
+  if (!freshEl || freshEl.dataset.stopsHash !== stopHash) return; // navigated away
+  _renderFullElevSVG(freshEl, elevs, stopIdxs, stopsArr, elId);
+}
+
+function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
+  const valid = elevs.map(e => (typeof e === 'number' && isFinite(e)) ? e : null);
+  const defined = valid.filter(e => e !== null);
+  if (defined.length < 2) { el.innerHTML = ''; return; }
+
+  const minE  = Math.min(...defined);
+  const maxE  = Math.max(...defined);
+  const range = maxE - minE;
+  if (range < 20) { el.innerHTML = ''; return; }
+
+  const W = 600, H = 56, pad = 3, labelH = 14;
+  const plotH = H - labelH;
+  const n     = valid.length;
+
+  // Build separate path segments for null gaps
+  const segments = [];
+  let cur = [];
+  valid.forEach((e, j) => {
+    if (e === null) { if (cur.length >= 2) segments.push(cur); cur = []; return; }
+    const x = pad + (j / (n - 1)) * (W - 2 * pad);
+    const y = pad + (1 - (e - minE) / range) * (plotH - 2 * pad);
+    cur.push([x.toFixed(1), y.toFixed(1)]);
+  });
+  if (cur.length >= 2) segments.push(cur);
+
+  const fillPath = segments.map(seg =>
+    seg.map(([x,y], k) => `${k===0?'M':'L'}${x},${y}`).join(' ')
+    + ` L${seg[seg.length-1][0]},${plotH-pad} L${seg[0][0]},${plotH-pad} Z`
+  ).join(' ');
+
+  const linePath = segments.map(seg =>
+    seg.map(([x,y], k) => `${k===0?'M':'L'}${x},${y}`).join(' ')
+  ).join(' ');
+
+  // Stop markers + city-name labels
+  const markers = stopIdxs.map((si, k) => {
+    if (si >= valid.length) return '';
+    const e = valid[Math.min(si, valid.length - 1)];
+    const x = (pad + (Math.min(si, n-1) / (n-1)) * (W - 2 * pad)).toFixed(1);
+    const y = e !== null
+      ? (pad + (1 - (e - minE) / range) * (plotH - 2 * pad)).toFixed(1)
+      : (plotH / 2).toFixed(1);
+    const name = (stopsArr[k]?.name || '').split(',')[0].trim();
+    return `<line x1="${x}" y1="${y}" x2="${x}" y2="${plotH - pad}" stroke="var(--border2)" stroke-width="0.8" stroke-dasharray="2,2"/>
+      <circle cx="${x}" cy="${y}" r="2" fill="var(--fern)" opacity="0.7"/>
+      <text x="${x}" y="${H - 2}" text-anchor="middle" font-size="7.5" font-family="var(--mono)" fill="var(--text3)">${name}</text>`;
+  }).join('');
+
+  // Gain / loss stats
+  let gain = 0, loss = 0;
+  for (let j = 1; j < valid.length; j++) {
+    if (valid[j] === null || valid[j-1] === null) continue;
+    const d = valid[j] - valid[j-1];
+    if (d > 0) gain += d; else loss -= d;
+  }
+  const stats = [
+    gain > 10  ? `↑ ${Math.round(gain).toLocaleString()} m` : '',
+    loss > 10  ? `↓ ${Math.round(loss).toLocaleString()} m` : '',
+    maxE > 100 ? `max ${Math.round(maxE).toLocaleString()} m` : '',
+  ].filter(Boolean).join(' · ');
+
+  const gid = 'feg' + (elId || '').replace(/\D/g, '');
+  el.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:64px;display:block" preserveAspectRatio="none" aria-hidden="true">
+      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--fern)" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="var(--fern)" stop-opacity="0.03"/>
+      </linearGradient></defs>
+      <path d="${fillPath}" fill="url(#${gid})"/>
+      <path d="${linePath}" fill="none" stroke="var(--fern)" stroke-width="1.2" stroke-linejoin="round"/>
+      ${markers}
+    </svg>
+    ${stats ? `<div class="leg-elev-stats" style="margin-top:1px">${stats}<span style="margin-left:auto;opacity:0.5;font-size:9px">SRTM 90m</span></div>` : ''}`;
 }
 
 function schedulePlannerMapUpdate() {
