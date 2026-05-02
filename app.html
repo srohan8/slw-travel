@@ -780,6 +780,7 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
       <button class="back-btn" id="tripEditBack" style="display:none" onclick="returnToTripView()">← Back to trip</button>
       <div class="save-trip-row">
         <input class="trip-title" placeholder="Name your trip..." id="tripTitle" title="Click to rename" style="flex:1"/>
+        <button id="btnAIRefine" class="btn pmw-noprint" style="display:none;font-size:11px;padding:5px 12px;background:var(--bg2);color:var(--text2);border:0.5px solid var(--border2)" onclick="refineWithAI()" title="Ask AI to fill in missing route details (booking sites, km, hours, costs)"><i class="ph ph-sparkle"></i> AI Refine</button>
         <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
         <span class="save-status" id="saveStatus"></span>
       </div>
@@ -788,6 +789,10 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
         <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0">Default transport</span>
         <div id="tripDefaultModePicker" style="display:flex;flex-wrap:wrap;gap:4px"></div>
         <span style="flex:1"></span>
+        <label class="import-gpx-btn pmw-noprint" title="Import stops from a .csv file">
+          <i class="ph ph-table"></i> Import CSV
+          <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none" onchange="importCSVFile(this)">
+        </label>
         <label class="import-gpx-btn pmw-noprint" title="Import stops from a .gpx file">
           <i class="ph ph-upload-simple"></i> Import GPX
           <input type="file" id="gpxFileInput" accept=".gpx,application/gpx+xml" style="display:none" onchange="importGPXFile(this)">
@@ -5177,6 +5182,9 @@ function renderTripDefaultModePicker() {
       <i class="ph ${icon}" style="font-size:12px"></i>${label}
     </button>`;
   }).join('');
+  // Show AI Refine button only when there's at least one named stop
+  const refineBtn = document.getElementById('btnAIRefine');
+  if (refineBtn) refineBtn.style.display = stops.some(s => s.name) ? '' : 'none';
 }
 function addStop() {
   stops.push({ name: '', date: '', days: 0 });
@@ -5313,6 +5321,166 @@ ${rtepts}
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ── CSV Import ────────────────────────────────────────────────────
+function importCSVFile(input) {
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  const hasData = stops.some(s => s.name) || currentTripId;
+  if (hasData && !confirm('Replace current trip data with the imported CSV?')) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try { _parseAndApplyCSV(e.target.result, file.name); }
+    catch(err) { alert('Could not parse CSV file: ' + err.message); }
+  };
+  reader.readAsText(file);
+}
+
+function _parseAndApplyCSV(csvText, filename) {
+  const lines = csvText.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) { alert('CSV file is empty.'); return; }
+
+  // Parse one CSV row, handles quoted fields containing commas
+  const parseRow = row => {
+    const fields = []; let cur = '', inQ = false;
+    for (const ch of row + ',') {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { fields.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    return fields;
+  };
+
+  // Detect header row by checking if first row contains recognisable column names
+  const KNOWN = /^(stop|name|city|destination|days|nights|mode|transport|km|distance|cost|price|hours|duration|notes?|tip)$/i;
+  const firstRow = parseRow(lines[0]);
+  const hasHeader = firstRow.some(f => KNOWN.test(f.trim()));
+  const header = hasHeader ? firstRow.map(f => f.toLowerCase().trim()) : null;
+  const dataRows = lines.slice(hasHeader ? 1 : 0);
+
+  // Get a cell value by column name (with aliases), or positional fallback
+  const POS = { stop:0, days:1, mode:2, km:3, cost:4, hours:5, notes:6 };
+  const col = (row, ...names) => {
+    if (header) {
+      for (const n of names) {
+        const i = header.findIndex(h => h === n || h.startsWith(n));
+        if (i >= 0) return row[i] || '';
+      }
+      return '';
+    }
+    for (const n of names) { if (POS[n] !== undefined) return row[POS[n]] || ''; }
+    return '';
+  };
+
+  const newStops = [], newLegs = [];
+  dataRows.forEach((line, i) => {
+    const row = parseRow(line);
+    const name = col(row, 'stop', 'name', 'city', 'destination').trim();
+    if (!name) return;
+    const days = parseInt(col(row, 'days', 'nights')) || 0;
+    newStops.push({ name, date: '', days, accomSites: [], accomNote: '' });
+    // Build leg from this stop to the next (last stop has no leg)
+    if (i < dataRows.length - 1) {
+      const mode  = (col(row, 'mode', 'transport') || tripDefaultMode || 'bus').toLowerCase().trim();
+      const km    = parseFloat(col(row, 'km', 'distance'))  || 0;
+      const cost  = parseFloat(col(row, 'cost', 'price'))   || 0;
+      const hours = parseFloat(col(row, 'hours', 'duration'))|| 0;
+      const notes = col(row, 'notes', 'note', 'tip') || '';
+      newLegs.push({ mode, cost, km, hours, notes, booked: false, bookingRef: '', bookingUrl: '',
+        bookingSites: [], infoSites: [], legRegion: '', confidence: 'uncertain', conflict: null });
+    }
+  });
+
+  if (!newStops.length) { alert('No stops found in CSV. Make sure a column is named "stop", "name", or "city".'); return; }
+
+  // Apply — same pattern as _parseAndApplyGPX
+  stops = newStops; legs = newLegs;
+  currentTripId = null; tripSummary = ''; tripWarnings = []; lastSuggestion = null;
+  editingLegModes.clear(); expandedLegs.clear();
+  const titleEl = document.getElementById('tripTitle');
+  if (titleEl && !titleEl.value) titleEl.value = filename.replace(/\.csv$/i, '').replace(/[-_]+/g, ' ').trim();
+  _tripDirty = true;
+  switchTab('record', document.getElementById('navbtn_record'));
+  updateActiveTripBar();
+  render();
+  const st = document.getElementById('saveStatus');
+  if (st) { st.textContent = `Imported ${newStops.length} stops from CSV`; setTimeout(() => st.textContent = '', 3000); }
+}
+
+// ── AI Refine ─────────────────────────────────────────────────────
+// Sends the current plan (stops + legs) to Claude and merges back
+// the enriched details: booking sites, accom notes, km, hours, costs,
+// confidence flags, etc. Works on any trip — manually typed, CSV/GPX
+// imported, or AI-generated. Only fills in *missing* (zero/empty) values
+// so the user's existing data is never overwritten.
+async function refineWithAI() {
+  if (!stops.some(s => s.name)) return;
+  const btn = document.getElementById('btnAIRefine');
+  const st  = document.getElementById('saveStatus');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite"></i> Refining…'; }
+  if (st) st.textContent = 'Asking AI to enhance your trip…';
+
+  const stopsJson = JSON.stringify(stops.map(s => ({ name: s.name, days: s.days || 0 })));
+  const legsJson  = JSON.stringify(legs.map(l => ({
+    mode: l.mode || tripDefaultMode, km: l.km || 0, hours: l.hours || 0, cost: l.cost || 0, notes: l.notes || ''
+  })));
+
+  const prompt = `You are an expert overland travel planner. A user has a trip plan and wants you to enhance it with practical details.
+
+Current stops: ${stopsJson}
+Current legs: ${legsJson}
+
+Return a JSON object with EXACTLY the same number of stops and legs in the same order. Fill in missing/zero values and add platform recommendations.
+
+Schema:
+{"summary":"2-3 sentence overview","warnings":["max 2 key warnings"],"stops":[{"name":"City, Country","days":N,"accom_sites":["Booking.com","Hostelworld"],"accom_note":"practical one-liner"}],"legs":[{"mode":"bus","km":N,"hours":N,"cost_usd":N,"notes":"practical tip","booking_sites":["Busbud"],"info_sites":[],"leg_region":"Southeast Asia","confidence":"verified","conflict":null}]}
+
+Rules:
+- Keep stop names EXACTLY as given. Add country suffix only if clearly missing (e.g. "Bangkok" → "Bangkok, Thailand").
+- km/hours/cost_usd: estimate realistically if 0; keep existing value if non-zero.
+- confidence: "verified"=well-documented regular service; "check"=verify before booking; "uncertain"=unsure.
+- conflict: only include if leg actually passes through a conflict/advisory zone; otherwise null.
+- accom_sites: only platforms that work for that city/region.
+- Respond with ONLY the raw JSON object. No markdown, no preamble.`;
+
+  try {
+    const d = await callAI(prompt, 6000);
+
+    if (d.stops?.length === stops.length) {
+      d.stops.forEach((s, i) => {
+        stops[i].accomSites = s.accom_sites || [];
+        stops[i].accomNote  = s.accom_note  || '';
+        if (s.days && !stops[i].days) stops[i].days = s.days;
+      });
+    }
+    if (d.legs?.length === legs.length) {
+      d.legs.forEach((l, i) => {
+        if (!legs[i].km    && l.km)      legs[i].km    = l.km;
+        if (!legs[i].hours && l.hours)   legs[i].hours = l.hours;
+        if (!legs[i].cost  && l.cost_usd)legs[i].cost  = Math.round(l.cost_usd);
+        if (!legs[i].notes && l.notes)   legs[i].notes = l.notes;
+        // Always update AI-enriched metadata (booking sites, region, confidence)
+        legs[i].bookingSites = l.booking_sites || [];
+        legs[i].infoSites    = l.info_sites    || [];
+        legs[i].legRegion    = l.leg_region    || '';
+        legs[i].confidence   = l.confidence    || 'uncertain';
+        legs[i].conflict     = l.conflict      || null;
+        // Update mode only if the leg was still on the default (user hasn't customised it)
+        if (l.mode && legs[i].mode === (tripDefaultMode || 'bus')) legs[i].mode = l.mode;
+      });
+    }
+    if (d.summary)  tripSummary  = d.summary;
+    if (d.warnings) tripWarnings = d.warnings;
+    _tripDirty = true;
+    render();
+    if (st) { st.textContent = 'AI Refine complete ✓'; setTimeout(() => st.textContent = '', 3000); }
+  } catch(err) {
+    if (st) { st.textContent = 'AI Refine failed: ' + err.message; setTimeout(() => st.textContent = '', 5000); }
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-sparkle"></i> AI Refine'; }
+  }
 }
 
 // ── GPX Import ────────────────────────────────────────────────────
