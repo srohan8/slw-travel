@@ -474,6 +474,9 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
   .leg-expand-chevron{font-size:10px;color:var(--text3);flex-shrink:0;transition:transform 0.2s;}
   .leg-expand-chevron.open{transform:rotate(180deg);}
   .leg-detail{padding:10px 12px 12px;border-top:0.5px solid var(--border);animation:fadeIn .15s ease;}
+  .leg-elev-row{margin:2px 0 8px;}
+  .leg-elev-sparkline{display:block;width:100%;height:28px;border-radius:3px;overflow:hidden;}
+  .leg-elev-stats{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;letter-spacing:0.3px;}
 
   @media(max-width:600px){
     .booking-progress{flex-direction:column;align-items:flex-start;gap:8px;}
@@ -3714,6 +3717,7 @@ function renderSegs() {
     </div>`;
   });
   el.innerHTML = h;
+  _loadPendingElevations(); // fill elevation rows async (no-op if nothing expanded)
 }
 
 function renderLeg(i) {
@@ -3787,6 +3791,12 @@ function renderLeg(i) {
     ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites||[], leg.legRegion||'', leg.infoSites||[])
     : '';
 
+  // Elevation profile — lazy-loaded; empty div is filled by _loadPendingElevations()
+  const _ea = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+  const elevRow = leg.mode !== 'ferry' && fromCity && toCity
+    ? `<div id="elev_${i}" class="leg-elev-row" data-from="${_ea(fromCity)}" data-to="${_ea(toCity)}"></div>`
+    : '';
+
   // Stay section — collapsible sub-panel
   const stayBooked = nextStop?.accomBooked || false;
   const stayId = `stay_${i}`;
@@ -3826,6 +3836,7 @@ function renderLeg(i) {
       ${renderConfidenceBadge(leg.confidence||'uncertain')}
       ${renderConflictAlert(leg.conflict, false)}
       ${transportLinks}
+      ${elevRow}
       ${bookedSection}
       ${staySection}
       ${contribs ? `<div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">${contribs}</div>` : ''}
@@ -4944,6 +4955,128 @@ async function geocodeStop(name) {
     }
   } catch(e) { console.warn('Geocode failed:', name, e.message); }
   return null;
+}
+
+// ── Elevation profiles ────────────────────────────────────────────────────
+// Open-Topo-Data: free, CORS-enabled, SRTM 90m, no API key required.
+// Fetched lazily on first expand of a leg; results cached in _geoCache.
+// Queue throttles to ~3 req/s to be polite to the community server.
+
+const _elevQueue = [];
+let _elevRunning = false;
+
+function _enqueueElev(fn) {
+  _elevQueue.push(fn);
+  if (!_elevRunning) _drainElevQueue();
+}
+
+async function _drainElevQueue() {
+  _elevRunning = true;
+  while (_elevQueue.length) {
+    const fn = _elevQueue.shift();
+    await fn();
+    if (_elevQueue.length) await new Promise(r => setTimeout(r, 350));
+  }
+  _elevRunning = false;
+}
+
+// Called after renderSegs() — finds all empty elevation divs and queues fetches
+function _loadPendingElevations() {
+  document.querySelectorAll('.leg-elev-row').forEach(div => {
+    if (div.innerHTML.trim()) return; // already rendered or loading
+    const from = div.dataset.from;
+    const to   = div.dataset.to;
+    if (!from || !to) return;
+    const id = div.id;
+    // Mark as queued so re-renders don't double-enqueue
+    div.innerHTML = '<!-- queued -->';
+    _enqueueElev(() => _fetchAndRenderElevation(id, from, to));
+  });
+}
+
+async function _fetchAndRenderElevation(divId, fromCity, toCity) {
+  const div = document.getElementById(divId);
+  if (!div) return; // leg collapsed / re-rendered away
+
+  // 1. Geocode (instant from cache after map/first-load)
+  const [c1, c2] = await Promise.all([geocodeStop(fromCity), geocodeStop(toCity)]);
+  if (!c1 || !c2) { div.innerHTML = ''; return; }
+
+  // 2. Check elevation cache
+  const cKey = `elev:${c1.lat.toFixed(4)},${c1.lon.toFixed(4)}:${c2.lat.toFixed(4)},${c2.lon.toFixed(4)}`;
+  if (_geoCache[cKey]?.elevs) {
+    const freshDiv = document.getElementById(divId);
+    if (freshDiv) _renderElevRow(freshDiv, _geoCache[cKey].elevs, divId);
+    return;
+  }
+
+  // 3. Interpolate 20 points along the straight-line path
+  const N = 20;
+  const pts = Array.from({ length: N }, (_, j) => {
+    const t   = j / (N - 1);
+    return `${(c1.lat + (c2.lat - c1.lat) * t).toFixed(5)},${(c1.lon + (c2.lon - c1.lon) * t).toFixed(5)}`;
+  });
+
+  // 4. Fetch from Open-Topo-Data
+  try {
+    const res  = await fetch(`https://api.opentopodata.org/v1/srtm90m?locations=${pts.join('|')}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    const elevs = (json.results || []).map(r => r.elevation ?? null).filter(e => e !== null);
+    if (elevs.length < 2) throw new Error('no data');
+
+    // Cache permanently (elevation doesn't change)
+    _geoCache[cKey] = { elevs, ts: Date.now() };
+    try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch(e) {}
+
+    const freshDiv = document.getElementById(divId);
+    if (freshDiv) _renderElevRow(freshDiv, elevs, divId);
+  } catch(e) {
+    const freshDiv = document.getElementById(divId);
+    if (freshDiv) freshDiv.innerHTML = ''; // silent fail
+  }
+}
+
+function _renderElevRow(div, elevs, divId) {
+  const valid = elevs.filter(e => typeof e === 'number' && isFinite(e));
+  if (valid.length < 2) { div.innerHTML = ''; return; }
+
+  const minE  = Math.min(...valid);
+  const maxE  = Math.max(...valid);
+  const range = maxE - minE;
+
+  // Skip flat terrain (< 20m total variation) — not worth showing
+  if (range < 20) { div.innerHTML = ''; return; }
+
+  // Build SVG sparkline — filled area path
+  const W = 200, H = 28, pad = 2;
+  const xs = valid.map((_, j) => pad + (j / (valid.length - 1)) * (W - 2 * pad));
+  const ys = valid.map(e   => pad + (1 - (e - minE) / range) * (H - 2 * pad));
+  const line = xs.map((x, j) => `${j === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[j].toFixed(1)}`).join(' ');
+  const pathD = `${line} L${xs[xs.length-1].toFixed(1)},${(H-pad)} L${pad},${(H-pad)} Z`;
+  const gid   = 'eg' + (divId || '').replace(/\D/g, '');
+
+  // Compute gain / loss
+  let gain = 0, loss = 0;
+  for (let j = 1; j < valid.length; j++) {
+    const d = valid[j] - valid[j-1];
+    if (d > 0) gain += d; else loss -= d;
+  }
+  const stats = [
+    gain > 10 ? `↑ ${Math.round(gain).toLocaleString()} m` : '',
+    loss > 10 ? `↓ ${Math.round(loss).toLocaleString()} m` : '',
+    `max ${Math.round(maxE).toLocaleString()} m`,
+  ].filter(Boolean).map(s => `<span>${s}</span>`).join('');
+
+  div.innerHTML = `
+    <svg class="leg-elev-sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--fern)" stop-opacity="0.4"/>
+        <stop offset="100%" stop-color="var(--fern)" stop-opacity="0.04"/>
+      </linearGradient></defs>
+      <path d="${pathD}" fill="url(#${gid})" stroke="var(--fern)" stroke-width="1.2" stroke-linejoin="round"/>
+    </svg>
+    <div class="leg-elev-stats">${stats}</div>`;
 }
 
 function schedulePlannerMapUpdate() {
