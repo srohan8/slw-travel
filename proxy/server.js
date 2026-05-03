@@ -62,11 +62,68 @@ app.post('/api/ai', async (req, res) => {
 
     const data = await upstream.json();
     res.status(upstream.status).json(data);
+
+    // Log usage to Supabase (fire-and-forget — don't block the response)
+    if (upstream.ok && data.usage) {
+      logUsageToSupabase(data.model, data.usage).catch(e => console.warn('Usage log failed:', e.message));
+    }
   } catch (err) {
     console.error('Anthropic upstream error:', err);
     res.status(502).json({ error: { message: 'Upstream request failed: ' + err.message } });
   }
 });
 
+
+// ── GET /api/elevation — proxy to Open-Topo-Data (CORS bypass) ──────────────
+app.get('/api/elevation', async (req, res) => {
+  const { locations } = req.query;
+  if (!locations) return res.status(400).json({ error: 'locations query param required' });
+  try {
+    const upstream = await fetch(
+      `https://api.opentopodata.org/v1/srtm90m?locations=${encodeURIComponent(locations)}`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+    const data = await upstream.json();
+    // Elevation data is static — cache aggressively at CDN/browser level
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.status(upstream.status).json(data);
+  } catch (err) {
+    res.status(502).json({ error: { message: 'Elevation upstream error: ' + err.message } });
+  }
+});
+
+// ── Supabase usage logger ────────────────────────────────────────────────────
+const PRICES_PER_MTOK = { input: 3, output: 15, cache_read: 0.3, cache_write: 3.75 };
+
+async function logUsageToSupabase(model, usage) {
+  const sbUrl = process.env.SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_KEY;
+  if (!sbUrl || !sbKey) return; // env vars not set — skip silently
+
+  const cost = (
+    (usage.input_tokens                || 0) * PRICES_PER_MTOK.input       +
+    (usage.output_tokens               || 0) * PRICES_PER_MTOK.output      +
+    (usage.cache_read_input_tokens     || 0) * PRICES_PER_MTOK.cache_read  +
+    (usage.cache_creation_input_tokens || 0) * PRICES_PER_MTOK.cache_write
+  ) / 1_000_000;
+
+  await fetch(`${sbUrl}/rest/v1/api_usage_log`, {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'apikey':        sbKey,
+      'Authorization': `Bearer ${sbKey}`,
+      'Prefer':        'return=minimal',
+    },
+    body: JSON.stringify({
+      model,
+      input_tokens:                usage.input_tokens                || 0,
+      output_tokens:               usage.output_tokens               || 0,
+      cache_read_input_tokens:     usage.cache_read_input_tokens     || 0,
+      cache_creation_input_tokens: usage.cache_creation_input_tokens || 0,
+      cost_usd: cost,
+    }),
+  });
+}
 
 app.listen(PORT, () => console.log(`slw-travel-proxy listening on :${PORT}`));
