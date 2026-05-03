@@ -5263,17 +5263,35 @@ function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
   ).join(' ');
 
   // Stop markers + city-name labels
+  // Thin out labels when many stops so they don't overlap (~10 max for 600px viewBox)
+  const maxLabels = Math.max(2, Math.floor(W / 55));
+  const lblStep   = stopIdxs.length <= maxLabels
+    ? 1
+    : Math.ceil((stopIdxs.length - 2) / (maxLabels - 2));
+
   const markers = stopIdxs.map((si, k) => {
     if (si >= valid.length) return '';
-    const e = valid[Math.min(si, valid.length - 1)];
-    const x = (pad + (Math.min(si, n-1) / (n-1)) * (W - 2 * pad)).toFixed(1);
-    const y = e !== null
+    const e    = valid[Math.min(si, valid.length - 1)];
+    const xNum = pad + (Math.min(si, n-1) / (n-1)) * (W - 2 * pad);
+    const x    = xNum.toFixed(1);
+    const y    = e !== null
       ? (pad + (1 - (e - minE) / range) * (plotH - 2 * pad)).toFixed(1)
       : (plotH / 2).toFixed(1);
     const name = (stopsArr[k]?.name || '').split(',')[0].trim();
+
+    const isFirst   = k === 0;
+    const isLast    = k === stopIdxs.length - 1;
+    // Always show first + last; show intermediate stops every lblStep-th index
+    const showLabel = isFirst || isLast || (k > 0 && k < stopIdxs.length - 1 && ((k - 1) % lblStep === 0));
+    // First label: left-aligned so it doesn't clip left edge; last: right-aligned for right edge
+    const anchor    = isFirst ? 'start' : isLast ? 'end' : 'middle';
+    const textX     = isFirst ? Math.max(pad + 1, xNum).toFixed(1)
+                    : isLast  ? Math.min(W - pad - 1, xNum).toFixed(1)
+                    : x;
+
     return `<line x1="${x}" y1="${y}" x2="${x}" y2="${plotH - pad}" stroke="var(--border2)" stroke-width="0.8" stroke-dasharray="2,2"/>
       <circle cx="${x}" cy="${y}" r="2" fill="var(--fern)" opacity="0.7"/>
-      <text x="${x}" y="${H - 2}" text-anchor="middle" font-size="7.5" font-family="var(--mono)" fill="var(--text3)">${name}</text>`;
+      ${showLabel ? `<text x="${textX}" y="${H - 2}" text-anchor="${anchor}" font-size="7.5" font-family="var(--mono)" fill="var(--text3)">${name}</text>` : ''}`;
   }).join('');
 
   // Gain / loss stats
