@@ -3566,10 +3566,10 @@ function adoptRoute() {
 // ── Affiliate link renderers ──────────────────────────────────────
 function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowedInfoNames) {
   let sources = [], category = '';
-  if (mode === 'flight')                             { sources = AFF.flights;  category = 'flights'; }
-  else if (mode === 'bus' || mode === 'shared taxi') { sources = AFF.buses;    category = 'buses'; }
-  else if (mode === 'train')                         { sources = AFF.trains;   category = 'trains'; }
-  else if (mode === 'ferry')                         { sources = AFF.ferries;  category = 'ferries'; }
+  if (mode === 'flight')                             { sources = AFF.flights  || []; category = 'flights'; }
+  else if (mode === 'bus' || mode === 'shared taxi') { sources = AFF.buses    || []; category = 'buses'; }
+  else if (mode === 'train')                         { sources = AFF.trains   || []; category = 'trains'; }
+  else if (mode === 'ferry')                         { sources = AFF.ferries  || []; category = 'ferries'; }
   else if (mode === 'hitchhike') {
     const hw = (city) => `https://hitchwiki.org/en/${encodeURIComponent(city)}`;
     return `<div class="search-links">
@@ -5089,7 +5089,7 @@ async function _fetchAndRenderElevation(divId, fromCity, toCity, mode) {
   // 4. Fetch elevations from Open-Topo-Data
   try {
     const locs = samplePts.map(p => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`).join('|');
-    const res  = await fetch(`https://api.opentopodata.org/v1/srtm90m?locations=${locs}`);
+    const res  = await fetch(`${PROXY_URL}/api/elevation?locations=${locs}`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
     const elevs = (json.results || []).map(r => r.elevation ?? null).filter(e => e !== null);
@@ -5213,7 +5213,7 @@ async function renderTripElevation(stopsArr, legsArr, elId) {
   const locs   = pts100.map(p => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`).join('|');
   let elevs = [];
   try {
-    const res  = await fetch(`https://api.opentopodata.org/v1/srtm90m?locations=${locs}`);
+    const res  = await fetch(`${PROXY_URL}/api/elevation?locations=${locs}`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
     elevs = (json.results || []).map(r => r.elevation ?? null);
