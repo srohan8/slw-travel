@@ -4944,6 +4944,7 @@ let _mapUpdating  = false;  // concurrency guard
 let _mapNeedsUpdate = false; // queued update while one is running
 let _mapMarkers   = [];
 let _mapLines     = [];
+let _osrmMapCache = {};  // in-memory OSRM route geometry cache (keyed by profile+coords)
 
 (function _initGeoCache() {
   try { _geoCache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY) || '{}'); } catch(e) {}
@@ -5499,15 +5500,61 @@ async function updatePlannerMap() {
   // If another update was queued while we were geocoding, run it now
   if (_mapNeedsUpdate) { schedulePlannerMapUpdate(); return; }
 
-  // Draw leg lines (colored by transport mode)
+  // Draw leg lines — flights/ferries as straight lines; road modes via OSRM geometry
+  const _mapOsrmProfile = {
+    bus: 'driving', car: 'driving', taxi: 'driving', 'shared taxi': 'driving',
+    hitchhike: 'driving', motorbike: 'driving', train: 'driving',
+    cycle: 'cycling', walk: 'foot',
+  };
   for (let i = 0; i < srcStops.length - 1; i++) {
     if (!coords[i] || !coords[i + 1]) continue;
     const mode  = srcLegs[i]?.mode || 'bus';
     const color = MODE_COLORS[mode] || '#8BAF7A';
-    const dash  = mode === 'flight' ? '8 10' : (mode === 'walk' || mode === 'cycle' || mode === 'motorbike') ? '4 6' : null;
-    const line  = L.polyline([coords[i], coords[i + 1]], { color, weight: 3, opacity: 0.82, dashArray: dash })
-      .addTo(_mapInstance);
-    _mapLines.push(line);
+    const isAir = mode === 'flight';
+    const isSea = mode === 'ferry';
+    const dash  = isAir ? '8 10' : (mode === 'walk' || mode === 'cycle' || mode === 'motorbike') ? '4 6' : null;
+
+    if (isAir || isSea) {
+      // Straight dashed line for air/sea — road routing makes no sense
+      const line = L.polyline([coords[i], coords[i + 1]], { color, weight: 2.5, opacity: 0.7, dashArray: isAir ? '8 10' : '4 8' }).addTo(_mapInstance);
+      _mapLines.push(line);
+    } else {
+      // Draw a faint placeholder straight line immediately, then replace with road geometry
+      const placeholder = L.polyline([coords[i], coords[i + 1]], { color, weight: 2, opacity: 0.3, dashArray: dash }).addTo(_mapInstance);
+      _mapLines.push(placeholder);
+      const _i = i; // capture for async closure
+      (async () => {
+        const profile = _mapOsrmProfile[mode] || 'driving';
+        const [lat1, lon1] = coords[_i];
+        const [lat2, lon2] = coords[_i + 1];
+        const cKey = `${profile}:${lon1.toFixed(4)},${lat1.toFixed(4)}:${lon2.toFixed(4)},${lat2.toFixed(4)}`;
+        let latlngs = _osrmMapCache[cKey];
+        if (!latlngs) {
+          await new Promise(res => setTimeout(res, _i * 160)); // stagger requests ~160ms apart
+          try {
+            const r = await fetch(
+              `https://router.project-osrm.org/route/v1/${profile}/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`
+            );
+            const d = await r.json();
+            if (d.code === 'Ok' && d.routes?.[0]?.geometry?.coordinates?.length) {
+              latlngs = d.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+              _osrmMapCache[cKey] = latlngs;
+            }
+          } catch(e) { /* fall back to placeholder */ }
+        }
+        if (latlngs) {
+          const idx = _mapLines.indexOf(placeholder);
+          if (idx >= 0) {
+            placeholder.remove();
+            const road = L.polyline(latlngs, { color, weight: 3, opacity: 0.82, dashArray: dash }).addTo(_mapInstance);
+            _mapLines[idx] = road;
+          }
+        } else {
+          // OSRM failed — upgrade placeholder opacity so it still looks intentional
+          try { placeholder.setStyle({ opacity: 0.7, weight: 3 }); } catch(e) {}
+        }
+      })();
+    }
   }
 
   // Draw numbered stop markers
