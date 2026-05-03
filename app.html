@@ -332,12 +332,13 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
   .add-row{padding:4px 0 0 40px;}
   .add-b{font-size:12px;color:var(--text2);cursor:pointer;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);padding:6px 14px;font-family:inherit;transition: all 0.2s;}
   .add-b:hover{background:var(--bg2); color: var(--text); border-color: var(--text2);}
-  .tl-track{display:flex;align-items:center;overflow-x:auto;padding-bottom:10px;margin-top:1rem;gap: 0;}
-  .tl-stop{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:80px;}
+  .tl-track{display:flex;align-items:center;overflow-x:auto;padding-bottom:2px;margin-top:1rem;gap:0;scrollbar-width:none;-ms-overflow-style:none;-webkit-mask-image:linear-gradient(to right,black calc(100% - 36px),transparent 100%);mask-image:linear-gradient(to right,black calc(100% - 36px),transparent 100%);}
+  .tl-track::-webkit-scrollbar{display:none;}
+  .tl-stop{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:66px;}
   .tl-dot{width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--border2);}
   .tl-dot.s{border-color:var(--green);background: var(--green);}
-  .tl-dot.e{border-color:var(--blue);background: var(--blue);}
-  .tl-nm{font-size:12px;color:var(--text2);text-align:center;max-width:80px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight: 500;}
+  .tl-dot.e{border-color:var(--fern);background:var(--fern);}
+  .tl-nm{font-size:11px;color:var(--text2);text-align:center;max-width:66px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:500;}
   .tl-dt{font-size:10px;color:var(--text3);}
   .tl-leg{flex:1;position:relative;min-width:40px;}
   .tl-line{height:2px;background:var(--border);transition: background 0.3s;}
@@ -3908,7 +3909,8 @@ function renderTl() {
   stops.forEach((s, i) => {
     const isF = i === 0, isL = i === stops.length - 1;
     const ds = s.date ? new Date(s.date + 'T00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' }) : '';
-    h += `<div class="tl-stop"><div class="tl-dot${isF ? ' s' : isL ? ' e' : ''}"></div><div class="tl-nm">${s.name || '?'}</div><div class="tl-dt">${ds}</div></div>`;
+    const city = (s.name || '').split(',')[0].trim() || '?';
+    h += `<div class="tl-stop" title="${s.name||''}"><div class="tl-dot${isF ? ' s' : isL ? ' e' : ''}"></div><div class="tl-nm">${city}</div><div class="tl-dt">${ds}</div></div>`;
     if (!isL) { const leg = getLeg(i); const mc = MODE_COLORS[leg.mode]; h += `<div class="tl-leg"><div class="tl-line" style="${mc?'background:'+mc+';opacity:0.35':''}"></div><div class="tl-badge" style="${mc?'color:'+mc+';border-color:'+mc+';opacity:0.9':''}">${MI[leg.mode] || leg.mode}${leg.booked ? '<span class="tl-booked">✓</span>' : ''}</div></div>`; }
   });
   el.innerHTML = h;
