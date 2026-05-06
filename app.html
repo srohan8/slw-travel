@@ -5241,7 +5241,7 @@ function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
   const range = maxE - minE;
   if (range < 20) { el.innerHTML = ''; return; }
 
-  const W = 600, H = 56, pad = 3, labelH = 14;
+  const W = 600, H = 66, pad = 3, labelH = 24;
   const plotH = H - labelH;
   const n     = valid.length;
 
@@ -5266,12 +5266,13 @@ function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
   ).join(' ');
 
   // Stop markers + city-name labels
-  // Thin out labels when many stops so they don't overlap (~10 max for 600px viewBox)
-  const maxLabels = Math.max(2, Math.floor(W / 55));
+  // Show at most ~10 labels; alternate between two rows so adjacent labels don't collide
+  const maxLabels = Math.max(2, Math.floor(W / 52));
   const lblStep   = stopIdxs.length <= maxLabels
     ? 1
-    : Math.ceil((stopIdxs.length - 2) / (maxLabels - 2));
+    : Math.ceil(stopIdxs.length / maxLabels);  // fix: k%step (not (k-1)%step which always fires at k=1)
 
+  let _lblRow = 0;
   const markers = stopIdxs.map((si, k) => {
     if (si >= valid.length) return '';
     const e    = valid[Math.min(si, valid.length - 1)];
@@ -5284,17 +5285,19 @@ function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
 
     const isFirst   = k === 0;
     const isLast    = k === stopIdxs.length - 1;
-    // Always show first + last; show intermediate stops every lblStep-th index
-    const showLabel = isFirst || isLast || (k > 0 && k < stopIdxs.length - 1 && ((k - 1) % lblStep === 0));
-    // First label: left-aligned so it doesn't clip left edge; last: right-aligned for right edge
+    const showLabel = isFirst || isLast || (k % lblStep === 0);
+    // First label left-aligned, last right-aligned — can't clip even with overflow:visible
     const anchor    = isFirst ? 'start' : isLast ? 'end' : 'middle';
     const textX     = isFirst ? Math.max(pad + 1, xNum).toFixed(1)
                     : isLast  ? Math.min(W - pad - 1, xNum).toFixed(1)
                     : x;
+    // Alternate: even-numbered visible labels at bottom row, odd ones 11px higher
+    const labelY    = showLabel ? (H - 2) - (_lblRow % 2 === 1 ? 11 : 0) : 0;
+    if (showLabel) _lblRow++;
 
     return `<line x1="${x}" y1="${y}" x2="${x}" y2="${plotH - pad}" stroke="var(--border2)" stroke-width="0.8" stroke-dasharray="2,2"/>
       <circle cx="${x}" cy="${y}" r="2" fill="var(--fern)" opacity="0.7"/>
-      ${showLabel ? `<text x="${textX}" y="${H - 2}" text-anchor="${anchor}" font-size="7.5" font-family="var(--mono)" fill="var(--text3)">${name}</text>` : ''}`;
+      ${showLabel ? `<text x="${textX}" y="${labelY}" text-anchor="${anchor}" font-size="7.5" font-family="var(--mono)" fill="var(--text3)">${name}</text>` : ''}`;
   }).join('');
 
   // Gain / loss stats
@@ -5312,7 +5315,7 @@ function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
 
   const gid = 'feg' + (elId || '').replace(/\D/g, '');
   el.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:64px;display:block" preserveAspectRatio="none" aria-hidden="true">
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:76px;display:block" preserveAspectRatio="none" overflow="visible" aria-hidden="true">
       <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="var(--fern)" stop-opacity="0.3"/>
         <stop offset="100%" stop-color="var(--fern)" stop-opacity="0.03"/>
