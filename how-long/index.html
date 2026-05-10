@@ -208,11 +208,14 @@ a:hover{text-decoration:underline}
 <div class="results" id="results">
   <div class="inner">
 
-    <div class="result-hero">
+    <a class="result-hero" id="resultHero" href="/app.html" style="display:block;text-decoration:none;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
       <div class="result-route" id="resultRoute"></div>
       <div class="result-days" id="resultDays">—<span>days</span></div>
       <div class="result-pace-note" id="resultPaceNote"></div>
-    </div>
+      <div style="margin-top:16px;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--sage);border-top:0.5px solid rgba(212,227,204,0.15);padding-top:14px;display:flex;align-items:center;justify-content:center;gap:6px">
+        Plan this route in detail <i class="ph ph-arrow-right"></i>
+      </div>
+    </a>
 
     <div class="stats-grid">
       <div class="stat-card">
@@ -393,8 +396,9 @@ function showResults(from, to, d) {
 
   const from2 = document.getElementById('fromInp').value.trim();
   const to2   = document.getElementById('toInp').value.trim();
-  document.getElementById('ctaLink').href =
-    `/app.html?from=${encodeURIComponent(from2)}&to=${encodeURIComponent(to2)}`;
+  const planUrl = `/app.html?from=${encodeURIComponent(from2)}&to=${encodeURIComponent(to2)}`;
+  document.getElementById('ctaLink').href    = planUrl;
+  document.getElementById('resultHero').href = planUrl;
   document.getElementById('carbonLink').href =
     `/carbon?from=${encodeURIComponent(from2)}&to=${encodeURIComponent(to2)}`;
 
