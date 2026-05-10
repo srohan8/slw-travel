@@ -1253,23 +1253,42 @@ const contribStorage = {
     }
   },
 
-  // Fetch contributions for a leg from Supabase, merge into cache
+  // Fetch contributions for a leg from Supabase, merge into cache.
+  // Tries with profiles join first; falls back to no-join if the FK isn't
+  // yet pointing at public.profiles (avoids 400s while schema migration is pending).
   async fetchForLeg(key) {
     if (this._fetched.has(key)) return;
     this._fetched.add(key);
     try {
-      const { data, error } = await sb
+      // ── Attempt 1: join profiles (works once FK points to public.profiles) ──
+      let { data, error } = await sb
         .from('contributions')
         .select('*, profiles(display_name, email)')
         .eq('leg_key', key)
         .order('votes', { ascending: false })
         .order('created_at', { ascending: false });
+
+      // ── Fallback: FK still points to auth.users → PostgREST returns 400 ──
+      // Retry without the join; author shows as 'traveller'. Contributions load,
+      // just without display names. Delete key so it retries with join after reload.
       if (error) {
-        // Keep key in _fetched — do NOT delete it, or every render retries and floods Supabase with 400s.
-        // The contributions feature will silently show nothing until the DB schema is fixed & page is reloaded.
-        console.warn('[slw] contributions fetch error (will not retry this session):', key, error.message);
-        return;
+        console.warn('[slw] contributions join failed, retrying without profiles:', error.message);
+        this._fetched.delete(key); // allow retry on next render (schema may be fixed by then)
+        const fb = await sb
+          .from('contributions')
+          .select('id, leg_key, kind, text, source, votes, confirmed_count, created_at')
+          .eq('leg_key', key)
+          .order('votes', { ascending: false })
+          .order('created_at', { ascending: false });
+        if (fb.error) {
+          console.warn('[slw] contributions fallback also failed:', fb.error.message);
+          this._fetched.add(key); // don't hammer — wait for reload
+          return;
+        }
+        data = fb.data;
+        error = null;
       }
+
       if (!data?.length) return;
 
       const all = this.getAll();
