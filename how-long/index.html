@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Overland Journey Time Estimator — How Long Does It Take? — SLW Travel</title>
+<meta name="description" content="How long does it actually take to travel overland from A to B? Get a realistic days estimate, cost range, and example route — no flights, surface travel only."/>
+<meta property="og:title" content="How Long Does Overland Travel Take?"/>
+<meta property="og:description" content="Realistic journey time estimates for surface travel. Enter any two cities and get days, costs, and an example route."/>
+<meta property="og:url" content="https://slw.travel/how-long"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'});
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --moss:#2D4A2D;--fern:#4A7C4A;--sage:#8BAF7A;--mist:#D4E3CC;
+  --cream:#F5F0E8;--sand:#E8DFD0;
+  --bg:#FAF7F2;--bg2:#F2EDE4;--bg3:#EDE8DC;
+  --text:#2D4A2D;--text2:#4A6040;--text3:#7A9870;
+  --border:rgba(45,74,45,0.15);--border2:rgba(45,74,45,0.25);
+  --rust:#C4622D;--amber:#B8820A;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono','Courier New',monospace;
+  --radius:10px;
+}
+body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh}
+a{color:var(--fern);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+.nav{background:var(--moss);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(26,43,26,0.2)}
+.nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo-text{font-family:var(--serif);font-weight:300;font-size:19px;color:var(--cream);letter-spacing:-0.3px}
+.nav-logo-text em{font-style:italic;color:var(--sage)}
+.nav-links{display:flex;gap:20px;align-items:center;font-size:13px}
+.nav-links a{color:rgba(212,227,204,0.6);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--cream)}
+.nav-cta{background:var(--sage);color:var(--moss);padding:7px 15px;border-radius:99px;font-weight:600;font-size:12px;border:none;font-family:var(--body);cursor:pointer;text-decoration:none}
+@media(max-width:600px){.nav-links{display:none}}
+
+/* Hero */
+.hero{background:var(--moss);color:var(--cream);padding:52px 0 72px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--bg3);clip-path:ellipse(55% 100% at 50% 100%)}
+.inner{max-width:780px;margin:0 auto;padding:0 1.5rem}
+.kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);margin-bottom:12px}
+.hero h1{font-family:var(--serif);font-weight:300;font-size:clamp(34px,5vw,56px);line-height:1.06;letter-spacing:-1px;margin-bottom:14px}
+.hero h1 em{font-style:italic;color:var(--sage)}
+.hero-sub{font-size:15px;line-height:1.6;color:rgba(245,240,232,0.72);max-width:480px}
+
+/* Counter badge */
+.usage-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(212,227,204,0.5);margin-top:16px}
+.usage-dots{display:flex;gap:4px}
+.usage-dot{width:8px;height:8px;border-radius:50%;background:rgba(212,227,204,0.2);transition:background .3s}
+.usage-dot.used{background:var(--sage)}
+
+/* Calculator card */
+.calc-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:16px;padding:1.75rem;box-shadow:0 16px 40px rgba(26,43,26,0.14);max-width:680px;margin:-36px auto 0;position:relative;z-index:2}
+.calc-row{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:12px}
+.calc-arrow{color:var(--text3);font-size:18px;text-align:center}
+.calc-inp{font-size:15px;color:var(--text);border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);padding:11px 14px;outline:none;font-family:var(--body);width:100%;transition:border-color .15s}
+.calc-inp:focus{border-color:var(--fern);background:var(--bg)}
+.calc-inp::placeholder{color:var(--text3)}
+
+/* Pace selector */
+.pace-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.pace-label{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);width:100%;margin-bottom:4px}
+.pace-btn{flex:1;min-width:80px;padding:8px 12px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:12px;font-family:var(--body);cursor:pointer;transition:all .15s;text-align:center}
+.pace-btn:hover,.pace-btn.active{border-color:var(--fern);background:rgba(74,124,74,0.08);color:var(--fern)}
+.pace-btn .pace-sub{font-size:10px;color:var(--text3);display:block;margin-top:2px;font-family:var(--mono)}
+.pace-btn.active .pace-sub{color:var(--fern);opacity:0.7}
+
+.calc-btn{width:100%;background:var(--fern);color:white;border:none;border-radius:var(--radius);padding:13px;font-size:14px;font-weight:600;font-family:var(--body);cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.calc-btn:hover{background:#3D6B3D}
+.calc-btn:disabled{background:var(--text3);cursor:not-allowed}
+
+.calc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.calc-chip{font-size:11px;padding:5px 11px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:var(--body);transition:border-color .15s}
+.calc-chip:hover{border-color:var(--fern);color:var(--text)}
+.calc-error{font-size:13px;color:var(--rust);font-family:var(--mono);margin-top:10px;display:none}
+@media(max-width:540px){.calc-row{grid-template-columns:1fr;}.calc-arrow{display:none}}
+
+/* Results */
+.results{max-width:780px;margin:36px auto 0;padding:0 1.5rem;display:none}
+.results.visible{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.result-hero{background:var(--moss);color:var(--cream);border-radius:16px;padding:2rem;margin-bottom:18px;text-align:center}
+.result-route{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--sage);margin-bottom:8px}
+.result-days{font-family:var(--serif);font-size:clamp(48px,8vw,80px);font-weight:300;letter-spacing:-2px;line-height:1;color:var(--cream)}
+.result-days span{font-size:18px;color:rgba(212,227,204,0.6);letter-spacing:0;margin-left:6px}
+.result-pace-note{font-size:13px;color:rgba(212,227,204,0.6);margin-top:6px;font-family:var(--mono);letter-spacing:0.5px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:500px){.stats-grid{grid-template-columns:1fr 1fr}}
+.stat-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:10px;padding:1rem;text-align:center}
+.stat-n{font-family:var(--serif);font-size:26px;font-weight:300;letter-spacing:-0.5px;line-height:1;margin-bottom:4px}
+.stat-l{font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3)}
+
+.example-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:10px;padding:1.25rem;margin-bottom:18px}
+.example-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.example-route{font-family:var(--serif);font-size:17px;font-weight:300;line-height:1.5;color:var(--text)}
+
+.caveat-card{background:rgba(184,130,10,0.07);border:0.5px solid rgba(184,130,10,0.3);border-radius:10px;padding:1rem 1.25rem;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+.caveat-icon{color:var(--amber);font-size:16px;flex-shrink:0;margin-top:2px}
+.caveat-text{font-size:13px;color:var(--text2);line-height:1.6}
+
+.cta-panel{background:var(--bg);border:0.5px solid var(--border2);border-radius:14px;padding:1.5rem;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:40px}
+.cta-text{flex:1;min-width:200px}
+.cta-text h3{font-family:var(--serif);font-weight:300;font-size:22px;margin-bottom:4px}
+.cta-text p{font-size:13px;color:var(--text2);line-height:1.5}
+.cta-btn{background:var(--fern);color:white;padding:11px 20px;border-radius:99px;font-weight:600;font-size:13px;white-space:nowrap;border:none;cursor:pointer;font-family:var(--body);text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+.cta-btn:hover{background:#3D6B3D;color:white}
+
+/* Email gate */
+.gate-overlay{display:none;position:fixed;inset:0;background:rgba(26,43,26,0.55);z-index:50;align-items:center;justify-content:center;padding:1.5rem}
+.gate-overlay.visible{display:flex}
+.gate-card{background:var(--bg);border-radius:16px;padding:2rem;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(26,43,26,0.25)}
+.gate-card h2{font-family:var(--serif);font-weight:300;font-size:28px;margin-bottom:8px}
+.gate-card p{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.gate-inp{width:100%;font-size:14px;padding:11px 14px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);font-family:var(--body);outline:none;margin-bottom:10px}
+.gate-inp:focus{border-color:var(--fern)}
+.gate-btn{width:100%;background:var(--fern);color:white;border:none;border-radius:var(--radius);padding:12px;font-size:14px;font-weight:600;font-family:var(--body);cursor:pointer;margin-bottom:10px}
+.gate-skip{width:100%;background:none;border:none;color:var(--text3);font-size:12px;font-family:var(--mono);cursor:pointer;letter-spacing:0.5px}
+.gate-skip:hover{color:var(--text2)}
+
+/* Footer */
+.footer{background:var(--moss);color:rgba(212,227,204,0.6);text-align:center;padding:28px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px;margin-top:60px}
+.footer a{color:var(--sage)}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-text">SLW <em>Travel</em></span>
+  </a>
+  <div class="nav-links">
+    <a href="/carbon">CO₂ calculator</a>
+    <a href="/app.html">Planner</a>
+  </div>
+  <a href="/app.html" class="nav-cta">Plan a route →</a>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="inner">
+    <div class="kicker">Free tool · Powered by AI · No signup needed</div>
+    <h1>How long does it <em>actually</em> take<br>to get there overland?</h1>
+    <p class="hero-sub">Flight time is useless. Get a realistic estimate for surface travel — days, cost range, and a sample route — based on how you actually want to travel.</p>
+    <div class="usage-badge">
+      <span>Free estimates remaining:</span>
+      <div class="usage-dots" id="usageDots">
+        <div class="usage-dot" id="dot0"></div>
+        <div class="usage-dot" id="dot1"></div>
+        <div class="usage-dot" id="dot2"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Calculator -->
+<div class="inner" style="position:relative">
+  <div class="calc-card">
+    <div class="calc-row">
+      <input class="calc-inp" id="fromInp" placeholder="From — e.g. Istanbul" autocomplete="off" spellcheck="false"/>
+      <div class="calc-arrow">→</div>
+      <input class="calc-inp" id="toInp" placeholder="To — e.g. Kathmandu" autocomplete="off" spellcheck="false"/>
+    </div>
+
+    <div class="pace-row">
+      <div class="pace-label">Travel pace</div>
+      <button class="pace-btn" id="pace-slow" onclick="setPace('slow')">
+        Slow
+        <span class="pace-sub">5–6h/day · see everything</span>
+      </button>
+      <button class="pace-btn active" id="pace-moderate" onclick="setPace('moderate')">
+        Moderate
+        <span class="pace-sub">7–8h/day · balanced</span>
+      </button>
+      <button class="pace-btn" id="pace-fast" onclick="setPace('fast')">
+        Fast
+        <span class="pace-sub">Max out each day</span>
+      </button>
+    </div>
+
+    <button class="calc-btn" id="calcBtn" onclick="estimate()">
+      <i class="ph ph-compass"></i> Estimate journey
+    </button>
+    <div class="calc-error" id="calcError"></div>
+
+    <div class="calc-chips">
+      <span class="calc-chip" onclick="preset('Istanbul','Kathmandu')">Istanbul → Kathmandu</span>
+      <span class="calc-chip" onclick="preset('London','Marrakech')">London → Marrakech</span>
+      <span class="calc-chip" onclick="preset('Berlin','Beijing')">Berlin → Beijing</span>
+      <span class="calc-chip" onclick="preset('Lisbon','Istanbul')">Lisbon → Istanbul</span>
+    </div>
+  </div>
+</div>
+
+<!-- Results -->
+<div class="results" id="results">
+  <div class="inner">
+
+    <div class="result-hero">
+      <div class="result-route" id="resultRoute"></div>
+      <div class="result-days" id="resultDays">—<span>days</span></div>
+      <div class="result-pace-note" id="resultPaceNote"></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-n" id="statCostMin">—</div>
+        <div class="stat-l">Budget (USD)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-n" id="statCostMax">—</div>
+        <div class="stat-l">Mid-range (USD)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-n" id="statStops">—</div>
+        <div class="stat-l">Likely stops</div>
+      </div>
+    </div>
+
+    <div class="example-card">
+      <div class="example-label">Example route</div>
+      <div class="example-route" id="exampleRoute">—</div>
+    </div>
+
+    <div class="caveat-card">
+      <i class="ph ph-warning caveat-icon"></i>
+      <div class="caveat-text" id="caveatText">—</div>
+    </div>
+
+    <div class="cta-panel">
+      <div class="cta-text">
+        <h3>Plan the actual route</h3>
+        <p>SLW Travel maps out every leg with booking platforms, confidence ratings, border advisories, and community notes — not just a time estimate.</p>
+      </div>
+      <a href="/app.html" id="ctaLink" class="cta-btn"><i class="ph ph-map-trifold"></i> Plan this route →</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- Email gate overlay -->
+<div class="gate-overlay" id="gateOverlay">
+  <div class="gate-card">
+    <h2>You've used your 3 free estimates</h2>
+    <p>Enter your email for unlimited estimates — plus a free guide to planning your first overland trip.</p>
+    <input class="gate-inp" id="gateEmail" type="email" placeholder="your@email.com" autocomplete="email"/>
+    <button class="gate-btn" onclick="submitGate()">Unlock unlimited estimates →</button>
+    <button class="gate-skip" onclick="closeGate()">Maybe later — I'll just plan the route</button>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div><a href="/">SLW Travel</a> · Go the long way. On purpose. · <a href="/carbon">CO₂ calculator</a> · <a href="/how-long">Journey time estimator</a></div>
+</footer>
+
+<script>
+const PROXY_URL = 'https://slw-travel-proxy-production.up.railway.app';
+const SUPABASE_URL = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
+
+// ── Usage counting (free tier: 3 per session) ─────────────────────
+const USAGE_KEY = 'slw_howlong_uses';
+const FREE_LIMIT = 3;
+let _usageCount = parseInt(sessionStorage.getItem(USAGE_KEY) || '0');
+let _gatedPending = null; // queued estimate to run after gate
+let _pace = 'moderate';
+
+function updateUsageDots() {
+  for (let i = 0; i < 3; i++) {
+    const dot = document.getElementById('dot' + i);
+    if (dot) dot.classList.toggle('used', i < _usageCount);
+  }
+}
+updateUsageDots();
+
+// ── Pace selector ─────────────────────────────────────────────────
+function setPace(p) {
+  _pace = p;
+  ['slow','moderate','fast'].forEach(x => {
+    const btn = document.getElementById('pace-' + x);
+    if (btn) btn.classList.toggle('active', x === p);
+  });
+}
+
+// ── AI call ───────────────────────────────────────────────────────
+async function callAI(prompt) {
+  const r = await fetch(`${PROXY_URL}/api/ai`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const d = await r.json();
+  if (!r.ok || d.error) throw new Error(d.error?.message || `HTTP ${r.status}`);
+  const text = d.content?.[0]?.text || '';
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('Unexpected response format');
+  return JSON.parse(match[0]);
+}
+
+// ── Main estimate function ────────────────────────────────────────
+async function estimate() {
+  const from = document.getElementById('fromInp').value.trim();
+  const to   = document.getElementById('toInp').value.trim();
+  const errEl = document.getElementById('calcError');
+
+  if (!from || !to) { showError('Enter both a start and end city.'); return; }
+  if (from.toLowerCase() === to.toLowerCase()) { showError('Origin and destination look the same.'); return; }
+
+  // Check usage gate
+  if (_usageCount >= FREE_LIMIT && !sessionStorage.getItem('slw_howlong_unlocked')) {
+    _gatedPending = { from, to };
+    openGate();
+    return;
+  }
+
+  const btn = document.getElementById('calcBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ph ph-spinner" style="animation:spin .7s linear infinite"></i> Estimating…';
+  errEl.style.display = 'none';
+
+  const paceDesc = { slow:'slow (5–6 hours moving per day, plenty of rest days)', moderate:'moderate (7–8 hours moving per day, balanced)', fast:'fast (maximise distance each day, minimal rest)' }[_pace];
+
+  const prompt = `You are an expert overland travel planner. Give a realistic estimate for surface travel (absolutely no flights) from ${from} to ${to} at a ${paceDesc} pace.
+
+Return ONLY valid JSON, no other text:
+{"days_min":N,"days_max":N,"cost_usd_min":N,"cost_usd_max":N,"stops_count":N,"example_route":"City → City → City (3-6 stops)","key_caveat":"One sentence about the main uncertainty — border, season, visa, or transport frequency."}`;
+
+  try {
+    const d = await callAI(prompt);
+
+    // Increment usage
+    _usageCount++;
+    sessionStorage.setItem(USAGE_KEY, _usageCount);
+    updateUsageDots();
+
+    showResults(from, to, d);
+
+    if (window.posthog) posthog.capture('howlong_estimated', {
+      from, to, pace: _pace,
+      days_min: d.days_min, days_max: d.days_max,
+      cost_min: d.cost_usd_min
+    });
+
+  } catch(e) {
+    showError(e.message || 'Estimate failed — try again in a moment.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ph ph-compass"></i> Estimate journey';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('calcError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function showResults(from, to, d) {
+  document.getElementById('resultRoute').textContent = `${from} → ${to}`;
+  document.getElementById('resultDays').innerHTML =
+    `${d.days_min}–${d.days_max}<span> days</span>`;
+  document.getElementById('resultPaceNote').textContent =
+    `${_pace.charAt(0).toUpperCase() + _pace.slice(1)} pace · surface travel only`;
+
+  document.getElementById('statCostMin').textContent = `$${(d.cost_usd_min||0).toLocaleString()}`;
+  document.getElementById('statCostMax').textContent = `$${(d.cost_usd_max||0).toLocaleString()}`;
+  document.getElementById('statStops').textContent   = d.stops_count ?? '—';
+
+  document.getElementById('exampleRoute').textContent = d.example_route || '—';
+  document.getElementById('caveatText').textContent   = d.key_caveat    || '';
+
+  const from2 = document.getElementById('fromInp').value.trim();
+  const to2   = document.getElementById('toInp').value.trim();
+  document.getElementById('ctaLink').href =
+    `/app.html?from=${encodeURIComponent(from2)}&to=${encodeURIComponent(to2)}`;
+
+  const r = document.getElementById('results');
+  r.style.display = 'block';
+  setTimeout(() => r.classList.add('visible'), 10);
+  r.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── Presets ───────────────────────────────────────────────────────
+function preset(from, to) {
+  document.getElementById('fromInp').value = from;
+  document.getElementById('toInp').value   = to;
+  estimate();
+}
+
+// ── Email gate ────────────────────────────────────────────────────
+function openGate() {
+  document.getElementById('gateOverlay').classList.add('visible');
+  if (window.posthog) posthog.capture('howlong_gate_shown', { uses: _usageCount });
+}
+
+function closeGate() {
+  document.getElementById('gateOverlay').classList.remove('visible');
+  // Let them continue anyway (soft gate — we don't hard block)
+  if (_gatedPending) {
+    sessionStorage.setItem('slw_howlong_unlocked', '1');
+    const { from, to } = _gatedPending;
+    _gatedPending = null;
+    document.getElementById('fromInp').value = from;
+    document.getElementById('toInp').value   = to;
+    estimate();
+  }
+}
+
+async function submitGate() {
+  const email = document.getElementById('gateEmail').value.trim();
+  if (!email || !email.includes('@')) {
+    document.getElementById('gateEmail').style.borderColor = 'var(--rust)';
+    return;
+  }
+
+  // Save to Supabase email_captures (best effort)
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/email_captures`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ email, source: 'how-long-tool', created_at: new Date().toISOString() })
+    });
+  } catch(e) {}
+
+  sessionStorage.setItem('slw_howlong_unlocked', '1');
+  if (window.posthog) {
+    posthog.identify(email);
+    posthog.capture('howlong_email_captured', { email, source: 'how-long-tool' });
+  }
+  closeGate();
+}
+
+// ── Prefill from URL params ───────────────────────────────────────
+(function() {
+  const p = new URLSearchParams(location.search);
+  const from = p.get('from'), to = p.get('to');
+  if (from) document.getElementById('fromInp').value = from;
+  if (to)   document.getElementById('toInp').value   = to;
+  if (from && to) estimate();
+})();
+
+// ── Enter key ─────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !document.getElementById('gateOverlay').classList.contains('visible')) estimate();
+});
+
+// ── Spinner keyframe ──────────────────────────────────────────────
+const style = document.createElement('style');
+style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
+</script>
+</body>
+</html>

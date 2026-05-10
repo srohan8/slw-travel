@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Flight vs Overland CO₂ Calculator — SLW Travel</title>
+<meta name="description" content="Calculate how much CO₂ you save by travelling overland instead of flying. Free calculator using ICAO emissions data."/>
+<meta property="og:title" content="Flight vs Overland CO₂ Calculator"/>
+<meta property="og:description" content="See exactly how much carbon you save by taking the train or bus instead of flying."/>
+<meta property="og:url" content="https://slw.travel/carbon"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'});
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --moss:#2D4A2D;--fern:#4A7C4A;--sage:#8BAF7A;--mist:#D4E3CC;
+  --cream:#F5F0E8;--sand:#E8DFD0;
+  --bg:#FAF7F2;--bg2:#F2EDE4;--bg3:#EDE8DC;
+  --text:#2D4A2D;--text2:#4A6040;--text3:#7A9870;
+  --border:rgba(45,74,45,0.15);--border2:rgba(45,74,45,0.25);
+  --rust:#C4622D;--amber:#B8820A;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono','Courier New',monospace;
+  --radius:10px;--shadow:0 2px 12px rgba(26,43,26,0.09);
+}
+body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh}
+a{color:var(--fern);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+.nav{background:var(--moss);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(26,43,26,0.2)}
+.nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo-text{font-family:var(--serif);font-weight:300;font-size:19px;color:var(--cream);letter-spacing:-0.3px}
+.nav-logo-text em{font-style:italic;color:var(--sage)}
+.nav-links{display:flex;gap:20px;align-items:center;font-size:13px;color:rgba(212,227,204,0.6)}
+.nav-links a{color:rgba(212,227,204,0.6);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--cream)}
+.nav-cta{background:var(--sage);color:var(--moss);padding:7px 15px;border-radius:99px;font-weight:600;font-size:12px;border:none;font-family:var(--body);cursor:pointer;letter-spacing:0.2px;text-decoration:none}
+@media(max-width:600px){.nav-links{display:none}}
+
+/* Hero */
+.hero{background:var(--moss);color:var(--cream);padding:52px 0 72px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--bg3);clip-path:ellipse(55% 100% at 50% 100%)}
+.inner{max-width:780px;margin:0 auto;padding:0 1.5rem}
+.kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);margin-bottom:12px}
+.hero h1{font-family:var(--serif);font-weight:300;font-size:clamp(36px,5.5vw,58px);line-height:1.06;letter-spacing:-1px;margin-bottom:14px}
+.hero h1 em{font-style:italic;color:var(--sage)}
+.hero-sub{font-size:15px;line-height:1.6;color:rgba(245,240,232,0.72);max-width:480px}
+
+/* Calculator card */
+.calc-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:16px;padding:1.75rem;box-shadow:0 16px 40px rgba(26,43,26,0.14);max-width:680px;margin:-36px auto 0;position:relative;z-index:2}
+.calc-row{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:14px}
+.calc-arrow{color:var(--text3);font-size:18px;text-align:center;flex-shrink:0}
+.calc-inp{font-size:15px;color:var(--text);border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);padding:11px 14px;outline:none;font-family:var(--body);width:100%;transition:border-color .15s}
+.calc-inp:focus{border-color:var(--fern);background:var(--bg)}
+.calc-inp::placeholder{color:var(--text3)}
+.calc-btn{width:100%;background:var(--fern);color:white;border:none;border-radius:var(--radius);padding:13px;font-size:14px;font-weight:600;font-family:var(--body);cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.calc-btn:hover{background:#3D6B3D}
+.calc-btn:disabled{background:var(--text3);cursor:not-allowed}
+.calc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.calc-chip{font-size:11px;padding:5px 11px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:var(--body);transition:border-color .15s}
+.calc-chip:hover{border-color:var(--fern);color:var(--text)}
+@media(max-width:540px){.calc-row{grid-template-columns:1fr;}.calc-arrow{display:none}}
+
+/* Error */
+.calc-error{font-size:13px;color:var(--rust);font-family:var(--mono);margin-top:10px;display:none}
+
+/* Results */
+.results{max-width:780px;margin:40px auto;padding:0 1.5rem;display:none}
+.results.visible{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+@media(max-width:540px){.result-grid{grid-template-columns:1fr}}
+
+.result-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:12px;padding:1.25rem}
+.result-card.flight{border-color:rgba(196,98,45,0.3)}
+.result-card.overland{border-color:rgba(74,124,74,0.35)}
+.result-mode{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.result-co2{font-family:var(--serif);font-size:clamp(28px,4vw,40px);font-weight:300;letter-spacing:-0.5px;line-height:1}
+.result-co2 .unit{font-size:14px;color:var(--text2);margin-left:3px}
+.result-meta{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:8px;line-height:1.6}
+
+.saving-panel{background:var(--moss);color:var(--cream);border-radius:14px;padding:1.75rem;margin-bottom:22px;text-align:center}
+.saving-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--sage);margin-bottom:8px}
+.saving-number{font-family:var(--serif);font-size:clamp(42px,7vw,72px);font-weight:300;letter-spacing:-2px;line-height:1;color:var(--cream)}
+.saving-unit{font-size:16px;color:rgba(212,227,204,0.7);margin-left:4px;letter-spacing:0}
+.saving-equiv{font-size:15px;color:rgba(245,240,232,0.8);margin-top:10px;line-height:1.5}
+.saving-equiv strong{color:var(--sage)}
+
+.saving-bar-wrap{margin-top:16px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;height:8px}
+.saving-bar-fill{height:100%;background:var(--sage);border-radius:99px;transition:width 1s ease}
+
+/* Share */
+.share-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.share-btn{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:8px 16px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;text-decoration:none}
+.share-btn:hover{border-color:var(--fern);color:var(--fern)}
+.share-btn.copied{border-color:var(--fern);color:var(--fern);background:rgba(74,124,74,0.06)}
+
+/* CTA */
+.cta-panel{background:var(--bg);border:0.5px solid var(--border2);border-radius:14px;padding:1.5rem;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:32px}
+.cta-text{flex:1;min-width:200px}
+.cta-text h3{font-family:var(--serif);font-weight:300;font-size:22px;margin-bottom:4px}
+.cta-text p{font-size:13px;color:var(--text2);line-height:1.5}
+.cta-btn{background:var(--fern);color:white;padding:11px 20px;border-radius:99px;font-weight:600;font-size:13px;white-space:nowrap;border:none;cursor:pointer;font-family:var(--body);text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+.cta-btn:hover{background:#3D6B3D;color:white}
+
+/* Methodology */
+.methodology{max-width:780px;margin:0 auto 60px;padding:0 1.5rem}
+.meth-toggle{width:100%;text-align:left;background:none;border:0.5px solid var(--border2);border-radius:var(--radius);padding:12px 16px;font-size:13px;font-family:var(--mono);color:var(--text2);cursor:pointer;letter-spacing:0.5px;display:flex;justify-content:space-between;align-items:center}
+.meth-toggle:hover{border-color:var(--fern);color:var(--fern)}
+.meth-body{display:none;padding:16px;background:var(--bg);border:0.5px solid var(--border2);border-top:none;border-radius:0 0 var(--radius) var(--radius);font-size:13px;line-height:1.7;color:var(--text2)}
+.meth-body.open{display:block}
+.meth-body table{width:100%;border-collapse:collapse;margin:10px 0}
+.meth-body th,.meth-body td{padding:6px 10px;text-align:left;border-bottom:0.5px solid var(--border);font-size:12px}
+.meth-body th{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3)}
+
+/* Footer */
+.footer{background:var(--moss);color:rgba(212,227,204,0.6);text-align:center;padding:28px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px}
+.footer a{color:var(--sage)}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-text">SLW <em>Travel</em></span>
+  </a>
+  <div class="nav-links">
+    <a href="/how-long">Journey time</a>
+    <a href="/app.html">Planner</a>
+  </div>
+  <a href="/app.html" class="nav-cta">Plan a route →</a>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="inner">
+    <div class="kicker">Free tool · No signup needed</div>
+    <h1>How much CO₂ does going<br><em>overland</em> save?</h1>
+    <p class="hero-sub">Flights are the fastest way to destroy a trip's carbon budget. See exactly what surface travel costs the atmosphere instead — and what that difference means.</p>
+  </div>
+</section>
+
+<!-- Calculator -->
+<div class="inner" style="position:relative">
+  <div class="calc-card">
+    <div class="calc-row">
+      <input class="calc-inp" id="fromInp" placeholder="From — e.g. London" autocomplete="off" spellcheck="false"/>
+      <div class="calc-arrow">→</div>
+      <input class="calc-inp" id="toInp" placeholder="To — e.g. Bangkok" autocomplete="off" spellcheck="false"/>
+    </div>
+    <button class="calc-btn" id="calcBtn" onclick="calculate()">
+      <i class="ph ph-leaf"></i> Calculate CO₂ savings
+    </button>
+    <div class="calc-error" id="calcError"></div>
+    <div class="calc-chips">
+      <span class="calc-chip" onclick="preset('London','Bangkok')">London → Bangkok</span>
+      <span class="calc-chip" onclick="preset('Berlin','Istanbul')">Berlin → Istanbul</span>
+      <span class="calc-chip" onclick="preset('Madrid','Tokyo')">Madrid → Tokyo</span>
+      <span class="calc-chip" onclick="preset('Sydney','Singapore')">Sydney → Singapore</span>
+    </div>
+  </div>
+</div>
+
+<!-- Results -->
+<div class="results" id="results">
+  <div class="inner">
+
+    <div class="result-grid">
+      <div class="result-card flight">
+        <div class="result-mode">✈️ Flying</div>
+        <div class="result-co2" id="flightCo2">—<span class="unit">kg CO₂</span></div>
+        <div class="result-meta" id="flightMeta"></div>
+      </div>
+      <div class="result-card overland">
+        <div class="result-mode">🚆 Overland</div>
+        <div class="result-co2" id="overlandCo2">—<span class="unit">kg CO₂</span></div>
+        <div class="result-meta" id="overlandMeta"></div>
+      </div>
+    </div>
+
+    <div class="saving-panel">
+      <div class="saving-label">You save</div>
+      <div class="saving-number" id="savingNum">0<span class="saving-unit">kg CO₂</span></div>
+      <div class="saving-equiv" id="savingEquiv"></div>
+      <div class="saving-bar-wrap">
+        <div class="saving-bar-fill" id="savingBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="share-row">
+      <button class="share-btn" onclick="shareTwitter()" id="shareTwitter">
+        <i class="ph ph-x-logo"></i> Share on X
+      </button>
+      <button class="share-btn" onclick="copyLink()" id="copyBtn">
+        <i class="ph ph-link"></i> Copy link
+      </button>
+    </div>
+
+    <div class="cta-panel">
+      <div class="cta-text">
+        <h3>Now plan the actual route</h3>
+        <p>SLW Travel generates realistic overland itineraries with booking links, journey times, and confidence ratings — no flights, by design.</p>
+      </div>
+      <a href="/app.html" id="ctaLink" class="cta-btn">Plan this route →</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- Methodology -->
+<div class="methodology">
+  <button class="meth-toggle" onclick="toggleMeth(this)">
+    How did we calculate this? <i class="ph ph-caret-down"></i>
+  </button>
+  <div class="meth-body" id="methBody">
+    <p>This calculator uses published emissions data — no proprietary models, no black boxes.</p>
+    <table>
+      <thead><tr><th>Mode</th><th>Emissions factor</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>Flight (economy)</td><td>0.195 kg CO₂e / passenger-km</td><td>ICAO Carbon Emissions Calculator — includes radiative forcing index (×2 multiplier) to account for high-altitude warming effects beyond CO₂ alone</td></tr>
+        <tr><td>Train (blended)</td><td>0.035 kg CO₂e / passenger-km</td><td>EEA transport data — blended average across European diesel and electric networks</td></tr>
+        <tr><td>Bus / coach</td><td>0.027 kg CO₂e / passenger-km</td><td>Eurostat / EEA</td></tr>
+        <tr><td>Ferry</td><td>0.190 kg CO₂e / passenger-km</td><td>EEA — ferries are relatively emissions-heavy; flagged where relevant</td></tr>
+        <tr><td>Overland (blended)</td><td>0.028 kg CO₂e / passenger-km</td><td>Weighted average: ~60% train, ~35% bus, ~5% ferry. Actual trips vary by region — rail-heavy European routes are much lower; bus-heavy Central Asian routes slightly higher.</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:10px"><strong>Distance:</strong> Flight distance is calculated as the great-circle distance between the two cities (the theoretical straight-line path through the air). Overland distance is estimated at 1.3× the flight distance — a typical rail/road factor for non-direct routes.</p>
+    <p style="margin-top:8px"><strong>Radiative forcing:</strong> The flight figure includes a 2× RFI multiplier. Aviation has warming effects beyond CO₂ (contrails, NOₓ, water vapour) that operate at altitude. Without this multiplier, flight looks 50% "cleaner" than it is. Some calculators omit it — we include it because it reflects real-world impact more accurately.</p>
+    <p style="margin-top:8px"><strong>Limitations:</strong> Emissions vary significantly by airline, aircraft type, occupancy, and grid mix of the region's rail network. This is a planning-level estimate, not a precision audit.</p>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div><a href="/">SLW Travel</a> · Go the long way. On purpose. · <a href="/carbon">Carbon calculator</a> · <a href="/how-long">Journey time estimator</a></div>
+</footer>
+
+<script>
+// ── Haversine distance (km) ───────────────────────────────────────
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ── Geocode via Photon (same as app.html) ─────────────────────────
+const _geoCache = {};
+async function geocode(name) {
+  const key = name.trim().toLowerCase();
+  if (_geoCache[key]) return _geoCache[key];
+  const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(name)}&limit=1&lang=en`);
+  const d = await r.json();
+  const f = d.features?.[0];
+  if (!f) return null;
+  const [lon, lat] = f.geometry.coordinates;
+  const label = f.properties?.city || f.properties?.name || name;
+  const country = f.properties?.country || '';
+  const result = { lat, lon, label, country };
+  _geoCache[key] = result;
+  return result;
+}
+
+// ── Emissions constants ───────────────────────────────────────────
+const KG_PER_KM_FLIGHT    = 0.195; // ICAO, includes 2× radiative forcing
+const KG_PER_KM_OVERLAND  = 0.028; // blended: 60% train, 35% bus, 5% ferry
+const OVERLAND_DIST_FACTOR = 1.3;  // road/rail vs straight line
+
+// Equivalencies
+function bestEquiv(savingKg) {
+  const trees   = Math.round(savingKg / 21);   // trees absorbing CO₂ for 1 year
+  const burgers = Math.round(savingKg / 2.5);  // beef burgers
+  const carKm   = Math.round(savingKg / 0.171);// km not driven by an average car
+  const phones  = Math.round(savingKg / 0.008);// smartphone charges
+
+  // Pick the most vivid comparison
+  if (trees >= 3)       return `equivalent to <strong>${trees} trees</strong> absorbing carbon for a year`;
+  if (burgers >= 5)     return `the carbon in <strong>${burgers} beef burgers</strong>`;
+  if (carKm >= 100)     return `<strong>${carKm.toLocaleString()} km</strong> of driving`;
+  return                       `<strong>${phones.toLocaleString()} smartphone charges</strong>`;
+}
+
+// ── State ─────────────────────────────────────────────────────────
+let _lastFrom = '', _lastTo = '', _lastResult = null;
+
+// ── Main calculate function ───────────────────────────────────────
+async function calculate() {
+  const from = document.getElementById('fromInp').value.trim();
+  const to   = document.getElementById('toInp').value.trim();
+  const errEl = document.getElementById('calcError');
+  const btn   = document.getElementById('calcBtn');
+
+  if (!from || !to) { showError('Enter both a start and end city.'); return; }
+  if (from.toLowerCase() === to.toLowerCase()) { showError('Origin and destination look the same.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ph ph-spinner" style="animation:spin .7s linear infinite"></i> Looking up…';
+  errEl.style.display = 'none';
+
+  try {
+    const [c1, c2] = await Promise.all([geocode(from), geocode(to)]);
+    if (!c1) throw new Error(`Couldn't find "${from}" — try a major city name`);
+    if (!c2) throw new Error(`Couldn't find "${to}" — try a major city name`);
+
+    const flightKm   = Math.round(haversine(c1.lat, c1.lon, c2.lat, c2.lon));
+    const overlandKm = Math.round(flightKm * OVERLAND_DIST_FACTOR);
+    const flightCo2   = Math.round(flightKm * KG_PER_KM_FLIGHT);
+    const overlandCo2 = Math.round(overlandKm * KG_PER_KM_OVERLAND);
+    const saving      = Math.max(0, flightCo2 - overlandCo2);
+    const pctSaved    = flightCo2 > 0 ? Math.round(saving / flightCo2 * 100) : 0;
+
+    _lastFrom = `${c1.label}${c1.country ? ', '+c1.country : ''}`;
+    _lastTo   = `${c2.label}${c2.country ? ', '+c2.country : ''}`;
+    _lastResult = { flightKm, overlandKm, flightCo2, overlandCo2, saving, pctSaved };
+
+    showResults(flightKm, overlandKm, flightCo2, overlandCo2, saving, pctSaved, from, to);
+
+    if (window.posthog) posthog.capture('carbon_calculated', {
+      from: _lastFrom, to: _lastTo, saving_kg: saving, pct_saved: pctSaved
+    });
+
+  } catch(e) {
+    showError(e.message || 'Something went wrong — check your city names and try again.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ph ph-leaf"></i> Calculate CO₂ savings';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('calcError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function showResults(flightKm, overlandKm, flightCo2, overlandCo2, saving, pctSaved, from, to) {
+  // Flight card
+  document.getElementById('flightCo2').innerHTML =
+    `${flightCo2.toLocaleString()}<span class="unit">kg CO₂</span>`;
+  document.getElementById('flightMeta').innerHTML =
+    `${flightKm.toLocaleString()} km · economy class<br>includes radiative forcing`;
+
+  // Overland card
+  document.getElementById('overlandCo2').innerHTML =
+    `${overlandCo2.toLocaleString()}<span class="unit">kg CO₂</span>`;
+  document.getElementById('overlandMeta').innerHTML =
+    `~${overlandKm.toLocaleString()} km · train + bus mix<br>blended EEA average`;
+
+  // Saving panel
+  document.getElementById('savingNum').innerHTML =
+    `${saving.toLocaleString()}<span class="saving-unit">kg CO₂</span>`;
+  document.getElementById('savingEquiv').innerHTML =
+    saving > 0
+      ? `That's ${bestEquiv(saving)} — going overland saves <strong>${pctSaved}%</strong>`
+      : 'Overland and flight have similar footprints on this route';
+
+  // Animated bar
+  setTimeout(() => {
+    document.getElementById('savingBar').style.width = pctSaved + '%';
+  }, 100);
+
+  // CTA link
+  document.getElementById('ctaLink').href =
+    `/app.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+  // Show
+  const r = document.getElementById('results');
+  r.style.display = 'block';
+  setTimeout(() => r.classList.add('visible'), 10);
+  r.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── Presets ───────────────────────────────────────────────────────
+function preset(from, to) {
+  document.getElementById('fromInp').value = from;
+  document.getElementById('toInp').value = to;
+  calculate();
+}
+
+// ── Share ─────────────────────────────────────────────────────────
+function shareTwitter() {
+  if (!_lastResult) return;
+  const { saving, pctSaved } = _lastResult;
+  const text = `Going overland from ${_lastFrom} to ${_lastTo} saves ${saving.toLocaleString()} kg CO₂ — ${pctSaved}% less than flying. Calculate yours:`;
+  const url  = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://slw.travel/carbon')}`;
+  window.open(url, '_blank', 'width=600,height=400');
+  if (window.posthog) posthog.capture('carbon_share', { platform: 'twitter' });
+}
+
+function copyLink() {
+  const from = document.getElementById('fromInp').value.trim();
+  const to   = document.getElementById('toInp').value.trim();
+  const url  = `https://slw.travel/carbon?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = '<i class="ph ph-check"></i> Copied!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<i class="ph ph-link"></i> Copy link';
+    }, 2000);
+  });
+  if (window.posthog) posthog.capture('carbon_share', { platform: 'copy' });
+}
+
+// ── Methodology toggle ────────────────────────────────────────────
+function toggleMeth(btn) {
+  const body = document.getElementById('methBody');
+  const icon = btn.querySelector('i');
+  body.classList.toggle('open');
+  icon.className = body.classList.contains('open') ? 'ph ph-caret-up' : 'ph ph-caret-down';
+}
+
+// ── Prefill from URL params ───────────────────────────────────────
+(function() {
+  const p = new URLSearchParams(location.search);
+  const from = p.get('from'), to = p.get('to');
+  if (from) document.getElementById('fromInp').value = from;
+  if (to)   document.getElementById('toInp').value   = to;
+  if (from && to) calculate();
+})();
+
+// ── Enter key ─────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') calculate();
+});
+
+// ── Spinner keyframe ──────────────────────────────────────────────
+const style = document.createElement('style');
+style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
+</script>
+</body>
+</html>
