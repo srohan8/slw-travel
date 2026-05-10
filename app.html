@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿---
+permalink: /app
+render_with_liquid: false
+---
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -35,13 +39,16 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
 (function(){
   try {
     var valid = ['plan','record','mytrips','profile','admin'];
-    var t = (location.hash||'').replace(/^#/, '');
+    // Read tab from path (/app/record → 'record') or sessionStorage (404 redirect) or localStorage
+    var t = window.location.pathname.replace(/^\/app\/?/, '').split('/')[0] || '';
+    if (valid.indexOf(t) === -1) {
+      try { t = sessionStorage.getItem('_slw_tab') || ''; } catch(e) {}
+    }
     if (valid.indexOf(t) === -1) {
       try { t = localStorage.getItem('slw_active_tab') || ''; } catch(e) { t = ''; }
     }
     if (t && t !== 'plan' && valid.indexOf(t) !== -1) {
       document.documentElement.classList.add('tab-restoring');
-      // Failsafe: if init() never completes, never leave the user staring at a spinner
       setTimeout(function(){ document.documentElement.classList.remove('tab-restoring'); }, 4000);
     }
   } catch(e) {}
@@ -700,8 +707,8 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
     <select id="currSel" onchange="render()" style="display:none" aria-hidden="true">
       <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option><option>AUD</option><option>CAD</option><option>JPY</option><option>THB</option>
     </select>
-    <span class="user-badge" id="userBadge" style="cursor:pointer" onclick="currentUser?switchTab('profile',document.getElementById('navbtn_profile')):window.location.href='auth.html'">Guest</span>
-    <button class="btn" onclick="window.location.href='auth.html'" id="signInBtn">Sign in</button>
+    <span class="user-badge" id="userBadge" style="cursor:pointer" onclick="currentUser?switchTab('profile',document.getElementById('navbtn_profile')):window.location.href='/auth.html'">Guest</span>
+    <button class="btn" onclick="window.location.href='/auth.html'" id="signInBtn">Sign in</button>
     <button class="btn" onclick="signOut()" id="signOutBtn" style="display:none">Sign out</button>
   </div>
 </nav>
@@ -1446,7 +1453,7 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   const isGuest = params.get('guest') === '1';
   if (appSettings.login_required && !currentUser && !isGuest) {
-    window.location.href = 'index.html'; return;
+    window.location.href = '/'; return;
   }
 
   loadCustomSitesIntoAFF();
@@ -1457,12 +1464,21 @@ async function init() {
   renderSavedTrips();
   updateActiveTripBar();
 
-  // Restore last-active tab from URL hash (preferred, shareable) or localStorage.
+  // Restore last-active tab from URL path (/app/record) or sessionStorage (404 redirect) or localStorage.
   const validTabs = ['plan', 'record', 'mytrips', 'profile', 'admin'];
-  let savedTab = (window.location.hash || '').replace(/^#/, '');
+  let savedTab = window.location.pathname.replace(/^\/app\/?/, '').split('/')[0] || '';
+  if (!validTabs.includes(savedTab)) {
+    try { savedTab = sessionStorage.getItem('_slw_tab') || ''; sessionStorage.removeItem('_slw_tab'); } catch (e) {}
+  }
   if (!validTabs.includes(savedTab)) {
     try { savedTab = localStorage.getItem('slw_active_tab') || ''; } catch (e) { savedTab = ''; }
   }
+
+  // Browser back/forward — re-sync tab to URL without pushing a new history entry
+  window.addEventListener('popstate', function() {
+    const tab = window.location.pathname.replace(/^\/app\/?/, '').split('/')[0] || 'plan';
+    if (validTabs.includes(tab)) switchTab(tab, document.getElementById('navbtn_' + tab));
+  });
   if (savedTab && validTabs.includes(savedTab) && savedTab !== 'plan') {
     if (savedTab !== 'admin' || isAdmin) {
       switchTab(savedTab, document.getElementById('navbtn_' + savedTab));
@@ -1647,7 +1663,7 @@ function updateNavAuth() {
 async function signOut() {
     phReset();
     await sb.auth.signOut();
-    window.location.href = 'index.html';
+    window.location.href = '/';
 }
 
 // ── Usage bars ────────────────────────────────────────────────────
@@ -2994,9 +3010,9 @@ function switchTab(id, el) {
   // Persist current tab so refreshes / new tabs land back here
   try { localStorage.setItem('slw_active_tab', id); } catch (e) {}
   try {
-    const targetHash = '#' + id;
-    if (location.hash !== targetHash) {
-      history.replaceState(null, '', location.pathname + location.search + targetHash);
+    const tabPath = '/app' + (id !== 'plan' ? '/' + id : '');
+    if (location.pathname !== tabPath) {
+      history.pushState({ tab: id }, '', tabPath);
     }
   } catch (e) {}
 }
@@ -3400,7 +3416,7 @@ async function planRoute() {
   const allowed = await checkAndGate('routePlans');
   if (!allowed) {
     document.getElementById('planResult').style.display = 'block';
-    document.getElementById('planResult').innerHTML = `<div class="gate-msg"><h3>Monthly limit reached</h3><p>You've used all your free route plans this month. Upgrade to Pro for unlimited searches.</p><a href="/index.html" class="btn btn-primary">Upgrade to Pro</a></div>`;
+    document.getElementById('planResult').innerHTML = `<div class="gate-msg"><h3>Monthly limit reached</h3><p>You've used all your free route plans this month. Upgrade to Pro for unlimited searches.</p><a href="/" class="btn btn-primary">Upgrade to Pro</a></div>`;
     return;
   }
 
@@ -4959,7 +4975,7 @@ async function renderProfilePanel() {
     el.innerHTML = `<div style="text-align:center;padding:3rem 1rem">
       <div style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:10px">Welcome to By Sloth</div>
       <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Sign in to save trips, track karma, and contribute notes to the community.</p>
-      <a class="btn btn-primary" href="auth.html">Sign in / Create account</a>
+      <a class="btn btn-primary" href="/auth.html">Sign in / Create account</a>
     </div>`;
     return;
   }
