@@ -6,10 +6,14 @@ const PORT = process.env.PORT || 3000;
 
 // ── CORS — allow GitHub Pages and local dev ──────────────────────────────────
 const ALLOWED_ORIGINS = [
+  'https://slw.travel',
+  'https://www.slw.travel',
   'https://srohan8.github.io',
+  'http://localhost:3333',
   'http://localhost:4000',
   'http://localhost:3000',
   'http://127.0.0.1:4000',
+  'http://127.0.0.1:3333',
 ];
 
 app.use((req, res, next) => {
