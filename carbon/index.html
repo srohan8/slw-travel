@@ -1,13 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Flight vs Overland CO₂ Calculator — SLW Travel</title>
+<title>Flight vs Overland CO₂ Calculator — By Sloth</title>
 <meta name="description" content="Calculate how much CO₂ you save by travelling overland instead of flying. Free calculator using ICAO emissions data."/>
 <meta property="og:title" content="Flight vs Overland CO₂ Calculator"/>
 <meta property="og:description" content="See exactly how much carbon you save by taking the train or bus instead of flying."/>
-<meta property="og:url" content="https://slw.travel/carbon"/>
+<meta property="og:url" content="https://bysloth.com/carbon"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <script>
 !function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
@@ -131,7 +131,7 @@ a:hover{text-decoration:underline}
 <!-- Nav -->
 <nav class="nav">
   <a href="/" class="nav-logo">
-    <span class="nav-logo-text">SLW <em>Travel</em></span>
+    <span class="nav-logo-text">By <em>Sloth</em></span>
   </a>
   <div class="nav-links">
     <a href="/how-long">Journey time</a>
@@ -214,7 +214,7 @@ a:hover{text-decoration:underline}
     <div class="cta-panel">
       <div class="cta-text">
         <h3>Now plan the actual route</h3>
-        <p>SLW Travel generates realistic overland itineraries with booking links, journey times, and confidence ratings — no flights, by design.</p>
+        <p>By Sloth generates realistic overland itineraries with booking links, journey times, and confidence ratings — no flights, by design.</p>
       </div>
       <a href="/app.html" id="ctaLink" class="cta-btn">Plan this route →</a>
     </div>
@@ -247,7 +247,7 @@ a:hover{text-decoration:underline}
 
 <!-- Footer -->
 <footer class="footer">
-  <div><a href="/">SLW Travel</a> · Go the long way. On purpose. · <a href="/carbon">Carbon calculator</a> · <a href="/how-long">Journey time estimator</a></div>
+  <div><a href="/">By Sloth</a> · Go the long way. On purpose. · <a href="/carbon">Carbon calculator</a> · <a href="/how-long">Journey time estimator</a></div>
 </footer>
 
 <script>
@@ -402,7 +402,7 @@ function shareTwitter() {
   if (!_lastResult) return;
   const { saving, pctSaved } = _lastResult;
   const text = `Going overland from ${_lastFrom} to ${_lastTo} saves ${saving.toLocaleString()} kg CO₂ — ${pctSaved}% less than flying. Calculate yours:`;
-  const url  = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://slw.travel/carbon')}`;
+  const url  = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://bysloth.com/carbon')}`;
   window.open(url, '_blank', 'width=600,height=400');
   if (window.posthog) posthog.capture('carbon_share', { platform: 'twitter' });
 }
@@ -410,7 +410,7 @@ function shareTwitter() {
 function copyLink() {
   const from = document.getElementById('fromInp').value.trim();
   const to   = document.getElementById('toInp').value.trim();
-  const url  = `https://slw.travel/carbon?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+  const url  = `https://bysloth.com/carbon?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
   navigator.clipboard.writeText(url).then(() => {
     const btn = document.getElementById('copyBtn');
     btn.classList.add('copied');

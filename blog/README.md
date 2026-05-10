@@ -1,4 +1,4 @@
-# SLW Travel — Blog
+﻿# By Sloth — Blog
 
 Long-form route guides and field notes. Built with Jekyll, served from GitHub Pages.
 

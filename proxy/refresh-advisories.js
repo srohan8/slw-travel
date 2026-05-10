@@ -1,4 +1,4 @@
-// SLW Travel · Daily conflict-zone refresh
+﻿// By Sloth · Daily conflict-zone refresh
 // ─────────────────────────────────────────
 // Pulls travel-advisory levels from the UK FCDO content API and the
 // Government of Canada open data, upserts them into Supabase

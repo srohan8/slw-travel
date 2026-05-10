@@ -1,4 +1,4 @@
-// SLW Travel — Service Worker
+﻿// By Sloth — Service Worker
 // Cache-first for app shell; network-only for Supabase, Reddit, geocoding APIs.
 
 const CACHE_NAME = 'slw-v1';

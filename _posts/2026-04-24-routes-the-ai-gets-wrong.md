@@ -1,16 +1,16 @@
----
+﻿---
 title: "What the AI gets wrong — and the routes we won't plan until we're sure"
 date: 2026-04-24
 layout: post
 ---
 
-*By the SLW Travel team*
+*By the By Sloth team*
 
 ---
 
 Every AI travel planner has a confidence problem. Not a lack of confidence — too much of it. Ask most AI tools to plan a route and they will give you one. Fluent, specific, structured. Train at 08:40, bus from the north terminal, ferry on Tuesdays and Fridays. It sounds right. Sometimes it is. Sometimes the train hasn't run in four years and the north terminal closed in 2022 and the ferry is freight-only.
 
-SLW Travel is built on a different assumption: that being honest about what we don't know is more useful than sounding certain about everything.
+By Sloth is built on a different assumption: that being honest about what we don't know is more useful than sounding certain about everything.
 
 This post is about where that honesty currently lives — the routes we flag, the legs we refuse to confirm, and a few corridors we won't plan at all yet because the gap between what the AI can say and what is actually true is too wide to bridge with a confidence badge.
 
@@ -24,7 +24,7 @@ The Samjhauta Express was a train service running between Attari (India) and Lah
 
 Ask a general-purpose AI to plan an overland route from Delhi to Lahore and there is a meaningful chance it will mention the Samjhauta Express. It is in the training data. It was a real service. The AI has no reliable mechanism for knowing it was suspended seven years ago and has not come back.
 
-In the SLW Travel planner, any route leg involving India-Pakistan surface crossings is flagged **Uncertain** and accompanied by a note explaining the suspension. We do not suggest the Samjhauta Express as a plannable option. We are not going to pretend otherwise until there is a published timetable and tickets are actually on sale.
+In the By Sloth planner, any route leg involving India-Pakistan surface crossings is flagged **Uncertain** and accompanied by a note explaining the suspension. We do not suggest the Samjhauta Express as a plannable option. We are not going to pretend otherwise until there is a published timetable and tickets are actually on sale.
 
 ---
 
@@ -74,7 +74,7 @@ We flag any Africa route passing through Sudan at the highest level. The app wil
 
 Most travel apps do not publish posts about what they cannot do. The incentive is to appear capable of everything and let the small print handle the liability.
 
-We think this is the wrong approach, particularly for the travellers SLW Travel is built for. A digital nomad planning six months across Central Asia, a journalist trying to get from Nairobi to Cairo, a researcher crossing into a conflict-adjacent country — these are not people who benefit from an AI that sounds confident about everything. They need to know which parts of the plan are solid and which parts they need to verify themselves.
+We think this is the wrong approach, particularly for the travellers By Sloth is built for. A digital nomad planning six months across Central Asia, a journalist trying to get from Nairobi to Cairo, a researcher crossing into a conflict-adjacent country — these are not people who benefit from an AI that sounds confident about everything. They need to know which parts of the plan are solid and which parts they need to verify themselves.
 
 The confidence labels in the planner — **Verified**, **Verify before booking**, **Uncertain** — exist for exactly this reason. So does this post. The routes above are the ones where the gap between what AI training data contains and what is true on the ground is wide enough to cause real harm if someone trusted the wrong answer.
 
@@ -84,7 +84,7 @@ We would rather tell you we don't know than guess.
 
 ## What we are working on
 
-Phase 2 of the SLW Travel route knowledge base involves curating a graph of verified connections — routes checked against live operator data, recent traveller reports, and official timetables. As that database builds, the number of **Verified** legs will grow and the **Uncertain** ones will shrink.
+Phase 2 of the By Sloth route knowledge base involves curating a graph of verified connections — routes checked against live operator data, recent traveller reports, and official timetables. As that database builds, the number of **Verified** legs will grow and the **Uncertain** ones will shrink.
 
 In the meantime, for any leg the AI flags as Uncertain, we recommend:
 - [Seat61](https://www.seat61.com) — the most reliable single source for train routes worldwide
@@ -96,6 +96,6 @@ If you have made a journey recently that the app is flagging incorrectly — a l
 
 ---
 
-*Advisory levels in the SLW Travel planner are refreshed daily from the UK FCDO and the Government of Canada. Each flagged leg links out to the relevant FCDO, Canada, US State Department, Australia, Germany, France, and Japan advisory pages for cross-checking. Country coverage is currently ~20 high-risk and elevated-risk destinations, reviewed weekly and expanding. The app informs — it never blocks.*
+*Advisory levels in the By Sloth planner are refreshed daily from the UK FCDO and the Government of Canada. Each flagged leg links out to the relevant FCDO, Canada, US State Department, Australia, Germany, France, and Japan advisory pages for cross-checking. Country coverage is currently ~20 high-risk and elevated-risk destinations, reviewed weekly and expanding. The app informs — it never blocks.*
 
-*Try the [SLW Travel planner](https://slwtravel.com).*
+*Try the [By Sloth planner](https://slwtravel.com).*

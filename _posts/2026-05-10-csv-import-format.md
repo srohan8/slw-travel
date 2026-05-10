@@ -1,15 +1,15 @@
----
+﻿---
 title: "Importing a trip from a spreadsheet — CSV format guide"
 date: 2026-05-10
 layout: post
-description: "SLW Travel accepts CSV files from Google Sheets, Excel, or any app that exports plain text. Here's the column format and a template to get started."
+description: "By Sloth accepts CSV files from Google Sheets, Excel, or any app that exports plain text. Here's the column format and a template to get started."
 ---
 
-*By the SLW Travel team*
+*By the By Sloth team*
 
 ---
 
-If you've been planning your overland trip in a spreadsheet, you can import it directly into SLW Travel without re-entering everything by hand. SLW accepts `.csv` files — the plain-text format exported by Google Sheets, Excel, Numbers, LibreOffice Calc, and most other spreadsheet apps.
+If you've been planning your overland trip in a spreadsheet, you can import it directly into By Sloth without re-entering everything by hand. By Sloth accepts `.csv` files — the plain-text format exported by Google Sheets, Excel, Numbers, LibreOffice Calc, and most other spreadsheet apps.
 
 Once imported, you can use **AI Refine** to fill in missing details — booking platforms, km estimates, journey times, and confidence ratings.
 
@@ -19,7 +19,7 @@ Once imported, you can use **AI Refine** to fill in missing details — booking 
 
 1. Open the **Trip planner** tab (the record icon in the navigation)
 2. Click **Import CSV** in the toolbar above the route
-3. Select your `.csv` file — SLW reads it and creates a trip plan from your stops
+3. Select your `.csv` file — By Sloth reads it and creates a trip plan from your stops
 4. Click **AI Refine** to let the AI fill in booking sites, distances, and confidence ratings
 5. Edit anything that needs adjusting, then save
 
@@ -39,9 +39,9 @@ Each row in your CSV is one stop. The leg *leaving* that stop (the transport to 
 | Journey time (hours) | `hours`, `duration` | No | `9` |
 | Notes | `notes`, `note`, `tip` | No | `Book 2 weeks ahead` |
 
-**Column names are case-insensitive and can be in any order.** SLW detects them automatically.
+**Column names are case-insensitive and can be in any order.** By Sloth detects them automatically.
 
-If your file has no header row, SLW falls back to positional order: column 1 = stop name, column 2 = days, column 3 = mode, column 4 = km, column 5 = cost.
+If your file has no header row, By Sloth falls back to positional order: column 1 = stop name, column 2 = days, column 3 = mode, column 4 = km, column 5 = cost.
 
 ---
 
@@ -58,7 +58,7 @@ If your file has no header row, SLW falls back to positional order: column 1 = s
 | `walk` | On foot |
 | `motorbike` | Motorcycle |
 | `hitchhike` | Hitchhiking |
-| `flight` | *(not recommended — SLW is overland-first, but it won't break anything)* |
+| `flight` | *(not recommended — By Sloth is overland-first, but it won't break anything)* |
 
 ---
 
@@ -80,7 +80,7 @@ Paris,5,,,,
 - The last stop has no transport row (there's no leg leaving it) — leave the transport columns blank on the last row
 - You don't need to fill in `km`, `cost`, or `hours` — AI Refine will estimate them
 - Quoted fields with commas work fine: `"Bangkok, Thailand"` parses correctly
-- The file can have extra columns — SLW ignores any it doesn't recognise
+- The file can have extra columns — By Sloth ignores any it doesn't recognise
 
 ---
 

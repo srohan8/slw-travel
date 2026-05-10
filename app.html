@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SLW Travel — App</title>
+<title>By Sloth — App</title>
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#2D4A2D">
@@ -11,7 +11,7 @@
 <!-- iOS Safari -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="SLW Travel">
+<meta name="apple-mobile-web-app-title" content="By Sloth">
 <link rel="apple-touch-icon" href="/icons/icon.svg">
 <!-- Service worker registration -->
 <script>
@@ -672,7 +672,7 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
 
 <!-- ── Cookie consent banner ── -->
 <div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#2D4A2D;color:#F5F0E8;padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
-  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:#8BAF7A;">Learn&nbsp;more</a></span>
+  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://bysloth.com/privacy" style="color:#8BAF7A;">Learn&nbsp;more</a></span>
   <div style="display:flex;gap:8px;flex-shrink:0;">
     <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(245,240,232,0.35);color:#F5F0E8;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
     <button onclick="slwConsent('accepted')" style="background:#8BAF7A;border:none;color:#2D4A2D;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
@@ -683,7 +683,7 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
 <nav>
   <a class="logo" href="#">
     <img src="public/sloth-logo.svg" height="32" style="filter:brightness(0) invert(1);opacity:0.9;margin-right:2px"/>
-    SLW <em>Travel</em>
+    By <em>Sloth</em>
   </a>
   <div class="nav-utils">
     <button class="nav-link active" id="navbtn_plan"    onclick="switchTab('plan',this)">Search</button>
@@ -4921,7 +4921,7 @@ async function renderProfilePanel() {
   // ── Render ────────────────────────────────────────────────────────
   if (!user) {
     el.innerHTML = `<div style="text-align:center;padding:3rem 1rem">
-      <div style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:10px">Welcome to SLW Travel</div>
+      <div style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:10px">Welcome to By Sloth</div>
       <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Sign in to save trips, track karma, and contribute notes to the community.</p>
       <a class="btn btn-primary" href="auth.html">Sign in / Create account</a>
     </div>`;
@@ -6033,7 +6033,7 @@ function exportTripPDF(tripId) {
       <tbody>${legsRows}</tbody>
     </table>` : ''}
     ${trip.notes ? `<h3>Notes</h3><div style="white-space:pre-wrap;font-size:12px;color:#333">${_slwEsc(trip.notes)}</div>` : ''}
-    <div class="pr-meta" style="margin-top:24px">slw.travel · go the long way, on purpose</div>`;
+    <div class="pr-meta" style="margin-top:24px">bysloth.com · go the long way, on purpose</div>`;
   document.body.classList.add('printing');
   const cleanup = () => {
     document.body.classList.remove('printing');
@@ -6080,7 +6080,7 @@ async function exportTripGPX(tripId) {
   const titleSafe = _slwEsc(trip.title || 'Trip');
   const gpx =
 `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="slw.travel" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="bysloth.com" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>${titleSafe}</name></metadata>
 ${wpts}
   <rte><name>${titleSafe}</name>

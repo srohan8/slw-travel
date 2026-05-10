@@ -1,11 +1,11 @@
----
+﻿---
 title: "Polarsteps vs planning your trip: the gap nobody has filled yet"
 date: 2026-05-10
 layout: post
 description: "Polarsteps is good for recording where you've been. It's not a trip planner. Here's what people who've tried to use it for planning actually found — and what a real plan-to-record tool would look like."
 ---
 
-*By the SLW Travel team*
+*By the By Sloth team*
 
 ---
 
@@ -40,7 +40,7 @@ The planning layer and the recording layer are completely separate. Nothing ties
 
 ## What a plan-to-record tool would look like
 
-The roadmap vision for SLW is to close this gap: plan your route in the tool, then record the trip *in the same tool* as it happens.
+The roadmap vision for By Sloth is to close this gap: plan your route in the tool, then record the trip *in the same tool* as it happens.
 
 Each stop in your plan gets a journal entry. Each leg carries the notes you wrote when you crossed it. The confidence rating on that border crossing gets a community note from you, because you just did it yesterday and you know what the current situation is.
 
@@ -52,7 +52,7 @@ That document is valuable to future travellers. It's also a better version of yo
 
 ## What's live today
 
-The journal feature is in progress. What's live now in SLW Travel:
+The journal feature is in progress. What's live now in By Sloth:
 
 - **Journal entry per stop** — a text field on every stop in your plan. Write notes during the trip, not just before it.
 - **Mark as visited** — tap "Mark as visited" on each stop as you pass through. Your trip view shows which stops are done, with the date.
@@ -64,7 +64,7 @@ The full plan-to-record experience — where the route you planned and the journ
 
 ## If you've been using a spreadsheet
 
-You can import it. SLW accepts CSV files from Google Sheets, Excel, or any app that exports plain text. Drop in your stops, days, and any other columns you have — SLW reads them and turns them into a trip plan. From there, AI Refine can fill in booking sites, km estimates, and confidence ratings. Then you can use that plan as the skeleton for your journal.
+You can import it. By Sloth accepts CSV files from Google Sheets, Excel, or any app that exports plain text. Drop in your stops, days, and any other columns you have — By Sloth reads them and turns them into a trip plan. From there, AI Refine can fill in booking sites, km estimates, and confidence ratings. Then you can use that plan as the skeleton for your journal.
 
 [Plan your overland route →]
 
@@ -72,4 +72,4 @@ You can import it. SLW accepts CSV files from Google Sheets, Excel, or any app t
 
 ---
 
-*SLW Travel is in private beta. The journal and plan-to-record features are in active development.*
+*By Sloth is in private beta. The journal and plan-to-record features are in active development.*

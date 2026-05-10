@@ -1,6 +1,6 @@
-{
-  "name": "SLW Travel",
-  "short_name": "SLW",
+﻿{
+  "name": "By Sloth",
+  "short_name": "Sloth",
   "description": "Overland trip planner for people who choose the ground over the sky. Trains, buses, ferries, shared taxis — with confidence ratings and community notes.",
   "start_url": "/app.html",
   "id": "/app.html",
