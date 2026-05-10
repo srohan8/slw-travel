@@ -491,3 +491,106 @@ on conflict (country_code) do update set
   france_url        = coalesce(excluded.france_url,  public.conflict_zones.france_url),
   japan_url         = coalesce(excluded.japan_url,   public.conflict_zones.japan_url),
   reviewed_at       = now();
+
+-- ── API Usage Log ─────────────────────────────────────────────────────────────
+-- Written by the Railway proxy on every AI search. Readable only by service role
+-- (admin tab uses the Supabase anon key but RLS blocks public reads).
+create table if not exists public.api_usage_log (
+  id                          uuid        primary key default gen_random_uuid(),
+  created_at                  timestamptz not null default now(),
+  model                       text,
+  input_tokens                int         not null default 0,
+  output_tokens               int         not null default 0,
+  cache_read_input_tokens     int         not null default 0,
+  cache_creation_input_tokens int         not null default 0,
+  cost_usd                    numeric(10,6) not null default 0
+);
+
+alter table public.api_usage_log enable row level security;
+
+-- Only service role can insert (proxy uses service key)
+drop policy if exists "Service role insert usage" on public.api_usage_log;
+
+-- Admins can read (profiles.is_admin = true) — client uses anon key + JWT
+drop policy if exists "Admins can read usage" on public.api_usage_log;
+create policy "Admins can read usage"
+  on public.api_usage_log for select
+  using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and is_admin = true
+    )
+  );
+
+
+-- ── Community flagging ────────────────────────────────────────────────────
+
+-- 1. flagged column on contributions (hidden from all non-admins when true)
+alter table public.contributions add column if not exists flagged boolean not null default false;
+
+-- 2. Flags audit table: one flag per user per contribution
+create table if not exists public.contribution_flags (
+  id              uuid        primary key default gen_random_uuid(),
+  contribution_id uuid        not null references public.contributions(id) on delete cascade,
+  user_id         uuid        references auth.users(id) on delete set null,
+  created_at      timestamptz not null default now(),
+  unique(contribution_id, user_id)
+);
+alter table public.contribution_flags enable row level security;
+drop policy if exists "Authenticated users can flag" on public.contribution_flags;
+create policy "Authenticated users can flag"
+  on public.contribution_flags for insert
+  with check (auth.uid() = user_id);
+
+-- 3. RPC: flag_contribution — security definer bypasses RLS to write both tables atomically
+create or replace function public.flag_contribution(contrib_id uuid)
+returns void language sql security definer as $$
+  insert into public.contribution_flags (contribution_id, user_id)
+    values (contrib_id, auth.uid())
+    on conflict do nothing;
+  update public.contributions set flagged = true where id = contrib_id;
+$$;
+
+-- 4. Admin RLS: allow admins to update or delete any contribution
+drop policy if exists "Admins can update any contribution" on public.contributions;
+create policy "Admins can update any contribution"
+  on public.contributions for update
+  using (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true));
+
+drop policy if exists "Admins can delete contributions" on public.contributions;
+create policy "Admins can delete contributions"
+  on public.contributions for delete
+  using (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true));
+
+-- 5. Update read RLS: hide flagged notes from non-admins at DB level
+drop policy if exists "Anyone can read contributions" on public.contributions;
+create policy "Anyone can read contributions"
+  on public.contributions for select
+  using (
+    flagged = false
+    or exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+  );
+
+
+
+-- ── Email captures (free tools lead gen) ─────────────────────────────
+create table if not exists public.email_captures (
+  id         uuid        primary key default gen_random_uuid(),
+  email      text        not null,
+  source     text        not null default '',   -- e.g. 'how-long-tool', 'carbon-tool'
+  created_at timestamptz not null default now(),
+  unique(email, source)
+);
+alter table public.email_captures enable row level security;
+
+-- Allow anonymous inserts (the free tools have no auth)
+drop policy if exists "Anyone can insert email capture" on public.email_captures;
+create policy "Anyone can insert email capture"
+  on public.email_captures for insert
+  with check (true);
+
+-- Only admins can read captures
+drop policy if exists "Admins can read email captures" on public.email_captures;
+create policy "Admins can read email captures"
+  on public.email_captures for select
+  using (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true));
