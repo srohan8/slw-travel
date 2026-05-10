@@ -1364,6 +1364,7 @@ let tripWarnings = [];   // AI-generated warning badges — persisted with the t
 let currentTripId     = null;
 let currentTripSubTab = 'mytrips'; // mytrips | saved | collections
 let viewingTripId     = null;      // null = list view, string = viewing this trip
+let recordingTripId   = null;      // non-null = record panel open for this trip
 let _fromTripView     = false;     // true when edit was launched from trip view panel
 let _autoRefreshPending = false; // true while a stale-cache background re-fetch is in flight
 let _tripDirty = false;
@@ -1688,6 +1689,73 @@ function closeTripView() {
   if (_mapState === 'expanded') setMapState('docked');
 }
 
+// ── Record panel ─────────────────────────────────────────────────
+function openRecordPanel(tripId) {
+  recordingTripId = tripId;
+  viewingTripId   = tripId; // so closing record returns to trip view, not list
+  renderMyTripsPanel();
+}
+
+function closeRecordPanel() {
+  recordingTripId = null;
+  renderMyTripsPanel(); // viewingTripId still set → goes back to trip view
+}
+
+function renderRecordPanel(trip, el) {
+  const sc = trip.stops?.length || 0;
+  const visitedCount = (trip.stops||[]).filter(s => s.visitedAt).length;
+  const route = sc >= 2
+    ? (trip.stops[0].name||'?') + ' → ' + (trip.stops[sc-1].name||'?')
+    : trip.title || 'Trip';
+
+  const stopsHtml = (trip.stops||[]).map((stop, i) => {
+    const isLast = i === sc - 1;
+    const leg    = !isLast ? (trip.legs?.[i] || {}) : null;
+    const dateStr = stop.date
+      ? new Date(stop.date + 'T00:00').toLocaleDateString('en', { weekday:'short', month:'long', day:'numeric' })
+      : '';
+    const legParts = [leg?.mode, leg?.km ? leg.km + ' km' : '', leg?.hours ? leg.hours + 'h' : ''].filter(Boolean);
+
+    return `<div style="margin-bottom:4px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
+        <div>
+          <div style="font-family:var(--serif);font-size:22px;font-weight:300;color:var(--text);line-height:1.15">${_slwEsc(stop.name||'Unnamed stop')}</div>
+          ${dateStr ? `<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px">${dateStr}${stop.days ? ' · ' + stop.days + ' night' + (stop.days!==1?'s':'') : ''}</div>` : ''}
+        </div>
+        <button onclick="toggleTripViewVisited('${trip.id}',${i},this)"
+          style="flex-shrink:0;margin-top:4px;font-size:10px;font-family:var(--mono);padding:5px 12px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:${stop.visitedAt?'var(--fern)':'var(--text3)'};cursor:pointer;white-space:nowrap">
+          ${stop.visitedAt ? `<i class="ph ph-check-circle"></i> ${stop.visitedAt.slice(0,10)}` : '<i class="ph ph-map-pin"></i> Mark visited'}
+        </button>
+      </div>
+      <textarea
+        oninput="saveTripViewStop('${trip.id}',${i},'journalEntry',this.value)"
+        placeholder="What happened in ${_slwEsc(stop.name||'this stop')}?"
+        rows="4"
+        onfocus="this.style.borderColor='var(--fern)'" onblur="this.style.borderColor='var(--border2)'"
+        style="width:100%;font-size:14px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:6px;background:var(--bg);resize:vertical;font-family:var(--serif);line-height:1.6;color:var(--text);outline:none;transition:border-color .15s"
+      >${_slwEsc(stop.journalEntry||'')}</textarea>
+      ${!isLast ? `<div style="display:flex;align-items:center;gap:8px;margin:18px 0;color:var(--text3)">
+        <div style="flex:1;height:0.5px;background:var(--border2)"></div>
+        <span style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;flex-shrink:0">${_slwEsc(legParts.join(' · ') || 'leg')}</span>
+        <div style="flex:1;height:0.5px;background:var(--border2)"></div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem">
+      <button class="back-btn" onclick="closeRecordPanel()">← Trip overview</button>
+      <div style="flex:1"></div>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${visitedCount}/${sc} visited</span>
+    </div>
+    <div style="margin-bottom:1.75rem">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:6px">Journey log</div>
+      <div style="font-family:var(--serif);font-size:clamp(20px,3.5vw,28px);font-weight:300;color:var(--text);letter-spacing:-0.3px">${_slwEsc(route)}</div>
+    </div>
+    ${stopsHtml}
+  `;
+}
+
 // ── Pin / bookmark ───────────────────────────────────────────────────
 function togglePin(tripId, ev) {
   ev.stopPropagation();
@@ -1949,12 +2017,8 @@ function renderTripViewPanel(trip, el) {
           + '<button class="back-btn" style="font-size:10px;letter-spacing:1px" onclick="loadTrip(' + safeTrip + ',' + i + ')">Edit leg \u2192</button>'
         + '</div>'
       + '</div>'
-      + '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:8px">'
-        + '<textarea oninput="saveTripViewStop(\'' + trip.id + '\',' + i + ',\'journalEntry\',this.value)" rows="2" placeholder="Notes from ' + _slwEsc(from) + '…" style="flex:1;font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);resize:vertical;font-family:var(--serif);line-height:1.5;color:var(--text)">' + _slwEsc(trip.stops[i]?.journalEntry||'') + '</textarea>'
-        + '<button onclick="toggleTripViewVisited(\'' + trip.id + '\',' + i + ',this)" style="flex-shrink:0;font-size:10px;font-family:var(--mono);padding:4px 9px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:' + (trip.stops[i]?.visitedAt?'var(--fern)':'var(--text3)') + ';cursor:pointer;white-space:nowrap">'
-        + (trip.stops[i]?.visitedAt ? '<i class="ph ph-check-circle"></i> ' + trip.stops[i].visitedAt.slice(0,10) : '<i class="ph ph-map-pin"></i> Mark visited')
-        + '</button>'
-      + '</div>'
+      + (trip.stops[i]?.visitedAt ? '<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--fern);margin-bottom:4px"><i class="ph ph-check-circle"></i> Visited ' + trip.stops[i].visitedAt.slice(0,10) + '</div>' : '')
+      + (trip.stops[i]?.journalEntry ? '<div style="font-family:var(--serif);font-size:13px;line-height:1.65;color:var(--text2);white-space:pre-wrap;margin-bottom:10px;padding:10px 12px;background:var(--bg2);border-radius:6px;border-left:3px solid var(--border2)">' + _slwEsc(trip.stops[i].journalEntry) + '</div>' : '')
       + (conflictHtml ? conflictHtml : '')
       + '<div class="leg-grid">' + journeyHtml + transportHtml + stayHtml + '</div>'
       + renderContribBlockForKey(from + '\u2192' + to, i)
@@ -1972,6 +2036,7 @@ function renderTripViewPanel(trip, el) {
     <button class="back-btn" onclick="closeTripView()">\u2190 All trips</button>
     <div style="flex:1"></div>
     <button class="pin-btn${isPinned?' pinned':''}" onclick="togglePin('${trip.id}',event)" title="${isPinned?'Unsave':'Save'}">${isPinned?'<i class="ph-fill ph-heart"></i>':'<i class="ph ph-heart"></i>'}</button>
+    <button class="btn" onclick="openRecordPanel('${trip.id}')" title="Write journal entries and mark stops visited" style="background:var(--bg2)"><i class="ph ph-notebook"></i> Record journey</button>
     <button class="btn btn-primary" onclick="loadTrip(${safeTrip})">Edit trip \u2192</button>
   </div>
 
@@ -1999,22 +2064,7 @@ function renderTripViewPanel(trip, el) {
   ${trip.summary ? `<p style="color:var(--text);font-size:14px;line-height:1.65;margin-bottom:${trip.warnings?.length?'10px':'1.5rem'}">${_slwEsc(trip.summary)}</p>` : ''}
   ${trip.warnings?.length ? `<div style="margin-bottom:1.5rem">${trip.warnings.map(w=>`<span class="warn-badge">${_slwEsc(w)}</span>`).join(' ')}</div>` : ''}
 
-  ${(() => {
-    if (!legsHtml) return '';
-    const fs = sc >= 2 ? trip.stops[sc-1] : null;
-    const fsHtml = fs ? (
-      '<div style="margin-top:8px;padding:10px 12px;background:var(--bg2);border-radius:6px;border:0.5px solid var(--border2)">'
-      + '<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Arrival — ' + _slwEsc(fs.name||'Final stop') + '</div>'
-      + '<div style="display:flex;gap:6px;align-items:flex-start">'
-        + '<textarea oninput="saveTripViewStop(\'' + trip.id + '\',' + (sc-1) + ',\'journalEntry\',this.value)" rows="2" placeholder="Notes from ' + _slwEsc(fs.name||'final stop') + '…" style="flex:1;font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);resize:vertical;font-family:var(--serif);line-height:1.5;color:var(--text)">' + _slwEsc(fs.journalEntry||'') + '</textarea>'
-        + '<button onclick="toggleTripViewVisited(\'' + trip.id + '\',' + (sc-1) + ',this)" style="flex-shrink:0;font-size:10px;font-family:var(--mono);padding:4px 9px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:' + (fs.visitedAt?'var(--fern)':'var(--text3)') + ';cursor:pointer;white-space:nowrap">'
-        + (fs.visitedAt ? '<i class="ph ph-check-circle"></i> ' + fs.visitedAt.slice(0,10) : '<i class="ph ph-map-pin"></i> Mark visited')
-        + '</button>'
-      + '</div>'
-      + '</div>'
-    ) : '';
-    return '<div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:10px">Legs</div><div class="tv-legs-list">' + legsHtml + fsHtml + '</div>';
-  })()}
+  ${legsHtml ? '<div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:10px">Legs</div><div class="tv-legs-list">' + legsHtml + '</div>' : ''}
 
   <div id="tvElev_${trip.id}" style="margin:12px 0 4px"></div>
 
@@ -3853,16 +3903,6 @@ function renderSegs() {
             ${departHtml}
             ${daysBadge}
           </div>
-          <div style="margin-top:5px;display:flex;gap:6px;align-items:flex-start">
-            <textarea placeholder="Journal — notes, what happened here…" rows="2"
-              oninput="stops[${i}].journalEntry=this.value;_tripDirty=true"
-              style="flex:1;font-size:11px;padding:5px 7px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);resize:vertical;font-family:var(--serif);line-height:1.5;color:var(--text)"
-            >${_slwEsc(s.journalEntry||'')}</textarea>
-            <button onclick="markVisited(${i})" title="${s.visitedAt?'Mark as not yet visited':'Mark as visited'}"
-              style="flex-shrink:0;font-size:10px;font-family:var(--mono);padding:4px 9px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:${s.visitedAt?'var(--fern)':'var(--text3)'};cursor:pointer;white-space:nowrap">
-              ${s.visitedAt ? '<i class="ph ph-check-circle"></i> ' + (s.visitedAt.slice(0,10)) : '<i class="ph ph-map-pin"></i> Mark visited'}
-            </button>
-          </div>
         </div>
         ${!isL ? renderLeg(i) : ''}
         ${!isL ? `<button class="insert-stop-btn" onclick="insertStop(${i})">+ Insert stop here</button>` : ''}
@@ -4644,6 +4684,13 @@ function stateOf(t) {
 function renderMyTripsPanel() {
   const el = document.getElementById('mytripsPanel');
   if (!el) return;
+
+  // Record panel takes over when active
+  if (recordingTripId) {
+    const trip = (storage.get('trips')||[]).find(t => t.id === recordingTripId);
+    if (trip) { renderRecordPanel(trip, el); return; }
+    recordingTripId = null; // trip deleted — fall through
+  }
 
   // Trip detail view takes over the whole panel
   if (viewingTripId) {
