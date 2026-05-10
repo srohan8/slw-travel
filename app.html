@@ -767,7 +767,7 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
       </div>
     </div>
     <div style="display:flex;gap:10px;align-items:center">
-      <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
+      <button class="btn btn-primary" id="planBtn" onclick="planRoute()" title="Every leg gets a confidence rating — we flag what needs checking">Suggest route ↗</button>
       <span style="font-size:12px;color:var(--text3)">Free to use · No account needed</span>
     </div>
     </div><!-- end #planSearchForm -->
@@ -811,7 +811,7 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
       </div>
       <!-- Trip-level default transport mode -->
       <div style="display:flex;align-items:center;gap:8px;padding:6px 0 2px;flex-wrap:wrap">
-        <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0">Default transport</span>
+        <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0" title="Sets the mode for new legs — existing legs are unchanged">New leg default</span>
         <div id="tripDefaultModePicker" style="display:flex;flex-wrap:wrap;gap:4px"></div>
         <span style="flex:1"></span>
         <label class="import-gpx-btn pmw-noprint" title="Import stops from a .csv file">
@@ -3465,7 +3465,7 @@ Available transport booking sites (${siteHint}; for shared taxi/carpooling also 
 - "booking_sites":["Name"] — only sites that actually operate on that route/region
 - "leg_region" — world region (Southeast Asia/Central Asia/South Asia/East Asia/Europe/Middle East/Africa/North America/Latin America/Oceania)
 - "info_sites":["Name"] — if booking_sites is empty, add research/info sites for that region
-- "confidence":"verified"|"check"|"uncertain" — verified=well-documented regular service; check=route exists but verify before booking (seasonal/irregular/suspended); uncertain=AI is not confident this connection currently operates
+- "confidence":"safe"|"verified"|"check"|"uncertain" — safe=well-established standard leg, AI has high confidence (common route, no advisory, no exotic crossing); verified=well-documented regular service that travellers have recently confirmed; check=route exists but verify before booking (seasonal/irregular/suspended); uncertain=AI is not confident this connection currently operates
 - "conflict":{"level":"war"|"conflict"|"tension"|"advisory","note":"one-line reason","country_code":"ISO-2 uppercase, e.g. MM"} — MANDATORY if leg passes through ANY of these countries (use the specified level): SD=war (Sudan civil war), YE=war (Yemen civil war), MM=war (Myanmar junta conflict), AF=war (Afghanistan), SY=war (Syria), SS=conflict (South Sudan), LY=conflict (Libya), IQ=conflict (Iraq, certain regions), SO=conflict (Somalia), CF=conflict (Central African Republic), ML=conflict (Mali, northern regions), NI=tension (Nicaragua), BY=tension (Belarus), RU=conflict (Russia, active war), UA=conflict (Ukraine, eastern regions), IR=tension (Iran sanctions/unrest), KP=advisory (North Korea). Also flag any other leg you assess as passing through an active conflict or travel-advisory area. country_code must be the ISO-3166-1 alpha-2 code of the PRIMARY risk country; omit conflict only if the leg is genuinely safe
 Available accommodation platforms (${accomHint}). For each stop include:
 - "accom_sites":["Name"] — platforms that work for that city/region (e.g. Agoda for SE/East Asia; Hostelworld for hostel-rich cities; omit platforms irrelevant to that destination; use empty array if only guesthouses/no platform)
@@ -5933,19 +5933,15 @@ async function updatePlannerMap() {
 }
 
 function setTripDefaultMode(m) {
-  const hasEdits = legs.some(leg => leg.mode !== tripDefaultMode);
-  if (hasEdits) {
-    if (!confirm('Some legs have been set to a different transport mode. Reset all legs to ' + (MI[m] || m) + '?')) return;
-  }
   tripDefaultMode = m;
-  legs.forEach(leg => { leg.mode = m; });
   render();
 }
 
 function renderTripDefaultModePicker() {
   const el = document.getElementById('tripDefaultModePicker');
   if (!el) return;
-  el.innerHTML = MODES.map(m => {
+  // Exclude flight — overland only. This picker sets the default for new legs only, not existing ones.
+  el.innerHTML = MODES.filter(m => m !== 'flight').map(m => {
     const active = tripDefaultMode === m;
     const icon   = MODE_ICONS[m] || 'ph-circle';
     const label  = MI[m] || m;
