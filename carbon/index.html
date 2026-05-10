@@ -180,11 +180,11 @@ a:hover{text-decoration:underline}
         <div class="result-co2" id="flightCo2">—<span class="unit">kg CO₂</span></div>
         <div class="result-meta" id="flightMeta"></div>
       </div>
-      <div class="result-card overland">
-        <div class="result-mode">🚆 Overland</div>
+      <a class="result-card overland" id="overlandCard" href="/app.html" style="display:block;text-decoration:none;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">
+        <div class="result-mode">🚆 Overland <span style="margin-left:4px;color:var(--fern);font-size:9px">→ Plan it</span></div>
         <div class="result-co2" id="overlandCo2">—<span class="unit">kg CO₂</span></div>
         <div class="result-meta" id="overlandMeta"></div>
-      </div>
+      </a>
     </div>
 
     <a class="saving-panel" id="savingPanel" href="/app.html" style="display:block;text-decoration:none;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
@@ -377,8 +377,9 @@ function showResults(flightKm, overlandKm, flightCo2, overlandCo2, saving, pctSa
 
   // CTA + cross-tool links
   const planUrl = `/app.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
-  document.getElementById('ctaLink').href    = planUrl;
+  document.getElementById('ctaLink').href     = planUrl;
   document.getElementById('savingPanel').href = planUrl;
+  document.getElementById('overlandCard').href = planUrl;
   document.getElementById('howLongLink').href =
     `/how-long?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
 
