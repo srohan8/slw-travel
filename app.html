@@ -2060,7 +2060,7 @@ function renderTripViewPanel(trip, el) {
       + (conflictHtml ? conflictHtml : '')
       + '<div class="leg-grid">' + journeyHtml + transportHtml + stayHtml + '</div>'
       + renderContribBlockForKey(from + '\u2192' + to, i)
-      + (['check','uncertain'].includes(leg.confidence) ? renderRedditBlockForKey(from, to) : '')
+      + (['check','uncertain'].includes(leg.confidence) ? renderRedditBlockForKey(from, to, (trip.legs||[]).some(l => l.mode === 'cycle')) : '')
     + '</div>';
   }).join('');
 
@@ -4381,8 +4381,9 @@ function renderContribBlock(legIdx) {
   const legKey = `${from}→${to}`;
   const conf   = getLeg(legIdx)?.confidence;
   const showReddit = ['check', 'uncertain'].includes(conf);
+  const isCyclingTrip = legs.some(l => l.mode === 'cycle');
   return renderContribBlockForKey(legKey, legIdx)
-       + (showReddit ? renderRedditBlockForKey(from, to) : '');
+       + (showReddit ? renderRedditBlockForKey(from, to, isCyclingTrip) : '');
 }
 
 function renderContribBlockForKey(legKey, legIdx) {
@@ -5250,15 +5251,17 @@ async function geocodeStop(name) {
 let _redditQ = Promise.resolve();
 const _redditDelay = fn => (_redditQ = _redditQ.then(() => new Promise(r => setTimeout(r, 1500))).then(fn));
 
-async function fetchRedditForLeg(from, to) {
-  const key = from + '→' + to;
+async function fetchRedditForLeg(from, to, isCycling) {
+  const key = from + '→' + to + (isCycling ? '|cycling' : '');
   const hit = _redditCache[key];
   if (hit && Date.now() - hit.ts < REDDIT_TTL) return hit.posts;
 
   const f = from.split(',')[0].trim();
   const t = to.split(',')[0].trim();
   const q = encodeURIComponent(f + ' ' + t);
-  const subs = 'solotravel+bicycletouring+overlanding+backpacking+travel';
+  const subs = isCycling
+    ? 'solotravel+bicycletouring+overlanding+backpacking+travel'
+    : 'solotravel+overlanding+backpacking+travel';
   const url = `https://www.reddit.com/r/${subs}/search.json?q=${q}&sort=new&t=year&limit=8&restrict_sr=on`;
 
   return _redditDelay(async () => {
@@ -5303,13 +5306,13 @@ function _redditBlockHTML(blockId, posts) {
   </div>`;
 }
 
-function renderRedditBlockForKey(from, to) {
-  const key     = from + '→' + to;
-  const blockId = 'rb_' + key.replace(/[^a-z0-9]/gi, '_');
-  const hit     = _redditCache[key];
+function renderRedditBlockForKey(from, to, isCycling) {
+  const cacheKey = from + '→' + to + (isCycling ? '|cycling' : '');
+  const blockId  = 'rb_' + cacheKey.replace(/[^a-z0-9]/gi, '_');
+  const hit      = _redditCache[cacheKey];
 
   if (!hit || Date.now() - hit.ts >= REDDIT_TTL) {
-    fetchRedditForLeg(from, to).then(posts => {
+    fetchRedditForLeg(from, to, isCycling).then(posts => {
       const el = document.getElementById(blockId);
       if (el) el.outerHTML = _redditBlockHTML(blockId, posts);
     });
