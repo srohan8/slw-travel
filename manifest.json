@@ -1,0 +1,64 @@
+﻿{
+  "name": "By Sloth",
+  "short_name": "Sloth",
+  "description": "Overland trip planner for people who choose the ground over the sky. Trains, buses, ferries, shared taxis — with confidence ratings and community notes.",
+  "start_url": "/app.html",
+  "id": "/app.html",
+  "display": "standalone",
+  "background_color": "#F8F6F1",
+  "theme_color": "#2D4A2D",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["travel", "navigation"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Plan your overland route"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Plan a route",
+      "short_name": "Plan",
+      "description": "Start planning a new overland trip",
+      "url": "/app.html#plan",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "My trips",
+      "short_name": "Trips",
+      "description": "View your saved trips",
+      "url": "/app.html#mytrips",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    }
+  ]
+}
