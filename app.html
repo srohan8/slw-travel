@@ -1702,6 +1702,17 @@ function closeRecordPanel() {
 }
 
 function renderRecordPanel(trip, el) {
+  // ── Backfill stable _id for stops that predate this feature ────────
+  let needsSave = false;
+  (trip.stops || []).forEach(s => {
+    if (!s._id) { s._id = crypto.randomUUID(); needsSave = true; }
+  });
+  if (needsSave) {
+    const trips = storage.get('trips') || [];
+    const idx = trips.findIndex(t => t.id === trip.id);
+    if (idx !== -1) { trips[idx] = trip; storage.set('trips', trips); }
+  }
+
   const sc = trip.stops?.length || 0;
   const visitedCount = (trip.stops||[]).filter(s => s.visitedAt).length;
   const route = sc >= 2
@@ -1711,10 +1722,39 @@ function renderRecordPanel(trip, el) {
   const stopsHtml = (trip.stops||[]).map((stop, i) => {
     const isLast = i === sc - 1;
     const leg    = !isLast ? (trip.legs?.[i] || {}) : null;
+    const sid    = stop._id; // stable ID for oninput/onclick
     const dateStr = stop.date
       ? new Date(stop.date + 'T00:00').toLocaleDateString('en', { weekday:'short', month:'long', day:'numeric' })
       : '';
-    const legParts = [leg?.mode, leg?.km ? leg.km + ' km' : '', leg?.hours ? leg.hours + 'h' : ''].filter(Boolean);
+
+    // Leg separator with inline mode picker so user can correct "took train not bus"
+    const legSep = leg ? (() => {
+      const curMode = leg.mode || 'bus';
+      const km   = leg.km   ? leg.km   + ' km' : '';
+      const hrs  = leg.hours ? leg.hours + 'h'  : '';
+      const meta = [km, hrs].filter(Boolean).join(' · ');
+      const modeOpts = MODES.map(m => {
+        const sel = m === curMode;
+        return `<option value="${m}"${sel?' selected':''}>${MI[m]||m}</option>`;
+      }).join('');
+      return `<div style="margin:18px 0">
+        <div style="display:flex;align-items:center;gap:8px;color:var(--text3)">
+          <div style="flex:1;height:0.5px;background:var(--border2)"></div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <select onchange="saveTripViewLeg('${trip.id}',${i},'mode',this.value)"
+              title="Change transport mode"
+              style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;
+                     border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);
+                     color:var(--text2);padding:2px 4px;cursor:pointer">
+              ${modeOpts}
+            </select>
+            ${meta ? `<span style="font-size:10px;font-family:var(--mono);color:var(--text3)">${meta}</span>` : ''}
+          </div>
+          <div style="flex:1;height:0.5px;background:var(--border2)"></div>
+        </div>
+        ${leg.notes ? `<div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-top:5px;text-align:center;font-style:italic">${_slwEsc(leg.notes)}</div>` : ''}
+      </div>`;
+    })() : '';
 
     return `<div style="margin-bottom:4px">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
@@ -1722,23 +1762,19 @@ function renderRecordPanel(trip, el) {
           <div style="font-family:var(--serif);font-size:22px;font-weight:300;color:var(--text);line-height:1.15">${_slwEsc(stop.name||'Unnamed stop')}</div>
           ${dateStr ? `<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px">${dateStr}${stop.days ? ' · ' + stop.days + ' night' + (stop.days!==1?'s':'') : ''}</div>` : ''}
         </div>
-        <button onclick="toggleTripViewVisited('${trip.id}',${i},this)"
+        <button onclick="toggleTripViewVisited('${trip.id}','${sid}',this)"
           style="flex-shrink:0;margin-top:4px;font-size:10px;font-family:var(--mono);padding:5px 12px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:${stop.visitedAt?'var(--fern)':'var(--text3)'};cursor:pointer;white-space:nowrap">
           ${stop.visitedAt ? `<i class="ph ph-check-circle"></i> ${stop.visitedAt.slice(0,10)}` : '<i class="ph ph-map-pin"></i> Mark visited'}
         </button>
       </div>
       <textarea
-        oninput="saveTripViewStop('${trip.id}',${i},'journalEntry',this.value)"
+        oninput="saveTripViewStop('${trip.id}','${sid}','journalEntry',this.value)"
         placeholder="What happened in ${_slwEsc(stop.name||'this stop')}?"
         rows="4"
         onfocus="this.style.borderColor='var(--fern)'" onblur="this.style.borderColor='var(--border2)'"
         style="width:100%;font-size:14px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:6px;background:var(--bg);resize:vertical;font-family:var(--serif);line-height:1.6;color:var(--text);outline:none;transition:border-color .15s"
       >${_slwEsc(stop.journalEntry||'')}</textarea>
-      ${!isLast ? `<div style="display:flex;align-items:center;gap:8px;margin:18px 0;color:var(--text3)">
-        <div style="flex:1;height:0.5px;background:var(--border2)"></div>
-        <span style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;flex-shrink:0">${_slwEsc(legParts.join(' · ') || 'leg')}</span>
-        <div style="flex:1;height:0.5px;background:var(--border2)"></div>
-      </div>` : ''}
+      ${legSep}
     </div>`;
   }).join('');
 
@@ -2109,14 +2145,20 @@ function saveTripViewNotes(tripId) {
 }
 
 // ── Inline recording helpers (trip view) ──────────────────────────
-// Journal entry typed directly in the trip view — debounced auto-save.
-function saveTripViewStop(tripId, stopIdx, field, value) {
+// Resolve a stop by _id (stable, survives plan edits) or index fallback (legacy trips).
+function _resolveStop(t, stopRef) {
+  return t.stops?.find(s => s._id === stopRef) ?? t.stops?.[stopRef];
+}
+
+// Journal entry auto-save — called from record panel oninput.
+// stopRef is stop._id for new trips, numeric index as fallback for old ones.
+function saveTripViewStop(tripId, stopRef, field, value) {
   const trips = storage.get('trips') || [];
   const t = trips.find(x => x.id === tripId);
-  if (!t || !t.stops?.[stopIdx]) return;
-  t.stops[stopIdx][field] = value;
+  const stop = t ? _resolveStop(t, stopRef) : null;
+  if (!stop) return;
+  stop[field] = value;
   storage.set('trips', trips);
-  // Debounce Supabase sync — don't hammer on every keystroke
   clearTimeout(saveTripViewStop._t);
   saveTripViewStop._t = setTimeout(() => {
     if (currentUser) {
@@ -2126,23 +2168,39 @@ function saveTripViewStop(tripId, stopIdx, field, value) {
   }, 2000);
 }
 
-// "Mark visited" toggled in the trip view — updates button instantly, syncs in background.
-function toggleTripViewVisited(tripId, stopIdx, btn) {
+// Leg field save — called from record panel when mode/notes changed to reflect reality.
+function saveTripViewLeg(tripId, legIdx, field, value) {
   const trips = storage.get('trips') || [];
   const t = trips.find(x => x.id === tripId);
-  if (!t || !t.stops?.[stopIdx]) return;
-  const wasVisited = !!t.stops[stopIdx].visitedAt;
-  t.stops[stopIdx].visitedAt = wasVisited ? '' : new Date().toISOString();
+  if (!t || !t.legs?.[legIdx]) return;
+  t.legs[legIdx][field] = value;
   storage.set('trips', trips);
-  // Update button colour + label without a full re-render
+  clearTimeout(saveTripViewLeg._t);
+  saveTripViewLeg._t = setTimeout(() => {
+    if (currentUser) {
+      sb.from('trips').upsert({ id: tripId, user_id: currentUser.id, data: t, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+        .catch(e => console.warn('leg sync:', e.message));
+    }
+  }, 2000);
+}
+
+// "Mark visited" — updates button instantly, saves in background.
+function toggleTripViewVisited(tripId, stopRef, btn) {
+  const trips = storage.get('trips') || [];
+  const t = trips.find(x => x.id === tripId);
+  const stop = t ? _resolveStop(t, stopRef) : null;
+  if (!stop) return;
+  const wasVisited = !!stop.visitedAt;
+  stop.visitedAt = wasVisited ? '' : new Date().toISOString();
+  storage.set('trips', trips);
   if (btn) {
-    const ts = t.stops[stopIdx].visitedAt;
+    const ts = stop.visitedAt;
     btn.style.color = ts ? 'var(--fern)' : 'var(--text3)';
     btn.innerHTML = ts
       ? '<i class="ph ph-check-circle"></i> ' + ts.slice(0, 10)
       : '<i class="ph ph-map-pin"></i> Mark visited';
   }
-  phCapture('stop_visited_toggled', { trip_id: tripId, stop_idx: stopIdx, visited: !wasVisited });
+  phCapture('stop_visited_toggled', { trip_id: tripId, visited: !wasVisited });
   if (currentUser) {
     sb.from('trips').upsert({ id: tripId, user_id: currentUser.id, data: t, updated_at: new Date().toISOString() }, { onConflict: 'id' })
       .catch(e => console.warn('visited sync:', e.message));
@@ -3721,9 +3779,9 @@ function adoptRoute() {
   currentTripId = null;   // always creates a new trip on next save
   expandedLegs.clear();
   if (d.stops?.length) {
-    d.stops.forEach(s => stops.push({ name: s.name, date: '', days: s.days || 0, accomSites: s.accom_sites || [], accomNote: s.accom_note || '' }));
+    d.stops.forEach(s => stops.push({ _id: crypto.randomUUID(), name: s.name, date: '', days: s.days || 0, accomSites: s.accom_sites || [], accomNote: s.accom_note || '' }));
   } else {
-    [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ name: c, date: '', days: 0 }));
+    [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ _id: crypto.randomUUID(), name: c, date: '', days: 0 }));
   }
   d.legs.forEach(l => legs.push({
     mode: l.mode, cost: convertCost(l.cost_usd || 0), km: l.km || 0,
@@ -5894,13 +5952,14 @@ function renderTripDefaultModePicker() {
   const refineBtn = document.getElementById('btnAIRefine');
   if (refineBtn) refineBtn.style.display = stops.some(s => s.name) ? '' : 'none';
 }
+function _newStop(overrides) { return { _id: crypto.randomUUID(), name: '', date: '', days: 0, ...overrides }; }
 function addStop() {
-  stops.push({ name: '', date: '', days: 0 });
+  stops.push(_newStop());
   legs.push({ mode: tripDefaultMode || 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
   render();
 }
 function insertStop(i) {
-  stops.splice(i + 1, 0, { name: '', date: '', days: 0 });
+  stops.splice(i + 1, 0, _newStop());
   legs.splice(i + 1, 0, { mode: tripDefaultMode || legs[i]?.mode || 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
   render();
 }
@@ -6093,7 +6152,7 @@ function _parseAndApplyCSV(csvText, filename) {
     const name = col(row, 'stop', 'name', 'city', 'destination').trim();
     if (!name) return;
     const days = parseInt(col(row, 'days', 'nights')) || 0;
-    newStops.push({ name, date: '', days, accomSites: [], accomNote: '' });
+    newStops.push({ _id: crypto.randomUUID(), name, date: '', days, accomSites: [], accomNote: '' });
     // Build leg from this stop to the next (last stop has no leg)
     if (i < dataRows.length - 1) {
       const mode  = (col(row, 'mode', 'transport') || tripDefaultMode || 'bus').toLowerCase().trim();
@@ -6253,7 +6312,7 @@ function _parseAndApplyGPX(xmlText, filename) {
     const daysMatch = desc.match(/^(\d+)\s*day/i);
     const days = daysMatch ? parseInt(daysMatch[1]) : 0;
     const name = rawName || ('Stop ' + (idx + 1));
-    newStops.push({ name, date: '', days, accomSites: [], accomNote: '' });
+    newStops.push({ _id: crypto.randomUUID(), name, date: '', days, accomSites: [], accomNote: '' });
     coords.push({ lat, lon });
     // Seed geo-cache so GPX re-export needs no Nominatim calls
     if (!isNaN(lat) && !isNaN(lon)) {
