@@ -92,6 +92,20 @@ article h1 em { font-style:italic; color:var(--fern); }
     {% for t in page.tags %}<span>#{{ t }}</span>{% endfor %}
   </div>
   {% endif %}
+
+  {% assign others = site.posts | where_exp: "p", "p.url != page.url" %}
+  {% if others.size > 0 %}
+  <div style="margin-top:56px;padding-top:28px;border-top:1px solid var(--border)">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-bottom:18px">More from the blog</div>
+    {% for p in others limit: 3 %}
+    <a href="{{ p.url | relative_url }}" style="display:block;padding:14px 0;border-bottom:0.5px solid var(--border);text-decoration:none;color:inherit">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:4px">{{ p.date | date: "%Y-%m-%d" }}</div>
+      <div style="font-family:var(--serif);font-size:20px;font-weight:400;color:var(--text);line-height:1.25">{{ p.title }}</div>
+    </a>
+    {% endfor %}
+    <a href="{{ '/blog/' | relative_url }}" style="display:inline-block;margin-top:18px;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--fern);text-decoration:none">All posts →</a>
+  </div>
+  {% endif %}
 </article>
 
 </body>
