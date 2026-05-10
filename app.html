@@ -1930,8 +1930,12 @@ function renderTripViewPanel(trip, el) {
           + '<button class="back-btn" style="font-size:10px;letter-spacing:1px" onclick="loadTrip(' + safeTrip + ',' + i + ')">Edit leg \u2192</button>'
         + '</div>'
       + '</div>'
-      + (trip.stops[i]?.visitedAt ? '<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--fern);margin-bottom:4px"><i class="ph ph-check-circle"></i> Visited ' + trip.stops[i].visitedAt.slice(0,10) + '</div>' : '')
-      + (trip.stops[i]?.journalEntry ? '<div style="font-family:var(--serif);font-size:13px;line-height:1.65;color:var(--text2);white-space:pre-wrap;margin-bottom:10px;padding:10px 12px;background:var(--bg2);border-radius:6px;border-left:3px solid var(--border2)">' + _slwEsc(trip.stops[i].journalEntry) + '</div>' : '')
+      + '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:8px">'
+        + '<textarea oninput="saveTripViewStop(\'' + trip.id + '\',' + i + ',\'journalEntry\',this.value)" rows="2" placeholder="Notes from ' + _slwEsc(from) + '…" style="flex:1;font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);resize:vertical;font-family:var(--serif);line-height:1.5;color:var(--text)">' + _slwEsc(trip.stops[i]?.journalEntry||'') + '</textarea>'
+        + '<button onclick="toggleTripViewVisited(\'' + trip.id + '\',' + i + ',this)" style="flex-shrink:0;font-size:10px;font-family:var(--mono);padding:4px 9px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:' + (trip.stops[i]?.visitedAt?'var(--fern)':'var(--text3)') + ';cursor:pointer;white-space:nowrap">'
+        + (trip.stops[i]?.visitedAt ? '<i class="ph ph-check-circle"></i> ' + trip.stops[i].visitedAt.slice(0,10) : '<i class="ph ph-map-pin"></i> Mark visited')
+        + '</button>'
+      + '</div>'
       + (conflictHtml ? conflictHtml : '')
       + '<div class="leg-grid">' + journeyHtml + transportHtml + stayHtml + '</div>'
       + renderContribBlockForKey(from + '\u2192' + to, i)
@@ -1976,7 +1980,22 @@ function renderTripViewPanel(trip, el) {
   ${trip.summary ? `<p style="color:var(--text);font-size:14px;line-height:1.65;margin-bottom:${trip.warnings?.length?'10px':'1.5rem'}">${_slwEsc(trip.summary)}</p>` : ''}
   ${trip.warnings?.length ? `<div style="margin-bottom:1.5rem">${trip.warnings.map(w=>`<span class="warn-badge">${_slwEsc(w)}</span>`).join(' ')}</div>` : ''}
 
-  ${legsHtml ? '<div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:10px">Legs</div><div class="tv-legs-list">' + legsHtml + '</div>' : ''}
+  ${(() => {
+    if (!legsHtml) return '';
+    const fs = sc >= 2 ? trip.stops[sc-1] : null;
+    const fsHtml = fs ? (
+      '<div style="margin-top:8px;padding:10px 12px;background:var(--bg2);border-radius:6px;border:0.5px solid var(--border2)">'
+      + '<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Arrival — ' + _slwEsc(fs.name||'Final stop') + '</div>'
+      + '<div style="display:flex;gap:6px;align-items:flex-start">'
+        + '<textarea oninput="saveTripViewStop(\'' + trip.id + '\',' + (sc-1) + ',\'journalEntry\',this.value)" rows="2" placeholder="Notes from ' + _slwEsc(fs.name||'final stop') + '…" style="flex:1;font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);resize:vertical;font-family:var(--serif);line-height:1.5;color:var(--text)">' + _slwEsc(fs.journalEntry||'') + '</textarea>'
+        + '<button onclick="toggleTripViewVisited(\'' + trip.id + '\',' + (sc-1) + ',this)" style="flex-shrink:0;font-size:10px;font-family:var(--mono);padding:4px 9px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:' + (fs.visitedAt?'var(--fern)':'var(--text3)') + ';cursor:pointer;white-space:nowrap">'
+        + (fs.visitedAt ? '<i class="ph ph-check-circle"></i> ' + fs.visitedAt.slice(0,10) : '<i class="ph ph-map-pin"></i> Mark visited')
+        + '</button>'
+      + '</div>'
+      + '</div>'
+    ) : '';
+    return '<div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:10px">Legs</div><div class="tv-legs-list">' + legsHtml + fsHtml + '</div>';
+  })()}
 
   <div id="tvElev_${trip.id}" style="margin:12px 0 4px"></div>
 
@@ -2018,6 +2037,47 @@ function saveTripViewNotes(tripId) {
   const btn = event.target;
   btn.textContent = 'Saved ✓';
   setTimeout(() => { btn.textContent = 'Save notes'; }, 2000);
+}
+
+// ── Inline recording helpers (trip view) ──────────────────────────
+// Journal entry typed directly in the trip view — debounced auto-save.
+function saveTripViewStop(tripId, stopIdx, field, value) {
+  const trips = storage.get('trips') || [];
+  const t = trips.find(x => x.id === tripId);
+  if (!t || !t.stops?.[stopIdx]) return;
+  t.stops[stopIdx][field] = value;
+  storage.set('trips', trips);
+  // Debounce Supabase sync — don't hammer on every keystroke
+  clearTimeout(saveTripViewStop._t);
+  saveTripViewStop._t = setTimeout(() => {
+    if (currentUser) {
+      sb.from('trips').upsert({ id: tripId, user_id: currentUser.id, data: t, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+        .catch(e => console.warn('journal sync:', e.message));
+    }
+  }, 2000);
+}
+
+// "Mark visited" toggled in the trip view — updates button instantly, syncs in background.
+function toggleTripViewVisited(tripId, stopIdx, btn) {
+  const trips = storage.get('trips') || [];
+  const t = trips.find(x => x.id === tripId);
+  if (!t || !t.stops?.[stopIdx]) return;
+  const wasVisited = !!t.stops[stopIdx].visitedAt;
+  t.stops[stopIdx].visitedAt = wasVisited ? '' : new Date().toISOString();
+  storage.set('trips', trips);
+  // Update button colour + label without a full re-render
+  if (btn) {
+    const ts = t.stops[stopIdx].visitedAt;
+    btn.style.color = ts ? 'var(--fern)' : 'var(--text3)';
+    btn.innerHTML = ts
+      ? '<i class="ph ph-check-circle"></i> ' + ts.slice(0, 10)
+      : '<i class="ph ph-map-pin"></i> Mark visited';
+  }
+  phCapture('stop_visited_toggled', { trip_id: tripId, stop_idx: stopIdx, visited: !wasVisited });
+  if (currentUser) {
+    sb.from('trips').upsert({ id: tripId, user_id: currentUser.id, data: t, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+      .catch(e => console.warn('visited sync:', e.message));
+  }
 }
 
 function updateActiveTripBar() {
