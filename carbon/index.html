@@ -187,14 +187,17 @@ a:hover{text-decoration:underline}
       </div>
     </div>
 
-    <div class="saving-panel">
+    <a class="saving-panel" id="savingPanel" href="/app.html" style="display:block;text-decoration:none;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
       <div class="saving-label">You save</div>
       <div class="saving-number" id="savingNum">0<span class="saving-unit">kg CO₂</span></div>
       <div class="saving-equiv" id="savingEquiv"></div>
-      <div class="saving-bar-wrap">
+      <div class="saving-bar-wrap" style="margin-bottom:16px">
         <div class="saving-bar-fill" id="savingBar" style="width:0%"></div>
       </div>
-    </div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--sage);border-top:0.5px solid rgba(212,227,204,0.15);padding-top:14px;display:flex;align-items:center;justify-content:center;gap:6px">
+        Plan this route without a single flight <i class="ph ph-arrow-right"></i>
+      </div>
+    </a>
 
     <div class="share-row">
       <button class="share-btn" onclick="shareTwitter()" id="shareTwitter">
@@ -373,8 +376,9 @@ function showResults(flightKm, overlandKm, flightCo2, overlandCo2, saving, pctSa
   }, 100);
 
   // CTA + cross-tool links
-  document.getElementById('ctaLink').href =
-    `/app.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+  const planUrl = `/app.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+  document.getElementById('ctaLink').href    = planUrl;
+  document.getElementById('savingPanel').href = planUrl;
   document.getElementById('howLongLink').href =
     `/how-long?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
 
