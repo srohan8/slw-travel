@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bike on Train &amp; Bus: Which Operators Accept Bikes? — By Sloth</title>
+<meta name="description" content="Find out which trains, buses, and ferries accept bikes. Covers Flixbus, Eurostar, DB, SNCF, Amtrak, and 25+ operators worldwide. Updated 2026."/>
+<meta property="og:title" content="Does this train take bikes? The answer most apps don't have."/>
+<meta property="og:description" content="Bike policies for 30+ train, bus, and ferry operators worldwide. Plan your bike tour with confidence."/>
+<meta property="og:url" content="https://bysloth.com/bike-on-train"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<!-- PostHog -->
+<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'});
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --moss:#2D4A2D;--fern:#4A7C4A;--sage:#8BAF7A;--mist:#D4E3CC;
+  --cream:#F5F0E8;--sand:#E8DFD0;
+  --bg:#FAF7F2;--bg2:#F2EDE4;--bg3:#EDE8DC;
+  --text:#2D4A2D;--text2:#4A6040;--text3:#7A9870;
+  --border:rgba(45,74,45,0.15);--border2:rgba(45,74,45,0.25);
+  --rust:#C4622D;--amber:#B8820A;
+  --ok-bg:rgba(45,74,45,0.09);--ok-color:#2D4A2D;
+  --no-bg:#FDF0EC;--no-color:#C4622D;
+  --check-bg:#FFF8ED;--check-color:#B8820A;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono','Courier New',monospace;
+  --radius:10px;--shadow:0 2px 12px rgba(26,43,26,0.09);
+}
+body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh}
+a{color:var(--fern);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+.nav{background:var(--moss);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(26,43,26,0.2)}
+.nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo-text{font-family:var(--serif);font-weight:300;font-size:19px;color:var(--cream);letter-spacing:-0.3px}
+.nav-logo-text em{font-style:italic;color:var(--sage)}
+.nav-links{display:flex;gap:20px;align-items:center;font-size:13px;color:rgba(212,227,204,0.6)}
+.nav-links a{color:rgba(212,227,204,0.6);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--cream)}
+.nav-cta{background:var(--sage);color:var(--moss);padding:7px 15px;border-radius:99px;font-weight:600;font-size:12px;border:none;font-family:var(--body);cursor:pointer;letter-spacing:0.2px;text-decoration:none}
+@media(max-width:600px){.nav-links{display:none}}
+
+/* Hero */
+.hero{background:var(--moss);color:var(--cream);padding:48px 0 68px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--bg3);clip-path:ellipse(55% 100% at 50% 100%)}
+.inner{max-width:820px;margin:0 auto;padding:0 1.5rem}
+.kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);margin-bottom:12px}
+.hero h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,54px);line-height:1.08;letter-spacing:-0.8px;margin-bottom:14px}
+.hero h1 em{font-style:italic;color:var(--sage)}
+.hero-sub{font-size:15px;line-height:1.6;color:rgba(245,240,232,0.72);max-width:500px}
+
+/* Search + filter card */
+.lookup-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:16px;padding:1.6rem;box-shadow:0 16px 40px rgba(26,43,26,0.14);max-width:700px;margin:-32px auto 0;position:relative;z-index:2}
+.search-row{display:flex;gap:10px;margin-bottom:14px}
+.search-inp{flex:1;font-size:15px;color:var(--text);border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);padding:11px 14px;outline:none;font-family:var(--body);transition:border-color .15s}
+.search-inp:focus{border-color:var(--fern);background:var(--bg)}
+.search-inp::placeholder{color:var(--text3)}
+.filter-pills{display:flex;gap:6px;flex-wrap:wrap}
+.filter-pill{font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:5px 13px;border-radius:99px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.filter-pill.active{background:var(--moss);border-color:var(--moss);color:var(--cream)}
+.filter-pill:hover:not(.active){border-color:var(--fern);color:var(--text)}
+
+/* Results */
+.results-wrap{max-width:820px;margin:36px auto;padding:0 1.5rem}
+.results-meta{font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:16px}
+.op-card{background:var(--bg);border:0.5px solid var(--border);border-radius:12px;padding:1.25rem 1.4rem;margin-bottom:10px;box-shadow:var(--shadow);transition:border-color .2s}
+.op-card:hover{border-color:var(--border2)}
+.op-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+.op-name{font-family:var(--serif);font-weight:400;font-size:20px;color:var(--text);line-height:1.15}
+.op-region{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-top:2px}
+.policy-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;letter-spacing:0.5px;padding:4px 12px;border-radius:99px;white-space:nowrap;flex-shrink:0}
+.policy-badge.ok{background:var(--ok-bg);color:var(--ok-color);border:0.5px solid rgba(45,74,45,0.2)}
+.policy-badge.no{background:var(--no-bg);color:var(--no-color);border:0.5px solid rgba(196,98,45,0.2)}
+.policy-badge.check{background:var(--check-bg);color:var(--check-color);border:0.5px solid rgba(184,130,10,0.2)}
+.op-notes{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px}
+.op-meta{display:flex;flex-wrap:wrap;gap:14px}
+.op-meta-item{font-family:var(--mono);font-size:10px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.op-meta-item i{font-size:12px}
+.op-source{font-family:var(--mono);font-size:10px;color:var(--fern);margin-left:auto}
+@media(max-width:500px){.op-header{flex-direction:column;gap:6px}.op-source{margin-left:0}}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-state i{font-size:36px;margin-bottom:12px;display:block}
+.empty-state p{font-size:14px;line-height:1.6}
+
+/* CTA section */
+.cta-section{max-width:820px;margin:0 auto 48px;padding:0 1.5rem}
+.cta-card{background:var(--moss);border-radius:14px;padding:2rem;color:var(--cream);display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.cta-text h2{font-family:var(--serif);font-weight:300;font-size:26px;margin-bottom:6px;letter-spacing:-0.3px}
+.cta-text p{font-size:14px;color:rgba(245,240,232,0.7);line-height:1.5;max-width:380px}
+.cta-btn{background:var(--sage);color:var(--moss);padding:13px 24px;border-radius:99px;font-weight:600;font-size:14px;font-family:var(--body);text-decoration:none;white-space:nowrap;transition:background .15s}
+.cta-btn:hover{background:var(--mist);text-decoration:none}
+
+/* About / methodology */
+.about-section{max-width:820px;margin:0 auto 56px;padding:0 1.5rem}
+.about-card{background:var(--bg);border:0.5px solid var(--border);border-radius:12px;padding:1.5rem}
+.about-card h3{font-family:var(--serif);font-weight:400;font-size:20px;margin-bottom:10px}
+.about-card p{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:8px}
+.about-card p:last-child{margin-bottom:0}
+.about-card a{color:var(--fern)}
+
+/* Contribute note */
+.contrib-note{max-width:820px;margin:0 auto 36px;padding:0 1.5rem}
+.contrib-box{background:var(--bg2);border:0.5px dashed var(--border2);border-radius:12px;padding:1.2rem 1.4rem;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.contrib-box i{font-size:24px;color:var(--text3);flex-shrink:0}
+.contrib-box-text p{font-size:13px;color:var(--text2);line-height:1.5}
+.contrib-box-text strong{color:var(--text)}
+.contrib-box-link{margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--fern);white-space:nowrap;text-decoration:none;border:0.5px solid var(--border2);padding:6px 14px;border-radius:99px;transition:all .15s;flex-shrink:0}
+.contrib-box-link:hover{border-color:var(--fern);background:var(--fern);color:white;text-decoration:none}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <a class="nav-logo" href="/app.html">
+    <img src="/public/sloth-logo.svg" width="26" height="26" alt="" style="filter:brightness(0) invert(1);opacity:0.85"/>
+    <span class="nav-logo-text">By <em>Sloth</em></span>
+  </a>
+  <div class="nav-links">
+    <a href="/carbon">CO₂ calculator</a>
+    <a href="/how-long">Journey time</a>
+    <a href="/app.html">Planner</a>
+  </div>
+  <a class="nav-cta" href="/app.html">Plan a route →</a>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="inner">
+    <div class="kicker">Bike + transit · Updated 2026</div>
+    <h1>Does this train take <em>bikes?</em></h1>
+    <p class="hero-sub">The answer most route apps don't have. Policies for 30+ trains, buses, and ferries worldwide — curated from operator T&amp;Cs and community reports.</p>
+  </div>
+</div>
+
+<!-- Lookup card -->
+<div class="inner" style="margin-top:0">
+  <div class="lookup-card">
+    <div class="search-row">
+      <input type="text" class="search-inp" id="searchInp" placeholder="Search by operator or country…" oninput="filterCards()" autocomplete="off" autocorrect="off" spellcheck="false"/>
+    </div>
+    <div class="filter-pills">
+      <button class="filter-pill active" data-filter="all" onclick="setFilter('all',this)">All operators</button>
+      <button class="filter-pill" data-filter="yes" onclick="setFilter('yes',this)"><i class="ph ph-check" style="font-size:11px"></i> Bikes OK</button>
+      <button class="filter-pill" data-filter="no" onclick="setFilter('no',this)"><i class="ph ph-x" style="font-size:11px"></i> No bikes</button>
+      <button class="filter-pill" data-filter="check" onclick="setFilter('check',this)"><i class="ph ph-question" style="font-size:11px"></i> Check first</button>
+    </div>
+  </div>
+</div>
+
+<!-- Results -->
+<div class="results-wrap">
+  <div class="results-meta" id="resultsMeta"></div>
+  <div id="opList"></div>
+</div>
+
+<!-- Contribute note -->
+<div class="contrib-note">
+  <div class="contrib-box">
+    <i class="ph ph-bicycle"></i>
+    <div class="contrib-box-text">
+      <p><strong>Travelled with a bike recently?</strong><br>
+      Policies change — booking windows tighten, new trains launch, summer rules differ from winter. Add what you know and help the next cyclist.</p>
+    </div>
+    <a href="/app.html" class="contrib-box-link">Add your experience →</a>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="cta-card">
+    <div class="cta-text">
+      <h2>Planning a bike tour?</h2>
+      <p>Build your full intermodal route on By Sloth — plan which segments are train vs. cycle, check which legs accept bikes, and get community notes from other touring cyclists.</p>
+    </div>
+    <a class="cta-btn" href="/app.html">Plan your route →</a>
+  </div>
+</div>
+
+<!-- About -->
+<div class="about-section">
+  <div class="about-card">
+    <h3>About this data</h3>
+    <p>Policies are sourced from official operator T&amp;Cs and verified by date. Bike policies change frequently — seasonal routes, new rolling stock, and changing regulations all affect what's permitted. Always confirm with the operator before travel, especially for international trips.</p>
+    <p>Entries marked "Check locally" mean the policy is real but variable — time of day, specific train, or route affects whether you and your bike get on. This is not a "no" — it means ring ahead.</p>
+    <p>This database is curated and updated manually. Community reports from <a href="/app.html">By Sloth</a> users who've done routes with bikes are layered on top where available.</p>
+  </div>
+</div>
+
+<script>
+const OPERATORS = [
+  // Europe — International / Night trains
+  {
+    op:'ÖBB Nightjet', region:'Europe (night trains)',
+    bikes:'yes',
+    notes:'Bike spaces available on most routes — reserve in advance. €10–€20 per journey depending on route. Not available on all Nightjet trains; check at booking. Excellent for crossing the Alps with a bike.',
+    booking:'Required', spaces:'Limited', cost:'€10–€20', source:'nightjet.com', url:'https://www.nightjet.com', verified:'2026-01'
+  },
+  {
+    op:'Snälltåget', region:'Sweden / Europe (night trains)',
+    bikes:'yes',
+    notes:'Accepts bikes on most night train routes including Stockholm–Berlin. Reserve a space; popular in summer — book weeks ahead. Good value overnight option for bike tourers.',
+    booking:'Required', spaces:'Limited', cost:'~SEK 100–200', source:'snalltaget.se', url:'https://www.snalltaget.se', verified:'2026-01'
+  },
+  {
+    op:'Eurostar', region:'UK → France / Belgium',
+    bikes:'no',
+    notes:'Standard bikes not accepted. Folded bikes in a bag (≤85×35×35cm) only. No boxed bike service. A significant barrier for cycle-touring in continental Europe.',
+    booking:'N/A', spaces:'Folded only', cost:'Free if folded/bagged', source:'eurostar.com', url:'https://www.eurostar.com', verified:'2026-01'
+  },
+  {
+    op:'Interrail / Eurail pass trains', region:'Europe (general)',
+    bikes:'check',
+    notes:"Each individual rail operator sets its own bike policy — the Interrail/Eurail pass does not automatically include bike carriage. Check the specific train you're booking. Budget for bike reservations on top of pass cost.",
+    booking:'Varies by operator', spaces:null, cost:'Varies by operator', source:'interrail.eu', url:'https://www.interrail.eu', verified:'2026-01'
+  },
+  // Germany
+  {
+    op:'DB (Deutsche Bahn)', region:'Germany + European IC/ICE',
+    bikes:'yes',
+    notes:'Bikes accepted on regional (RE/RB) trains with a bike ticket (€5–6). ICE high-speed trains require a separate bike reservation (€9); spaces limited. Most IC trains accept bikes with reservation. Regional trains are very cycle-friendly.',
+    booking:'ICE: required. Regional: not needed', spaces:'ICE: 4–6 per train', cost:'Regional: €6; ICE: €9 bike supplement', source:'bahn.de', url:'https://www.bahn.de', verified:'2026-01'
+  },
+  // France
+  {
+    op:'SNCF (TGV / Intercités)', region:'France',
+    bikes:'check',
+    notes:'TGV: bikes must be in a bag (≤120×90cm, folded). Intercités: reserved bike space available on some trains (check at booking). Folded/bagged bikes always accepted at no extra cost. Tricky for loaded tourers on high-speed trains.',
+    booking:'Intercités: recommended', spaces:'Limited on TGV', cost:'Free if bagged; ~€10 reserved space', source:'sncf.com', url:'https://www.sncf.com', verified:'2026-01'
+  },
+  {
+    op:'OUIGO', region:'France (low-cost TGV)',
+    bikes:'no',
+    notes:'Only folded bikes in a bag accepted. Non-folded bikes not allowed on any OUIGO service.',
+    booking:'N/A', spaces:'Folded only', cost:'Free if folded and bagged', source:'ouigo.com', url:'https://www.ouigo.com', verified:'2026-01'
+  },
+  // Spain
+  {
+    op:'Renfe (AVE / Regional)', region:'Spain',
+    bikes:'check',
+    notes:'High-speed AVE: bikes must be bagged/folded, reserved space required (~€10). Regional trains generally accept bikes without reservation. Cercanías suburban trains have dedicated bike carriages.',
+    booking:'AVE: required', spaces:'Limited on AVE', cost:'~€10 on AVE', source:'renfe.com', url:'https://www.renfe.com', verified:'2026-01'
+  },
+  // Italy
+  {
+    op:'Trenitalia', region:'Italy',
+    bikes:'check',
+    notes:'High-speed Frecciarossa/Frecciargento: folded bikes in bags only. Regional trains have dedicated bike carriages (€3.50 bike ticket). Intercity trains: reserved bike space, book ahead. Very variable — always check before booking.',
+    booking:'High-speed: yes', spaces:'Regional: good', cost:'Regional: €3.50; High-speed: bagged only', source:'trenitalia.com', url:'https://www.trenitalia.com', verified:'2026-01'
+  },
+  {
+    op:'Italo (NTV)', region:'Italy (high-speed)',
+    bikes:'no',
+    notes:'Folded bikes in a bag only. Non-folded bikes not accepted on any Italo service.',
+    booking:'N/A', spaces:'Folded only', cost:'Free if folded and bagged', source:'italotreno.it', url:'https://www.italotreno.it', verified:'2026-01'
+  },
+  // Switzerland
+  {
+    op:'SBB (Swiss Federal Railways)', region:'Switzerland',
+    bikes:'yes',
+    notes:'Excellent bike infrastructure. Most trains accept bikes with a bike day pass (CHF 15). Reservation required on some trains. Not all IC trains accept bikes — check before boarding. One of the best rail networks in Europe for cycle-tourers.',
+    booking:'Recommended', spaces:'Good availability', cost:'CHF 15 bike day pass', source:'sbb.ch', url:'https://www.sbb.ch', verified:'2026-01'
+  },
+  // Netherlands
+  {
+    op:'NS (Dutch Railways)', region:'Netherlands',
+    bikes:'yes',
+    notes:'Bikes accepted on all trains outside peak hours (06:30–09:00 and 16:00–18:30, Mon–Fri). Bike day ticket required (€7.50). Very cycling-friendly country; storage ample outside peaks. Thalys and Eurostar connections: bikes not accepted.',
+    booking:'Not needed', spaces:'Plentiful off-peak', cost:'€7.50 bike day ticket', source:'ns.nl', url:'https://www.ns.nl', verified:'2026-01'
+  },
+  // Austria
+  {
+    op:'ÖBB (Austrian Federal Railways)', region:'Austria',
+    bikes:'yes',
+    notes:'Most trains accept bikes. Reservation required on Railjet and some IC/EC trains (€3–5 supplement). Excellent overnight options via ÖBB Nightjet. Regional trains generally fine without reservation. Very cycle-friendly.',
+    booking:'Railjet: required', spaces:'Good', cost:'€3–5 supplement', source:'oebb.at', url:'https://www.oebb.at', verified:'2026-01'
+  },
+  // Poland
+  {
+    op:'PKP Intercity', region:'Poland',
+    bikes:'yes',
+    notes:'Accepted on most trains with a bike ticket (PLN 15–30). Reservation required on express (EIC/EIP) trains. Regional trains (operated by regional operators) generally accept bikes without reservation.',
+    booking:'Express: required', spaces:'Available', cost:'PLN 15–30', source:'intercity.pl', url:'https://www.intercity.pl', verified:'2026-01'
+  },
+  // Czech Republic
+  {
+    op:'České dráhy (ČD)', region:'Czech Republic',
+    bikes:'yes',
+    notes:'Accepted on most trains with a bike ticket (CZK 50–80). Some express trains require reservation. Good regional coverage for cycling routes across Bohemia and Moravia.',
+    booking:'Express: recommended', spaces:'Available', cost:'CZK 50–80', source:'cd.cz', url:'https://www.cd.cz', verified:'2026-01'
+  },
+  // UK
+  {
+    op:'National Rail (UK)', region:'United Kingdom',
+    bikes:'check',
+    notes:"Policy varies by Train Operating Company. Most allow 2 bikes per train but many require advance reservation (online or by phone — not always bookable online). GWR, LNER, Avanti, CrossCountry: reservation recommended. Southern/Southeastern: first-come, usually no reservation. Always check specific operator's policy.",
+    booking:'Varies by operator', spaces:'Usually 2 per train', cost:'Free (reservation fee may apply)', source:'nationalrail.co.uk', url:'https://www.nationalrail.co.uk', verified:'2026-01'
+  },
+  {
+    op:'Caledonian Sleeper', region:'Scotland → London (overnight)',
+    bikes:'yes',
+    notes:'Bike spaces on all overnight trains. Reserve in advance — fills fast especially June–August. Unboxed bikes accepted; must be loaded by crew. A favourite for cycle-tourers doing Land\'s End to John O\'Groats.',
+    booking:'Required', spaces:'Limited (4–6)', cost:'~£5 bike reservation', source:'sleeper.scot', url:'https://www.sleeper.scot', verified:'2026-01'
+  },
+  // Coaches / buses
+  {
+    op:'Flixbus', region:'Europe',
+    bikes:'no',
+    notes:"Non-folded bikes generally not accepted. Folded bikes in a bag (≤120×60×40cm) may be carried as standard luggage at no extra charge. Some seasonal summer routes accept non-folded bikes — check at booking for specific routes. Availability varies significantly by route.",
+    booking:'Not needed', spaces:'Folded bikes as luggage', cost:'Folded: included in ticket', source:'flixbus.com', url:'https://www.flixbus.com', verified:'2026-01'
+  },
+  {
+    op:'BlaBlaCar Bus', region:'Europe (long-haul)',
+    bikes:'no',
+    notes:"Operated via Flixbus network. Same policy as Flixbus: folded bikes in a bag (≤120×60×40cm) only. Non-folded bikes not accepted.",
+    booking:'N/A', spaces:'Folded only', cost:'Included in ticket if folded', source:'blablacar.com', url:'https://www.blablacar.com', verified:'2026-01'
+  },
+  {
+    op:'National Express (UK coaches)', region:'United Kingdom',
+    bikes:'no',
+    notes:'Non-folded bikes not accepted. Folded bikes in a bag may be stowed in luggage hold as standard luggage (no guarantee of space).',
+    booking:'N/A', spaces:'Folded only', cost:'Free if folded', source:'nationalexpress.com', url:'https://www.nationalexpress.com', verified:'2026-01'
+  },
+  // USA
+  {
+    op:'Amtrak', region:'USA',
+    bikes:'check',
+    notes:"Long-distance trains with a checked baggage car (Empire Builder, California Zephyr, etc.): boxed bikes accepted as checked luggage (~$30). Short-distance Amtrak trains and Acela: folding bikes in a bag only. Acela: no bikes at all. Boxing a bike takes time — allow 30+ minutes at the station.",
+    booking:'Checked bags: yes', spaces:'Baggage car trains only', cost:'~$30 for boxed bike', source:'amtrak.com', url:'https://www.amtrak.com', verified:'2026-01'
+  },
+  // Asia
+  {
+    op:'Indian Railways (IRCTC)', region:'India',
+    bikes:'check',
+    notes:"Bikes accepted in the luggage van (parcel booking required). Process is complex: you book the parcel separately at the station's parcel office. Allow 1–2 hours extra. Charges by weight/distance. Widely used by Indian cycle-tourers but can be slow.",
+    booking:'Station parcel office', spaces:'Luggage van', cost:'Varies by distance/weight', source:'irctc.co.in', url:'https://www.irctc.co.in', verified:'2026-01'
+  },
+  {
+    op:'State Railway of Thailand', region:'Thailand',
+    bikes:'check',
+    notes:"Bicycles accepted on most long-distance ordinary and rapid trains — not on the faster Sprinter services. Goes in the baggage car. Enquire at the station; staff are helpful but English is limited. Write your request in Thai if possible.",
+    booking:'Station enquiry', spaces:'Baggage car', cost:'Small fee (variable)', source:'railway.co.th', url:'https://www.railway.co.th', verified:'2026-01'
+  },
+  {
+    op:'Vietnam Railways (VR)', region:'Vietnam',
+    bikes:'check',
+    notes:"Accepted on most trains in the baggage carriage or end carriage. Ask in advance; policy can vary by train and station. Bikes sometimes need to be partly dismantled. Good value — one of the better Asian rail options for cycle-tourers.",
+    booking:'Station enquiry', spaces:'Baggage carriage', cost:'Small fee', source:'vr.com.vn', url:'https://www.vr.com.vn', verified:'2026-01'
+  },
+  {
+    op:'KTM Berhad (Malaysia)', region:'Malaysia + Singapore',
+    bikes:'check',
+    notes:'Folded bikes in a bag accepted on ETS intercity trains. Non-folded bikes may be accepted with advance arrangement at the station. Check with station staff before travel.',
+    booking:'Station enquiry', spaces:'Limited', cost:'Minimal fee', source:'ktmb.com.my', url:'https://www.ktmb.com.my', verified:'2026-01'
+  },
+  // Ferries
+  {
+    op:'DFDS Ferries', region:'North Sea / Baltic',
+    bikes:'yes',
+    notes:"Bikes accepted on all routes — book as part of the vehicle reservation. Very bike-friendly on North Sea (Harwich–Hook, Newcastle–Amsterdam/IJmuiden) and Baltic routes. Budget €10–€30 per crossing. Popular with cycle-tourers crossing from the UK.",
+    booking:'Required', spaces:'Good', cost:'€10–€30 per crossing', source:'dfds.com', url:'https://www.dfds.com', verified:'2026-01'
+  },
+  {
+    op:'Stena Line', region:'Irish Sea / North Sea / Baltic',
+    bikes:'yes',
+    notes:'Bikes accepted on all ferries. Book in advance during summer peak — spaces fill quickly. Great option for UK↔Ireland and UK↔Europe crossings. Reasonable supplement.',
+    booking:'Recommended', spaces:'Good', cost:'€5–€20 per crossing', source:'stenaline.com', url:'https://www.stenaline.com', verified:'2026-01'
+  },
+  {
+    op:'Brittany Ferries', region:'UK → France / Spain',
+    bikes:'yes',
+    notes:"Bikes accepted on all routes. Reserve ahead — popular Roscoff, Cherbourg, and Santander crossings fill up in summer. Excellent for cycle-tourers doing the Atlantic Coast or Camino. One of the most bike-friendly ferry operators.",
+    booking:'Recommended', spaces:'Good', cost:'€10–€30 per crossing', source:'brittanyferries.com', url:'https://www.brittanyferries.com', verified:'2026-01'
+  },
+  // Turkey / Middle East
+  {
+    op:'TCDD (Turkish Railways)', region:'Turkey',
+    bikes:'check',
+    notes:"Non-folded bikes on passenger trains are complicated — generally require separate freight/parcel booking. YHT high-speed trains: folded/bagged bikes only. Ask at the station; rules vary by line. Better options exist for bike-touring in Turkey (buses/minibuses).",
+    booking:'Station enquiry', spaces:null, cost:'Varies', source:'tcdd.gov.tr', url:'https://www.tcdd.gov.tr', verified:'2026-01'
+  },
+];
+
+const POLICY_CONFIG = {
+  yes:   { label:'Bikes accepted', cls:'ok',    icon:'ph-check-circle' },
+  no:    { label:'No bikes',       cls:'no',    icon:'ph-x-circle' },
+  check: { label:'Check first',   cls:'check', icon:'ph-question' },
+};
+
+let _activeFilter = 'all';
+
+function setFilter(f, btn) {
+  _activeFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+  posthog.capture('bike_filter_changed', { filter: f });
+}
+
+function filterCards() {
+  renderList();
+}
+
+function renderList() {
+  const q = document.getElementById('searchInp').value.trim().toLowerCase();
+  const list = OPERATORS.filter(op => {
+    const matchFilter = _activeFilter === 'all' || op.bikes === _activeFilter;
+    const matchSearch = !q
+      || op.op.toLowerCase().includes(q)
+      || op.region.toLowerCase().includes(q)
+      || op.notes.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  const meta = document.getElementById('resultsMeta');
+  const listEl = document.getElementById('opList');
+
+  meta.textContent = list.length + ' operator' + (list.length !== 1 ? 's' : '') + ' shown' + (q ? ' for "' + q + '"' : '');
+
+  if (!list.length) {
+    listEl.innerHTML = `<div class="empty-state">
+      <i class="ph ph-magnifying-glass"></i>
+      <p>No operators match "${q}".<br>Try a different name or country, or <a href="https://bysloth.com/app.html">open the planner</a> to add what you know.</p>
+    </div>`;
+    return;
+  }
+
+  listEl.innerHTML = list.map(op => {
+    const pc = POLICY_CONFIG[op.bikes];
+    const bookingStr = op.booking && op.booking !== 'N/A' ? op.booking : null;
+    const spacesStr  = op.spaces  || null;
+    const costStr    = op.cost    || null;
+    return `<div class="op-card">
+      <div class="op-header">
+        <div>
+          <div class="op-name">${op.op}</div>
+          <div class="op-region">${op.region}</div>
+        </div>
+        <span class="policy-badge ${pc.cls}"><i class="ph ${pc.icon}"></i> ${pc.label}</span>
+      </div>
+      <div class="op-notes">${op.notes}</div>
+      <div class="op-meta">
+        ${bookingStr ? `<span class="op-meta-item"><i class="ph ph-ticket"></i> Booking: ${bookingStr}</span>` : ''}
+        ${spacesStr  ? `<span class="op-meta-item"><i class="ph ph-bicycle"></i> Spaces: ${spacesStr}</span>` : ''}
+        ${costStr    ? `<span class="op-meta-item"><i class="ph ph-currency-dollar"></i> ${costStr}</span>` : ''}
+        <a class="op-source" href="${op.url}" target="_blank" rel="noopener noreferrer">${op.source} ↗</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  renderList();
+
+  // Pre-fill search from URL params
+  const params = new URLSearchParams(location.search);
+  const q = params.get('q') || params.get('operator') || params.get('search') || '';
+  if (q) {
+    document.getElementById('searchInp').value = q;
+    renderList();
+  }
+
+  posthog.capture('bike_tool_loaded', { referrer: document.referrer || 'direct' });
+});
+</script>
+</body>
+</html>
