@@ -4,6 +4,25 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SLW Travel — App</title>
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2D4A2D">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- iOS Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SLW Travel">
+<link rel="apple-touch-icon" href="/icons/icon.svg">
+<!-- Service worker registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(r => console.log('[slw] SW registered', r.scope))
+        .catch(e => console.warn('[slw] SW registration failed:', e));
+    });
+  }
+</script>
 <script src="https://app.minnal.io/track/7c00ae17-46ed-4f8a-9276-84b122dd2ff5.js"></script>
 <script>
 !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ai Ri init Vi Yi Rr zi Gi Zi capture calculateEventProperties en register register_once register_for_session unregister unregister_for_session sn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync an identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty rn Ki createPersonProfile setInternalOrTestUser nn $i hn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Xi debug Mr tn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
@@ -797,6 +816,9 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
           <i class="ph ph-table"></i> Import CSV
           <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none" onchange="importCSVFile(this)">
         </label>
+        <a href="/blog/csv-import-format" target="_blank" rel="noopener"
+           style="font-size:10px;color:var(--text3);font-family:var(--mono);text-decoration:none;padding:0 2px"
+           title="CSV format guide — what columns are accepted">?</a>
         <label class="import-gpx-btn pmw-noprint" title="Import stops from a .gpx file">
           <i class="ph ph-upload-simple"></i> Import GPX
           <input type="file" id="gpxFileInput" accept=".gpx,application/gpx+xml" style="display:none" onchange="importGPXFile(this)">
@@ -1174,6 +1196,7 @@ const CONTRIB_KINDS = {
   route:    { icon:'ph-x-circle',          color:'#8B2A00', bg:'#FFF0EC', label:'Route changed' },
   split:    { icon:'ph-git-branch',        color:'#2E6FA8', bg:'#EDF4F9', label:'Split here' },
   transport:{ icon:'ph-swap',              color:'#2D4A2D', bg:'#E8F0E0', label:'Transport fix' },
+  bike:     { icon:'ph-bicycle',           color:'#2D4A2D', bg:'#E8F0E0', label:'Bike info' },
 };
 
 // Popular corridors for plan landing (curated real overland routes)
@@ -1899,15 +1922,20 @@ function renderTripViewPanel(trip, el) {
     return '<div style="margin:0 0 10px;border-left:3px solid ' + modeColor + ';padding-left:14px;position:relative">'
       + '<div class="leg-icon-dot" style="background:' + modeColor + '"><i class="ph ' + iconCls + '"></i></div>'
       + '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;gap:8px">'
-        + '<div style="font-size:13px;font-weight:600;color:var(--text)">' + from + ' \u2192 ' + to + '</div>'
+        + '<div style="font-size:13px;font-weight:600;color:var(--text)">' + from + ' \u2192 ' + to
+        + (leg.bikeAccepted ? ' <span style="font-size:10px;font-family:var(--mono);padding:1px 7px;border-radius:99px;vertical-align:middle;background:' + (leg.bikeAccepted==='yes'?'rgba(45,74,45,0.12)':leg.bikeAccepted==='no'?'#FDF0EC':'var(--bg2)') + ';color:' + (leg.bikeAccepted==='yes'?'var(--fern)':leg.bikeAccepted==='no'?'#C4622D':'var(--text2)') + '"><i class="ph ph-bicycle" style="font-size:10px"></i> ' + (leg.bikeAccepted==='yes'?'Bike OK':leg.bikeAccepted==='no'?'No bikes':'Check bike policy') + (leg.bikeNotes?' \u00b7 '+_slwEsc(leg.bikeNotes):'') + '</span>' : '')
+        + '</div>'
         + '<div style="display:flex;gap:8px;flex-shrink:0">'
           + '<button class="back-btn" style="font-size:10px;letter-spacing:1px" onclick="splitLeg(' + safeTrip + ',' + i + ')">Split leg</button>'
           + '<button class="back-btn" style="font-size:10px;letter-spacing:1px" onclick="loadTrip(' + safeTrip + ',' + i + ')">Edit leg \u2192</button>'
         + '</div>'
       + '</div>'
+      + (trip.stops[i]?.visitedAt ? '<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--fern);margin-bottom:4px"><i class="ph ph-check-circle"></i> Visited ' + trip.stops[i].visitedAt.slice(0,10) + '</div>' : '')
+      + (trip.stops[i]?.journalEntry ? '<div style="font-family:var(--serif);font-size:13px;line-height:1.65;color:var(--text2);white-space:pre-wrap;margin-bottom:10px;padding:10px 12px;background:var(--bg2);border-radius:6px;border-left:3px solid var(--border2)">' + _slwEsc(trip.stops[i].journalEntry) + '</div>' : '')
       + (conflictHtml ? conflictHtml : '')
       + '<div class="leg-grid">' + journeyHtml + transportHtml + stayHtml + '</div>'
       + renderContribBlockForKey(from + '\u2192' + to, i)
+      + renderRedditBlockForKey(from, to)
     + '</div>';
   }).join('');
 
@@ -2925,35 +2953,52 @@ function filterAdminContribs(filter) {
   renderAdminContribList();
 }
 
-function renderAdminContribList() {
+async function renderAdminContribList() {
   const listEl = document.getElementById('admin-contrib-list');
   if (!listEl) return;
+  listEl.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:13px;padding:28px 0">Loading…</div>`;
 
-  // Gather all notes from localStorage
-  const all = contribStorage.getAll();
-  let rows = [];
-  for (const [legKey, notes] of Object.entries(all)) {
-    for (const note of (notes || [])) {
-      rows.push({ ...note, _legKey: legKey });
+  try {
+    let query = sb.from('contributions')
+      .select('*, profiles(display_name, email)')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (_adminContribFilter === 'flagged')       query = query.eq('flagged', true);
+    else if (_adminContribFilter === 'pending')   query = query.eq('flagged', false);
+    else if (_adminContribFilter === 'verified')  query = query.eq('flagged', false);
+    // 'all': no additional filter
+
+    const { data, error } = await query;
+    if (error) {
+      listEl.innerHTML = `<div style="color:#C4622D;padding:20px;font-size:13px">${error.message}</div>`;
+      return;
     }
-  }
 
-  // Apply filter
-  if (_adminContribFilter === 'flagged') {
-    rows = rows.filter(n => n._flagged);
-  } else if (_adminContribFilter === 'pending') {
-    rows = rows.filter(n => !n._flagged && !n.confirmed && (n.votes||0) < 3 && !n._adminVerified);
-  } else if (_adminContribFilter === 'verified') {
-    rows = rows.filter(n => !n._flagged && (n._adminVerified || n.confirmed || (n.votes||0) >= 3));
-  }
-  // 'all' shows everything
+    let rows = (data || []).map(row => ({
+      id:              row.id,
+      kind:            row.kind,
+      text:            row.text,
+      votes:           row.votes || 0,
+      confirmed_count: row.confirmed_count || 0,
+      flagged:         row.flagged,
+      author:          row.profiles?.display_name || row.profiles?.email?.split('@')[0] || 'anonymous',
+      when:            _timeAgo(row.created_at),
+      _legKey:         row.leg_key,
+      _fromCloud:      true,
+    }));
 
-  if (rows.length === 0) {
-    listEl.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:13px;padding:28px 0">No notes match this filter.</div>`;
-    return;
-  }
+    if (_adminContribFilter === 'pending')  rows = rows.filter(n => (n.votes||0) < 3);
+    else if (_adminContribFilter === 'verified') rows = rows.filter(n => (n.votes||0) >= 3);
 
-  listEl.innerHTML = rows.map(n => renderAdminContribRow(n)).join('');
+    if (!rows.length) {
+      listEl.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:13px;padding:28px 0">No notes match this filter.</div>`;
+      return;
+    }
+    listEl.innerHTML = rows.map(n => renderAdminContribRow(n)).join('');
+  } catch(e) {
+    listEl.innerHTML = `<div style="color:#C4622D;padding:20px;font-size:13px">Error: ${e.message}</div>`;
+  }
 }
 
 function renderAdminContribRow(note) {
@@ -2964,13 +3009,14 @@ function renderAdminContribRow(note) {
   const verified = note._adminVerified || note.confirmed || (note.votes||0) >= 3;
   const overridden = !!note._adminOverride;
 
-  const statusBadge = note._flagged
+  const isFlagged = note._flagged || note.flagged;
+  const statusBadge = isFlagged
     ? `<span style="background:#FDF0EC;color:#C4622D;font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px">🚩 flagged</span>`
     : verified
     ? `<span style="background:rgba(45,74,45,0.1);color:var(--fern);font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px">✓ verified${overridden?' (override)':''}</span>`
     : `<span style="background:rgba(0,0,0,0.05);color:var(--text3);font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px">pending</span>`;
 
-  return `<div data-note-id="${id}" style="border:0.5px solid var(--border);border-radius:8px;padding:12px 14px;background:${note._flagged ? '#FFF8F6' : 'white'}">
+  return `<div data-note-id="${id}" style="border:0.5px solid var(--border);border-radius:8px;padding:12px 14px;background:${isFlagged ? '#FFF8F6' : 'white'}">
     <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
       <div style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:${k.bg};color:${k.color};flex-shrink:0">
         <i class="ph ${k.icon}" style="font-size:13px"></i>
@@ -2986,7 +3032,7 @@ function renderAdminContribRow(note) {
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">
         ${!note._adminVerified && !note._flagged ? `<button onclick="adminVerifyContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:var(--fern);color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">✓ Verify</button>` : ''}
-        ${note._flagged ? `<button onclick="adminVerifyContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:var(--fern);color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">✓ Unflag &amp; verify</button>` : ''}
+        ${isFlagged ? `<button onclick="adminVerifyContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:var(--fern);color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">✓ Unflag &amp; verify</button>` : ''}
         ${note.kind === 'split' && note.splitCity ? `<button onclick="adminOverrideRoute('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:#2E6FA8;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">↯ Override route</button>` : ''}
         <button onclick="adminRemoveContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:0.5px solid #C4622D;color:#C4622D;padding:4px 10px;border-radius:4px;cursor:pointer">✕ Remove</button>
       </div>
@@ -3009,7 +3055,7 @@ function adminVerifyContrib(noteId, legKey) {
   if (blockEl) blockEl.outerHTML = renderContribBlockForKey(legKey, 0);
   // Sync to Supabase if logged in
   if (currentUser) {
-    sb.from('contributions').update({ confirmed: true }).eq('id', noteId).catch(() => {});
+    sb.from('contributions').update({ flagged: false, confirmed: true }).eq('id', noteId).catch(() => {});
   }
 }
 
@@ -3310,9 +3356,10 @@ function openPlanSearch() {
 }
 
 const CONF = {
-  verified:  { label:'Verified',            cls:'conf-ok',   icon:'ph-check-circle',    tip:'Well-documented route with regular service — you can book with confidence.' },
-  check:     { label:'Check before booking', cls:'conf-warn', icon:'ph-warning-circle',  tip:'Route exists but may be seasonal, irregular, or recently suspended. Verify current schedules before booking.' },
-  uncertain: { label:'Uncertain',            cls:'conf-bad',  icon:'ph-question',        tip:"AI isn't confident this connection currently operates. Research carefully before relying on it." },
+  safe:      { label:'Safe route',           cls:'conf-ok',   icon:'ph-shield-check',    tip:'Well-established route — no known issues, no advisory. Standard overland leg.' },
+  verified:  { label:'Traveller confirmed',  cls:'conf-ok',   icon:'ph-check-circle',    tip:'A real traveller has recently done this route and confirmed it works.' },
+  check:     { label:'Check locally',        cls:'conf-warn', icon:'ph-warning-circle',  tip:'Conditions change — verify current schedules, border status, or availability before committing.' },
+  uncertain: { label:'Unverified',           cls:'conf-bad',  icon:'ph-question',        tip:"Limited data on this leg. Research carefully and have a backup plan." },
 };
 // Static city→conflict lookup — fallback for trips saved before AI prompt fix
 const STATIC_CONFLICT_CITIES = {
@@ -3727,6 +3774,16 @@ function renderSegs() {
             ${departHtml}
             ${daysBadge}
           </div>
+          <div style="margin-top:5px;display:flex;gap:6px;align-items:flex-start">
+            <textarea placeholder="Journal — notes, what happened here…" rows="2"
+              oninput="stops[${i}].journalEntry=this.value;_tripDirty=true"
+              style="flex:1;font-size:11px;padding:5px 7px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);resize:vertical;font-family:var(--serif);line-height:1.5;color:var(--text)"
+            >${_slwEsc(s.journalEntry||'')}</textarea>
+            <button onclick="markVisited(${i})" title="${s.visitedAt?'Mark as not yet visited':'Mark as visited'}"
+              style="flex-shrink:0;font-size:10px;font-family:var(--mono);padding:4px 9px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:${s.visitedAt?'var(--fern)':'var(--text3)'};cursor:pointer;white-space:nowrap">
+              ${s.visitedAt ? '<i class="ph ph-check-circle"></i> ' + (s.visitedAt.slice(0,10)) : '<i class="ph ph-map-pin"></i> Mark visited'}
+            </button>
+          </div>
         </div>
         ${!isL ? renderLeg(i) : ''}
         ${!isL ? `<button class="insert-stop-btn" onclick="insertStop(${i})">+ Insert stop here</button>` : ''}
@@ -3857,9 +3914,22 @@ function renderLeg(i) {
       ${elevRow}
       ${bookedSection}
       ${staySection}
+      ${['train','bus','ferry','car','shared-taxi'].includes(leg.mode||'') ? `
+      <div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border2)">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:5px"><i class="ph ph-bicycle"></i> Bike accepted</div>
+        <div style="display:flex;gap:5px;margin-bottom:5px">
+          ${['yes','check','no'].map(v => `<button onclick="setLegBike(${i},'${v}')" style="font-size:10px;font-family:var(--mono);padding:3px 10px;border-radius:99px;cursor:pointer;border:0.5px solid var(--border2);background:${leg.bikeAccepted===v?(v==='yes'?'var(--fern)':v==='no'?'#C4622D':'var(--bg2)'):'var(--bg)'};color:${leg.bikeAccepted===v?(v==='yes'||v==='no'?'white':'var(--text)'):'var(--text2)'}">${v==='yes'?'✓ Yes':v==='no'?'✕ No':'? Check locally'}</button>`).join('')}
+        </div>
+        <input placeholder="Bike notes — spaces, booking, restrictions…" value="${_slwEsc(leg.bikeNotes||'')}" oninput="legs[${i}].bikeNotes=this.value;_tripDirty=true" style="width:100%;font-size:11px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);box-sizing:border-box">
+      </div>` : ''}
       ${contribs ? `<div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">${contribs}</div>` : ''}
     </div>
   </div>`;
+}
+
+function setLegBike(idx, val) {
+  legs[idx].bikeAccepted = legs[idx].bikeAccepted === val ? null : val;
+  _tripDirty = true; render();
 }
 
 function renderFinalStay(stopIdx) {
@@ -4130,7 +4200,8 @@ function renderContribBlock(legIdx) {
   const to   = stops[legIdx+1]?.name || '';
   if (!from || !to) return '';
   const legKey = `${from}→${to}`;
-  return renderContribBlockForKey(legKey, legIdx);
+  return renderContribBlockForKey(legKey, legIdx)
+       + renderRedditBlockForKey(from, to);
 }
 
 function renderContribBlockForKey(legKey, legIdx) {
@@ -4223,12 +4294,13 @@ function contribFlag(e, noteId, legKey) {
     const blockEl = document.getElementById(blockId);
     if (blockEl) blockEl.outerHTML = renderContribBlockForKey(legKey, 0);
   }, 350);
-  // Send flag to Supabase (table may not exist yet — fail silently)
+  // Persist flag via RPC (writes contribution_flags + sets contributions.flagged = true)
   if (currentUser) {
-    sb.from('contribution_flags')
-      .insert({ contribution_id: noteId, user_id: currentUser.id })
-      .catch(() => {});
+    sb.rpc('flag_contribution', { contrib_id: noteId }).catch(() => {});
   }
+  phCapture('contribution_flagged', { leg_key: legKey });
+  const st = document.getElementById('saveStatus');
+  if (st) { st.textContent = 'Note reported — thanks.'; setTimeout(() => st.textContent = '', 3000); }
 }
 
 // ── Contribute modal ──────────────────────────────────────────────────
@@ -4952,6 +5024,11 @@ let _osrmMapCache = {};  // in-memory OSRM route geometry cache (keyed by profil
   try { _geoCache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY) || '{}'); } catch(e) {}
 })();
 
+const REDDIT_CACHE_KEY = 'slw_reddit_cache';
+const REDDIT_TTL = 24 * 60 * 60 * 1000; // 24 hours
+let _redditCache = {};
+try { _redditCache = JSON.parse(localStorage.getItem(REDDIT_CACHE_KEY) || '{}'); } catch(e) {}
+
 async function geocodeStop(name) {
   if (!name?.trim()) return null;
   const key = name.trim().toLowerCase();
@@ -4975,6 +5052,82 @@ async function geocodeStop(name) {
     }
   } catch(e) { console.warn('Geocode failed:', name, e.message); }
   return null;
+}
+
+// ── Reddit community reports ───────────────────────────────────────────────
+// Surfaces recent trip reports from travel subreddits on each leg card.
+// Unauthenticated read-only fetch to reddit.com/search.json (CORS-enabled).
+// Results cached 24 h in localStorage; throttled to 1.5 s between requests.
+
+let _redditQ = Promise.resolve();
+const _redditDelay = fn => (_redditQ = _redditQ.then(() => new Promise(r => setTimeout(r, 1500))).then(fn));
+
+async function fetchRedditForLeg(from, to) {
+  const key = from + '→' + to;
+  const hit = _redditCache[key];
+  if (hit && Date.now() - hit.ts < REDDIT_TTL) return hit.posts;
+
+  const f = from.split(',')[0].trim();
+  const t = to.split(',')[0].trim();
+  const q = encodeURIComponent(f + ' ' + t);
+  const subs = 'solotravel+bicycletouring+overlanding+backpacking+travel';
+  const url = `https://www.reddit.com/r/${subs}/search.json?q=${q}&sort=new&t=year&limit=8&restrict_sr=on`;
+
+  return _redditDelay(async () => {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('reddit ' + r.status);
+      const d = await r.json();
+      const posts = (d.data?.children || [])
+        .map(c => c.data)
+        .filter(p => p.score >= 1)
+        .slice(0, 3)
+        .map(p => ({
+          title:    p.title,
+          sub:      p.subreddit,
+          url:      'https://reddit.com' + p.permalink,
+          ageM:     Math.round((Date.now() / 1000 - p.created_utc) / (30 * 24 * 3600)),
+          comments: p.num_comments
+        }));
+      _redditCache[key] = { ts: Date.now(), posts };
+      try { localStorage.setItem(REDDIT_CACHE_KEY, JSON.stringify(_redditCache)); } catch(e) {}
+      return posts;
+    } catch {
+      // Short TTL on failure so it retries in 5 min rather than 24 h
+      _redditCache[key] = { ts: Date.now() - REDDIT_TTL + 5 * 60 * 1000, posts: [] };
+      return [];
+    }
+  });
+}
+
+function _redditBlockHTML(blockId, posts) {
+  if (!posts || !posts.length) return `<div id="${blockId}"></div>`;
+  const ageLabel = m => m < 1 ? 'this month' : m === 1 ? '1 month ago' : m + ' months ago';
+  return `<div id="${blockId}" style="margin-top:6px;padding:8px 10px;background:var(--bg2);border-radius:6px;border:0.5px solid var(--border2)">
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px">
+      <i class="ph ph-reddit-logo" style="font-size:11px;vertical-align:-1px"></i> Recent trip reports
+    </div>
+    ${posts.map(p => `<a href="${p.url}" target="_blank" rel="noopener noreferrer"
+        style="display:block;margin-bottom:5px;text-decoration:none;color:inherit">
+        <div style="font-size:11px;color:var(--link);line-height:1.35;margin-bottom:1px">${_slwEsc(p.title)}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">r/${p.sub} · ${ageLabel(p.ageM)} · ${p.comments} comments</div>
+      </a>`).join('')}
+  </div>`;
+}
+
+function renderRedditBlockForKey(from, to) {
+  const key     = from + '→' + to;
+  const blockId = 'rb_' + key.replace(/[^a-z0-9]/gi, '_');
+  const hit     = _redditCache[key];
+
+  if (!hit || Date.now() - hit.ts >= REDDIT_TTL) {
+    fetchRedditForLeg(from, to).then(posts => {
+      const el = document.getElementById(blockId);
+      if (el) el.outerHTML = _redditBlockHTML(blockId, posts);
+    });
+  }
+
+  return _redditBlockHTML(blockId, hit?.posts || []);
 }
 
 // ── Elevation profiles ────────────────────────────────────────────────────
@@ -5631,6 +5784,11 @@ function removeStop(i) {
   editingLegModes.delete(i);
   render();
 }
+function markVisited(idx) {
+  stops[idx].visitedAt = stops[idx].visitedAt ? '' : new Date().toISOString();
+  _tripDirty = true; render();
+  phCapture('stop_marked_visited', { stop: stops[idx]?.name });
+}
 
 function exportTrip() {
   const title = document.getElementById('tripTitle').value;
@@ -5877,7 +6035,7 @@ Rules:
   • cycle / walk / motorbike → empty array (no booking needed)
   • car → none (own vehicle); or rental sites (Rentalcars.com, Sixt) if context implies rental
 - info_sites: research/info sites when booking_sites is empty (e.g. Seat61 for trains, WikiVoyage)
-- confidence: "verified"=well-documented regular service; "check"=verify before booking; "uncertain"=unsure.
+- confidence: "safe"=standard well-established route, no verification needed; "verified"=community traveller has recently confirmed this works; "check"=exists but seasonal/irregular/border uncertain, verify first; "uncertain"=limited data, research carefully.
 - conflict: only include if leg actually passes through a conflict/advisory zone; otherwise null.
 - accom_sites: only platforms that work for that city/region.
 - Respond with ONLY the raw JSON object. No markdown, no preamble.`;
