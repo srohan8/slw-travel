@@ -1,9 +1,28 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SLW Travel — App</title>
+<title>By Sloth — App</title>
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2D4A2D">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- iOS Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="By Sloth">
+<link rel="apple-touch-icon" href="/icons/icon.svg">
+<!-- Service worker registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(r => console.log('[slw] SW registered', r.scope))
+        .catch(e => console.warn('[slw] SW registration failed:', e));
+    });
+  }
+</script>
 <script src="https://app.minnal.io/track/7c00ae17-46ed-4f8a-9276-84b122dd2ff5.js"></script>
 <script>
 !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ai Ri init Vi Yi Rr zi Gi Zi capture calculateEventProperties en register register_once register_for_session unregister unregister_for_session sn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync an identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty rn Ki createPersonProfile setInternalOrTestUser nn $i hn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Xi debug Mr tn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
@@ -334,12 +353,13 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
   .add-row{padding:4px 0 0 40px;}
   .add-b{font-size:12px;color:var(--text2);cursor:pointer;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);padding:6px 14px;font-family:inherit;transition: all 0.2s;}
   .add-b:hover{background:var(--bg2); color: var(--text); border-color: var(--text2);}
-  .tl-track{display:flex;align-items:center;overflow-x:auto;padding-bottom:10px;margin-top:1rem;gap: 0;}
-  .tl-stop{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:80px;}
+  .tl-track{display:flex;align-items:center;overflow-x:auto;padding-bottom:2px;margin-top:1rem;gap:0;scrollbar-width:none;-ms-overflow-style:none;-webkit-mask-image:linear-gradient(to right,black calc(100% - 36px),transparent 100%);mask-image:linear-gradient(to right,black calc(100% - 36px),transparent 100%);}
+  .tl-track::-webkit-scrollbar{display:none;}
+  .tl-stop{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:66px;}
   .tl-dot{width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--border2);}
   .tl-dot.s{border-color:var(--green);background: var(--green);}
-  .tl-dot.e{border-color:var(--blue);background: var(--blue);}
-  .tl-nm{font-size:12px;color:var(--text2);text-align:center;max-width:80px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight: 500;}
+  .tl-dot.e{border-color:var(--fern);background:var(--fern);}
+  .tl-nm{font-size:11px;color:var(--text2);text-align:center;max-width:66px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:500;}
   .tl-dt{font-size:10px;color:var(--text3);}
   .tl-leg{flex:1;position:relative;min-width:40px;}
   .tl-line{height:2px;background:var(--border);transition: background 0.3s;}
@@ -652,7 +672,7 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
 
 <!-- ── Cookie consent banner ── -->
 <div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#2D4A2D;color:#F5F0E8;padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
-  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:#8BAF7A;">Learn&nbsp;more</a></span>
+  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://bysloth.com/privacy" style="color:#8BAF7A;">Learn&nbsp;more</a></span>
   <div style="display:flex;gap:8px;flex-shrink:0;">
     <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(245,240,232,0.35);color:#F5F0E8;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
     <button onclick="slwConsent('accepted')" style="background:#8BAF7A;border:none;color:#2D4A2D;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
@@ -663,7 +683,7 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
 <nav>
   <a class="logo" href="#">
     <img src="public/sloth-logo.svg" height="32" style="filter:brightness(0) invert(1);opacity:0.9;margin-right:2px"/>
-    SLW <em>Travel</em>
+    By <em>Sloth</em>
   </a>
   <div class="nav-utils">
     <button class="nav-link active" id="navbtn_plan"    onclick="switchTab('plan',this)">Search</button>
@@ -798,6 +818,9 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
           <i class="ph ph-table"></i> Import CSV
           <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none" onchange="importCSVFile(this)">
         </label>
+        <a href="/blog/csv-import-format" target="_blank" rel="noopener"
+           style="font-size:10px;color:var(--text3);font-family:var(--mono);text-decoration:none;padding:0 2px"
+           title="CSV format guide — what columns are accepted">?</a>
         <label class="import-gpx-btn pmw-noprint" title="Import stops from a .gpx file">
           <i class="ph ph-upload-simple"></i> Import GPX
           <input type="file" id="gpxFileInput" accept=".gpx,application/gpx+xml" style="display:none" onchange="importGPXFile(this)">
@@ -1175,6 +1198,7 @@ const CONTRIB_KINDS = {
   route:    { icon:'ph-x-circle',          color:'#8B2A00', bg:'#FFF0EC', label:'Route changed' },
   split:    { icon:'ph-git-branch',        color:'#2E6FA8', bg:'#EDF4F9', label:'Split here' },
   transport:{ icon:'ph-swap',              color:'#2D4A2D', bg:'#E8F0E0', label:'Transport fix' },
+  bike:     { icon:'ph-bicycle',           color:'#2D4A2D', bg:'#E8F0E0', label:'Bike info' },
 };
 
 // Popular corridors for plan landing (curated real overland routes)
@@ -1231,23 +1255,42 @@ const contribStorage = {
     }
   },
 
-  // Fetch contributions for a leg from Supabase, merge into cache
+  // Fetch contributions for a leg from Supabase, merge into cache.
+  // Tries with profiles join first; falls back to no-join if the FK isn't
+  // yet pointing at public.profiles (avoids 400s while schema migration is pending).
   async fetchForLeg(key) {
     if (this._fetched.has(key)) return;
     this._fetched.add(key);
     try {
-      const { data, error } = await sb
+      // ── Attempt 1: join profiles (works once FK points to public.profiles) ──
+      let { data, error } = await sb
         .from('contributions')
         .select('*, profiles(display_name, email)')
         .eq('leg_key', key)
         .order('votes', { ascending: false })
         .order('created_at', { ascending: false });
+
+      // ── Fallback: FK still points to auth.users → PostgREST returns 400 ──
+      // Retry without the join; author shows as 'traveller'. Contributions load,
+      // just without display names. Delete key so it retries with join after reload.
       if (error) {
-        // Keep key in _fetched — do NOT delete it, or every render retries and floods Supabase with 400s.
-        // The contributions feature will silently show nothing until the DB schema is fixed & page is reloaded.
-        console.warn('[slw] contributions fetch error (will not retry this session):', key, error.message);
-        return;
+        console.warn('[slw] contributions join failed, retrying without profiles:', error.message);
+        this._fetched.delete(key); // allow retry on next render (schema may be fixed by then)
+        const fb = await sb
+          .from('contributions')
+          .select('id, leg_key, kind, text, source, votes, confirmed_count, created_at')
+          .eq('leg_key', key)
+          .order('votes', { ascending: false })
+          .order('created_at', { ascending: false });
+        if (fb.error) {
+          console.warn('[slw] contributions fallback also failed:', fb.error.message);
+          this._fetched.add(key); // don't hammer — wait for reload
+          return;
+        }
+        data = fb.data;
+        error = null;
       }
+
       if (!data?.length) return;
 
       const all = this.getAll();
@@ -1323,6 +1366,7 @@ let tripWarnings = [];   // AI-generated warning badges — persisted with the t
 let currentTripId     = null;
 let currentTripSubTab = 'mytrips'; // mytrips | saved | collections
 let viewingTripId     = null;      // null = list view, string = viewing this trip
+let recordingTripId   = null;      // non-null = record panel open for this trip
 let _fromTripView     = false;     // true when edit was launched from trip view panel
 let _autoRefreshPending = false; // true while a stale-cache background re-fetch is in flight
 let _tripDirty = false;
@@ -1647,6 +1691,109 @@ function closeTripView() {
   if (_mapState === 'expanded') setMapState('docked');
 }
 
+// ── Record panel ─────────────────────────────────────────────────
+function openRecordPanel(tripId) {
+  recordingTripId = tripId;
+  viewingTripId   = tripId; // so closing record returns to trip view, not list
+  renderMyTripsPanel();
+}
+
+function closeRecordPanel() {
+  recordingTripId = null;
+  renderMyTripsPanel(); // viewingTripId still set → goes back to trip view
+}
+
+function renderRecordPanel(trip, el) {
+  // ── Backfill stable _id for stops that predate this feature ────────
+  let needsSave = false;
+  (trip.stops || []).forEach(s => {
+    if (!s._id) { s._id = crypto.randomUUID(); needsSave = true; }
+  });
+  if (needsSave) {
+    const trips = storage.get('trips') || [];
+    const idx = trips.findIndex(t => t.id === trip.id);
+    if (idx !== -1) { trips[idx] = trip; storage.set('trips', trips); }
+  }
+
+  const sc = trip.stops?.length || 0;
+  const visitedCount = (trip.stops||[]).filter(s => s.visitedAt).length;
+  const route = sc >= 2
+    ? (trip.stops[0].name||'?') + ' → ' + (trip.stops[sc-1].name||'?')
+    : trip.title || 'Trip';
+
+  const stopsHtml = (trip.stops||[]).map((stop, i) => {
+    const isLast = i === sc - 1;
+    const leg    = !isLast ? (trip.legs?.[i] || {}) : null;
+    const sid    = stop._id; // stable ID for oninput/onclick
+    const dateStr = stop.date
+      ? new Date(stop.date + 'T00:00').toLocaleDateString('en', { weekday:'short', month:'long', day:'numeric' })
+      : '';
+
+    // Leg separator with inline mode picker so user can correct "took train not bus"
+    const legSep = leg ? (() => {
+      const curMode = leg.mode || 'bus';
+      const km   = leg.km   ? leg.km   + ' km' : '';
+      const hrs  = leg.hours ? leg.hours + 'h'  : '';
+      const meta = [km, hrs].filter(Boolean).join(' · ');
+      const modeOpts = MODES.map(m => {
+        const sel = m === curMode;
+        return `<option value="${m}"${sel?' selected':''}>${MI[m]||m}</option>`;
+      }).join('');
+      return `<div style="margin:18px 0">
+        <div style="display:flex;align-items:center;gap:8px;color:var(--text3)">
+          <div style="flex:1;height:0.5px;background:var(--border2)"></div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <select onchange="saveTripViewLeg('${trip.id}',${i},'mode',this.value)"
+              title="Change transport mode"
+              style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;
+                     border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);
+                     color:var(--text2);padding:2px 4px;cursor:pointer">
+              ${modeOpts}
+            </select>
+            ${meta ? `<span style="font-size:10px;font-family:var(--mono);color:var(--text3)">${meta}</span>` : ''}
+          </div>
+          <div style="flex:1;height:0.5px;background:var(--border2)"></div>
+        </div>
+        ${leg.notes ? `<div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-top:5px;text-align:center;font-style:italic">${_slwEsc(leg.notes)}</div>` : ''}
+      </div>`;
+    })() : '';
+
+    return `<div style="margin-bottom:4px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
+        <div>
+          <div style="font-family:var(--serif);font-size:22px;font-weight:300;color:var(--text);line-height:1.15">${_slwEsc(stop.name||'Unnamed stop')}</div>
+          ${dateStr ? `<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px">${dateStr}${stop.days ? ' · ' + stop.days + ' night' + (stop.days!==1?'s':'') : ''}</div>` : ''}
+        </div>
+        <button onclick="toggleTripViewVisited('${trip.id}','${sid}',this)"
+          style="flex-shrink:0;margin-top:4px;font-size:10px;font-family:var(--mono);padding:5px 12px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg);color:${stop.visitedAt?'var(--fern)':'var(--text3)'};cursor:pointer;white-space:nowrap">
+          ${stop.visitedAt ? `<i class="ph ph-check-circle"></i> ${stop.visitedAt.slice(0,10)}` : '<i class="ph ph-map-pin"></i> Mark visited'}
+        </button>
+      </div>
+      <textarea
+        oninput="saveTripViewStop('${trip.id}','${sid}','journalEntry',this.value)"
+        placeholder="What happened in ${_slwEsc(stop.name||'this stop')}?"
+        rows="4"
+        onfocus="this.style.borderColor='var(--fern)'" onblur="this.style.borderColor='var(--border2)'"
+        style="width:100%;font-size:14px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:6px;background:var(--bg);resize:vertical;font-family:var(--serif);line-height:1.6;color:var(--text);outline:none;transition:border-color .15s"
+      >${_slwEsc(stop.journalEntry||'')}</textarea>
+      ${legSep}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem">
+      <button class="back-btn" onclick="closeRecordPanel()">← Trip overview</button>
+      <div style="flex:1"></div>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${visitedCount}/${sc} visited</span>
+    </div>
+    <div style="margin-bottom:1.75rem">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:6px">Journey log</div>
+      <div style="font-family:var(--serif);font-size:clamp(20px,3.5vw,28px);font-weight:300;color:var(--text);letter-spacing:-0.3px">${_slwEsc(route)}</div>
+    </div>
+    ${stopsHtml}
+  `;
+}
+
 // ── Pin / bookmark ───────────────────────────────────────────────────
 function togglePin(tripId, ev) {
   ev.stopPropagation();
@@ -1900,15 +2047,20 @@ function renderTripViewPanel(trip, el) {
     return '<div style="margin:0 0 10px;border-left:3px solid ' + modeColor + ';padding-left:14px;position:relative">'
       + '<div class="leg-icon-dot" style="background:' + modeColor + '"><i class="ph ' + iconCls + '"></i></div>'
       + '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;gap:8px">'
-        + '<div style="font-size:13px;font-weight:600;color:var(--text)">' + from + ' \u2192 ' + to + '</div>'
+        + '<div style="font-size:13px;font-weight:600;color:var(--text)">' + from + ' \u2192 ' + to
+        + (leg.bikeAccepted ? ' <span style="font-size:10px;font-family:var(--mono);padding:1px 7px;border-radius:99px;vertical-align:middle;background:' + (leg.bikeAccepted==='yes'?'rgba(45,74,45,0.12)':leg.bikeAccepted==='no'?'#FDF0EC':'var(--bg2)') + ';color:' + (leg.bikeAccepted==='yes'?'var(--fern)':leg.bikeAccepted==='no'?'#C4622D':'var(--text2)') + '"><i class="ph ph-bicycle" style="font-size:10px"></i> ' + (leg.bikeAccepted==='yes'?'Bike OK':leg.bikeAccepted==='no'?'No bikes':'Check bike policy') + (leg.bikeNotes?' \u00b7 '+_slwEsc(leg.bikeNotes):'') + '</span>' : '')
+        + '</div>'
         + '<div style="display:flex;gap:8px;flex-shrink:0">'
           + '<button class="back-btn" style="font-size:10px;letter-spacing:1px" onclick="splitLeg(' + safeTrip + ',' + i + ')">Split leg</button>'
           + '<button class="back-btn" style="font-size:10px;letter-spacing:1px" onclick="loadTrip(' + safeTrip + ',' + i + ')">Edit leg \u2192</button>'
         + '</div>'
       + '</div>'
+      + (trip.stops[i]?.visitedAt ? '<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--fern);margin-bottom:4px"><i class="ph ph-check-circle"></i> Visited ' + trip.stops[i].visitedAt.slice(0,10) + '</div>' : '')
+      + (trip.stops[i]?.journalEntry ? '<div style="font-family:var(--serif);font-size:13px;line-height:1.65;color:var(--text2);white-space:pre-wrap;margin-bottom:10px;padding:10px 12px;background:var(--bg2);border-radius:6px;border-left:3px solid var(--border2)">' + _slwEsc(trip.stops[i].journalEntry) + '</div>' : '')
       + (conflictHtml ? conflictHtml : '')
       + '<div class="leg-grid">' + journeyHtml + transportHtml + stayHtml + '</div>'
       + renderContribBlockForKey(from + '\u2192' + to, i)
+      + (['check','uncertain'].includes(leg.confidence) ? renderRedditBlockForKey(from, to, (trip.legs||[]).some(l => l.mode === 'cycle')) : '')
     + '</div>';
   }).join('');
 
@@ -1922,6 +2074,7 @@ function renderTripViewPanel(trip, el) {
     <button class="back-btn" onclick="closeTripView()">\u2190 All trips</button>
     <div style="flex:1"></div>
     <button class="pin-btn${isPinned?' pinned':''}" onclick="togglePin('${trip.id}',event)" title="${isPinned?'Unsave':'Save'}">${isPinned?'<i class="ph-fill ph-heart"></i>':'<i class="ph ph-heart"></i>'}</button>
+    <button class="btn" onclick="openRecordPanel('${trip.id}')" title="Write journal entries and mark stops visited" style="background:var(--bg2)"><i class="ph ph-notebook"></i> Record journey</button>
     <button class="btn btn-primary" onclick="loadTrip(${safeTrip})">Edit trip \u2192</button>
   </div>
 
@@ -1991,6 +2144,69 @@ function saveTripViewNotes(tripId) {
   const btn = event.target;
   btn.textContent = 'Saved ✓';
   setTimeout(() => { btn.textContent = 'Save notes'; }, 2000);
+}
+
+// ── Inline recording helpers (trip view) ──────────────────────────
+// Resolve a stop by _id (stable, survives plan edits) or index fallback (legacy trips).
+function _resolveStop(t, stopRef) {
+  return t.stops?.find(s => s._id === stopRef) ?? t.stops?.[stopRef];
+}
+
+// Journal entry auto-save — called from record panel oninput.
+// stopRef is stop._id for new trips, numeric index as fallback for old ones.
+function saveTripViewStop(tripId, stopRef, field, value) {
+  const trips = storage.get('trips') || [];
+  const t = trips.find(x => x.id === tripId);
+  const stop = t ? _resolveStop(t, stopRef) : null;
+  if (!stop) return;
+  stop[field] = value;
+  storage.set('trips', trips);
+  clearTimeout(saveTripViewStop._t);
+  saveTripViewStop._t = setTimeout(() => {
+    if (currentUser) {
+      sb.from('trips').upsert({ id: tripId, user_id: currentUser.id, data: t, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+        .catch(e => console.warn('journal sync:', e.message));
+    }
+  }, 2000);
+}
+
+// Leg field save — called from record panel when mode/notes changed to reflect reality.
+function saveTripViewLeg(tripId, legIdx, field, value) {
+  const trips = storage.get('trips') || [];
+  const t = trips.find(x => x.id === tripId);
+  if (!t || !t.legs?.[legIdx]) return;
+  t.legs[legIdx][field] = value;
+  storage.set('trips', trips);
+  clearTimeout(saveTripViewLeg._t);
+  saveTripViewLeg._t = setTimeout(() => {
+    if (currentUser) {
+      sb.from('trips').upsert({ id: tripId, user_id: currentUser.id, data: t, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+        .catch(e => console.warn('leg sync:', e.message));
+    }
+  }, 2000);
+}
+
+// "Mark visited" — updates button instantly, saves in background.
+function toggleTripViewVisited(tripId, stopRef, btn) {
+  const trips = storage.get('trips') || [];
+  const t = trips.find(x => x.id === tripId);
+  const stop = t ? _resolveStop(t, stopRef) : null;
+  if (!stop) return;
+  const wasVisited = !!stop.visitedAt;
+  stop.visitedAt = wasVisited ? '' : new Date().toISOString();
+  storage.set('trips', trips);
+  if (btn) {
+    const ts = stop.visitedAt;
+    btn.style.color = ts ? 'var(--fern)' : 'var(--text3)';
+    btn.innerHTML = ts
+      ? '<i class="ph ph-check-circle"></i> ' + ts.slice(0, 10)
+      : '<i class="ph ph-map-pin"></i> Mark visited';
+  }
+  phCapture('stop_visited_toggled', { trip_id: tripId, visited: !wasVisited });
+  if (currentUser) {
+    sb.from('trips').upsert({ id: tripId, user_id: currentUser.id, data: t, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+      .catch(e => console.warn('visited sync:', e.message));
+  }
 }
 
 function updateActiveTripBar() {
@@ -2926,35 +3142,52 @@ function filterAdminContribs(filter) {
   renderAdminContribList();
 }
 
-function renderAdminContribList() {
+async function renderAdminContribList() {
   const listEl = document.getElementById('admin-contrib-list');
   if (!listEl) return;
+  listEl.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:13px;padding:28px 0">Loading…</div>`;
 
-  // Gather all notes from localStorage
-  const all = contribStorage.getAll();
-  let rows = [];
-  for (const [legKey, notes] of Object.entries(all)) {
-    for (const note of (notes || [])) {
-      rows.push({ ...note, _legKey: legKey });
+  try {
+    let query = sb.from('contributions')
+      .select('*, profiles(display_name, email)')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (_adminContribFilter === 'flagged')       query = query.eq('flagged', true);
+    else if (_adminContribFilter === 'pending')   query = query.eq('flagged', false);
+    else if (_adminContribFilter === 'verified')  query = query.eq('flagged', false);
+    // 'all': no additional filter
+
+    const { data, error } = await query;
+    if (error) {
+      listEl.innerHTML = `<div style="color:#C4622D;padding:20px;font-size:13px">${error.message}</div>`;
+      return;
     }
-  }
 
-  // Apply filter
-  if (_adminContribFilter === 'flagged') {
-    rows = rows.filter(n => n._flagged);
-  } else if (_adminContribFilter === 'pending') {
-    rows = rows.filter(n => !n._flagged && !n.confirmed && (n.votes||0) < 3 && !n._adminVerified);
-  } else if (_adminContribFilter === 'verified') {
-    rows = rows.filter(n => !n._flagged && (n._adminVerified || n.confirmed || (n.votes||0) >= 3));
-  }
-  // 'all' shows everything
+    let rows = (data || []).map(row => ({
+      id:              row.id,
+      kind:            row.kind,
+      text:            row.text,
+      votes:           row.votes || 0,
+      confirmed_count: row.confirmed_count || 0,
+      flagged:         row.flagged,
+      author:          row.profiles?.display_name || row.profiles?.email?.split('@')[0] || 'anonymous',
+      when:            _timeAgo(row.created_at),
+      _legKey:         row.leg_key,
+      _fromCloud:      true,
+    }));
 
-  if (rows.length === 0) {
-    listEl.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:13px;padding:28px 0">No notes match this filter.</div>`;
-    return;
-  }
+    if (_adminContribFilter === 'pending')  rows = rows.filter(n => (n.votes||0) < 3);
+    else if (_adminContribFilter === 'verified') rows = rows.filter(n => (n.votes||0) >= 3);
 
-  listEl.innerHTML = rows.map(n => renderAdminContribRow(n)).join('');
+    if (!rows.length) {
+      listEl.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:13px;padding:28px 0">No notes match this filter.</div>`;
+      return;
+    }
+    listEl.innerHTML = rows.map(n => renderAdminContribRow(n)).join('');
+  } catch(e) {
+    listEl.innerHTML = `<div style="color:#C4622D;padding:20px;font-size:13px">Error: ${e.message}</div>`;
+  }
 }
 
 function renderAdminContribRow(note) {
@@ -2965,13 +3198,14 @@ function renderAdminContribRow(note) {
   const verified = note._adminVerified || note.confirmed || (note.votes||0) >= 3;
   const overridden = !!note._adminOverride;
 
-  const statusBadge = note._flagged
+  const isFlagged = note._flagged || note.flagged;
+  const statusBadge = isFlagged
     ? `<span style="background:#FDF0EC;color:#C4622D;font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px">🚩 flagged</span>`
     : verified
     ? `<span style="background:rgba(45,74,45,0.1);color:var(--fern);font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px">✓ verified${overridden?' (override)':''}</span>`
     : `<span style="background:rgba(0,0,0,0.05);color:var(--text3);font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px">pending</span>`;
 
-  return `<div data-note-id="${id}" style="border:0.5px solid var(--border);border-radius:8px;padding:12px 14px;background:${note._flagged ? '#FFF8F6' : 'white'}">
+  return `<div data-note-id="${id}" style="border:0.5px solid var(--border);border-radius:8px;padding:12px 14px;background:${isFlagged ? '#FFF8F6' : 'white'}">
     <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
       <div style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:${k.bg};color:${k.color};flex-shrink:0">
         <i class="ph ${k.icon}" style="font-size:13px"></i>
@@ -2987,7 +3221,7 @@ function renderAdminContribRow(note) {
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">
         ${!note._adminVerified && !note._flagged ? `<button onclick="adminVerifyContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:var(--fern);color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">✓ Verify</button>` : ''}
-        ${note._flagged ? `<button onclick="adminVerifyContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:var(--fern);color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">✓ Unflag &amp; verify</button>` : ''}
+        ${isFlagged ? `<button onclick="adminVerifyContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:var(--fern);color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">✓ Unflag &amp; verify</button>` : ''}
         ${note.kind === 'split' && note.splitCity ? `<button onclick="adminOverrideRoute('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:#2E6FA8;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">↯ Override route</button>` : ''}
         <button onclick="adminRemoveContrib('${id}','${safeLk}')" style="font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:0.5px solid #C4622D;color:#C4622D;padding:4px 10px;border-radius:4px;cursor:pointer">✕ Remove</button>
       </div>
@@ -3010,7 +3244,7 @@ function adminVerifyContrib(noteId, legKey) {
   if (blockEl) blockEl.outerHTML = renderContribBlockForKey(legKey, 0);
   // Sync to Supabase if logged in
   if (currentUser) {
-    sb.from('contributions').update({ confirmed: true }).eq('id', noteId).catch(() => {});
+    sb.from('contributions').update({ flagged: false, confirmed: true }).eq('id', noteId).catch(() => {});
   }
 }
 
@@ -3311,9 +3545,10 @@ function openPlanSearch() {
 }
 
 const CONF = {
-  verified:  { label:'Verified',            cls:'conf-ok',   icon:'ph-check-circle',    tip:'Well-documented route with regular service — you can book with confidence.' },
-  check:     { label:'Check before booking', cls:'conf-warn', icon:'ph-warning-circle',  tip:'Route exists but may be seasonal, irregular, or recently suspended. Verify current schedules before booking.' },
-  uncertain: { label:'Uncertain',            cls:'conf-bad',  icon:'ph-question',        tip:"AI isn't confident this connection currently operates. Research carefully before relying on it." },
+  safe:      { label:'Safe route',           cls:'conf-ok',   icon:'ph-shield-check',    tip:'Well-established route — no known issues, no advisory. Standard overland leg.' },
+  verified:  { label:'Traveller confirmed',  cls:'conf-ok',   icon:'ph-check-circle',    tip:'A real traveller has recently done this route and confirmed it works.' },
+  check:     { label:'Check locally',        cls:'conf-warn', icon:'ph-warning-circle',  tip:'Conditions change — verify current schedules, border status, or availability before committing.' },
+  uncertain: { label:'Unverified',           cls:'conf-bad',  icon:'ph-question',        tip:"Limited data on this leg. Research carefully and have a backup plan." },
 };
 // Static city→conflict lookup — fallback for trips saved before AI prompt fix
 const STATIC_CONFLICT_CITIES = {
@@ -3546,9 +3781,9 @@ function adoptRoute() {
   currentTripId = null;   // always creates a new trip on next save
   expandedLegs.clear();
   if (d.stops?.length) {
-    d.stops.forEach(s => stops.push({ name: s.name, date: '', days: s.days || 0, accomSites: s.accom_sites || [], accomNote: s.accom_note || '' }));
+    d.stops.forEach(s => stops.push({ _id: crypto.randomUUID(), name: s.name, date: '', days: s.days || 0, accomSites: s.accom_sites || [], accomNote: s.accom_note || '' }));
   } else {
-    [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ name: c, date: '', days: 0 }));
+    [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ _id: crypto.randomUUID(), name: c, date: '', days: 0 }));
   }
   d.legs.forEach(l => legs.push({
     mode: l.mode, cost: convertCost(l.cost_usd || 0), km: l.km || 0,
@@ -3858,9 +4093,22 @@ function renderLeg(i) {
       ${elevRow}
       ${bookedSection}
       ${staySection}
+      ${['train','bus','ferry','car','shared-taxi'].includes(leg.mode||'') ? `
+      <div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border2)">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:5px"><i class="ph ph-bicycle"></i> Bike accepted</div>
+        <div style="display:flex;gap:5px;margin-bottom:5px">
+          ${['yes','check','no'].map(v => `<button onclick="setLegBike(${i},'${v}')" style="font-size:10px;font-family:var(--mono);padding:3px 10px;border-radius:99px;cursor:pointer;border:0.5px solid var(--border2);background:${leg.bikeAccepted===v?(v==='yes'?'var(--fern)':v==='no'?'#C4622D':'var(--bg2)'):'var(--bg)'};color:${leg.bikeAccepted===v?(v==='yes'||v==='no'?'white':'var(--text)'):'var(--text2)'}">${v==='yes'?'✓ Yes':v==='no'?'✕ No':'? Check locally'}</button>`).join('')}
+        </div>
+        <input placeholder="Bike notes — spaces, booking, restrictions…" value="${_slwEsc(leg.bikeNotes||'')}" oninput="legs[${i}].bikeNotes=this.value;_tripDirty=true" style="width:100%;font-size:11px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);box-sizing:border-box">
+      </div>` : ''}
       ${contribs ? `<div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">${contribs}</div>` : ''}
     </div>
   </div>`;
+}
+
+function setLegBike(idx, val) {
+  legs[idx].bikeAccepted = legs[idx].bikeAccepted === val ? null : val;
+  _tripDirty = true; render();
 }
 
 function renderFinalStay(stopIdx) {
@@ -3910,7 +4158,8 @@ function renderTl() {
   stops.forEach((s, i) => {
     const isF = i === 0, isL = i === stops.length - 1;
     const ds = s.date ? new Date(s.date + 'T00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' }) : '';
-    h += `<div class="tl-stop"><div class="tl-dot${isF ? ' s' : isL ? ' e' : ''}"></div><div class="tl-nm">${s.name || '?'}</div><div class="tl-dt">${ds}</div></div>`;
+    const city = (s.name || '').split(',')[0].trim() || '?';
+    h += `<div class="tl-stop" title="${s.name||''}"><div class="tl-dot${isF ? ' s' : isL ? ' e' : ''}"></div><div class="tl-nm">${city}</div><div class="tl-dt">${ds}</div></div>`;
     if (!isL) { const leg = getLeg(i); const mc = MODE_COLORS[leg.mode]; h += `<div class="tl-leg"><div class="tl-line" style="${mc?'background:'+mc+';opacity:0.35':''}"></div><div class="tl-badge" style="${mc?'color:'+mc+';border-color:'+mc+';opacity:0.9':''}">${MI[leg.mode] || leg.mode}${leg.booked ? '<span class="tl-booked">✓</span>' : ''}</div></div>`; }
   });
   el.innerHTML = h;
@@ -4130,7 +4379,11 @@ function renderContribBlock(legIdx) {
   const to   = stops[legIdx+1]?.name || '';
   if (!from || !to) return '';
   const legKey = `${from}→${to}`;
-  return renderContribBlockForKey(legKey, legIdx);
+  const conf   = getLeg(legIdx)?.confidence;
+  const showReddit = ['check', 'uncertain'].includes(conf);
+  const isCyclingTrip = legs.some(l => l.mode === 'cycle');
+  return renderContribBlockForKey(legKey, legIdx)
+       + (showReddit ? renderRedditBlockForKey(from, to, isCyclingTrip) : '');
 }
 
 function renderContribBlockForKey(legKey, legIdx) {
@@ -4223,12 +4476,13 @@ function contribFlag(e, noteId, legKey) {
     const blockEl = document.getElementById(blockId);
     if (blockEl) blockEl.outerHTML = renderContribBlockForKey(legKey, 0);
   }, 350);
-  // Send flag to Supabase (table may not exist yet — fail silently)
+  // Persist flag via RPC (writes contribution_flags + sets contributions.flagged = true)
   if (currentUser) {
-    sb.from('contribution_flags')
-      .insert({ contribution_id: noteId, user_id: currentUser.id })
-      .catch(() => {});
+    sb.rpc('flag_contribution', { contrib_id: noteId }).catch(() => {});
   }
+  phCapture('contribution_flagged', { leg_key: legKey });
+  const st = document.getElementById('saveStatus');
+  if (st) { st.textContent = 'Note reported — thanks.'; setTimeout(() => st.textContent = '', 3000); }
 }
 
 // ── Contribute modal ──────────────────────────────────────────────────
@@ -4492,6 +4746,13 @@ function renderMyTripsPanel() {
   const el = document.getElementById('mytripsPanel');
   if (!el) return;
 
+  // Record panel takes over when active
+  if (recordingTripId) {
+    const trip = (storage.get('trips')||[]).find(t => t.id === recordingTripId);
+    if (trip) { renderRecordPanel(trip, el); return; }
+    recordingTripId = null; // trip deleted — fall through
+  }
+
   // Trip detail view takes over the whole panel
   if (viewingTripId) {
     const trip = (storage.get('trips')||[]).find(t => t.id === viewingTripId);
@@ -4661,7 +4922,7 @@ async function renderProfilePanel() {
   // ── Render ────────────────────────────────────────────────────────
   if (!user) {
     el.innerHTML = `<div style="text-align:center;padding:3rem 1rem">
-      <div style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:10px">Welcome to SLW Travel</div>
+      <div style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:10px">Welcome to By Sloth</div>
       <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Sign in to save trips, track karma, and contribute notes to the community.</p>
       <a class="btn btn-primary" href="auth.html">Sign in / Create account</a>
     </div>`;
@@ -4946,10 +5207,16 @@ let _mapUpdating  = false;  // concurrency guard
 let _mapNeedsUpdate = false; // queued update while one is running
 let _mapMarkers   = [];
 let _mapLines     = [];
+let _osrmMapCache = {};  // in-memory OSRM route geometry cache (keyed by profile+coords)
 
 (function _initGeoCache() {
   try { _geoCache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY) || '{}'); } catch(e) {}
 })();
+
+const REDDIT_CACHE_KEY = 'slw_reddit_cache';
+const REDDIT_TTL = 24 * 60 * 60 * 1000; // 24 hours
+let _redditCache = {};
+try { _redditCache = JSON.parse(localStorage.getItem(REDDIT_CACHE_KEY) || '{}'); } catch(e) {}
 
 async function geocodeStop(name) {
   if (!name?.trim()) return null;
@@ -4974,6 +5241,84 @@ async function geocodeStop(name) {
     }
   } catch(e) { console.warn('Geocode failed:', name, e.message); }
   return null;
+}
+
+// ── Reddit community reports ───────────────────────────────────────────────
+// Surfaces recent trip reports from travel subreddits on each leg card.
+// Unauthenticated read-only fetch to reddit.com/search.json (CORS-enabled).
+// Results cached 24 h in localStorage; throttled to 1.5 s between requests.
+
+let _redditQ = Promise.resolve();
+const _redditDelay = fn => (_redditQ = _redditQ.then(() => new Promise(r => setTimeout(r, 1500))).then(fn));
+
+async function fetchRedditForLeg(from, to, isCycling) {
+  const key = from + '→' + to + (isCycling ? '|cycling' : '');
+  const hit = _redditCache[key];
+  if (hit && Date.now() - hit.ts < REDDIT_TTL) return hit.posts;
+
+  const f = from.split(',')[0].trim();
+  const t = to.split(',')[0].trim();
+  const q = encodeURIComponent(f + ' ' + t);
+  const subs = isCycling
+    ? 'solotravel+bicycletouring+overlanding+backpacking+travel'
+    : 'solotravel+overlanding+backpacking+travel';
+  const url = `https://www.reddit.com/r/${subs}/search.json?q=${q}&sort=new&t=year&limit=8&restrict_sr=on`;
+
+  return _redditDelay(async () => {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('reddit ' + r.status);
+      const d = await r.json();
+      const posts = (d.data?.children || [])
+        .map(c => c.data)
+        .filter(p => p.score >= 1)
+        .slice(0, 3)
+        .map(p => ({
+          title:    p.title,
+          sub:      p.subreddit,
+          url:      'https://reddit.com' + p.permalink,
+          ageM:     Math.round((Date.now() / 1000 - p.created_utc) / (30 * 24 * 3600)),
+          comments: p.num_comments
+        }));
+      _redditCache[key] = { ts: Date.now(), posts };
+      try { localStorage.setItem(REDDIT_CACHE_KEY, JSON.stringify(_redditCache)); } catch(e) {}
+      return posts;
+    } catch {
+      // Short TTL on failure so it retries in 5 min rather than 24 h
+      _redditCache[key] = { ts: Date.now() - REDDIT_TTL + 5 * 60 * 1000, posts: [] };
+      return [];
+    }
+  });
+}
+
+function _redditBlockHTML(blockId, posts) {
+  if (!posts || !posts.length) return `<div id="${blockId}"></div>`;
+  const ageLabel = m => m < 1 ? 'this month' : m === 1 ? '1 month ago' : m + ' months ago';
+  return `<div id="${blockId}" style="margin-top:6px;padding:8px 10px;background:var(--bg2);border-radius:6px;border:0.5px solid var(--border2)">
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px">
+      <i class="ph ph-reddit-logo" style="font-size:11px;vertical-align:-1px"></i> Recent trip reports
+    </div>
+    ${posts.map(p => `<a href="${p.url}" target="_blank" rel="noopener noreferrer"
+        style="display:block;margin-bottom:5px;text-decoration:none;color:inherit">
+        <div style="font-size:11px;color:var(--link);line-height:1.35;margin-bottom:1px">${_slwEsc(p.title)}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">r/${p.sub} · ${ageLabel(p.ageM)} · ${p.comments} comments</div>
+      </a>`).join('')}
+  </div>`;
+}
+
+function renderRedditBlockForKey(from, to, isCycling) {
+  const cacheKey = from + '→' + to + (isCycling ? '|cycling' : '');
+  const blockId  = 'rb_' + cacheKey.replace(/[^a-z0-9]/gi, '_');
+  const hit      = _redditCache[cacheKey];
+
+  if (!hit || Date.now() - hit.ts >= REDDIT_TTL) {
+    fetchRedditForLeg(from, to, isCycling).then(posts => {
+      const el = document.getElementById(blockId);
+      if (el) el.outerHTML = _redditBlockHTML(blockId, posts);
+    });
+  }
+
+  return _redditBlockHTML(blockId, hit?.posts || []);
 }
 
 // ── Elevation profiles ────────────────────────────────────────────────────
@@ -5240,7 +5585,7 @@ function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
   const range = maxE - minE;
   if (range < 20) { el.innerHTML = ''; return; }
 
-  const W = 600, H = 56, pad = 3, labelH = 14;
+  const W = 600, H = 66, pad = 3, labelH = 24;
   const plotH = H - labelH;
   const n     = valid.length;
 
@@ -5265,17 +5610,38 @@ function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
   ).join(' ');
 
   // Stop markers + city-name labels
+  // Show at most ~10 labels; alternate between two rows so adjacent labels don't collide
+  const maxLabels = Math.max(2, Math.floor(W / 52));
+  const lblStep   = stopIdxs.length <= maxLabels
+    ? 1
+    : Math.ceil(stopIdxs.length / maxLabels);  // fix: k%step (not (k-1)%step which always fires at k=1)
+
+  let _lblRow = 0;
   const markers = stopIdxs.map((si, k) => {
     if (si >= valid.length) return '';
-    const e = valid[Math.min(si, valid.length - 1)];
-    const x = (pad + (Math.min(si, n-1) / (n-1)) * (W - 2 * pad)).toFixed(1);
-    const y = e !== null
+    const e    = valid[Math.min(si, valid.length - 1)];
+    const xNum = pad + (Math.min(si, n-1) / (n-1)) * (W - 2 * pad);
+    const x    = xNum.toFixed(1);
+    const y    = e !== null
       ? (pad + (1 - (e - minE) / range) * (plotH - 2 * pad)).toFixed(1)
       : (plotH / 2).toFixed(1);
     const name = (stopsArr[k]?.name || '').split(',')[0].trim();
+
+    const isFirst   = k === 0;
+    const isLast    = k === stopIdxs.length - 1;
+    const showLabel = isFirst || isLast || (k % lblStep === 0);
+    // First label left-aligned, last right-aligned — can't clip even with overflow:visible
+    const anchor    = isFirst ? 'start' : isLast ? 'end' : 'middle';
+    const textX     = isFirst ? Math.max(pad + 1, xNum).toFixed(1)
+                    : isLast  ? Math.min(W - pad - 1, xNum).toFixed(1)
+                    : x;
+    // Alternate: even-numbered visible labels at bottom row, odd ones 11px higher
+    const labelY    = showLabel ? (H - 2) - (_lblRow % 2 === 1 ? 11 : 0) : 0;
+    if (showLabel) _lblRow++;
+
     return `<line x1="${x}" y1="${y}" x2="${x}" y2="${plotH - pad}" stroke="var(--border2)" stroke-width="0.8" stroke-dasharray="2,2"/>
       <circle cx="${x}" cy="${y}" r="2" fill="var(--fern)" opacity="0.7"/>
-      <text x="${x}" y="${H - 2}" text-anchor="middle" font-size="7.5" font-family="var(--mono)" fill="var(--text3)">${name}</text>`;
+      ${showLabel ? `<text x="${textX}" y="${labelY}" text-anchor="${anchor}" font-size="7.5" font-family="var(--mono)" fill="var(--text3)">${name}</text>` : ''}`;
   }).join('');
 
   // Gain / loss stats
@@ -5293,7 +5659,7 @@ function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
 
   const gid = 'feg' + (elId || '').replace(/\D/g, '');
   el.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:64px;display:block" preserveAspectRatio="none" aria-hidden="true">
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:76px;display:block" preserveAspectRatio="none" overflow="visible" aria-hidden="true">
       <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="var(--fern)" stop-opacity="0.3"/>
         <stop offset="100%" stop-color="var(--fern)" stop-opacity="0.03"/>
@@ -5483,15 +5849,61 @@ async function updatePlannerMap() {
   // If another update was queued while we were geocoding, run it now
   if (_mapNeedsUpdate) { schedulePlannerMapUpdate(); return; }
 
-  // Draw leg lines (colored by transport mode)
+  // Draw leg lines — flights/ferries as straight lines; road modes via OSRM geometry
+  const _mapOsrmProfile = {
+    bus: 'driving', car: 'driving', taxi: 'driving', 'shared taxi': 'driving',
+    hitchhike: 'driving', motorbike: 'driving', train: 'driving',
+    cycle: 'cycling', walk: 'foot',
+  };
   for (let i = 0; i < srcStops.length - 1; i++) {
     if (!coords[i] || !coords[i + 1]) continue;
     const mode  = srcLegs[i]?.mode || 'bus';
     const color = MODE_COLORS[mode] || '#8BAF7A';
-    const dash  = mode === 'flight' ? '8 10' : (mode === 'walk' || mode === 'cycle' || mode === 'motorbike') ? '4 6' : null;
-    const line  = L.polyline([coords[i], coords[i + 1]], { color, weight: 3, opacity: 0.82, dashArray: dash })
-      .addTo(_mapInstance);
-    _mapLines.push(line);
+    const isAir = mode === 'flight';
+    const isSea = mode === 'ferry';
+    const dash  = isAir ? '8 10' : (mode === 'walk' || mode === 'cycle' || mode === 'motorbike') ? '4 6' : null;
+
+    if (isAir || isSea) {
+      // Straight dashed line for air/sea — road routing makes no sense
+      const line = L.polyline([coords[i], coords[i + 1]], { color, weight: 2.5, opacity: 0.7, dashArray: isAir ? '8 10' : '4 8' }).addTo(_mapInstance);
+      _mapLines.push(line);
+    } else {
+      // Draw a faint placeholder straight line immediately, then replace with road geometry
+      const placeholder = L.polyline([coords[i], coords[i + 1]], { color, weight: 2, opacity: 0.3, dashArray: dash }).addTo(_mapInstance);
+      _mapLines.push(placeholder);
+      const _i = i; // capture for async closure
+      (async () => {
+        const profile = _mapOsrmProfile[mode] || 'driving';
+        const [lat1, lon1] = coords[_i];
+        const [lat2, lon2] = coords[_i + 1];
+        const cKey = `${profile}:${lon1.toFixed(4)},${lat1.toFixed(4)}:${lon2.toFixed(4)},${lat2.toFixed(4)}`;
+        let latlngs = _osrmMapCache[cKey];
+        if (!latlngs) {
+          await new Promise(res => setTimeout(res, _i * 160)); // stagger requests ~160ms apart
+          try {
+            const r = await fetch(
+              `https://router.project-osrm.org/route/v1/${profile}/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`
+            );
+            const d = await r.json();
+            if (d.code === 'Ok' && d.routes?.[0]?.geometry?.coordinates?.length) {
+              latlngs = d.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+              _osrmMapCache[cKey] = latlngs;
+            }
+          } catch(e) { /* fall back to placeholder */ }
+        }
+        if (latlngs) {
+          const idx = _mapLines.indexOf(placeholder);
+          if (idx >= 0) {
+            placeholder.remove();
+            const road = L.polyline(latlngs, { color, weight: 3, opacity: 0.82, dashArray: dash }).addTo(_mapInstance);
+            _mapLines[idx] = road;
+          }
+        } else {
+          // OSRM failed — upgrade placeholder opacity so it still looks intentional
+          try { placeholder.setStyle({ opacity: 0.7, weight: 3 }); } catch(e) {}
+        }
+      })();
+    }
   }
 
   // Draw numbered stop markers
@@ -5545,13 +5957,14 @@ function renderTripDefaultModePicker() {
   const refineBtn = document.getElementById('btnAIRefine');
   if (refineBtn) refineBtn.style.display = stops.some(s => s.name) ? '' : 'none';
 }
+function _newStop(overrides) { return { _id: crypto.randomUUID(), name: '', date: '', days: 0, ...overrides }; }
 function addStop() {
-  stops.push({ name: '', date: '', days: 0 });
+  stops.push(_newStop());
   legs.push({ mode: tripDefaultMode || 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
   render();
 }
 function insertStop(i) {
-  stops.splice(i + 1, 0, { name: '', date: '', days: 0 });
+  stops.splice(i + 1, 0, _newStop());
   legs.splice(i + 1, 0, { mode: tripDefaultMode || legs[i]?.mode || 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' });
   render();
 }
@@ -5562,6 +5975,11 @@ function removeStop(i) {
   if (i < legs.length) legs.splice(i, 1);
   editingLegModes.delete(i);
   render();
+}
+function markVisited(idx) {
+  stops[idx].visitedAt = stops[idx].visitedAt ? '' : new Date().toISOString();
+  _tripDirty = true; render();
+  phCapture('stop_marked_visited', { stop: stops[idx]?.name });
 }
 
 function exportTrip() {
@@ -5618,7 +6036,7 @@ function exportTripPDF(tripId) {
       <tbody>${legsRows}</tbody>
     </table>` : ''}
     ${trip.notes ? `<h3>Notes</h3><div style="white-space:pre-wrap;font-size:12px;color:#333">${_slwEsc(trip.notes)}</div>` : ''}
-    <div class="pr-meta" style="margin-top:24px">slw.travel · go the long way, on purpose</div>`;
+    <div class="pr-meta" style="margin-top:24px">bysloth.com · go the long way, on purpose</div>`;
   document.body.classList.add('printing');
   const cleanup = () => {
     document.body.classList.remove('printing');
@@ -5665,7 +6083,7 @@ async function exportTripGPX(tripId) {
   const titleSafe = _slwEsc(trip.title || 'Trip');
   const gpx =
 `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="slw.travel" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="bysloth.com" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>${titleSafe}</name></metadata>
 ${wpts}
   <rte><name>${titleSafe}</name>
@@ -5739,7 +6157,7 @@ function _parseAndApplyCSV(csvText, filename) {
     const name = col(row, 'stop', 'name', 'city', 'destination').trim();
     if (!name) return;
     const days = parseInt(col(row, 'days', 'nights')) || 0;
-    newStops.push({ name, date: '', days, accomSites: [], accomNote: '' });
+    newStops.push({ _id: crypto.randomUUID(), name, date: '', days, accomSites: [], accomNote: '' });
     // Build leg from this stop to the next (last stop has no leg)
     if (i < dataRows.length - 1) {
       const mode  = (col(row, 'mode', 'transport') || tripDefaultMode || 'bus').toLowerCase().trim();
@@ -5809,7 +6227,7 @@ Rules:
   • cycle / walk / motorbike → empty array (no booking needed)
   • car → none (own vehicle); or rental sites (Rentalcars.com, Sixt) if context implies rental
 - info_sites: research/info sites when booking_sites is empty (e.g. Seat61 for trains, WikiVoyage)
-- confidence: "verified"=well-documented regular service; "check"=verify before booking; "uncertain"=unsure.
+- confidence: "safe"=standard well-established route, no verification needed; "verified"=community traveller has recently confirmed this works; "check"=exists but seasonal/irregular/border uncertain, verify first; "uncertain"=limited data, research carefully.
 - conflict: only include if leg actually passes through a conflict/advisory zone; otherwise null.
 - accom_sites: only platforms that work for that city/region.
 - Respond with ONLY the raw JSON object. No markdown, no preamble.`;
@@ -5899,7 +6317,7 @@ function _parseAndApplyGPX(xmlText, filename) {
     const daysMatch = desc.match(/^(\d+)\s*day/i);
     const days = daysMatch ? parseInt(daysMatch[1]) : 0;
     const name = rawName || ('Stop ' + (idx + 1));
-    newStops.push({ name, date: '', days, accomSites: [], accomNote: '' });
+    newStops.push({ _id: crypto.randomUUID(), name, date: '', days, accomSites: [], accomNote: '' });
     coords.push({ lat, lon });
     // Seed geo-cache so GPX re-export needs no Nominatim calls
     if (!isNaN(lat) && !isNaN(lon)) {
