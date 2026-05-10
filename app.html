@@ -809,10 +809,9 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
         <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
         <span class="save-status" id="saveStatus"></span>
       </div>
-      <!-- Trip-level default transport mode -->
+      <!-- Trip-level mode filter + new leg default -->
       <div style="display:flex;align-items:center;gap:8px;padding:6px 0 2px;flex-wrap:wrap">
-        <span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0" title="Sets the mode for new legs — existing legs are unchanged">New leg default</span>
-        <div id="tripDefaultModePicker" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        <div id="tripDefaultModePicker" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center"></div>
         <span style="flex:1"></span>
         <label class="import-gpx-btn pmw-noprint" title="Import stops from a .csv file">
           <i class="ph ph-table"></i> Import CSV
@@ -1356,6 +1355,7 @@ function _timeAgo(iso) {
 let stops = [{name:'',date:'',days:0},{name:'',date:'',days:0}];
 let legs  = [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
 let tripDefaultMode = 'bus'; // trip-level transport default; individual legs can override
+let _legModeFilter  = null;  // active mode filter pill (null = show all legs)
 let editingLegModes = new Set(); // indices of legs currently showing mode picker
 let expandedLegs   = new Set(); // indices of legs currently showing detail panel
 let pace  = 'slow';
@@ -2233,6 +2233,7 @@ function startNewTrip() {
   const hasContent = stops.some(s => s.name) || currentTripId;
   if (hasContent && !confirm('Start a new trip? Unsaved changes to the current trip will be lost.')) return;
   tripDefaultMode = 'bus';
+  _legModeFilter  = null;
   stops = [{name:'',date:'',days:0},{name:'',date:'',days:0}];
   legs  = [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
   editingLegModes.clear();
@@ -2261,6 +2262,7 @@ function loadTrip(trip, openLegIndex = -1) {
     trip = found;
   }
   tripDefaultMode = trip.defaultMode || (trip.legs?.[0]?.mode) || 'bus';
+  _legModeFilter  = null;
   stops       = trip.stops    || [{name:'',date:'',days:0},{name:'',date:'',days:0}];
   legs        = trip.legs     || [{mode:'bus',cost:0,km:0,hours:0,notes:'',booked:false,bookingRef:'',bookingUrl:''}];
   tripSummary  = trip.summary  || '';
@@ -3976,6 +3978,10 @@ function renderSegs() {
 
 function renderLeg(i) {
   const leg        = getLeg(i);
+  // Apply mode filter — hide legs that don't match the active filter
+  if (_legModeFilter && (leg.mode || 'bus') !== _legModeFilter) {
+    return `<div class="leg-card" style="display:none"></div>`;
+  }
   const showAff    = appSettings.affiliate_links !== false;
   const fromCity   = stops[i]?.name   || '';
   const toCity     = stops[i+1]?.name || '';
@@ -5937,18 +5943,50 @@ function setTripDefaultMode(m) {
   render();
 }
 
+function setLegModeFilter(mode) {
+  _legModeFilter = mode;
+  render();
+}
+
 function renderTripDefaultModePicker() {
   const el = document.getElementById('tripDefaultModePicker');
   if (!el) return;
-  // Exclude flight — overland only. This picker sets the default for new legs only, not existing ones.
-  el.innerHTML = MODES.filter(m => m !== 'flight').map(m => {
-    const active = tripDefaultMode === m;
-    const icon   = MODE_ICONS[m] || 'ph-circle';
-    const label  = MI[m] || m;
-    return `<button class="mp${active?' on':''}" onclick="setTripDefaultMode('${m}')" title="${label}" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 9px">
-      <i class="ph ${icon}" style="font-size:12px"></i>${label}
-    </button>`;
-  }).join('');
+
+  // ── Mode filter pills (only modes present in current trip) ────────────
+  const tripModes = [...new Set(legs.map(l => l.mode).filter(Boolean))];
+  let html = '';
+
+  if (tripModes.length > 1) {
+    html += `<span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0">Filter</span>`;
+
+    if (_legModeFilter) {
+      html += `<button class="mp on" onclick="setLegModeFilter(null)" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 9px">All</button>`;
+    }
+
+    html += tripModes.map(m => {
+      const active = _legModeFilter === m;
+      const icon   = MODE_ICONS[m] || 'ph-circle';
+      const label  = MI[m] || m;
+      return `<button class="mp${active?' on':''}" onclick="setLegModeFilter('${m}')" title="${label}" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 9px">
+        <i class="ph ${icon}" style="font-size:12px"></i>${label}
+      </button>`;
+    }).join('');
+
+    // Divider between filter and default
+    html += `<span style="display:inline-block;width:0.5px;height:14px;background:var(--border2);margin:0 2px;flex-shrink:0"></span>`;
+  }
+
+  // ── New leg default dropdown ──────────────────────────────────────────
+  html += `<span style="font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0" title="Mode applied to new legs added to this trip">New leg</span>
+    <select onchange="setTripDefaultMode(this.value)"
+      style="font-size:11px;font-family:var(--mono);padding:2px 6px;border:0.5px solid var(--border2);border-radius:6px;background:var(--bg);color:var(--text);cursor:pointer;outline:none">
+      ${MODES.filter(m => m !== 'flight').map(m =>
+        `<option value="${m}"${tripDefaultMode === m ? ' selected' : ''}>${MI[m] || m}</option>`
+      ).join('')}
+    </select>`;
+
+  el.innerHTML = html;
+
   // Show AI Refine button only when there's at least one named stop
   const refineBtn = document.getElementById('btnAIRefine');
   if (refineBtn) refineBtn.style.display = stops.some(s => s.name) ? '' : 'none';
