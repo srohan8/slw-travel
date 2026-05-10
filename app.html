@@ -5609,11 +5609,20 @@ async function renderTripElevation(stopsArr, legsArr, elId) {
 
   const freshEl = document.getElementById(elId);
   if (!freshEl || freshEl.dataset.stopsHash !== stopHash) return; // navigated away
-  _renderFullElevSVG(freshEl, elevs, stopIdxs, stopsArr, elId);
+  _renderFullElevSVG(freshEl, elevs, stopIdxs, stopsArr, legsArr, elId);
 }
 
-function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
+function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, legsArr, elId) {
   const valid = elevs.map(e => (typeof e === 'number' && isFinite(e)) ? e : null);
+
+  // Null out elevation data for ferry spans — ocean terrain is meaningless
+  (legsArr || []).forEach((leg, k) => {
+    if (leg.mode !== 'ferry') return;
+    const i1 = stopIdxs[k]   || 0;
+    const i2 = stopIdxs[k+1] || 0;
+    for (let j = i1 + 1; j < i2 && j < valid.length; j++) valid[j] = null;
+  });
+
   const defined = valid.filter(e => e !== null);
   if (defined.length < 2) { el.innerHTML = ''; return; }
 
@@ -5694,6 +5703,38 @@ function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
     maxE > 100 ? `max ${Math.round(maxE).toLocaleString()} m` : '',
   ].filter(Boolean).join(' · ');
 
+  // ── Ferry water overlays ───────────────────────────────────────────
+  const ferryOverlays = (legsArr || []).map((leg, k) => {
+    if (leg.mode !== 'ferry') return '';
+    const si1 = Math.min(stopIdxs[k]   || 0, n - 1);
+    const si2 = Math.min(stopIdxs[k+1] || 0, n - 1);
+    if (si2 <= si1) return '';
+    const x1   = pad + (si1 / (n - 1)) * (W - 2 * pad);
+    const x2   = pad + (si2 / (n - 1)) * (W - 2 * pad);
+    // y level = average y of the two ferry endpoints (where terrain meets water)
+    const y1e  = valid[si1] !== null ? valid[si1] : (defined[0] || minE);
+    const y2e  = valid[si2] !== null ? valid[si2] : (defined[defined.length-1] || minE);
+    const avgE = (y1e + y2e) / 2;
+    const waveY = pad + (1 - (avgE - minE) / range) * (plotH - 2 * pad);
+    const baseY = plotH - pad;
+
+    // Wavy line from x1 to x2 at waveY
+    const span   = x2 - x1;
+    const cycles = Math.max(2, Math.round(span / 20));
+    const step   = span / cycles;
+    const midY   = (waveY + baseY) / 2;
+    let wave = `M ${x1.toFixed(1)},${midY.toFixed(1)}`;
+    for (let c = 0; c < cycles; c++) {
+      const ex = x1 + (c + 1) * step;
+      wave += ` C ${(x1 + c*step + step*0.3).toFixed(1)},${waveY.toFixed(1)} ${(x1 + c*step + step*0.7).toFixed(1)},${baseY.toFixed(1)} ${ex.toFixed(1)},${midY.toFixed(1)}`;
+    }
+    const waterFill = wave + ` L ${x2.toFixed(1)},${baseY.toFixed(1)} L ${x1.toFixed(1)},${baseY.toFixed(1)} Z`;
+
+    return `<rect x="${x1.toFixed(1)}" y="${waveY.toFixed(1)}" width="${(x2-x1).toFixed(1)}" height="${(baseY-waveY).toFixed(1)}" fill="rgba(46,111,168,0.06)"/>
+      <path d="${waterFill}" fill="rgba(46,111,168,0.13)" stroke="none"/>
+      <path d="${wave}" fill="none" stroke="#2E6FA8" stroke-width="1.4" stroke-opacity="0.6" stroke-linejoin="round"/>`;
+  }).join('');
+
   const gid = 'feg' + (elId || '').replace(/\D/g, '');
   el.innerHTML = `
     <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:76px;display:block" preserveAspectRatio="none" overflow="visible" aria-hidden="true">
@@ -5703,6 +5744,7 @@ function _renderFullElevSVG(el, elevs, stopIdxs, stopsArr, elId) {
       </linearGradient></defs>
       <path d="${fillPath}" fill="url(#${gid})"/>
       <path d="${linePath}" fill="none" stroke="var(--fern)" stroke-width="1.2" stroke-linejoin="round"/>
+      ${ferryOverlays}
       ${markers}
     </svg>
     ${stats ? `<div class="leg-elev-stats" style="margin-top:1px">${stats}<span style="margin-left:auto;opacity:0.5;font-size:9px">SRTM 90m</span></div>` : ''}`;
