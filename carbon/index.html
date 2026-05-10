@@ -203,6 +203,9 @@ a:hover{text-decoration:underline}
       <button class="share-btn" onclick="copyLink()" id="copyBtn">
         <i class="ph ph-link"></i> Copy link
       </button>
+      <a class="share-btn" id="howLongLink" href="/how-long" target="_blank">
+        <i class="ph ph-clock"></i> How long does this take?
+      </a>
     </div>
 
     <div class="cta-panel">
@@ -369,9 +372,11 @@ function showResults(flightKm, overlandKm, flightCo2, overlandCo2, saving, pctSa
     document.getElementById('savingBar').style.width = pctSaved + '%';
   }, 100);
 
-  // CTA link
+  // CTA + cross-tool links
   document.getElementById('ctaLink').href =
     `/app.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+  document.getElementById('howLongLink').href =
+    `/how-long?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
 
   // Show
   const r = document.getElementById('results');

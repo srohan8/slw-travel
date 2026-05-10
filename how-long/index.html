@@ -244,7 +244,12 @@ a:hover{text-decoration:underline}
         <h3>Plan the actual route</h3>
         <p>SLW Travel maps out every leg with booking platforms, confidence ratings, border advisories, and community notes — not just a time estimate.</p>
       </div>
-      <a href="/app.html" id="ctaLink" class="cta-btn"><i class="ph ph-map-trifold"></i> Plan this route →</a>
+      <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0">
+        <a href="/app.html" id="ctaLink" class="cta-btn"><i class="ph ph-map-trifold"></i> Plan this route →</a>
+        <a href="/carbon" id="carbonLink" style="font-size:11px;font-family:var(--mono);text-align:center;color:var(--text3);letter-spacing:0.5px;text-decoration:none">
+          <i class="ph ph-leaf"></i> See CO₂ savings →
+        </a>
+      </div>
     </div>
 
   </div>
@@ -390,6 +395,8 @@ function showResults(from, to, d) {
   const to2   = document.getElementById('toInp').value.trim();
   document.getElementById('ctaLink').href =
     `/app.html?from=${encodeURIComponent(from2)}&to=${encodeURIComponent(to2)}`;
+  document.getElementById('carbonLink').href =
+    `/carbon?from=${encodeURIComponent(from2)}&to=${encodeURIComponent(to2)}`;
 
   const r = document.getElementById('results');
   r.style.display = 'block';
