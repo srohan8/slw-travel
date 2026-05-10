@@ -1939,7 +1939,7 @@ function renderTripViewPanel(trip, el) {
       + (conflictHtml ? conflictHtml : '')
       + '<div class="leg-grid">' + journeyHtml + transportHtml + stayHtml + '</div>'
       + renderContribBlockForKey(from + '\u2192' + to, i)
-      + renderRedditBlockForKey(from, to)
+      + (['check','uncertain'].includes(leg.confidence) ? renderRedditBlockForKey(from, to) : '')
     + '</div>';
   }).join('');
 
@@ -4260,8 +4260,10 @@ function renderContribBlock(legIdx) {
   const to   = stops[legIdx+1]?.name || '';
   if (!from || !to) return '';
   const legKey = `${from}→${to}`;
+  const conf   = getLeg(legIdx)?.confidence;
+  const showReddit = ['check', 'uncertain'].includes(conf);
   return renderContribBlockForKey(legKey, legIdx)
-       + renderRedditBlockForKey(from, to);
+       + (showReddit ? renderRedditBlockForKey(from, to) : '');
 }
 
 function renderContribBlockForKey(legKey, legIdx) {
