@@ -353,14 +353,12 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
   .add-row{padding:4px 0 0 40px;}
   .add-b{font-size:12px;color:var(--text2);cursor:pointer;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);padding:6px 14px;font-family:inherit;transition: all 0.2s;}
   .add-b:hover{background:var(--bg2); color: var(--text); border-color: var(--text2);}
-  .tl-wrap{position:relative;}
-  .tl-track{display:flex;align-items:center;overflow-x:auto;padding-bottom:2px;margin-top:1rem;gap:0;scrollbar-width:none;-ms-overflow-style:none;}
+  .tl-wrap{display:flex;align-items:center;gap:4px;margin-top:1rem;}
+  .tl-track{flex:1;display:flex;align-items:center;overflow-x:auto;padding-bottom:2px;gap:0;scrollbar-width:none;-ms-overflow-style:none;}
   .tl-track::-webkit-scrollbar{display:none;}
-  .tl-arr{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:26px;height:26px;border-radius:50%;background:var(--bg);border:0.5px solid var(--border2);box-shadow:0 1px 5px rgba(26,43,26,0.14);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--text2);line-height:1;transition:opacity .2s,background .15s;opacity:0;pointer-events:none;}
+  .tl-arr{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--bg);border:0.5px solid var(--border2);box-shadow:0 1px 4px rgba(26,43,26,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--text2);line-height:1;transition:opacity .15s,background .15s;opacity:0;pointer-events:none;}
   .tl-arr.vis{opacity:1;pointer-events:auto;}
   .tl-arr:hover{background:var(--bg2);}
-  .tl-arr-l{left:-13px;}
-  .tl-arr-r{right:-13px;}
   .tl-stop{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:66px;}
   .tl-dot{width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--border2);}
   .tl-dot.s{border-color:var(--green);background: var(--green);}
@@ -859,9 +857,9 @@ function phCapture(event,props){try{if(window.posthog&&typeof posthog.capture===
     <div class="add-row"><button class="add-b" onclick="addStop()">+ Add stop</button></div>
     <div style="margin-top:1.25rem"><div class="sec-lbl">Timeline</div>
       <div class="tl-wrap">
-        <button id="tlPrev" class="tl-arr tl-arr-l" onclick="_tlScroll(-1)" aria-label="Scroll timeline left">‹</button>
+        <button id="tlPrev" class="tl-arr" onclick="_tlScroll(-1)" aria-label="Scroll timeline left">‹</button>
         <div class="tl-track" id="tl" onscroll="_tlArrows()"></div>
-        <button id="tlNext" class="tl-arr tl-arr-r" onclick="_tlScroll(1)" aria-label="Scroll timeline right">›</button>
+        <button id="tlNext" class="tl-arr" onclick="_tlScroll(1)" aria-label="Scroll timeline right">›</button>
       </div>
     </div>
     <div id="plannerElev" style="margin-top:8px"></div>
