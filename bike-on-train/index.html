@@ -116,6 +116,17 @@ a:hover{text-decoration:underline}
 .contrib-box-text strong{color:var(--text)}
 .contrib-box-link{margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--fern);white-space:nowrap;text-decoration:none;border:0.5px solid var(--border2);padding:6px 14px;border-radius:99px;transition:all .15s;flex-shrink:0}
 .contrib-box-link:hover{border-color:var(--fern);background:var(--fern);color:white;text-decoration:none}
+
+/* Footer */
+.footer{background:var(--moss);padding:32px 24px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px;margin-top:60px}
+.footer-inner{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
+.footer-tools{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+.footer-tools a{color:rgba(212,227,204,0.7);text-decoration:none;transition:color .2s}
+.footer-tools a:hover{color:var(--cream)}
+.footer-policy{display:flex;gap:16px;justify-content:center}
+.footer-policy a{color:rgba(212,227,204,0.45);text-decoration:none;transition:color .2s}
+.footer-policy a:hover{color:rgba(212,227,204,0.8)}
+.footer-copy{color:rgba(212,227,204,0.35)}
 </style>
 </head>
 <body>
@@ -474,5 +485,23 @@ document.addEventListener('DOMContentLoaded', () => {
   posthog.capture('bike_tool_loaded', { referrer: document.referrer || 'direct' });
 });
 </script>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-tools">
+      <a href="/carbon">CO₂ calculator</a>
+      <a href="/how-long">Journey time estimator</a>
+      <a href="/bike-on-train">Bike on train lookup</a>
+      <a href="/app.html">Trip planner</a>
+    </div>
+    <div class="footer-policy">
+      <a href="/privacy">Privacy policy</a>
+      <a href="/terms">Terms of use</a>
+    </div>
+    <div class="footer-copy">By Sloth · Go the long way. On purpose.</div>
+  </div>
+</footer>
+
 </body>
 </html>

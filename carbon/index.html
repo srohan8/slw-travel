@@ -122,8 +122,15 @@ a:hover{text-decoration:underline}
 .meth-body th{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3)}
 
 /* Footer */
-.footer{background:var(--moss);color:rgba(212,227,204,0.6);text-align:center;padding:28px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px}
-.footer a{color:var(--sage)}
+.footer{background:var(--moss);padding:32px 24px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px}
+.footer-inner{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
+.footer-tools{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+.footer-tools a{color:rgba(212,227,204,0.7);text-decoration:none;transition:color .2s}
+.footer-tools a:hover{color:var(--cream)}
+.footer-policy{display:flex;gap:16px;justify-content:center}
+.footer-policy a{color:rgba(212,227,204,0.45);text-decoration:none;transition:color .2s}
+.footer-policy a:hover{color:rgba(212,227,204,0.8)}
+.footer-copy{color:rgba(212,227,204,0.35)}
 </style>
 </head>
 <body>
@@ -248,7 +255,19 @@ a:hover{text-decoration:underline}
 
 <!-- Footer -->
 <footer class="footer">
-  <div><a href="/">By Sloth</a> · Go the long way. On purpose. · <a href="/carbon">Carbon calculator</a> · <a href="/how-long">Journey time estimator</a></div>
+  <div class="footer-inner">
+    <div class="footer-tools">
+      <a href="/carbon">CO₂ calculator</a>
+      <a href="/how-long">Journey time estimator</a>
+      <a href="/bike-on-train">Bike on train lookup</a>
+      <a href="/app.html">Trip planner</a>
+    </div>
+    <div class="footer-policy">
+      <a href="/privacy">Privacy policy</a>
+      <a href="/terms">Terms of use</a>
+    </div>
+    <div class="footer-copy">By Sloth · Go the long way. On purpose.</div>
+  </div>
 </footer>
 
 <script>
