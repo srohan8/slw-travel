@@ -151,9 +151,9 @@ a:hover{text-decoration:underline}
   <div class="nav-links">
     <a href="/carbon">CO₂ calculator</a>
     <a href="/bike-on-train">Bike on train</a>
-    <a href="/app.html">Planner</a>
+    <a href="/app">Planner</a>
   </div>
-  <a href="/app.html" class="nav-cta">Plan a route →</a>
+  <a href="/app" class="nav-cta">Plan a route →</a>
 </nav>
 
 <!-- Hero -->
@@ -216,7 +216,7 @@ a:hover{text-decoration:underline}
 <div class="results" id="results">
   <div class="inner">
 
-    <a class="result-hero" id="resultHero" href="/app.html" style="display:block;text-decoration:none;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+    <a class="result-hero" id="resultHero" href="/app" style="display:block;text-decoration:none;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
       <div class="result-route" id="resultRoute"></div>
       <div class="result-days" id="resultDays">—<span>days</span></div>
       <div class="result-pace-note" id="resultPaceNote"></div>
@@ -256,7 +256,7 @@ a:hover{text-decoration:underline}
         <p>By Sloth maps out every leg with booking platforms, confidence ratings, border advisories, and community notes — not just a time estimate.</p>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0">
-        <a href="/app.html" id="ctaLink" class="cta-btn"><i class="ph ph-map-trifold"></i> Plan this route →</a>
+        <a href="/app" id="ctaLink" class="cta-btn"><i class="ph ph-map-trifold"></i> Plan this route →</a>
         <a href="/carbon" id="carbonLink" style="font-size:11px;font-family:var(--mono);text-align:center;color:var(--text3);letter-spacing:0.5px;text-decoration:none">
           <i class="ph ph-leaf"></i> See CO₂ savings →
         </a>
@@ -284,7 +284,7 @@ a:hover{text-decoration:underline}
       <a href="/carbon">CO₂ calculator</a>
       <a href="/how-long">Journey time estimator</a>
       <a href="/bike-on-train">Bike on train lookup</a>
-      <a href="/app.html">Trip planner</a>
+      <a href="/app">Trip planner</a>
     </div>
     <div class="footer-policy">
       <a href="/privacy">Privacy policy</a>
@@ -416,7 +416,7 @@ function showResults(from, to, d) {
 
   const from2 = document.getElementById('fromInp').value.trim();
   const to2   = document.getElementById('toInp').value.trim();
-  const planUrl = `/app.html?from=${encodeURIComponent(from2)}&to=${encodeURIComponent(to2)}`;
+  const planUrl = `/app?from=${encodeURIComponent(from2)}&to=${encodeURIComponent(to2)}`;
   document.getElementById('ctaLink').href    = planUrl;
   document.getElementById('resultHero').href = planUrl;
   document.getElementById('carbonLink').href =

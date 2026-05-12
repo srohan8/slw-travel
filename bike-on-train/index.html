@@ -133,16 +133,16 @@ a:hover{text-decoration:underline}
 
 <!-- Nav -->
 <nav class="nav">
-  <a class="nav-logo" href="/app.html">
+  <a class="nav-logo" href="/app">
     <img src="/public/sloth-logo.svg" width="26" height="26" alt="" style="filter:brightness(0) invert(1);opacity:0.85"/>
     <span class="nav-logo-text">By <em>Sloth</em></span>
   </a>
   <div class="nav-links">
     <a href="/carbon">CO₂ calculator</a>
     <a href="/how-long">Journey time</a>
-    <a href="/app.html">Planner</a>
+    <a href="/app">Planner</a>
   </div>
-  <a class="nav-cta" href="/app.html">Plan a route →</a>
+  <a class="nav-cta" href="/app">Plan a route →</a>
 </nav>
 
 <!-- Hero -->
@@ -183,7 +183,7 @@ a:hover{text-decoration:underline}
       <p><strong>Travelled with a bike recently?</strong><br>
       Policies change — booking windows tighten, new trains launch, summer rules differ from winter. Add what you know and help the next cyclist.</p>
     </div>
-    <a href="/app.html" class="contrib-box-link">Add your experience →</a>
+    <a href="/app" class="contrib-box-link">Add your experience →</a>
   </div>
 </div>
 
@@ -194,7 +194,7 @@ a:hover{text-decoration:underline}
       <h2>Planning a bike tour?</h2>
       <p>Build your full intermodal route on By Sloth — plan which segments are train vs. cycle, check which legs accept bikes, and get community notes from other touring cyclists.</p>
     </div>
-    <a class="cta-btn" href="/app.html">Plan your route →</a>
+    <a class="cta-btn" href="/app">Plan your route →</a>
   </div>
 </div>
 
@@ -204,7 +204,7 @@ a:hover{text-decoration:underline}
     <h3>About this data</h3>
     <p>Policies are sourced from official operator T&amp;Cs and verified by date. Bike policies change frequently — seasonal routes, new rolling stock, and changing regulations all affect what's permitted. Always confirm with the operator before travel, especially for international trips.</p>
     <p>Entries marked "Check locally" mean the policy is real but variable — time of day, specific train, or route affects whether you and your bike get on. This is not a "no" — it means ring ahead.</p>
-    <p>This database is curated and updated manually. Community reports from <a href="/app.html">By Sloth</a> users who've done routes with bikes are layered on top where available.</p>
+    <p>This database is curated and updated manually. Community reports from <a href="/app">By Sloth</a> users who've done routes with bikes are layered on top where available.</p>
   </div>
 </div>
 
@@ -441,7 +441,7 @@ function renderList() {
   if (!list.length) {
     listEl.innerHTML = `<div class="empty-state">
       <i class="ph ph-magnifying-glass"></i>
-      <p>No operators match "${q}".<br>Try a different name or country, or <a href="https://bysloth.com/app.html">open the planner</a> to add what you know.</p>
+      <p>No operators match "${q}".<br>Try a different name or country, or <a href="https://bysloth.com/app">open the planner</a> to add what you know.</p>
     </div>`;
     return;
   }
@@ -493,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <a href="/carbon">CO₂ calculator</a>
       <a href="/how-long">Journey time estimator</a>
       <a href="/bike-on-train">Bike on train lookup</a>
-      <a href="/app.html">Trip planner</a>
+      <a href="/app">Trip planner</a>
     </div>
     <div class="footer-policy">
       <a href="/privacy">Privacy policy</a>

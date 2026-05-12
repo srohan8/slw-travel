@@ -143,9 +143,9 @@ a:hover{text-decoration:underline}
   <div class="nav-links">
     <a href="/how-long">Journey time</a>
     <a href="/bike-on-train">Bike on train</a>
-    <a href="/app.html">Planner</a>
+    <a href="/app">Planner</a>
   </div>
-  <a href="/app.html" class="nav-cta">Plan a route →</a>
+  <a href="/app" class="nav-cta">Plan a route →</a>
 </nav>
 
 <!-- Hero -->
@@ -188,14 +188,14 @@ a:hover{text-decoration:underline}
         <div class="result-co2" id="flightCo2">—<span class="unit">kg CO₂</span></div>
         <div class="result-meta" id="flightMeta"></div>
       </div>
-      <a class="result-card overland" id="overlandCard" href="/app.html" style="display:block;text-decoration:none;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">
+      <a class="result-card overland" id="overlandCard" href="/app" style="display:block;text-decoration:none;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">
         <div class="result-mode">🚆 Overland <span style="margin-left:4px;color:var(--fern);font-size:9px">→ Plan it</span></div>
         <div class="result-co2" id="overlandCo2">—<span class="unit">kg CO₂</span></div>
         <div class="result-meta" id="overlandMeta"></div>
       </a>
     </div>
 
-    <a class="saving-panel" id="savingPanel" href="/app.html" style="display:block;text-decoration:none;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+    <a class="saving-panel" id="savingPanel" href="/app" style="display:block;text-decoration:none;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
       <div class="saving-label">You save</div>
       <div class="saving-number" id="savingNum">0<span class="saving-unit">kg CO₂</span></div>
       <div class="saving-equiv" id="savingEquiv"></div>
@@ -224,7 +224,7 @@ a:hover{text-decoration:underline}
         <h3>Now plan the actual route</h3>
         <p>By Sloth generates realistic overland itineraries with booking links, journey times, and confidence ratings — no flights, by design.</p>
       </div>
-      <a href="/app.html" id="ctaLink" class="cta-btn">Plan this route →</a>
+      <a href="/app" id="ctaLink" class="cta-btn">Plan this route →</a>
     </div>
 
   </div>
@@ -260,7 +260,7 @@ a:hover{text-decoration:underline}
       <a href="/carbon">CO₂ calculator</a>
       <a href="/how-long">Journey time estimator</a>
       <a href="/bike-on-train">Bike on train lookup</a>
-      <a href="/app.html">Trip planner</a>
+      <a href="/app">Trip planner</a>
     </div>
     <div class="footer-policy">
       <a href="/privacy">Privacy policy</a>
@@ -396,7 +396,7 @@ function showResults(flightKm, overlandKm, flightCo2, overlandCo2, saving, pctSa
   }, 100);
 
   // CTA + cross-tool links
-  const planUrl = `/app.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+  const planUrl = `/app?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
   document.getElementById('ctaLink').href     = planUrl;
   document.getElementById('savingPanel').href = planUrl;
   document.getElementById('overlandCard').href = planUrl;

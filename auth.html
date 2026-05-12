@@ -486,7 +486,7 @@ body {
 
   // Redirect if already signed in
   sb.auth.getSession().then(({ data: { session } }) => {
-    if (session) window.location.href = 'app.html';
+    if (session) window.location.href = '/app';
   });
 
   // ── Signup gate (admin_settings.new_signups_enabled) ───────────
@@ -544,7 +544,7 @@ body {
     const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     btn.disabled = false;
     if (error) return setMsg('si-msg', error.message, true);
-    window.location.href = 'app.html';
+    window.location.href = '/app';
   }
 
   async function signUp() {
@@ -577,7 +577,7 @@ body {
   async function oauthGoogle() {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/app.html' }
+      options: { redirectTo: window.location.origin + '/app' }
     });
     if (error) setMsg('si-msg', error.message, true);
   }
@@ -585,13 +585,13 @@ body {
   async function oauthApple() {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'apple',
-      options: { redirectTo: window.location.origin + '/app.html' }
+      options: { redirectTo: window.location.origin + '/app' }
     });
     if (error) setMsg('si-msg', error.message, true);
   }
 
   function skipToApp() {
-    window.location.href = 'app.html?guest=1';
+    window.location.href = '/app?guest=1';
   }
 
   // Enter key

@@ -554,7 +554,7 @@ fetch('/feed.json').then(function(r){return r.json();}).then(function(posts){
       <a href="/carbon" style="color:rgba(212,227,204,0.7);text-decoration:none">CO₂ calculator</a>
       <a href="/how-long" style="color:rgba(212,227,204,0.7);text-decoration:none">Journey time estimator</a>
       <a href="/bike-on-train" style="color:rgba(212,227,204,0.7);text-decoration:none">Bike on train lookup</a>
-      <a href="/app.html" style="color:rgba(212,227,204,0.7);text-decoration:none">Trip planner</a>
+      <a href="/app" style="color:rgba(212,227,204,0.7);text-decoration:none">Trip planner</a>
       <a href="/blog/" style="color:rgba(212,227,204,0.7);text-decoration:none">Blog</a>
     </div>
     <div style="display:flex;gap:16px;justify-content:center">
@@ -664,7 +664,7 @@ fetch('/feed.json').then(function(r){return r.json();}).then(function(posts){
 
   // ── Session check: redirect if already signed in ───────────────
   sb.auth.getSession().then(({ data: { session } }) => {
-    if (session) window.location.href = 'app.html';
+    if (session) window.location.href = '/app';
   });
 
   // ── Auth modal ────────────────────────────────────────────────
@@ -699,7 +699,7 @@ fetch('/feed.json').then(function(r){return r.json();}).then(function(posts){
     setMsg('si-msg', 'Signing in…');
     const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) return setMsg('si-msg', error.message, true);
-    window.location.href = 'app.html';
+    window.location.href = '/app';
   }
 
   async function signUp() {
@@ -716,13 +716,13 @@ fetch('/feed.json').then(function(r){return r.json();}).then(function(posts){
   async function signInGoogle() {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/app.html' }
+      options: { redirectTo: window.location.origin + '/app' }
     });
     if (error) setMsg('si-msg', error.message, true);
   }
 
   function skipToApp() {
-    window.location.href = 'app.html?guest=1';
+    window.location.href = '/app?guest=1';
   }
 
   // ── Demo launch ───────────────────────────────────────────────
@@ -737,7 +737,7 @@ fetch('/feed.json').then(function(r){return r.json();}).then(function(posts){
   function launchDemo() {
     const from = encodeURIComponent(document.getElementById('demoFrom').value);
     const to   = encodeURIComponent(document.getElementById('demoTo').value);
-    window.location.href = `app.html?from=${from}&to=${to}`;
+    window.location.href = `/app?from=${from}&to=${to}`;
   }
 
   // ── Smooth scroll helper ──────────────────────────────────────
