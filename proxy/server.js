@@ -6,6 +6,8 @@ const PORT = process.env.PORT || 3000;
 
 // ── CORS — allow GitHub Pages and local dev ──────────────────────────────────
 const ALLOWED_ORIGINS = [
+  'https://bysloth.com',
+  'https://www.bysloth.com',
   'https://slw.travel',
   'https://www.slw.travel',
   'https://srohan8.github.io',
