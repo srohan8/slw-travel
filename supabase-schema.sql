@@ -90,6 +90,9 @@ create table if not exists public.profiles (
   created_at  timestamptz not null default now()
 );
 
+-- Add display_name column if upgrading from older schema
+alter table public.profiles add column if not exists display_name text default '';
+
 -- Add location column if upgrading from older schema
 alter table public.profiles add column if not exists location text default '';
 
