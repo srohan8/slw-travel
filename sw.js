@@ -1,9 +1,9 @@
-﻿// By Sloth — Service Worker
+// By Sloth — Service Worker
 // Cache-first for app shell; network-only for Supabase, Reddit, geocoding APIs.
 
-const CACHE_NAME = 'slw-v1';
+const CACHE_NAME = 'slw-v2';
 const SHELL_URLS = [
-  '/app.html',
+  '/app/',
   '/auth.html',
   '/icons/icon.svg',
 ];
@@ -41,6 +41,7 @@ const NETWORK_ONLY_ORIGINS = [
   'eu.i.posthog.com',
   'app.minnal.io',
   'api.anthropic.com',
+  'railway.app',
 ];
 
 self.addEventListener('fetch', event => {
@@ -68,7 +69,9 @@ self.addEventListener('fetch', event => {
         return res;
       }).catch(() => {
         // Offline fallback: return cached app shell if navigating
-        if (req.mode === 'navigate') return caches.match('/app.html');
+        if (req.mode === 'navigate') return caches.match('/app/');
+        // For other requests (assets), just let the browser handle the error
+        return Response.error();
       });
     })
   );

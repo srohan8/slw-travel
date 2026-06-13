@@ -2378,7 +2378,7 @@ async function callAI(prompt, maxTokens = 8000) {
     headers['anthropic-version'] = '2023-06-01';
   }
   const controller = new AbortController();
-  const timeoutId  = setTimeout(() => controller.abort(), 30_000);
+  const timeoutId  = setTimeout(() => controller.abort(), 90_000);
   let r;
   try {
     r = await fetch(url, {
