@@ -2383,11 +2383,11 @@ async function callAI(prompt, maxTokens = 8000) {
   try {
     r = await fetch(url, {
       method: 'POST', headers, signal: controller.signal,
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
     });
   } catch (err) {
     clearTimeout(timeoutId);
-    if (err.name === 'AbortError') throw new Error('Request timed out after 30 s — please try again');
+    if (err.name === 'AbortError') throw new Error('Request timed out after 90 s — please try again');
     throw new Error('Could not reach the route server — please check your connection and try again');
   }
   clearTimeout(timeoutId);
