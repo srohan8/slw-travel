@@ -43,20 +43,20 @@ app.post('/api/ai', async (req, res) => {
     return res.status(500).json({ error: { message: 'Server misconfiguration: API key missing' } });
   }
 
-  const { model, max_tokens, messages, system } = req.body || {};
+  const { max_tokens, messages, system } = req.body || {};
   if (!messages?.length) {
     return res.status(400).json({ error: { message: 'messages array is required' } });
   }
 
-  const body = {
-    model:      model      || 'claude-sonnet-4-6',
-    max_tokens: max_tokens || 8000,
-    messages,
-  };
-  if (system) body.system = system;
+  // Model order: env var → hardcoded primary → fallback
+  // To change without a deploy: set ANTHROPIC_MODEL in Railway env vars
+  const PRIMARY_MODEL  = process.env.ANTHROPIC_MODEL  || 'claude-sonnet-4-6';
+  const FALLBACK_MODEL = process.env.ANTHROPIC_MODEL_FALLBACK || 'claude-haiku-4-5-20251001';
 
-  try {
-    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+  const callAnthropic = async (model) => {
+    const body = { model, max_tokens: max_tokens || 8000, messages };
+    if (system) body.system = system;
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method:  'POST',
       headers: {
         'Content-Type':      'application/json',
@@ -65,12 +65,22 @@ app.post('/api/ai', async (req, res) => {
       },
       body: JSON.stringify(body),
     });
+    return { r, data: await r.json() };
+  };
 
-    const data = await upstream.json();
-    res.status(upstream.status).json(data);
+  try {
+    let { r, data } = await callAnthropic(PRIMARY_MODEL);
+
+    // If primary model is retired/not-found, retry with fallback
+    if (!r.ok && data.error?.type === 'not_found_error') {
+      console.warn(`Primary model ${PRIMARY_MODEL} not found, falling back to ${FALLBACK_MODEL}`);
+      ({ r, data } = await callAnthropic(FALLBACK_MODEL));
+    }
+
+    res.status(r.status).json(data);
 
     // Log usage to Supabase (fire-and-forget — don't block the response)
-    if (upstream.ok && data.usage) {
+    if (r.ok && data.usage) {
       logUsageToSupabase(data.model, data.usage).catch(e => console.warn('Usage log failed:', e.message));
     }
   } catch (err) {
