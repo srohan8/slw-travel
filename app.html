@@ -295,6 +295,16 @@
   /* ── Plan edit bar (shown in results view) ──────────── */
   .plan-edit-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:2px;}
 
+  /* ── Route result card header ───────────────────────── */
+  .route-result-hdr{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:14px 18px 12px;border-bottom:0.5px solid var(--border);margin:-1.25rem -1.25rem 14px;}
+  .route-result-title{font-family:var(--serif);font-size:22px;font-weight:300;color:var(--text);letter-spacing:-0.3px;}
+  .route-result-title em{color:var(--fern);font-style:italic;}
+
+  /* ── Alternating leg rows in planner results ────────── */
+  .plan-leg-row{padding:14px 0 6px;border-bottom:0.5px dashed var(--border);}
+  .plan-leg-row:last-of-type{border-bottom:none;}
+  .plan-leg-row.alt{background:rgba(139,175,122,0.04);margin:0 -1.25rem;padding:14px 1.25rem 6px;}
+
   /* ── Plan summary strip ─────────────────────────────── */
   .plan-summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
   .plan-sum-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
@@ -452,7 +462,7 @@
     </div>
     <div style="display:flex;gap:10px;align-items:center">
       <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
-      <span style="font-size:12px;color:var(--text3)">Free to use · No account needed</span>
+      <span style="font-size:12px;color:var(--text3)">Free to use · Account required</span>
     </div>
     </div><!-- end #planSearchForm -->
 
@@ -464,7 +474,6 @@
     <!-- Summary strip (shown with results) -->
     <div id="planSummaryStrip" style="display:none"></div>
     <div id="planResult" class="result-box" style="display:none"></div>
-    <button class="adopt-btn" id="adoptBtn" style="display:none" onclick="adoptRoute()">Add this route to My trip →</button>
   </div>
 
   <!-- RECORD TAB -->
@@ -907,6 +916,11 @@ async function syncTripsFromCloud() {
 }
 
 async function saveCurrentTrip() {
+  if (!currentUser) {
+    const el = document.getElementById('saveStatus');
+    if (el) el.innerHTML = `<a href="auth.html" style="color:var(--rust);font-size:12px">Sign in to save trips →</a>`;
+    return;
+  }
   document.getElementById('saveStatus').textContent = 'Saving...';
 
   const typedTitle = document.getElementById('tripTitle').value.trim();
@@ -1663,6 +1677,24 @@ async function planRoute() {
   const to   = document.getElementById('pTo').value.trim();
   if (!from || !to) { alert('Please enter start and end.'); return; }
 
+  // ── Auth gate ─────────────────────────────────────────────────────
+  if (!currentUser) {
+    const lg = document.getElementById('planLandingGrid');
+    if (lg) lg.style.display = 'none';
+    const hl = document.getElementById('planLanding');
+    if (hl) hl.style.display = 'none';
+    _collapseSearchForm(from, to);
+    document.getElementById('planResult').style.display = 'block';
+    document.getElementById('planSummaryStrip').style.display = 'none';
+    document.getElementById('planResult').innerHTML = `<div class="gate-msg">
+      <div style="font-size:36px;margin-bottom:12px">🦥</div>
+      <h3>Sign in to plan routes</h3>
+      <p>Create a free account to get AI-suggested overland routes, save trips, and share community notes.</p>
+      <a href="auth.html" class="btn btn-primary" style="text-decoration:none;display:inline-block">Sign in / Register →</a>
+    </div>`;
+    return;
+  }
+
   const allowed = await checkAndGate('routePlans');
   if (!allowed) {
     document.getElementById('planResult').style.display = 'block';
@@ -1680,7 +1712,6 @@ async function planRoute() {
     lastSuggestion = hit;
     document.getElementById('planResult').style.display = 'block';
     renderPlanSuggestion(hit, true);
-    document.getElementById('adoptBtn').style.display = 'inline-block';
     _collapseSearchForm(from, to);
     return;
   }
@@ -1698,7 +1729,6 @@ async function planRoute() {
   const res = document.getElementById('planResult');
   res.style.display = 'block';
   res.innerHTML = '<span class="thinking">Finding the best overland route...</span>';
-  document.getElementById('adoptBtn').style.display = 'none';
 
   try {
     // Build site hint for AI so it knows what options exist
@@ -1767,7 +1797,6 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
     setCachedRoute(cacheKey, data, from, to);
     updateCacheClearBtn();
     renderPlanSuggestion(data, false);
-    document.getElementById('adoptBtn').style.display = 'inline-block';
     updateUsageBars();
   } catch (e) {
     console.error('planRoute error:', e);
@@ -1798,7 +1827,6 @@ function openPlanSearch() {
   if (lg) lg.style.display = 'block';
   document.getElementById('planResult').style.display       = 'none';
   document.getElementById('planSummaryStrip').style.display = 'none';
-  document.getElementById('adoptBtn').style.display         = 'none';
 }
 
 const CONF = {
@@ -1850,7 +1878,19 @@ function renderPlanSuggestion(d, fromCache = false) {
     </div>`;
   }
 
-  let h = '';
+  // ── Route card header: title + confidence + Save button ──────────
+  const fromCity = d.legs?.[0]?.from || '';
+  const toCity   = d.legs?.[d.legs.length-1]?.to || '';
+  const overallConf = (d.legs||[]).every(l => l.confidence === 'verified') ? 'verified'
+                    : (d.legs||[]).some(l => l.confidence === 'uncertain') ? 'uncertain' : 'check';
+  let h = `<div class="route-result-hdr">
+    <div class="route-result-title">${fromCity} <em>→</em> ${toCity}</div>
+    ${renderConfidenceBadge(overallConf)}
+    <button class="btn btn-primary" style="font-size:12px;padding:6px 14px;display:flex;align-items:center;gap:6px" onclick="adoptRoute()">
+      <i class="ph ph-bookmark-simple"></i> Save to trip
+    </button>
+  </div>`;
+
   if (fromCache) {
     const sub = d._subset_of ? ` <span style="opacity:0.7;font-weight:400">— sliced from ${d._subset_of}</span>` : '';
     const noRegion = d.legs?.some(l => !l.leg_region);
@@ -1865,6 +1905,16 @@ function renderPlanSuggestion(d, fromCache = false) {
   }
   h += `<p style="color:var(--text);margin-bottom:10px">${d.summary}</p>`;
   if (d.warnings?.length) { d.warnings.forEach(w => { h += `<span class="warn-badge">${w}</span><br>`; }); h += '<br>'; }
+
+  // Honesty note for uncertain/check legs
+  const uncertainLegs = (d.legs||[]).filter(l => l.confidence === 'uncertain' || l.confidence === 'check');
+  if (uncertainLegs.length) {
+    h += `<div style="padding:10px 14px;border:0.5px dashed var(--warn-border);border-radius:var(--radius);background:var(--warn-bg);margin-bottom:12px;font-size:12px;line-height:1.5;color:var(--warn-text)">
+      <span style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-right:6px">Honesty note</span>
+      ${uncertainLegs.length} leg${uncertainLegs.length>1?'s':''} on this route ${uncertainLegs.length>1?'are':'is'} marked <strong>check</strong> or <strong>uncertain</strong> — verify schedules before booking.
+    </div>`;
+  }
+
   d.legs.forEach((leg, i) => {
     const ns = d.stops[i + 1];
     const iconCls    = MODE_ICONS[leg.mode] || 'ph-path';
@@ -1876,7 +1926,8 @@ function renderPlanSuggestion(d, fromCache = false) {
       ? renderAccommodationLinks(stayCity, ns?.accom_sites, ns?.accom_note)
       : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
     const legKey = `${leg.from}→${stayCity}`;
-    h += `<div style="margin:0 -1px 2px;border-left:3px solid ${modeColor};padding-left:14px;position:relative">
+    const altCls = i % 2 === 1 ? ' alt' : '';
+    h += `<div class="plan-leg-row${altCls}" style="border-left:3px solid ${modeColor};padding-left:14px;position:relative">
       <div class="leg-icon-dot" style="background:${modeColor}"><i class="ph ${iconCls}"></i></div>
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">${leg.from} → ${leg.to}</div>
       <div class="leg-grid">
@@ -1896,7 +1947,6 @@ function renderPlanSuggestion(d, fromCache = false) {
         </div>
         <div class="leg-col leg-col-b">
           <div class="leg-col-lbl">Transport</div>
-          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Book this leg on</div>
           ${transportCol || '<div style="font-size:12px;color:var(--text3)">No links for this leg</div>'}
         </div>
         <div class="leg-col leg-col-b">
@@ -1907,12 +1957,18 @@ function renderPlanSuggestion(d, fromCache = false) {
       ${renderContribBlockForKey(legKey, i)}
     </div>`;
   });
-  h += `<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2)">Total: ~${d.total_days} days · ~${fmtCost(d.total_cost_usd)}</div>`;
+  h += `<div style="margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2);display:flex;justify-content:space-between;align-items:center">
+    <span>Total: ~${d.total_days} days · ~${fmtCost(d.total_cost_usd)}</span>
+    <button class="btn btn-primary" style="font-size:12px;padding:6px 14px;display:flex;align-items:center;gap:6px" onclick="adoptRoute()">
+      <i class="ph ph-bookmark-simple"></i> Save to trip
+    </button>
+  </div>`;
   document.getElementById('planResult').innerHTML = h;
 }
 
 function adoptRoute() {
   if (!lastSuggestion) return;
+  if (!currentUser) { window.location.href = 'auth.html?return=planner'; return; }
   const d = lastSuggestion; stops = []; legs = []; editingLegModes.clear();
   currentTripId = null;   // always creates a new trip on next save
   expandedLegs.clear();
