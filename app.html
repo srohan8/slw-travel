@@ -30,16 +30,7 @@
     --body:'Albert Sans',system-ui,sans-serif;
     --mono:'JetBrains Mono','Courier New',monospace;
   }
-  @media(prefers-color-scheme:dark){:root{
-    --bg:#141F14;--bg2:var(--dusk);--bg3:#0E160E;
-    --text:#EDE8DF;--text2:var(--sage);--text3:#4A6040;
-    --border:rgba(139,175,122,0.12);--border2:rgba(139,175,122,0.22);
-    --info-bg:#0C1F0C;--info-text:var(--sage);--info-border:rgba(74,124,74,0.3);
-    --success-bg:#162216;--success-text:var(--sage);--success-border:rgba(74,124,74,0.3);
-    --warn-bg:#2a1e08;--warn-text:#ef9f27;--warn-border:rgba(186,117,23,0.3);
-    --danger-bg:#2a0e0e;--danger-text:#f09595;--danger-border:rgba(196,98,45,0.3);
-    --green:var(--sage);--blue:var(--sage);--amber:#EF9F27;
-  }}
+  html{color-scheme:light;}
   body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh;transition:background 0.3s ease;}
   nav{display:flex;justify-content:space-between;align-items:center;padding:12px 22px;border-bottom:none;background:var(--dusk);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(26,43,26,0.18);}
   .logo{font-family:var(--body);font-size:20px;font-weight:500;color:var(--cream);text-decoration:none;letter-spacing:-0.6px;display:flex;align-items:center;gap:8px;}
