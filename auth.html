@@ -10,10 +10,11 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --moss:#2D4A2D; --fern:#4A7C4A; --sage:#8BAF7A; --mist:#D4E3CC;
-  --cream:#F5F0E8; --sand:#E8DFD0; --dusk:#0D120D; --gold:#C9A84C;
-  --bg:#FAF7F2; --bg2:#F2EDE4; --text:#1A2B1A; --text2:#4A6040; --text3:#9AA880;
-  --border:rgba(45,74,45,0.15); --border2:rgba(45,74,45,0.3);
+  --moss:#13213A; --fern:#1E3A5C; --sage:#FF5014; --mist:#FFD9CC;
+  --cream:#FFFFFF; --sand:#F8F4F2; --dusk:#091022; --gold:#FFB800;
+  --bg:#FFFFFF; --bg2:#FAF6F4; --text:#0E1A2E; --text2:#2C4060; --text3:#94A0B0;
+  --border:rgba(14,26,46,0.15); --border2:rgba(14,26,46,0.30);
+  --cta-text:#FFFFFF;
   --radius:10px; --radius-lg:16px; --radius-pill:9999px;
   --serif:'Sora',system-ui,sans-serif;
   --body:'Albert Sans',system-ui,sans-serif;
@@ -31,7 +32,7 @@ body {
 
 /* ── Left pitch panel ─────────────────────────────────────── */
 .auth-left {
-  background: linear-gradient(180deg, #0D120D 0%, #17231A 100%);
+  background: linear-gradient(180deg, #091022 0%, #13213A 100%);
   padding: 48px 56px;
   position: relative;
   overflow: hidden;
@@ -105,7 +106,7 @@ body {
 }
 .auth-trust-l {
   font-size: 10px;
-  color: rgba(212,227,204,0.5);
+  color: rgba(255,255,255,0.5);
   margin-top: 2px;
   font-family: var(--mono);
   letter-spacing: 0.8px;
@@ -125,7 +126,7 @@ body {
   top: 96px;
   font-family: var(--mono);
   font-size: 10px;
-  color: rgba(212,227,204,0.28);
+  color: rgba(255,255,255,0.28);
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
@@ -278,16 +279,16 @@ body {
   padding: 12px 20px;
   border-radius: 10px;
   border: none;
-  background: var(--moss);
-  color: var(--cream);
+  background: var(--sage);
+  color: var(--cta-text);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: var(--body);
   cursor: pointer;
   width: 100%;
   transition: background .15s;
 }
-.auth-submit:hover { background: var(--fern); }
+.auth-submit:hover { background: #E0440C; }
 .auth-submit:disabled { opacity: 0.5; cursor: default; }
 
 /* Message */

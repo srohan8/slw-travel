@@ -10,16 +10,16 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --moss:#2D4A2D; --fern:#4A7C4A; --sage:#8BAF7A; --mist:#D4E3CC;
-  --cream:#F5F0E8; --sand:#E8DFD0; --sand2:#EDE8DC;
-  --bark:#6B4F3A; --rust:#C4622D; --dusk:#0D120D; --gold:#C9A84C;
-  --bg:#FAF7F2; --bg2:#F2EDE4; --bg3:var(--cream);
-  --text:#1A2B1A; --text2:#4A6040; --text3:#9AA880;
-  --border:rgba(45,74,45,0.15); --border2:rgba(45,74,45,0.3);
-  --fern-rgb:74,124,74;
+  --moss:#13213A; --fern:#1E3A5C; --sage:#FF5014; --mist:#FFD9CC;
+  --cream:#FFFFFF; --sand:#F8F4F2; --sand2:#F0EAE7;
+  --bark:#3A2A24; --rust:#FF5014; --dusk:#091022; --gold:#FFB800;
+  --bg:#FFFFFF; --bg2:#FAF6F4; --bg3:#FFFFFF;
+  --text:#0E1A2E; --text2:#2C4060; --text3:#94A0B0;
+  --border:rgba(14,26,46,0.15); --border2:rgba(14,26,46,0.30);
+  --fern-rgb:30,58,92; --cta-text:#FFFFFF;
   --radius:10px; --radius-lg:16px; --radius-pill:9999px;
-  --shadow:0 2px 8px rgba(26,43,26,0.07);
-  --shadow-float:0 8px 28px rgba(26,43,26,0.22);
+  --shadow:0 2px 8px rgba(14,26,46,0.07);
+  --shadow-float:0 8px 28px rgba(14,26,46,0.22);
   --serif:'Sora',system-ui,sans-serif;
   --body:'Albert Sans',system-ui,sans-serif;
   --mono:'JetBrains Mono','Courier New',monospace;
@@ -33,16 +33,16 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   background:var(--dusk); color:var(--cream);
   padding:13px 22px; display:flex; align-items:center; justify-content:space-between;
   position:sticky; top:0; z-index:20;
-  box-shadow:0 2px 12px rgba(26,43,26,0.2);
+  box-shadow:0 2px 12px rgba(14,26,46,0.2);
 }
 .mkt-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
 .mkt-logo-text { font-family:var(--body); font-weight:500; font-size:20px; color:var(--cream); letter-spacing:-0.6px; }
 .mkt-logo-text em { font-style:normal; color:var(--sage); }
 .mkt-nav-links { display:flex; gap:22px; align-items:center; font-size:13px; }
-.mkt-nav-links span { color:rgba(212,227,204,0.55); cursor:pointer; transition:color .2s; }
+.mkt-nav-links span { color:rgba(255,255,255,0.55); cursor:pointer; transition:color .2s; }
 .mkt-nav-links span:hover { color:var(--cream); }
 .mkt-cta-pill {
-  background:var(--sage); color:var(--dusk); padding:6px 14px; border-radius:99px;
+  background:var(--sage); color:var(--cta-text); padding:6px 14px; border-radius:99px;
   font-weight:600; font-size:12px; cursor:pointer; letter-spacing:0.2px;
   border:none; font-family:var(--body); transition:opacity .15s;
 }
@@ -61,7 +61,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 }
 .hero-corner {
   position:absolute; font-family:var(--mono); font-size:10px;
-  color:rgba(212,227,204,0.4); letter-spacing:1.5px; text-transform:uppercase;
+  color:rgba(255,255,255,0.4); letter-spacing:1.5px; text-transform:uppercase;
 }
 .kicker {
   font-family:var(--mono); font-size:10px; letter-spacing:3px;
@@ -75,7 +75,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .hero-sub { font-size:16px; line-height:1.55; color:rgba(245,240,232,0.72); max-width:460px; }
 .hero-cta { display:flex; gap:10px; align-items:center; margin-top:26px; flex-wrap:wrap; }
 .hero-btn-primary {
-  background:var(--sage); color:var(--dusk); padding:12px 22px; border-radius:99px;
+  background:var(--sage); color:var(--cta-text); padding:12px 22px; border-radius:99px;
   font-weight:600; font-size:14px; cursor:pointer; letter-spacing:0.2px;
   display:inline-flex; align-items:center; gap:8px; border:none; font-family:var(--body);
   transition:opacity .15s;
@@ -88,7 +88,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 }
 .hero-btn-ghost:hover { border-color:rgba(245,240,232,0.6); }
 .hero-free-lbl {
-  font-size:11px; font-family:var(--mono); color:rgba(212,227,204,0.5);
+  font-size:11px; font-family:var(--mono); color:rgba(255,255,255,0.5);
   letter-spacing:1px; text-transform:uppercase; margin-left:8px;
 }
 .hero-stats {
@@ -98,14 +98,14 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .hero-stat { padding-left:18px; border-left:0.5px solid rgba(245,240,232,0.13); }
 .hero-stat:first-child { padding-left:0; border-left:none; }
 .hero-stat-n { font-family:var(--serif); font-size:28px; font-weight:300; color:var(--cream); letter-spacing:-0.5px; }
-.hero-stat-l { font-size:11px; color:rgba(212,227,204,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
+.hero-stat-l { font-size:11px; color:rgba(255,255,255,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
 @media(max-width:600px){ .hero-stats{grid-template-columns:repeat(2,1fr);gap:10px;} .hero-stat{border:none;padding:0;} }
 
 /* ── Demo search strip ─────────────────────────────────────────── */
 .demo-strip-wrap { max-width:860px; margin:-28px auto 0; padding:0 1.25rem; position:relative; z-index:2; }
 .demo-strip {
   background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg);
-  padding:1.1rem 1.25rem; box-shadow:0 10px 28px rgba(26,43,26,0.15);
+  padding:1.1rem 1.25rem; box-shadow:0 10px 28px rgba(14,26,46,0.15);
 }
 .demo-inputs { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:center; }
 .demo-inp {
@@ -114,8 +114,8 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 }
 .demo-inp:focus { border-color:var(--fern); background:var(--bg); }
 .demo-btn {
-  background:var(--moss); color:var(--cream); border:none; border-radius:var(--radius-pill);
-  padding:10px 18px; font-size:13px; font-weight:600; font-family:var(--body); cursor:pointer;
+  background:var(--sage); color:var(--cta-text); border:none; border-radius:var(--radius-pill);
+  padding:10px 18px; font-size:13px; font-weight:700; font-family:var(--body); cursor:pointer;
   white-space:nowrap; transition:background .15s;
 }
 .demo-btn:hover { background:var(--fern); }
@@ -168,7 +168,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   font-size:11px; font-weight:500; padding:2px 8px; border-radius:99px;
   border:0.5px solid transparent;
 }
-.conf-verified { background:#D4E3CC; color:#2D4A2D; border-color:rgba(45,74,45,0.3); }
+.conf-verified { background:#EAF5EE; color:#2D7D46; border-color:rgba(45,125,70,0.25); }
 .conf-check    { background:#faeeda; color:#633806; border-color:rgba(133,79,11,0.3); }
 .conf-uncertain{ background:#FDF0EC; color:#8B2A00; border-color:rgba(196,98,45,0.3); }
 @media(max-width:580px){ .route-row{grid-template-columns:1fr auto;} .route-modes,.route-stat:not(:last-child){display:none;} }
@@ -202,7 +202,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .price-card-pro  { background:var(--dusk); border:0.5px solid var(--dusk); color:var(--cream); }
 .price-tag { font-family:var(--serif); font-size:36px; font-weight:300; letter-spacing:-0.5px; }
 .price-period { font-size:12px; color:var(--text3); font-family:var(--mono); }
-.price-card-pro .price-period { color:rgba(212,227,204,0.5); }
+.price-card-pro .price-period { color:rgba(255,255,255,0.5); }
 .price-feature { font-size:13px; line-height:1.7; display:flex; gap:8px; align-items:center; }
 .price-feature-free { color:var(--text2); }
 .price-feature-pro  { color:rgba(245,240,232,0.8); }
@@ -265,7 +265,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .auth-left-sub { font-size:14px; line-height:1.55; color:rgba(245,240,232,0.65); max-width:340px; }
 .auth-trust { display:flex; gap:24px; margin-top:28px; padding-top:18px; border-top:0.5px solid rgba(245,240,232,0.12); }
 .auth-trust-n { font-family:var(--serif); font-size:22px; font-weight:300; color:var(--cream); letter-spacing:-0.3px; }
-.auth-trust-l { font-size:10px; color:rgba(212,227,204,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
+.auth-trust-l { font-size:10px; color:rgba(255,255,255,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
 .auth-bg-sloth { position:absolute; right:-60px; bottom:-30px; opacity:0.12; pointer-events:none; }
 .auth-right { background:var(--bg); padding:44px 48px; display:flex; flex-direction:column; justify-content:center; }
 .auth-tabs-row { display:flex; gap:2px; border-bottom:0.5px solid var(--border); margin-bottom:24px; }
@@ -297,7 +297,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .auth-submit:hover { background:var(--fern); }
 .auth-close {
   position:absolute; top:14px; right:14px; background:rgba(245,240,232,0.08); border:none;
-  color:rgba(212,227,204,0.6); width:28px; height:28px; border-radius:50%; cursor:pointer;
+  color:rgba(255,255,255,0.6); width:28px; height:28px; border-radius:50%; cursor:pointer;
   font-size:14px; display:flex; align-items:center; justify-content:center; z-index:5;
   font-family:var(--body);
 }
@@ -516,7 +516,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
         <div class="price-tag">€6</div>
         <div class="price-period">per month</div>
       </div>
-      <div style="margin-top:14px;border-top:0.5px dashed rgba(212,227,204,0.2);padding-top:12px">
+      <div style="margin-top:14px;border-top:0.5px dashed rgba(255,255,255,0.2);padding-top:12px">
         <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Unlimited routes</div>
         <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Shared taxi + hitch legs</div>
         <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Live conflict alerts</div>
@@ -535,7 +535,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
     <div class="final-cta-h">The slow way is the <em>only</em> way<br>to really see a place.</div>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap">
       <button class="hero-btn-primary" onclick="window.location='auth.html?tab=signup'">Plan your first route →</button>
-      <button class="hero-btn-ghost" style="border-color:rgba(212,227,204,0.25);color:var(--cream)">Read the manifesto</button>
+      <button class="hero-btn-ghost" style="border-color:rgba(255,255,255,0.25);color:var(--cream)">Read the manifesto</button>
     </div>
   </div>
 </div>
@@ -544,7 +544,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 <div class="section section-gap-sm">
   <footer class="footer-inner" style="padding:20px 0 40px;border-top:0.5px solid var(--border)">
     <div style="display:flex;align-items:center;gap:8px">
-      <svg width="18" height="18" viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="16" rx="7" ry="6" fill="#4A7C4A" opacity="0.9"/><circle cx="14" cy="9" r="5" fill="#4A7C4A" opacity="0.9"/></svg>
+      <svg width="18" height="18" viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="16" rx="7" ry="6" fill="#1E3A5C" opacity="0.9"/><circle cx="14" cy="9" r="5" fill="#1E3A5C" opacity="0.9"/></svg>
       <span class="footer-logo">bysloth</span>
     </div>
     <div class="footer-links">
@@ -580,7 +580,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
     </div>
     <!-- Right form -->
     <div class="auth-right" style="position:relative">
-      <button class="auth-close" style="background:rgba(45,74,45,0.07);color:var(--text3);position:absolute;top:14px;right:14px" onclick="closeAuth()">×</button>
+      <button class="auth-close" style="background:rgba(14,26,46,0.06);color:var(--text3);position:absolute;top:14px;right:14px" onclick="closeAuth()">×</button>
       <div class="auth-tabs-row">
         <button class="auth-tab active" id="atab-signin"  onclick="switchAuthTab('signin')">Sign in</button>
         <button class="auth-tab"        id="atab-signup" onclick="switchAuthTab('signup')">Create account</button>

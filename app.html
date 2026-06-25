@@ -10,46 +10,47 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    /* Brand palette — bysloth · Forest theme (design handoff) */
-    --moss:#2D4A2D;--fern:#4A7C4A;--sage:#8BAF7A;
-    --cream:#F5F0E8;--sand:#E8DFD0;--sand2:#EDE8DC;
-    --bark:#6B4F3A;--rust:#C4622D;--dusk:#0D120D;--mist:#D4E3CC;--gold:#C9A84C;
+    /* Brand palette — bysloth · Signal theme (production) */
+    --moss:#13213A;--fern:#1E3A5C;--sage:#FF5014;
+    --cream:#FFFFFF;--sand:#F8F4F2;--sand2:#F0EAE7;
+    --bark:#3A2A24;--rust:#FF5014;--dusk:#091022;--mist:#FFD9CC;--gold:#FFB800;
     /* Semantic */
-    --bg:#FAF7F2;--bg2:#F2EDE4;--bg3:var(--cream);
-    --text:#1A2B1A;--text2:#4A6040;--text3:#9AA880;
-    --border:rgba(45,74,45,0.15);--border2:rgba(45,74,45,0.3);
-    --info-bg:#EDF4E8;--info-text:var(--moss);--info-border:rgba(74,124,74,0.3);
-    --success-bg:var(--mist);--success-text:var(--moss);--success-border:rgba(45,74,45,0.3);
+    --bg:#FFFFFF;--bg2:#FAF6F4;--bg3:#FFFFFF;
+    --text:#0E1A2E;--text2:#2C4060;--text3:#94A0B0;
+    --border:rgba(14,26,46,0.15);--border2:rgba(14,26,46,0.30);
+    --info-bg:#FFE8E0;--info-text:#9A2800;--info-border:rgba(255,80,20,0.3);
+    --success-bg:#FFE8E0;--success-text:#9A2800;--success-border:rgba(255,80,20,0.25);
     --warn-bg:#faeeda;--warn-text:#633806;--warn-border:rgba(133,79,11,0.3);
     --danger-bg:#FDF0EC;--danger-text:#8B2A00;--danger-border:rgba(196,98,45,0.3);
     --green:var(--fern);--blue:#2E6FA8;--amber:#BA7517;
+    --cta-text:#FFFFFF;
     --radius:10px;--radius-lg:16px;--radius-pill:9999px;
-    --shadow:0 2px 8px rgba(26,43,26,0.07);
-    --shadow-float:0 8px 28px rgba(26,43,26,0.22);
+    --shadow:0 2px 8px rgba(14,26,46,0.07);
+    --shadow-float:0 8px 28px rgba(14,26,46,0.22);
     --serif:'Sora',system-ui,sans-serif;
     --body:'Albert Sans',system-ui,sans-serif;
     --mono:'JetBrains Mono','Courier New',monospace;
   }
   html{color-scheme:light;}
   body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh;transition:background 0.3s ease;}
-  nav{display:flex;justify-content:space-between;align-items:center;padding:12px 22px;border-bottom:none;background:var(--dusk);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(26,43,26,0.18);}
+  nav{display:flex;justify-content:space-between;align-items:center;padding:12px 22px;border-bottom:none;background:var(--dusk);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(14,26,46,0.18);}
   .logo{font-family:var(--body);font-size:20px;font-weight:500;color:var(--cream);text-decoration:none;letter-spacing:-0.6px;display:flex;align-items:center;gap:8px;}
   .logo em{font-style:normal;color:var(--sage);}
   .nav-links{display:flex;gap:18px;align-items:center;}
-  .nav-link{font-size:13px;color:rgba(212,227,204,0.55);border:none;background:none;border-bottom:2px solid transparent;padding-bottom:3px;cursor:pointer;font-family:var(--body);transition:color .2s;white-space:nowrap;padding:0;margin:0 5px;}
+  .nav-link{font-size:13px;color:rgba(255,255,255,0.55);border:none;background:none;border-bottom:2px solid transparent;padding-bottom:3px;cursor:pointer;font-family:var(--body);transition:color .2s;white-space:nowrap;padding:0;margin:0 5px;}
   .nav-link:hover{color:var(--cream);}
   .nav-link.active{color:var(--cream);border-bottom-color:var(--sage);}
   .nav-utils{display:flex;gap:8px;align-items:center;}
-  .nav-vsep{width:1px;height:16px;background:rgba(139,175,122,0.25);flex-shrink:0;}
-  .user-badge{font-size:12px;color:var(--sage);padding:5px 12px;border:0.5px solid rgba(139,175,122,0.3);border-radius:99px;background:rgba(139,175,122,0.08);}
+  .nav-vsep{width:1px;height:16px;background:rgba(255,255,255,0.2);flex-shrink:0;}
+  .user-badge{font-size:12px;color:var(--sage);padding:5px 12px;border:0.5px solid rgba(255,80,20,0.35);border-radius:99px;background:rgba(255,80,20,0.10);}
   .btn{font-size:13px;padding:7px 16px;border:0.5px solid var(--border2);border-radius:var(--radius-pill);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--body);transition:all 0.2s ease;font-weight:500;}
   .btn:hover{background:var(--bg2);color:var(--text);border-color:var(--text2);}
   .btn:disabled{opacity:0.4;cursor:default;}
-  .nav-utils .btn{background:rgba(255,255,255,0.07);color:rgba(212,227,204,0.8);border-color:rgba(139,175,122,0.25);}
+  .nav-utils .btn{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.22);}
   .nav-utils .btn:hover{background:rgba(255,255,255,0.14);color:var(--cream);}
-  .nav-utils select{font-size:12px;background:rgba(255,255,255,0.07);color:rgba(212,227,204,0.8);border:0.5px solid rgba(139,175,122,0.25);border-radius:var(--radius);padding:5px 8px;outline:none;font-family:inherit;cursor:pointer;}
-  .btn-primary{font-weight:600;background:var(--moss);color:var(--cream);border-color:var(--moss);box-shadow:0 2px 4px rgba(45,74,45,0.3);}
-  .btn-primary:hover{background:var(--fern);transform:translateY(-1px);box-shadow:0 4px 8px rgba(45,74,45,0.4);}
+  .nav-utils select{font-size:12px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);border:0.5px solid rgba(255,255,255,0.22);border-radius:var(--radius);padding:5px 8px;outline:none;font-family:inherit;cursor:pointer;}
+  .btn-primary{font-weight:700;background:var(--sage);color:var(--cta-text);border-color:var(--sage);box-shadow:0 2px 4px rgba(255,80,20,0.25);}
+  .btn-primary:hover{background:#E0440C;border-color:#E0440C;transform:translateY(-1px);box-shadow:0 4px 8px rgba(255,80,20,0.35);}
   .container{max-width:860px;margin:0 auto;padding:2rem 1.25rem;}
   .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;background:transparent;outline:none;width:320px;letter-spacing:-0.3px;transition:color .2s;}
   .trip-title:focus{color:var(--fern);}
@@ -264,7 +265,7 @@
   .plan-hero-kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);font-weight:400;}
   .plan-hero-title{font-family:var(--serif);font-size:36px;font-weight:300;line-height:1.1;margin-top:8px;max-width:460px;letter-spacing:-0.5px;color:var(--cream);}
   .plan-hero-title em{color:var(--sage);font-style:italic;}
-  .plan-hero-sub{color:rgba(212,227,204,0.55);font-size:13px;margin-top:10px;max-width:460px;line-height:1.5;}
+  .plan-hero-sub{color:rgba(255,255,255,0.55);font-size:13px;margin-top:10px;max-width:460px;line-height:1.5;}
   .plan-hero-sloth{position:absolute;right:-20px;top:-10px;opacity:0.35;pointer-events:none;}
 
   /* ── Plan landing grid ──────────────────────────────── */
@@ -298,7 +299,7 @@
   /* ── Alternating leg rows in planner results ────────── */
   .plan-leg-row{padding:14px 0 6px;border-bottom:0.5px dashed var(--border);}
   .plan-leg-row:last-of-type{border-bottom:none;}
-  .plan-leg-row.alt{background:rgba(139,175,122,0.04);margin:0 -1.25rem;padding:14px 1.25rem 6px;}
+  .plan-leg-row.alt{background:rgba(14,26,46,0.03);margin:0 -1.25rem;padding:14px 1.25rem 6px;}
 
   /* ── Plan summary strip ─────────────────────────────── */
   .plan-summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
@@ -311,8 +312,8 @@
   .contrib-block{margin-top:10px;padding-top:8px;border-top:0.5px dashed var(--border);}
   .contrib-block-hdr{display:flex;align-items:center;gap:8px;cursor:pointer;padding:2px 0;user-select:none;}
   .contrib-block-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-weight:600;display:inline-flex;align-items:center;gap:4px;}
-  .contrib-add-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px dashed var(--fern);color:var(--fern);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:var(--body);font-weight:500;background:rgba(74,124,74,0.05);white-space:nowrap;}
-  .contrib-add-pill:hover{background:rgba(74,124,74,0.12);}
+  .contrib-add-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px dashed var(--sage);color:var(--sage);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:var(--body);font-weight:500;background:rgba(255,80,20,0.05);white-space:nowrap;}
+  .contrib-add-pill:hover{background:rgba(255,80,20,0.12);}
   .contrib-card{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;padding:8px 10px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-top:6px;}
   .contrib-card-compact{display:grid;grid-template-columns:18px 1fr auto auto;gap:8px;align-items:center;padding:4px 0;font-size:12px;}
   .contrib-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -331,7 +332,7 @@
   .contrib-kind-pill{font-size:12px;padding:6px 12px;border-radius:99px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;border:0.5px solid var(--border2);color:var(--text2);background:transparent;}
   .contrib-kind-pill.active{font-weight:600;}
   .contrib-source-pill{font-size:12px;padding:6px 12px;border-radius:99px;cursor:pointer;transition:all .15s;border:0.5px solid var(--border2);color:var(--text2);background:transparent;}
-  .contrib-source-pill.active{border-color:var(--fern);background:rgba(74,124,74,0.08);color:var(--moss);font-weight:600;}
+  .contrib-source-pill.active{border-color:var(--sage);background:rgba(255,80,20,0.08);color:var(--sage);font-weight:600;}
   .contrib-field-lbl{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:600;margin-bottom:6px;}
   .contrib-textarea{width:100%;font-size:13px;color:var(--text);border:0.5px solid var(--fern);border-radius:var(--radius);padding:10px 12px;background:var(--bg);outline:none;resize:vertical;min-height:80px;font-family:inherit;line-height:1.5;}
   .contrib-inp{font-size:13px;color:var(--text);border:0.5px solid var(--border2);border-radius:6px;background:var(--bg);padding:8px 10px;outline:none;font-family:inherit;width:100%;}
@@ -697,7 +698,7 @@ const CONTRIB_KINDS = {
   schedule: { icon:'ph-clock-clockwise',color:'#2E6FA8', bg:'#EDF4F9', label:'Schedule tip' },
   border:   { icon:'ph-shield-warning', color:'#C4622D', bg:'#FDF0EC', label:'Border note' },
   tip:      { icon:'ph-lightbulb',     color:'#6B5410', bg:'#FDF6E3', label:'Local tip' },
-  confirmed:{ icon:'ph-check-circle',  color:'#2D4A2D', bg:'#D4E3CC', label:'Confirmed working' },
+  confirmed:{ icon:'ph-check-circle',  color:'#13213A', bg:'#FFE8E0', label:'Confirmed working' },
   warning:  { icon:'ph-warning',       color:'#C4622D', bg:'#FDF0EC', label:'Heads up' },
 };
 
@@ -2520,7 +2521,7 @@ function showContribModal(legIdx, legKey) {
   document.getElementById('contribModal').innerHTML = `<div class="contrib-modal-overlay" onclick="if(event.target===this)closeContribModal()">
     <div class="contrib-modal" onclick="event.stopPropagation()">
       <div class="contrib-modal-hdr">
-        <div style="width:34px;height:34px;border-radius:8px;background:rgba(139,175,122,0.15);color:var(--sage);display:flex;align-items:center;justify-content:center"><i class="ph ph-users-three" style="font-size:18px"></i></div>
+        <div style="width:34px;height:34px;border-radius:8px;background:rgba(255,80,20,0.15);color:var(--sage);display:flex;align-items:center;justify-content:center"><i class="ph ph-users-three" style="font-size:18px"></i></div>
         <div style="flex:1">
           <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);font-weight:400">Contribute a note</div>
           <div style="font-family:var(--serif);font-size:20px;font-weight:400;letter-spacing:-0.2px;margin-top:2px;color:var(--cream)">Help the next traveller on this leg</div>
@@ -2714,11 +2715,11 @@ function renderMyTripsPanel() {
     const ls = t.legs || [];
     const allBooked = ls.length && ls.every(l => l.booked);
     const anyBooked = ls.some(l => l.booked);
-    if (allBooked)  return { label:'Confirmed',   cls:'confirmed', color:'#2D4A2D' };
+    if (allBooked)  return { label:'Confirmed',   cls:'confirmed', color:'#13213A' };
     if (anyBooked)  return { label:'In progress', cls:'progress',  color:'#C9A84C' };
     const hasStops = (t.stops||[]).some(s => s.name);
-    if (hasStops)   return { label:'Planned',     cls:'planned',   color:'#4A7C4A' };
-    return             { label:'Draft',        cls:'draft',     color:'#9AA880' };
+    if (hasStops)   return { label:'Planned',     cls:'planned',   color:'#1E3A5C' };
+    return             { label:'Draft',        cls:'draft',     color:'#94A0B0' };
   };
 
   if (!trips.length) {
@@ -2853,11 +2854,11 @@ async function renderProfilePanel() {
     { icon:'ph-boat',           color:'#2E8B8B', tint:'#D4EFEF', label:'Seafarer',     sub:'Ferry leg verified', earned: false },
     { icon:'ph-mountains',      color:'#6B4F3A', tint:'#EDE3DC', label:'High passes',  sub:'3 legs >3500m',  earned: false },
     { icon:'ph-compass',        color:'#C9A84C', tint:'#F6ECCE', label:'Frontier',     sub:'First to log',   earned: false },
-    { icon:'ph-shield-check',   color:'#2D4A2D', tint:'#D4E3CC', label:'Trusted',      sub:'20+ confirms',   earned: totalConf>=20 },
-    { icon:'ph-tag',            color:'#4A7C4A', tint:'#D4E3CC', label:'Honest price', sub:'5 price updates', earned:(kindCounts.price||0)>=5 },
-    { icon:'ph-lock-key-open',  color:'#9AA880', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
-    { icon:'ph-lock-key-open',  color:'#9AA880', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
-    { icon:'ph-lock-key-open',  color:'#9AA880', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
+    { icon:'ph-shield-check',   color:'#13213A', tint:'#FFE8E0', label:'Trusted',      sub:'20+ confirms',   earned: totalConf>=20 },
+    { icon:'ph-tag',            color:'#1E3A5C', tint:'#FFE8E0', label:'Honest price', sub:'5 price updates', earned:(kindCounts.price||0)>=5 },
+    { icon:'ph-lock-key-open',  color:'#94A0B0', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
+    { icon:'ph-lock-key-open',  color:'#94A0B0', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
+    { icon:'ph-lock-key-open',  color:'#94A0B0', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
   ];
 
   // ── Render ────────────────────────────────────────────────────────
@@ -2878,17 +2879,17 @@ async function renderProfilePanel() {
     <div style="min-width:0">
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage)">Contributor${memberSince?' · since '+memberSince:''}</div>
       <div style="font-family:var(--serif);font-size:28px;font-weight:300;letter-spacing:-0.3px;margin-top:2px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-        ${displayName} <span style="font-size:13px;color:rgba(212,227,204,0.45);font-family:var(--mono);letter-spacing:0.5px">${handle}</span>
+        ${displayName} <span style="font-size:13px;color:rgba(255,255,255,0.45);font-family:var(--mono);letter-spacing:0.5px">${handle}</span>
       </div>
-      <div style="font-size:12px;color:rgba(212,227,204,0.65);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+      <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
         ${location ? `<span style="display:inline-flex;align-items:center;gap:4px"><i class="ph ph-map-pin" style="font-size:12px"></i> ${location}</span>` : ''}
         <span style="display:inline-flex;align-items:center;gap:4px"><i class="ph ph-map-trifold" style="font-size:12px"></i> ${trips.length} trips planned</span>
       </div>
     </div>
     <div style="text-align:right;flex-shrink:0">
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:rgba(212,227,204,0.5);text-transform:uppercase">Karma</div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.5);text-transform:uppercase">Karma</div>
       <div style="font-family:var(--serif);font-size:44px;font-weight:300;color:var(--gold);letter-spacing:-0.8px;line-height:1">${karma.toLocaleString()}</div>
-      <div style="font-size:11px;color:rgba(212,227,204,0.5);margin-top:4px;font-family:var(--mono)">${totalVotes} upvotes received</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;font-family:var(--mono)">${totalVotes} upvotes received</div>
     </div>
     <div style="position:absolute;right:-40px;top:-20px;opacity:0.08;pointer-events:none">
       <img src="public/sloth-logo.svg" width="200" style="filter:brightness(0) invert(1)"/>
