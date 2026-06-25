@@ -135,10 +135,10 @@
   .adopt-btn:hover{background:var(--bg2); color: var(--text); border-color: var(--text2);}
   .warn-badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:99px;background:var(--warn-bg);color:var(--warn-text);border:0.5px solid var(--warn-border);margin-bottom:8px;font-weight:500;}
   .cache-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:99px;background:var(--success-bg);color:var(--success-text);border:0.5px solid var(--success-border);margin-bottom:8px;font-weight:500;}
-  .conf-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;margin-top:4px;border:0.5px solid transparent;cursor:help;}
-  .conf-ok  {background:var(--success-bg);color:var(--success-text);border-color:var(--success-border);}
-  .conf-warn{background:var(--warn-bg);color:var(--warn-text);border-color:var(--warn-border);}
-  .conf-bad {background:var(--bg2);color:var(--text3);border-color:var(--border);}
+  .conf-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--body);font-size:11px;font-weight:500;padding:2px 8px;border-radius:var(--radius-pill);margin-top:4px;border:0.5px solid transparent;cursor:help;}
+  .conf-ok  {background:#EAF5EE;color:#2D7D46;border-color:rgba(45,125,70,0.25);}
+  .conf-warn{background:#FEF3C7;color:#B45309;border-color:rgba(180,83,9,0.25);}
+  .conf-bad {background:#FEE2E2;color:#B91C1C;border-color:rgba(185,28,28,0.25);}
   .conflict-alert{display:flex;align-items:center;gap:8px;margin-top:6px;padding:6px 10px;border-radius:var(--radius);font-size:11px;font-weight:500;flex-wrap:wrap;}
   .conflict-alert a{font-size:11px;opacity:0.8;text-decoration:none;color:inherit;}
   .conflict-alert a:hover{text-decoration:underline;}
@@ -294,7 +294,10 @@
   .recent-trip-sub{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono);letter-spacing:0.5px;}
 
   /* ── Plan edit bar (shown in results view) ──────────── */
-  .plan-edit-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:2px;}
+  .plan-edit-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:2px;flex-wrap:wrap;}
+  .route-hdr-chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+  .route-hdr-chip{font-family:var(--mono);font-size:10.5px;padding:2px 9px;border-radius:var(--radius-pill);background:var(--mist);color:var(--moss);text-transform:capitalize;}
+  .route-hdr-chip.pace{background:transparent;border:0.5px solid var(--border2);color:var(--text3);}
 
   /* ── Route result card header ───────────────────────── */
   .route-result-hdr{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:14px 18px 12px;border-bottom:0.5px solid var(--border);margin:-1.25rem -1.25rem 14px;}
@@ -411,12 +414,14 @@
       </div>
     </div>
 
-    <!-- Compact "edit search" bar — shown only when results are visible -->
+    <!-- Compact route header bar — shown only when results are visible -->
     <div id="planEditBar" style="display:none;margin-bottom:10px">
       <div class="plan-edit-bar">
-        <i class="ph ph-pencil-simple" style="color:var(--text3);font-size:14px;flex-shrink:0"></i>
-        <span id="planEditBarLabel" style="flex:1;font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
-        <button class="btn" style="font-size:11px;padding:4px 10px" onclick="openPlanSearch()">Edit search</button>
+        <i class="ph ph-map-trifold" style="color:var(--text3);font-size:14px;flex-shrink:0"></i>
+        <span id="planEditBarLabel" style="font-family:var(--mono);font-size:13.5px;letter-spacing:0.2px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
+        <span id="planEditBarChips" class="route-hdr-chips"></span>
+        <span style="flex:1"></span>
+        <button class="btn" style="font-size:11px;padding:4px 10px" onclick="openPlanSearch()"><i class="ph ph-pencil-simple"></i> Edit</button>
         <button class="btn" style="font-size:11px;padding:4px 10px" onclick="planRoute()">Re-run ↗</button>
       </div>
     </div>
@@ -1808,9 +1813,15 @@ function _collapseSearchForm(from, to) {
   const form = document.getElementById('planSearchForm');
   const bar  = document.getElementById('planEditBar');
   const lbl  = document.getElementById('planEditBarLabel');
+  const chips= document.getElementById('planEditBarChips');
   if (form) form.style.display = 'none';
   if (bar)  bar.style.display  = 'block';
-  if (lbl)  lbl.textContent    = `${from} → ${to}`;
+  if (lbl)  lbl.textContent    = `${from.toLowerCase()} → ${to.toLowerCase()}`;
+  if (chips) {
+    const modeChips = (prefModes || []).map(m => `<span class="route-hdr-chip">${m}</span>`).join('');
+    const paceChip  = pace ? `<span class="route-hdr-chip pace">${pace}</span>` : '';
+    chips.innerHTML = modeChips + paceChip;
+  }
 }
 
 function openPlanSearch() {
