@@ -837,6 +837,7 @@ let pace  = 'slow';
 let prefModes = ['bus','train'];
 let lastSuggestion = null;
 let currentTripId  = null;
+let myTripsFilter  = 'all'; // My Trips filter tab: all|progress|planned|confirmed|draft
 let _autoRefreshPending = false; // true while a stale-cache background re-fetch is in flight
 let appSettings    = {};
 let currentUser    = null;
@@ -2715,11 +2716,11 @@ function renderMyTripsPanel() {
     const ls = t.legs || [];
     const allBooked = ls.length && ls.every(l => l.booked);
     const anyBooked = ls.some(l => l.booked);
-    if (allBooked)  return { label:'Confirmed',   cls:'confirmed', color:'#13213A' };
-    if (anyBooked)  return { label:'In progress', cls:'progress',  color:'#C9A84C' };
+    if (allBooked)  return { label:'Confirmed',   cls:'confirmed', color:'var(--moss)' };
+    if (anyBooked)  return { label:'In progress', cls:'progress',  color:'var(--gold)' };
     const hasStops = (t.stops||[]).some(s => s.name);
-    if (hasStops)   return { label:'Planned',     cls:'planned',   color:'#1E3A5C' };
-    return             { label:'Draft',        cls:'draft',     color:'#94A0B0' };
+    if (hasStops)   return { label:'Planned',     cls:'planned',   color:'var(--fern)' };
+    return             { label:'Draft',        cls:'draft',     color:'var(--text3)' };
   };
 
   if (!trips.length) {
@@ -2740,27 +2741,45 @@ function renderMyTripsPanel() {
     return;
   }
 
-  const rowsHtml = trips.map(t => {
+  // Tag every trip with its computed state, then derive filter counts.
+  const tagged = trips.map(t => ({ t, st: stateOf(t) }));
+  const counts = {
+    all:       tagged.length,
+    progress:  tagged.filter(x => x.st.cls === 'progress').length,
+    planned:   tagged.filter(x => x.st.cls === 'planned').length,
+    confirmed: tagged.filter(x => x.st.cls === 'confirmed').length,
+    draft:     tagged.filter(x => x.st.cls === 'draft').length,
+  };
+  const TABS = [
+    ['all','All'],['progress','In progress'],['planned','Planned'],
+    ['confirmed','Confirmed'],['draft','Draft'],
+  ];
+  const tabsHtml = TABS.map(([key,label]) =>
+    `<button class="mytrips-ftab${myTripsFilter===key?' active':''}" onclick="setMyTripsFilter('${key}')">${label} (${counts[key]||0})</button>`
+  ).join('');
+
+  const visible = myTripsFilter === 'all' ? tagged : tagged.filter(x => x.st.cls === myTripsFilter);
+
+  const rowsHtml = visible.length ? visible.map(({ t, st }) => {
     const sc = t.stops?.length || 0;
     const route = sc >= 2 ? `${t.stops[0].name||'?'} → ${t.stops[sc-1].name||'?'}` : t.title||'Untitled';
     const sub   = [t.title, t.legs?.length ? t.legs.length + ' legs' : ''].filter(Boolean).join(' · ');
     const dates = t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : '—';
     const cost  = t.legs ? getCurrSym() + Math.round(t.legs.reduce((a,l)=>a+(+l.cost||0),0)) : '—';
     const dist  = t.legs ? Math.round(t.legs.reduce((a,l)=>a+(+l.km||0),0)) + ' km' : '—';
-    const st    = stateOf(t);
     const isAct = t.id === currentTripId;
     const safeT = JSON.stringify(t).replace(/"/g,'&quot;');
     return `<div class="mytrips-table-row" onclick="loadTrip(${safeT})">
       <div>
-        <div class="mytrips-row-title">${route}${isAct?' <span style="font-size:11px;color:var(--fern)">●</span>':''}</div>
+        <div class="mytrips-row-title">${route}${isAct?' <span style="font-size:11px;color:var(--sage)">●</span>':''}</div>
         <div class="mytrips-row-sub">${sub}</div>
       </div>
       <div style="font-size:12px;color:var(--text2);font-family:var(--mono)">${dates}</div>
       <div style="font-size:13px;color:var(--text2)">${sc} <span style="color:var(--text3);font-size:11px">· ${dist}</span></div>
       <div style="font-size:12px;color:var(--text2);font-family:var(--mono)">${cost}</div>
-      <span class="status-pill" style="border:0.5px solid ${st.color};color:${st.color};background:${st.color}14">${st.label}</span>
+      <span class="status-pill" style="border:0.5px solid ${st.color};color:${st.color};background:color-mix(in srgb, ${st.color} 10%, transparent)">${st.label}</span>
     </div>`;
-  }).join('');
+  }).join('') : `<div style="padding:2.5rem 1rem;text-align:center;font-size:13px;color:var(--text3)">No ${myTripsFilter==='all'?'':myTripsFilter+' '}trips.</div>`;
 
   // Yearly stats
   const allLegs  = trips.flatMap(t => t.legs||[]);
@@ -2770,14 +2789,18 @@ function renderMyTripsPanel() {
     if (ds.length>=2) return a + Math.round((ds[ds.length-1]-ds[0])/864e5);
     return a;
   }, 0);
+  // CO₂ saved vs flying: overland ~0.04 kg/km, flight ~0.25 kg/km → ~0.21 kg/km saved.
+  const co2t = (totalKm * 0.21 / 1000);
+  const co2 = co2t >= 0.05 ? co2t.toFixed(1) : '—';
 
   el.innerHTML = `<div class="mytrips-hdr">
     <div>
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern)">Your journeys</div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage)">Your journeys</div>
       <div class="mytrips-serif-title">My <em>trips</em></div>
     </div>
     <button class="btn btn-primary" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New trip</button>
   </div>
+  <div class="mytrips-filter-tabs">${tabsHtml}</div>
   <div class="mytrips-table">
     <div class="mytrips-table-hdr">
       <span>Trip</span><span>Saved</span><span>Stops</span><span>Spent</span><span>Status</span>
@@ -2786,10 +2809,15 @@ function renderMyTripsPanel() {
   </div>
   <div class="mytrips-yearly">
     <div class="met"><div class="met-lbl">Trips</div><div class="met-val">${trips.length}</div></div>
-    <div class="met"><div class="met-lbl">Total km</div><div class="met-val">${totalKm.toLocaleString()} <span class="met-u">km</span></div></div>
+    <div class="met"><div class="met-lbl">Overland</div><div class="met-val">${totalKm.toLocaleString()} <span class="met-u">km</span></div></div>
     <div class="met"><div class="met-lbl">Days on road</div><div class="met-val">${totalDays||'—'}</div></div>
-    <div class="met"><div class="met-lbl">CO₂ saved</div><div class="met-val" style="font-size:13px;padding-top:4px;font-family:var(--mono)">vs flights</div></div>
+    <div class="met"><div class="met-lbl">CO₂ saved</div><div class="met-val">${co2} <span class="met-u">t vs flights</span></div></div>
   </div>`;
+}
+
+function setMyTripsFilter(f) {
+  myTripsFilter = f;
+  renderMyTripsPanel();
 }
 
 async function renderProfilePanel() {
