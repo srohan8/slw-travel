@@ -291,6 +291,12 @@
   .route-hdr-chip{font-family:var(--mono);font-size:10.5px;padding:2px 9px;border-radius:var(--radius-pill);background:var(--mist);color:var(--moss);text-transform:capitalize;}
   .route-hdr-chip.pace{background:transparent;border:0.5px solid var(--border2);color:var(--text3);}
 
+  /* ── Guest banner (cleaned-up flow) ─────────────────── */
+  .guest-banner{display:flex;align-items:center;gap:9px;padding:9px 14px;background:var(--mist);border:0.5px solid var(--success-border);border-radius:var(--radius);margin-bottom:14px;font-size:12.5px;color:var(--text);}
+  .guest-banner strong{font-weight:600;}
+  .guest-banner-cta{font-size:12px;font-weight:600;color:var(--cta-text);background:var(--sage);padding:5px 13px;border-radius:var(--radius-pill);text-decoration:none;white-space:nowrap;flex-shrink:0;}
+  .guest-banner-cta:hover{background:#E0440C;}
+
   /* ── Route result card header ───────────────────────── */
   .route-result-hdr{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:14px 18px 12px;border-bottom:0.5px solid var(--border);margin:-1.25rem -1.25rem 14px;}
   .route-result-title{font-family:var(--serif);font-size:22px;font-weight:300;color:var(--text);letter-spacing:-0.3px;}
@@ -396,6 +402,7 @@
   <!-- PLAN TAB -->
   <div id="plan" class="panel active">
     <div id="plan-usage" class="usage-bar" style="display:none"></div>
+    <div id="guestBanner" class="guest-banner" style="display:none"></div>
 
     <!-- Hero + landing (hidden when results shown) -->
     <div id="planLanding">
@@ -460,7 +467,7 @@
     </div>
     <div style="display:flex;gap:10px;align-items:center">
       <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
-      <span style="font-size:12px;color:var(--text3)">Free to use · Account required</span>
+      <span style="font-size:12px;color:var(--text3)">Free · 3 routes a month · no card</span>
     </div>
     </div><!-- end #planSearchForm -->
 
@@ -873,6 +880,7 @@ async function init() {
   loadCustomSitesIntoAFF();
   render();
   renderPlanLanding();
+  renderGuestBanner();
   updateUsageBars();
   updateCacheClearBtn();
   renderSavedTrips();
@@ -1005,6 +1013,35 @@ async function updateUsageBars() {
 async function checkAndGate(action) {
   // Always allow in LocalStorage mode
   return true;
+}
+
+// ── Guest free-route cap (cleaned-up flow: 3 demo routes/month, save needs account) ──
+const GUEST_FREE_ROUTES = 3;
+function guestRoutesUsed() {
+  const m = new Date().toISOString().slice(0, 7); // YYYY-MM
+  let g = storage.get('guestRoutes');
+  if (!g || g.month !== m) g = { month: m, count: 0 };
+  return g;
+}
+function bumpGuestRoutes() {
+  const g = guestRoutesUsed();
+  g.count += 1;
+  storage.set('guestRoutes', g);
+  return g;
+}
+// Guest banner strip: "X of 3 free routes left · sign up to save"
+function renderGuestBanner() {
+  const el = document.getElementById('guestBanner');
+  if (!el) return;
+  if (currentUser) { el.style.display = 'none'; return; }
+  const g = guestRoutesUsed();
+  const left = Math.max(0, GUEST_FREE_ROUTES - g.count);
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <i class="ph ph-user-circle-dashed" style="font-size:15px;color:var(--moss);flex-shrink:0"></i>
+    <span><strong>${left} of ${GUEST_FREE_ROUTES} free routes</strong> left this month · sign up to save trips</span>
+    <span style="flex:1"></span>
+    <a href="auth.html?return=planner" class="guest-banner-cta">Create free account →</a>`;
 }
 
 // ── Trip saving ───────────────────────────────────────────────────
@@ -1657,6 +1694,7 @@ function switchTab(id, el) {
   if (id === 'mytrips')  { renderMyTripsPanel(); }
   if (id === 'profile')  { renderProfilePanel(); }
   if (id === 'plan' && !lastSuggestion) { renderPlanLanding(); }
+  if (id === 'plan')     { renderGuestBanner(); }
 }
 
 // ── Plan tab ──────────────────────────────────────────────────────
@@ -1676,22 +1714,25 @@ async function planRoute() {
   const to   = document.getElementById('pTo').value.trim();
   if (!from || !to) { alert('Please enter start and end.'); return; }
 
-  // ── Auth gate ─────────────────────────────────────────────────────
+  // ── Guest free-route cap (cleaned-up flow: 3 free demo routes, save needs account) ──
   if (!currentUser) {
-    const lg = document.getElementById('planLandingGrid');
-    if (lg) lg.style.display = 'none';
-    const hl = document.getElementById('planLanding');
-    if (hl) hl.style.display = 'none';
-    _collapseSearchForm(from, to);
-    document.getElementById('planResult').style.display = 'block';
-    document.getElementById('planSummaryStrip').style.display = 'none';
-    document.getElementById('planResult').innerHTML = `<div class="gate-msg">
-      <div style="font-size:36px;margin-bottom:12px">🦥</div>
-      <h3>Sign in to plan routes</h3>
-      <p>Create a free account to get AI-suggested overland routes, save trips, and share community notes.</p>
-      <a href="auth.html" class="btn btn-primary" style="text-decoration:none;display:inline-block">Sign in / Register →</a>
-    </div>`;
-    return;
+    const g = guestRoutesUsed();
+    if (g.count >= GUEST_FREE_ROUTES) {
+      const lg = document.getElementById('planLandingGrid'); if (lg) lg.style.display = 'none';
+      const hl = document.getElementById('planLanding');     if (hl) hl.style.display = 'none';
+      _collapseSearchForm(from, to);
+      document.getElementById('planResult').style.display = 'block';
+      document.getElementById('planSummaryStrip').style.display = 'none';
+      document.getElementById('planResult').innerHTML = `<div class="gate-msg">
+        <div style="font-size:36px;margin-bottom:12px">🦥</div>
+        <h3>That's your ${GUEST_FREE_ROUTES} free routes this month</h3>
+        <p>Create a free account to keep planning, save trips, and share community notes.</p>
+        <a href="auth.html?return=planner" class="btn btn-primary" style="text-decoration:none;display:inline-block">Create free account →</a>
+      </div>`;
+      return;
+    }
+    bumpGuestRoutes();
+    renderGuestBanner();
   }
 
   const allowed = await checkAndGate('routePlans');
