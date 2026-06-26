@@ -877,6 +877,11 @@ async function init() {
     window.location.href = 'index.html'; return;
   }
 
+  // Demo data: ?seed=1 loads sample trips/route/notes; ?seed=clear wipes them.
+  const seedParam = params.get('seed');
+  if (seedParam === 'clear') clearDemoData();
+  else if (seedParam) seedDemoData();
+
   loadCustomSitesIntoAFF();
   render();
   renderPlanLanding();
@@ -1042,6 +1047,79 @@ function renderGuestBanner() {
     <span><strong>${left} of ${GUEST_FREE_ROUTES} free routes</strong> left this month · sign up to save trips</span>
     <span style="flex:1"></span>
     <a href="auth.html?return=planner" class="guest-banner-cta">Create free account →</a>`;
+}
+
+// ── Demo data seeder (visit app.html?seed=1 to load, ?seed=clear to wipe) ──
+function seedDemoData() {
+  const day = 864e5, base = Date.now();
+  const d = (offset) => new Date(base + offset * day).toISOString().slice(0, 10);
+  const stop = (name, date, days, accomNote) => ({ name, date, days, accomSites: ['Booking.com', 'Hostelworld'], accomNote: accomNote || '', accomBooked: false });
+  const leg = (mode, cost, km, hours, notes, booked, confidence) => ({
+    mode, cost, km, hours, notes: notes || '', booked: !!booked, bookingRef: booked ? 'BK-' + Math.floor(1000 + km) : '', bookingUrl: '',
+    bookingSites: mode === 'train' ? ['Trainline'] : ['Busbud'], infoSites: [], legRegion: '', confidence: confidence || 'verified', conflict: null,
+  });
+  const trips = [
+    { id: 'demo-silk', title: 'Silk Road 2026', currency: 'USD', budget: '1200', notes: 'The big overland push east.',
+      stops: [ stop('Istanbul', d(-40), 3, 'Stay in Sultanahmet, hostels from $12'), stop('Tbilisi', d(-35), 4, 'Old town guesthouses'), stop('Baku', d(-30), 2), stop('Tashkent', d(-26), 3), stop('Kashgar', d(-21), 2), stop('Kathmandu', d(-15), 5, 'Thamel, hostels from $8') ],
+      legs: [ leg('bus', 32, 1500, 22, 'Night bus, book a day ahead', true, 'verified'), leg('train', 28, 550, 9, 'Scenic mountain line', true, 'verified'), leg('ferry', 45, 380, 14, 'Caspian cargo ferry — schedule is loose', true, 'check'), leg('train', 60, 2000, 30, 'Long haul, bring snacks', true, 'verified'), leg('shared taxi', 40, 1100, 20, 'Border crossing can be slow', true, 'check') ],
+      updated_at: new Date(base - 2 * day).toISOString() },
+    { id: 'demo-oslo', title: 'Oslo long weekend', currency: 'EUR', budget: '350', notes: '',
+      stops: [ stop('Oslo', d(5), 1), stop('Stockholm', d(6), 2), stop('Helsinki', d(8), 1) ],
+      legs: [ leg('train', 55, 520, 6, 'Comfortable day train', true, 'verified'), leg('ferry', 70, 400, 16, 'Overnight Baltic ferry', false, 'verified') ],
+      updated_at: new Date(base - 1 * day).toISOString() },
+    { id: 'demo-lisbon', title: '', currency: 'EUR', budget: '400', notes: '',
+      stops: [ stop('Lisbon', d(40), 2), stop('Tarifa', d(42), 1), stop('Tangier', d(43), 2), stop('Marrakech', d(45), 3) ],
+      legs: [ leg('train', 35, 680, 8, '', false, 'verified'), leg('ferry', 40, 30, 1, 'Fast ferry across the strait', false, 'verified'), leg('train', 25, 580, 10, 'ONCF night train', false, 'check') ],
+      updated_at: new Date(base - 5 * day).toISOString() },
+    { id: 'demo-hanoi', title: '', currency: 'USD', budget: '300', notes: '',
+      stops: [ stop('Hanoi', d(60), 2), stop('Hue', d(62), 1), stop('Da Nang', d(63), 2), stop('Bangkok', d(66), 3) ],
+      legs: [ leg('train', 22, 690, 13, 'Reunification Express', true, 'verified'), leg('bus', 6, 110, 3, '', false, 'verified'), leg('bus', 30, 1200, 24, 'Cross-border to Thailand', false, 'check') ],
+      updated_at: new Date(base - 8 * day).toISOString() },
+    { id: 'demo-tbilisi', title: 'Caucasus idea', currency: 'USD', budget: '', notes: '',
+      stops: [ stop('', '', 0), stop('', '', 0) ], legs: [],
+      updated_at: new Date(base - 12 * day).toISOString() },
+  ];
+  storage.set('trips', trips);
+
+  // Cached route so "Suggest route" for Istanbul → Kathmandu returns instantly (no AI call).
+  const cacheData = {
+    summary: 'A classic overland crossing from Europe into the Himalaya — ferries across the Caspian, trains over the steppe, and a final shared-taxi push to Kathmandu.',
+    warnings: ['Azerbaijan & Uzbekistan need visas — arrange before you travel', 'Caspian ferry has no fixed timetable'],
+    stops: [
+      { name: 'Istanbul', days: 3, accom_sites: ['Booking.com', 'Hostelworld'], accom_note: 'Stay in Sultanahmet, hostels from $12', notes: 'Catch the sunset over the Bosphorus' },
+      { name: 'Tbilisi', days: 4, accom_sites: ['Booking.com'], accom_note: 'Old town guesthouses from $15', notes: 'Sulphur baths in Abanotubani' },
+      { name: 'Baku', days: 2, accom_sites: ['Booking.com'], accom_note: 'Stay near the old walled city' },
+      { name: 'Kathmandu', days: 5, accom_sites: ['Hostelworld', 'Agoda'], accom_note: 'Thamel, hostels from $8' },
+    ],
+    legs: [
+      { from: 'Istanbul', to: 'Tbilisi', mode: 'bus', hours: 22, cost_usd: 32, km: 1500, notes: 'Night bus, book a day ahead', leg_region: 'Caucasus', booking_sites: ['Busbud'], info_sites: [], confidence: 'verified', conflict: null },
+      { from: 'Tbilisi', to: 'Baku', mode: 'train', hours: 9, cost_usd: 28, km: 550, notes: 'Scenic overnight sleeper', leg_region: 'Caucasus', booking_sites: ['Trainline'], info_sites: [], confidence: 'verified', conflict: null },
+      { from: 'Baku', to: 'Kathmandu', mode: 'ferry', hours: 14, cost_usd: 45, km: 380, notes: 'Caspian cargo ferry then onward — verify schedule locally', leg_region: 'Central Asia', booking_sites: [], info_sites: ['Caravanistan'], confidence: 'check', conflict: { level: 'advisory', note: 'Check regional advisories before the Central Asia legs' } },
+    ],
+    total_days: 14, total_cost_usd: 105,
+  };
+  setCachedRoute(buildCacheKey('Istanbul', 'Kathmandu', '', '', 'slow', ['bus', 'train']), cacheData, 'Istanbul', 'Kathmandu');
+
+  // Community notes on a couple of legs
+  const contribs = {
+    'Istanbul→Tbilisi': [
+      { id: 'c1', kind: 'price', text: 'Paid 28 USD in March, not 32 — prices drop midweek.', author: 'marco_t', when: '2 days ago', votes: 9, confirmed_count: 3 },
+      { id: 'c2', kind: 'tip', text: 'Sit on the right side for the Black Sea coast views.', author: 'lena', when: '1 week ago', votes: 14, confirmed_count: 6 },
+    ],
+    'Baku→Kathmandu': [
+      { id: 'c3', kind: 'schedule', text: 'Ferry left a day late both times I crossed — keep 2 buffer days.', author: 'sam', when: '3 days ago', votes: 21, confirmed_count: 11 },
+      { id: 'c4', kind: 'border', text: 'Have USD cash for the visa-on-arrival; cards often fail.', author: 'priya', when: '5 days ago', votes: 17, confirmed_count: 8 },
+    ],
+  };
+  localStorage.setItem('slw_contribs', JSON.stringify(contribs));
+
+  storage.set('guestRoutes', { month: new Date().toISOString().slice(0, 7), count: 1 });
+}
+
+function clearDemoData() {
+  storage.set('trips', []);
+  localStorage.removeItem('slw_contribs');
+  localStorage.removeItem('guestRoutes');
 }
 
 // ── Trip saving ───────────────────────────────────────────────────
