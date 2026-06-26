@@ -323,7 +323,10 @@
   .contrib-votes-n{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text2);}
 
   /* ── Contribute modal ───────────────────────────────── */
-  .contrib-modal-overlay{position:fixed;inset:0;background:rgba(13,18,13,0.45);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding-top:60px;animation:fadeIn .2s ease;}
+  .contrib-modal-overlay{position:fixed;inset:0;background:rgba(9,16,34,0.45);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding-top:60px;animation:fadeIn .2s ease;}
+  .guest-gate-ribbon{background:var(--mist);padding:8px 18px;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;}
+  .oauth-btn-sm{flex:1;padding:9px 0;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .15s;}
+  .oauth-btn-sm:hover{background:var(--bg2);}
   .contrib-modal{width:640px;max-width:calc(100vw - 2rem);background:var(--bg);border-radius:var(--radius-lg);border:0.5px solid var(--border2);box-shadow:0 28px 70px rgba(13,18,13,0.35);overflow:hidden;max-height:calc(100vh - 80px);display:flex;flex-direction:column;}
   .contrib-modal-hdr{background:var(--dusk);color:var(--cream);padding:16px 22px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
   .contrib-modal-ctx{padding:14px 22px;background:var(--bg2);border-bottom:0.5px solid var(--border);display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;flex-shrink:0;}
@@ -2497,7 +2500,42 @@ function contribConfirm(e, noteId, legKey) {
 // ── Contribute modal ──────────────────────────────────────────────────
 let _contribModalState = { legIdx:0, legKey:'', kind:'tip', source:'I did this leg' };
 
+// 11 · Guest contribute gate — intercept guests tapping "Add a note"
+function showGuestContributeGate(legIdx, legKey) {
+  const el = document.getElementById('contribModal');
+  el.style.display = 'block';
+  el.innerHTML = `<div class="contrib-modal-overlay" onclick="if(event.target===this)closeContribModal()">
+    <div class="contrib-modal" style="max-width:440px" onclick="event.stopPropagation()">
+      <div class="guest-gate-ribbon">
+        <span style="font-weight:600;color:var(--moss)">1 · Sign up</span>
+        <i class="ph ph-caret-right" style="font-size:10px;color:var(--text3)"></i>
+        <span style="color:var(--text3)">2 · Write note</span>
+        <i class="ph ph-caret-right" style="font-size:10px;color:var(--text3)"></i>
+        <span style="color:var(--text3)">3 · Admin review</span>
+      </div>
+      <div style="padding:22px 24px 24px">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
+          <span style="width:30px;height:30px;border-radius:8px;background:var(--mist);display:inline-flex;align-items:center;justify-content:center"><i class="ph ph-users-three" style="font-size:16px;color:var(--moss)"></i></span>
+          <div style="font-family:var(--serif);font-size:20px;font-weight:400;color:var(--text)">Add a traveller note</div>
+        </div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6;margin:4px 0 18px">Create a free account to contribute. Your note helps the next traveller — and goes to a quick admin review before it appears on the leg.</p>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button class="oauth-btn-sm" onclick="window.location.href='auth.html?return=planner'"><i class="ph ph-google-logo" style="font-size:14px"></i> Google</button>
+          <button class="oauth-btn-sm" onclick="window.location.href='auth.html?return=planner'"><i class="ph ph-apple-logo" style="font-size:14px"></i> Apple</button>
+        </div>
+        <input id="gateEmail" placeholder="you@email.com" style="width:100%;font-size:13.5px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);outline:none;font-family:var(--body);color:var(--text);margin-bottom:10px"/>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="window.location.href='auth.html?return=planner'">Create account &amp; continue →</button>
+        <div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border);display:flex;align-items:flex-start;gap:8px">
+          <i class="ph ph-shield-check" style="font-size:14px;color:var(--sage);margin-top:1px;flex-shrink:0"></i>
+          <span style="font-size:11.5px;color:var(--text3);line-height:1.55">Every submission is reviewed before publishing. We never post automatically and we don't share your email.</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function showContribModal(legIdx, legKey) {
+  if (!currentUser) { showGuestContributeGate(legIdx, legKey); return; }
   const from = stops[legIdx]?.name || legKey.split('→')[0] || '?';
   const to   = stops[legIdx+1]?.name || legKey.split('→')[1] || '?';
   const leg  = getLeg(legIdx);
