@@ -297,6 +297,17 @@
   .guest-banner-cta{font-size:12px;font-weight:600;color:var(--cta-text);background:var(--sage);padding:5px 13px;border-radius:var(--radius-pill);text-decoration:none;white-space:nowrap;flex-shrink:0;}
   .guest-banner-cta:hover{background:#E0440C;}
 
+  /* ── Floating route map widget ──────────────────────── */
+  .route-map-widget{position:fixed;bottom:20px;right:20px;width:320px;z-index:40;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);box-shadow:var(--shadow-float);overflow:hidden;}
+  .route-map-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--dusk);}
+  .route-map-hdr .rm-title{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .route-map-hdr .rm-min{cursor:pointer;color:rgba(255,255,255,0.7);font-size:14px;}
+  .route-map-hdr .rm-min:hover{color:var(--cream);}
+  .route-map-body{position:relative;}
+  .route-map-resize{position:absolute;top:0;left:0;width:16px;height:16px;cursor:nwse-resize;z-index:2;}
+  .route-map-widget.min .route-map-body{display:none;}
+  @media(max-width:600px){.route-map-widget{display:none !important;}}
+
   /* ── Route result card header ───────────────────────── */
   .route-result-hdr{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:14px 18px 12px;border-bottom:0.5px solid var(--border);margin:-1.25rem -1.25rem 14px;}
   .route-result-title{font-family:var(--serif);font-size:22px;font-weight:300;color:var(--text);letter-spacing:-0.3px;}
@@ -479,6 +490,7 @@
     <!-- Summary strip (shown with results) -->
     <div id="planSummaryStrip" style="display:none"></div>
     <div id="planResult" class="result-box" style="display:none"></div>
+    <div id="routeMapWidget" class="route-map-widget" style="display:none"></div>
   </div>
 
   <!-- RECORD TAB -->
@@ -1773,6 +1785,10 @@ function switchTab(id, el) {
   if (id === 'profile')  { renderProfilePanel(); }
   if (id === 'plan' && !lastSuggestion) { renderPlanLanding(); }
   if (id === 'plan')     { renderGuestBanner(); }
+  // Floating route map only belongs on the plan tab while results are shown.
+  const resultsVisible = document.getElementById('planResult')?.style.display === 'block';
+  if (id === 'plan' && lastSuggestion && resultsVisible) showRouteMap(lastSuggestion);
+  else hideRouteMap();
 }
 
 // ── Plan tab ──────────────────────────────────────────────────────
@@ -1954,6 +1970,7 @@ function openPlanSearch() {
   if (lg) lg.style.display = 'block';
   document.getElementById('planResult').style.display       = 'none';
   document.getElementById('planSummaryStrip').style.display = 'none';
+  hideRouteMap();
 }
 
 const CONF = {
@@ -1967,6 +1984,108 @@ const CONFLICT_LEVELS = {
   tension:  { label:'Exercise caution', cls:'conflict-tension',  icon:'ph-info' },
   advisory: { label:'Travel advisory',  cls:'conflict-advisory', icon:'ph-info' },
 };
+
+// ── Floating route map widget (results page) ──────────────────────────
+// [lon, lat] for common overland cities; unknown routes fall back to a clean
+// left-to-right schematic so the widget always renders.
+const CITY_COORDS = {
+  istanbul:[28.98,41.01], ankara:[32.85,39.93], tbilisi:[44.79,41.72], baku:[49.87,40.41],
+  yerevan:[44.51,40.18], tashkent:[69.24,41.31], samarkand:[66.98,39.65], bishkek:[74.59,42.87],
+  almaty:[76.95,43.24], kashgar:[75.99,39.47], kunming:[102.83,24.88], lhasa:[91.17,29.65],
+  kathmandu:[85.32,27.71], pokhara:[83.99,28.21], delhi:[77.21,28.61], tehran:[51.39,35.69],
+  yazd:[54.37,31.90], dubai:[55.27,25.20], oslo:[10.75,59.91], stockholm:[18.07,59.33],
+  helsinki:[24.94,60.17], copenhagen:[12.57,55.68], lisbon:[-9.14,38.72], madrid:[-3.70,40.42],
+  tarifa:[-5.60,36.01], tangier:[-5.83,35.76], marrakech:[-7.98,31.63], paris:[2.35,48.85],
+  munich:[11.58,48.14], vienna:[16.37,48.21], budapest:[19.04,47.50], bucharest:[26.10,44.43],
+  belgrade:[20.46,44.79], sofia:[23.32,42.70], hanoi:[105.83,21.03], hue:[107.58,16.46],
+  'da nang':[108.22,16.05], 'ho chi minh city':[106.66,10.78], bangkok:[100.50,13.76],
+  'phnom penh':[104.89,11.56], vientiane:[102.60,17.97], 'kuala lumpur':[101.69,3.14],
+  singapore:[103.82,1.35], london:[-0.13,51.51], berlin:[13.40,52.52], warsaw:[21.01,52.23],
+  moscow:[37.62,55.75], 'ulaanbaatar':[106.92,47.92], beijing:[116.41,39.90], tokyo:[139.69,35.69],
+  'cape town':[18.42,-33.92], 'dar es salaam':[39.28,-6.79], nairobi:[36.82,-1.29],
+  'addis ababa':[38.74,9.03], khartoum:[32.53,15.50], cairo:[31.24,30.04],
+};
+let _routeMapStops = null;
+
+function routeMapStops(d) {
+  const names = d.stops?.length ? d.stops.map(s => s.name)
+              : (d.legs?.length ? [d.legs[0].from, ...d.legs.map(l => l.to)] : []);
+  const clean = names.filter(Boolean);
+  if (clean.length < 2) return null;
+  const looked = clean.map(n => ({ n, c: CITY_COORDS[n.trim().toLowerCase()] }));
+  if (looked.every(k => k.c)) return looked.map(k => ({ label: k.n, lon: k.c[0], lat: k.c[1] }));
+  // Fallback: schematic left-to-right with a gentle arc
+  const N = clean.length;
+  return clean.map((n, i) => ({ label: n, lon: i, lat: Math.sin(i / Math.max(1, N - 1) * Math.PI) * 0.6 }));
+}
+
+function buildRouteMapSvg(stops, VW, VH) {
+  const lons = stops.map(s => s.lon), lats = stops.map(s => s.lat);
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const sLon = (maxLon - minLon) || 10, sLat = (maxLat - minLat) || 6;
+  const pLon = sLon * 0.16, pLat = sLat * 0.30, px = 34, py = 26;
+  const sx = lon => ((lon - minLon + pLon) / (sLon + 2 * pLon)) * (VW - 2 * px) + px;
+  const sy = lat => ((maxLat + pLat - lat) / (sLat + 2 * pLat)) * (VH - 2 * py) + py;
+  const pts = stops.map(s => ({ ...s, x: sx(s.lon), y: sy(s.lat) }));
+  const poly = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const route = '#FF5014', ink = '#13213A';
+  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" height="${VH}" preserveAspectRatio="xMidYMid slice" style="display:block;background:#F0EAE7">
+    <defs><pattern id="rmGrid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0 L0 0 0 34" fill="none" stroke="rgba(14,26,46,0.07)" stroke-width="0.5"/></pattern></defs>
+    <rect width="${VW}" height="${VH}" fill="url(#rmGrid)"/>
+    <polyline points="${poly}" fill="none" stroke="rgba(255,80,20,0.20)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="${poly}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="${poly}" fill="none" stroke="${route}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pts.map((p, i) => { const end = i === 0 || i === pts.length - 1; const ty = (i % 2 === 0 ? p.y - 11 : p.y + 16).toFixed(1);
+      return `<g><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="#fff" stroke="${end ? ink : route}" stroke-width="2"/><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.5" fill="${end ? ink : route}"/><text x="${p.x.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="9.5" font-weight="600" fill="#0E1A2E" font-family="system-ui" style="paint-order:stroke;stroke:#F0EAE7;stroke-width:3px;stroke-linejoin:round">${p.label}</text></g>`; }).join('')}
+  </svg>`;
+}
+
+function showRouteMap(d) {
+  const el = document.getElementById('routeMapWidget');
+  if (!el) return;
+  const stops = routeMapStops(d);
+  if (!stops) { hideRouteMap(); return; }
+  _routeMapStops = stops;
+  const w = el._w || 320, h = el._h || 180;
+  el._w = w; el._h = h;
+  el.style.display = 'block';
+  el.style.width = w + 'px';
+  el.classList.remove('min');
+  el.innerHTML = `
+    <div class="route-map-hdr">
+      <i class="ph ph-map-trifold" style="font-size:13px;color:var(--sage)"></i>
+      <span class="rm-title">${stops[0].label} → ${stops[stops.length - 1].label}</span>
+      <i class="ph ph-minus rm-min" onclick="toggleRouteMapMin()" title="Minimise"></i>
+    </div>
+    <div class="route-map-body">
+      <div class="route-map-resize" onmousedown="routeMapResizeStart(event)" title="Drag to resize"></div>
+      ${buildRouteMapSvg(stops, w, h)}
+    </div>`;
+}
+function hideRouteMap() { const el = document.getElementById('routeMapWidget'); if (el) el.style.display = 'none'; }
+function toggleRouteMapMin() {
+  const el = document.getElementById('routeMapWidget');
+  el.classList.toggle('min');
+  const ic = el.querySelector('.rm-min');
+  if (ic) ic.className = 'ph ' + (el.classList.contains('min') ? 'ph-plus' : 'ph-minus') + ' rm-min';
+}
+function routeMapResizeStart(e) {
+  e.preventDefault();
+  const el = document.getElementById('routeMapWidget');
+  const x0 = e.clientX, y0 = e.clientY, w0 = el._w || el.offsetWidth, h0 = el._h || 180;
+  const mv = (ev) => {
+    // Anchored bottom-right: dragging the top-left handle up/left grows the widget.
+    const w = Math.max(220, Math.min(560, w0 - (ev.clientX - x0)));
+    const h = Math.max(120, Math.min(480, h0 - (ev.clientY - y0)));
+    el._w = w; el._h = h; el.style.width = w + 'px';
+    const body = el.querySelector('.route-map-body');
+    if (body) body.innerHTML = `<div class="route-map-resize" onmousedown="routeMapResizeStart(event)" title="Drag to resize"></div>` + buildRouteMapSvg(_routeMapStops, w, h);
+  };
+  const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); };
+  document.addEventListener('mousemove', mv);
+  document.addEventListener('mouseup', up);
+}
 
 function renderConfidenceBadge(confidence) {
   const c = CONF[confidence] || CONF.uncertain;
@@ -2091,6 +2210,7 @@ function renderPlanSuggestion(d, fromCache = false) {
     </button>
   </div>`;
   document.getElementById('planResult').innerHTML = h;
+  showRouteMap(d);
 }
 
 function adoptRoute() {
