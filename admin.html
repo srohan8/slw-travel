@@ -3,28 +3,26 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Admin — SLW Travel</title>
+<title>bysloth · Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Albert+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede9;
-    --text: #1a1a18; --text2: #6b6b67; --text3: #a0a09c;
-    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
-    --green: #1D9E75; --radius: 8px; --radius-lg: 12px;
-    --info-bg: #e6f1fb; --info-text: #0c447c;
-    --success-bg: #eaf3de; --success-text: #27500a;
-    --danger-bg: #fcebeb; --danger-text: #791f1f;
+    /* bysloth · Signal theme (production) */
+    --moss:#13213A; --fern:#1E3A5C; --sage:#FF5014; --cream:#FFFFFF; --dusk:#091022;
+    --bg: #FFFFFF; --bg2: #FAF6F4; --bg3: #F8F4F2;
+    --text: #0E1A2E; --text2: #2C4060; --text3: #94A0B0;
+    --border: rgba(14,26,46,0.15); --border2: rgba(14,26,46,0.30);
+    --green: #FF5014; --cta-text:#FFFFFF; --radius: 10px; --radius-lg: 16px; --radius-pill:9999px;
+    --info-bg: #FFE8E0; --info-text: #9A2800;
+    --success-bg: #FFE8E0; --success-text: #9A2800;
+    --danger-bg: #FDF0EC; --danger-text: #8B2A00;
     --warn-bg: #faeeda; --warn-text: #633806;
+    --serif:'Sora',system-ui,sans-serif; --body:'Albert Sans',system-ui,sans-serif; --mono:'JetBrains Mono','Courier New',monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1e1e1c; --bg2: #28281f; --bg3: #1a1a18;
-      --text: #e8e8e0; --text2: #9a9a90; --text3: #606058;
-      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
-    }
-  }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  html { color-scheme: light; }
+  body { font-family: var(--body); background: var(--bg3); color: var(--text); min-height: 100vh; }
 
   /* Lock screen */
   #lock { position: fixed; inset: 0; background: var(--bg3); display: flex; align-items: center; justify-content: center; z-index: 100; }
@@ -33,8 +31,8 @@
   .lock-card p { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
   .lock-card input { width: 100%; font-size: 14px; padding: 8px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); outline: none; font-family: inherit; margin-bottom: 10px; }
   .lock-card input:focus { border-color: var(--green); }
-  .btn { font-size: 13px; padding: 8px 16px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: transparent; color: var(--text); cursor: pointer; font-family: inherit; }
-  .btn-green { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn { font-size: 13px; padding: 8px 16px; border-radius: var(--radius-pill); border: 0.5px solid var(--border2); background: transparent; color: var(--text); cursor: pointer; font-family: var(--body); }
+  .btn-green { background: var(--green); color: var(--cta-text); border-color: var(--green); font-weight: 700; }
   .btn-green:hover { opacity: 0.9; }
   .btn:hover { background: var(--bg2); }
   .btn-full { width: 100%; }
@@ -42,9 +40,11 @@
 
   /* Main layout */
   #main { display: none; }
-  nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-bottom: 0.5px solid var(--border); background: var(--bg); }
-  .logo { font-size: 16px; font-weight: 500; }
-  .logo span { color: var(--green); }
+  nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 22px; background: var(--dusk); position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 12px rgba(14,26,46,0.18); }
+  .logo { font-family: var(--body); font-size: 20px; font-weight: 500; color: var(--cream); letter-spacing: -0.6px; }
+  .logo span { color: var(--sage); }
+  nav .btn { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.22); }
+  nav .btn:hover { background: rgba(255,255,255,0.14); color: var(--cream); }
   .nav-right { display: flex; gap: 8px; align-items: center; }
   .container { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem; }
   h1 { font-size: 20px; font-weight: 500; margin-bottom: .25rem; }
@@ -98,7 +98,7 @@
 <div id="lock">
   <div class="lock-card">
     <h2>Admin access</h2>
-    <p>slwtravel.com control panel</p>
+    <p>bysloth control panel</p>
     <input type="password" id="adminPass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')unlock()"/>
     <button class="btn btn-green btn-full" onclick="unlock()">Unlock</button>
     <div class="err-msg" id="lockErr"></div>
@@ -108,7 +108,7 @@
 <!-- Main admin panel -->
 <div id="main">
   <nav>
-    <div class="logo"><span>SLW</span> Travel — Admin</div>
+    <div class="logo">bysloth <span>· Admin</span></div>
     <div class="nav-right">
       <a href="/app.html" class="btn">View app</a>
       <button class="btn" onclick="lock()">Lock</button>
