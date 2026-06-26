@@ -51,7 +51,10 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 
 /* ── Hero ─────────────────────────────────────────────────────── */
 .hero {
-  background:var(--dusk); color:var(--cream);
+  background:
+    linear-gradient(to right, rgba(9,16,34,0.90) 45%, rgba(9,16,34,0.45) 100%),
+    url('public/hero-collage.jpg') center/cover no-repeat;
+  color:var(--cream);
   padding:60px 0 52px; position:relative; overflow:hidden;
 }
 .hero-inner { max-width:860px; margin:0 auto; padding:0 1.25rem; position:relative; z-index:1; }
@@ -100,6 +103,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .hero-stat-n { font-family:var(--serif); font-size:28px; font-weight:300; color:var(--cream); letter-spacing:-0.5px; }
 .hero-stat-l { font-size:11px; color:rgba(255,255,255,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
 @media(max-width:600px){ .hero-stats{grid-template-columns:repeat(2,1fr);gap:10px;} .hero-stat{border:none;padding:0;} }
+@media(max-width:640px){ .hero-photo-col{display:none;} }
 
 /* ── Demo search strip ─────────────────────────────────────────── */
 .demo-strip-wrap { max-width:860px; margin:-28px auto 0; padding:0 1.25rem; position:relative; z-index:2; }
@@ -126,6 +130,12 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   color:var(--text2); cursor:pointer; font-family:var(--body); transition:border-color .15s;
 }
 .demo-chip:hover { border-color:var(--fern); color:var(--text); }
+.demo-pill {
+  font-size:11px; padding:4px 10px; border-radius:99px;
+  border:0.5px solid var(--border2); background:transparent;
+  color:var(--text3); cursor:pointer; font-family:var(--body); transition:all .15s;
+}
+.demo-pill.on { background:var(--sage); border-color:var(--sage); color:#fff; }
 @media(max-width:580px){ .demo-inputs{grid-template-columns:1fr; gap:8px;} }
 
 /* ── Content sections ─────────────────────────────────────────── */
@@ -317,7 +327,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 <!-- ── Marketing header ──────────────────────────────────────── -->
 <header class="mkt-nav">
   <a class="mkt-logo" href="#">
-    <img src="public/sloth-logo.svg" height="32" style="filter:brightness(0) invert(1);opacity:0.9"/>
+    <img src="public/bysloth.png" alt="" style="height:26px;width:auto;flex-shrink:0"/>
     <span class="mkt-logo-text">bysloth</span>
   </a>
   <div class="mkt-nav-links">
@@ -334,25 +344,18 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   <div class="hero-corner" style="left:22px;top:22px">lat 41.0082 · lon 28.9784 — Istanbul</div>
   <div class="hero-corner" style="right:22px;top:22px">v0.4 · private beta</div>
 
-  <!-- Decorative sloth -->
-  <div class="hero-sloth">
-    <img src="public/sloth-logo.svg" width="520" style="filter:brightness(0) saturate(100%) invert(62%) sepia(18%) saturate(400%) hue-rotate(70deg) brightness(95%)"/>
-  </div>
-
   <div class="hero-inner">
-    <div class="kicker">A planner for overland travel</div>
-    <h1 class="hero-h1">
-      Go the long way.<br>
-      <em>On purpose.</em>
-    </h1>
-    <p class="hero-sub">Trains, buses, ferries, shared taxis, the occasional hitch. bysloth maps a realistic overland route between any two cities — and is honest about the legs it isn't sure about.</p>
-
-    <div class="hero-cta">
-      <button class="hero-btn-primary" onclick="window.location='auth.html?tab=signup'">Plan your first route <span>→</span></button>
-      <button class="hero-btn-ghost" onclick="window.location='auth.html'">Sign in</button>
-      <span class="hero-free-lbl">Free · 3 routes/mo</span>
-    </div>
-
+        <div class="kicker">A planner for overland travel</div>
+        <h1 class="hero-h1">
+          Go the long way.<br>
+          <em>On purpose.</em>
+        </h1>
+        <p class="hero-sub">Trains, buses, ferries, shared taxis, the occasional hitch. bysloth maps a realistic overland route between any two cities — and is honest about the legs it isn't sure about.</p>
+        <div class="hero-cta">
+          <button class="hero-btn-primary" onclick="window.location='auth.html?tab=signup'">Plan your first route <span>→</span></button>
+          <button class="hero-btn-ghost" onclick="window.location='auth.html'">Sign in</button>
+          <span class="hero-free-lbl">Free · 3 routes/mo</span>
+        </div>
     <div class="hero-stats">
       <div class="hero-stat"><div class="hero-stat-n">2,140</div><div class="hero-stat-l">Verified overland legs</div></div>
       <div class="hero-stat"><div class="hero-stat-n">23</div><div class="hero-stat-l">Countries mapped</div></div>
@@ -374,7 +377,32 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
       <input class="demo-inp" id="demoTo"   value="Tokyo, Japan"     placeholder="To…"/>
       <button class="demo-btn" onclick="launchDemo()">Plan route →</button>
     </div>
-    <div class="demo-chips">
+    <!-- Options panel -->
+    <div id="demoOpts" style="margin-top:10px;border-top:0.5px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <button style="font-size:12px;color:var(--text3);background:none;border:none;cursor:default;font-family:var(--body);display:flex;align-items:center;gap:4px;padding:0;flex-shrink:0"><i class="ph ph-sliders" style="font-size:13px"></i> Options</button>
+        <div style="width:0.5px;height:14px;background:var(--border);flex-shrink:0"></div>
+        <div id="demoModePills" style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="demo-pill on" onclick="toggleDemoPill(this)">Bus</button>
+          <button class="demo-pill on" onclick="toggleDemoPill(this)">Train</button>
+          <button class="demo-pill" onclick="toggleDemoPill(this)">Hitchhike</button>
+          <button class="demo-pill" onclick="toggleDemoPill(this)">Ferry</button>
+          <button class="demo-pill" onclick="toggleDemoPill(this)">Shared taxi</button>
+          <button class="demo-pill" onclick="toggleDemoPill(this)">Walking</button>
+        </div>
+        <div style="width:0.5px;height:14px;background:var(--border);flex-shrink:0"></div>
+        <div id="demoPacePills" style="display:flex;gap:5px">
+          <button class="demo-pill on" onclick="toggleDemoPacePill(this)">Slow</button>
+          <button class="demo-pill" onclick="toggleDemoPacePill(this)">Moderate</button>
+          <button class="demo-pill" onclick="toggleDemoPacePill(this)">Fast</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;padding-left:77px">
+        <input class="demo-inp" id="demoBudget" placeholder="Budget e.g. $500" style="max-width:140px;font-size:12px;padding:7px 10px"/>
+        <input class="demo-inp" id="demoVia"    placeholder="Via (optional)"   style="max-width:150px;font-size:12px;padding:7px 10px"/>
+      </div>
+    </div>
+    <div class="demo-chips" style="margin-top:10px">
       <span style="font-size:11px;color:var(--text3);margin-right:4px">Or start with:</span>
       <span class="demo-chip" onclick="setDemoAndLaunch('Istanbul, Turkey','Kathmandu, Nepal')">Istanbul → Kathmandu</span>
       <span class="demo-chip" onclick="setDemoAndLaunch('Cape Town, South Africa','Cairo, Egypt')">Cape Town → Cairo</span>
@@ -544,7 +572,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 <div class="section section-gap-sm">
   <footer class="footer-inner" style="padding:20px 0 40px;border-top:0.5px solid var(--border)">
     <div style="display:flex;align-items:center;gap:8px">
-      <svg width="18" height="18" viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="16" rx="7" ry="6" fill="#1E3A5C" opacity="0.9"/><circle cx="14" cy="9" r="5" fill="#1E3A5C" opacity="0.9"/></svg>
+      <img src="public/bysloth.png" alt="" style="height:20px;width:auto;opacity:0.7"/>
       <span class="footer-logo">bysloth</span>
     </div>
     <div class="footer-links">
@@ -560,7 +588,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
     <!-- Left pitch -->
     <div class="auth-left">
       <div class="auth-left-logo">
-        <img src="public/sloth-logo.svg" height="30" style="filter:brightness(0) invert(1);opacity:0.85"/>
+        <img src="public/bysloth.png" alt="" style="height:24px;width:auto;flex-shrink:0"/>
         <span>bysloth</span>
       </div>
       <div style="position:relative;z-index:1;margin-top:auto;margin-bottom:36px">
@@ -572,9 +600,6 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
           <div><div class="auth-trust-n">18,600</div><div class="auth-trust-l">Notes verified</div></div>
           <div><div class="auth-trust-n">23</div><div class="auth-trust-l">Countries live</div></div>
         </div>
-      </div>
-      <div class="auth-bg-sloth">
-        <img src="public/sloth-logo.svg" width="320" style="filter:brightness(0) invert(1);opacity:0.1"/>
       </div>
       <button class="auth-close" onclick="closeAuth()">×</button>
     </div>
@@ -704,6 +729,13 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 
   function skipToApp() {
     window.location.href = 'app.html?guest=1';
+  }
+
+  // ── Demo pill toggles ─────────────────────────────────────────
+  function toggleDemoPill(btn) { btn.classList.toggle('on'); }
+  function toggleDemoPacePill(btn) {
+    btn.closest('#demoPacePills').querySelectorAll('.demo-pill').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
   }
 
   // ── Demo launch ───────────────────────────────────────────────

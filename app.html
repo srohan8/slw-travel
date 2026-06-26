@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Albert+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -60,6 +62,9 @@
   @media(max-width:500px){.nav-utils .btn:not(.btn-primary){display:none;}}
   @keyframes fadeIn { from {opacity:0; transform: translateY(5px);} to {opacity:1; transform: translateY(0);} }
   .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.2rem;box-shadow: var(--shadow);}
+  #planSearchForm.editing .card{margin-bottom:2px;}
+  #planSearchForm.editing ~ #planSummaryStrip .plan-summary-strip{margin-bottom:6px;}
+  #planSearchForm.editing ~ #planResult{margin-top:0.5rem;}
   .form-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;}
   .form-row:last-child{margin-bottom:0;}
   .lbl{font-size:12px;font-weight:600;color:var(--text2);min-width:80px;padding-top:5px;flex-shrink:0;text-transform: uppercase; letter-spacing: 0.05em;}
@@ -175,6 +180,36 @@
   .aff-table tr:hover td{background:var(--bg2);}
   .aff-cat{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--bg2);color:var(--text3);border:0.5px solid var(--border);font-weight:500;white-space:nowrap;}
   .aff-empty{color:var(--text3);font-size:13px;padding:1rem 0;text-align:center;}
+  /* ── Admin sub-tabs ── */
+  .admin-stab-bar{display:flex;gap:2px;margin-bottom:1.25rem;border-bottom:1px solid var(--border);padding-bottom:0;}
+  .admin-stab{font-size:13px;padding:8px 16px;border:none;background:none;cursor:pointer;font-family:var(--body);color:var(--text3);border-bottom:2.5px solid transparent;margin-bottom:-1px;transition:all .15s;font-weight:500;}
+  .admin-stab.on{color:var(--text);border-bottom-color:var(--sage);}
+  /* ── Review queue ── */
+  .rev-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+  .rev-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:2.5px;text-transform:uppercase;color:var(--fern);margin-bottom:5px;}
+  .rev-title{font-size:24px;font-weight:700;letter-spacing:-0.5px;color:var(--text);}
+  .rev-desc{font-size:13px;color:var(--text2);margin-top:5px;line-height:1.55;max-width:460px;}
+  .rev-stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .rev-stat{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px 16px;display:flex;align-items:baseline;gap:8px;}
+  .rev-stat-val{font-family:var(--serif);font-size:22px;font-weight:400;}
+  .rev-stat-lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);}
+  .rev-filter-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .rev-ftab{font-size:12px;padding:5px 13px;border-radius:var(--radius-pill);border:0.5px solid var(--border);background:transparent;cursor:pointer;font-family:var(--body);color:var(--text2);transition:all .15s;}
+  .rev-ftab.on{background:var(--fern);color:#fff;border-color:var(--fern);}
+  .rev-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;margin-bottom:10px;}
+  .rev-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .rev-kind{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase;font-weight:600;border-radius:var(--radius-pill);padding:3px 9px;}
+  .rev-route{font-size:12px;color:var(--text2);font-family:var(--mono);}
+  .rev-leg{font-size:12px;color:var(--text3);font-family:var(--mono);}
+  .rev-text{font-size:13.5px;line-height:1.6;color:var(--text);}
+  .rev-author-row{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .rev-author-str{font-family:var(--mono);font-size:11px;color:var(--text3);}
+  .rev-guest-pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--danger-text);border:0.5px solid var(--danger-border);border-radius:var(--radius-pill);padding:2px 8px;}
+  .rev-actions{display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
+  .rev-approve{font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:var(--radius-pill);background:var(--moss);color:#fff;border:none;cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+  .rev-reject{font-size:12.5px;padding:8px 16px;border-radius:var(--radius-pill);background:transparent;color:var(--danger-text);border:0.5px solid var(--danger-border);cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;}
+  .rev-edit{font-size:11px;padding:5px 12px;border-radius:var(--radius-pill);background:transparent;color:var(--text3);border:none;cursor:pointer;font-family:var(--body);text-align:center;}
+  .rev-empty{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:13px;}
   .avoid-notice{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--danger-bg);border:0.5px solid var(--danger-border);border-radius:var(--radius);margin-bottom:16px;}
   .avoid-notice p{font-size:13px;color:var(--danger-text);line-height:1.5;margin: 0;}
   .flight-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:12px;box-shadow: var(--shadow);transition: all 0.2s;}
@@ -197,6 +232,15 @@
   .leg-col .search-links{margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border);}
   .leg-col .stay-toggle{margin-top:2px;}
   @media(max-width:640px){.leg-grid{grid-template-columns:1fr;}}
+  .stop-diary{width:100%;border:none;background:transparent;resize:none;font-size:12px;color:var(--text2);font-family:var(--body);line-height:1.5;outline:none;padding:4px 0 0;margin-top:6px;min-height:36px;}
+  .stop-diary::placeholder{color:var(--text3);}
+  .stop-diary:focus{color:var(--text);}
+  .dot.v{border-color:var(--success-text);background:var(--success-text);}
+  .stop-vis-btn{background:none;border:1.5px solid var(--border2);border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:9px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;padding:0;color:transparent;line-height:1;}
+  .stop-vis-btn.on{border-color:var(--success-text);background:var(--success-text);color:#fff;}
+  .rec-vis-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-family:var(--mono);font-size:11px;color:var(--text3);}
+  .rec-vis-bar-track{flex:1;height:3px;background:var(--border);border-radius:99px;overflow:hidden;}
+  .rec-vis-bar-fill{height:100%;background:var(--success-text);border-radius:99px;transition:width .3s;}
 
   .save-trip-bar{display:flex;gap:8px;align-items:center;padding:10px 0;margin-bottom:.5rem;}
   .save-status{font-size:12px;color:var(--text3);}
@@ -260,13 +304,36 @@
   /* ── Leg col variant: white bg for trip detail cols ── */
   .leg-col-b{background:var(--bg);}
 
-  /* ── Plan hero card ─────────────────────────────────── */
-  .plan-hero{background:var(--dusk);color:var(--cream);border-radius:var(--radius-lg);padding:28px 32px;margin-bottom:1.25rem;position:relative;overflow:hidden;}
-  .plan-hero-kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);font-weight:400;}
-  .plan-hero-title{font-family:var(--serif);font-size:36px;font-weight:300;line-height:1.1;margin-top:8px;max-width:460px;letter-spacing:-0.5px;color:var(--cream);}
-  .plan-hero-title em{color:var(--sage);font-style:italic;}
-  .plan-hero-sub{color:rgba(255,255,255,0.55);font-size:13px;margin-top:10px;max-width:460px;line-height:1.5;}
-  .plan-hero-sloth{position:absolute;right:-20px;top:-10px;opacity:0.35;pointer-events:none;}
+  /* ── Plan hero — light editorial layout ─────────────── */
+  .plan-hero-new{text-align:center;padding:3.5rem 0 2rem;margin-bottom:0;}
+  .plan-hero-content{max-width:600px;margin:0 auto;}
+  .plan-hero-kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);font-weight:400;margin-bottom:10px;}
+  .plan-hero-title{font-family:var(--serif);font-size:42px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:var(--text);margin-bottom:0;}
+  .plan-hero-title em{color:var(--sage);font-style:normal;}
+  .plan-hero-sub{color:var(--text2);font-size:14px;line-height:1.6;max-width:480px;margin:12px auto 0;}
+  .plan-hero-photo-wrap{flex-shrink:0;width:44%;max-width:320px;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:4/3;box-shadow:var(--shadow-float);}
+  .plan-hero-photo{width:100%;height:100%;object-fit:cover;display:block;}
+  @media(max-width:640px){.plan-hero-new{flex-direction:column;padding:1.5rem 0 1rem;}.plan-hero-photo-wrap{width:100%;max-width:none;aspect-ratio:16/7;}}
+  /* ── Plan search card — new design ──────────────────── */
+  .psc-card{padding:0 !important;margin-bottom:0 !important;overflow:hidden;}
+  .psc-from-to{display:grid;grid-template-columns:1fr 40px 1fr;}
+  .psc-slot{padding:16px 20px;}
+  .psc-slot-lbl{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+  .psc-inp{width:100%;font-size:20px;font-weight:600;color:var(--text);border:none;background:transparent;outline:none;font-family:var(--body);letter-spacing:-0.3px;}
+  .psc-inp::placeholder{color:var(--text3);font-weight:400;}
+  .psc-arrow{display:flex;align-items:center;justify-content:center;}
+  .psc-arrow-circle{width:30px;height:30px;border-radius:50%;background:var(--bg2);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:14px;line-height:1;}
+  .psc-footer{border-top:0.5px solid var(--border);display:flex;flex-direction:column;}
+  .psc-footer-opts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;}
+  .psc-footer-cta{display:flex;align-items:center;justify-content:flex-end;padding:12px 16px;border-top:0.5px solid var(--border);}
+  .psc-opts-toggle{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:var(--body);display:flex;align-items:center;gap:4px;padding:2px 0;flex-shrink:0;}
+  .psc-opts-toggle:hover{color:var(--text);}
+  .psc-sep{width:0.5px;height:16px;background:var(--border);flex-shrink:0;}
+  .psc-budget{font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);padding:4px 10px;outline:none;font-family:var(--body);color:var(--text);}
+  #planOptions{display:none;flex-direction:column;gap:8px;flex:1;}
+  #planOptions.open{display:flex;}
+  .psc-chips-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .psc-inputs-row{display:flex;align-items:center;gap:8px;}
 
   /* ── Plan landing grid ──────────────────────────────── */
   .plan-landing-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:1.2rem;}
@@ -297,16 +364,30 @@
   .guest-banner-cta{font-size:12px;font-weight:600;color:var(--cta-text);background:var(--sage);padding:5px 13px;border-radius:var(--radius-pill);text-decoration:none;white-space:nowrap;flex-shrink:0;}
   .guest-banner-cta:hover{background:#E0440C;}
 
-  /* ── Floating route map widget ──────────────────────── */
-  .route-map-widget{position:fixed;bottom:20px;right:20px;width:320px;z-index:40;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);box-shadow:var(--shadow-float);overflow:hidden;}
-  .route-map-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--dusk);}
-  .route-map-hdr .rm-title{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .route-map-hdr .rm-min{cursor:pointer;color:rgba(255,255,255,0.7);font-size:14px;}
-  .route-map-hdr .rm-min:hover{color:var(--cream);}
-  .route-map-body{position:relative;}
-  .route-map-resize{position:absolute;top:0;left:0;width:16px;height:16px;cursor:nwse-resize;z-index:2;}
-  .route-map-widget.min .route-map-body{display:none;}
-  @media(max-width:600px){.route-map-widget{display:none !important;}}
+  /* ── Floating route map widget (Leaflet + OSM) ──────── */
+  #plannerMapWrap{position:fixed;right:18px;bottom:18px;z-index:900;width:360px;max-width:calc(100vw - 36px);border-radius:var(--radius-lg);border:0.5px solid var(--border);background:var(--bg);overflow:hidden;box-shadow:var(--shadow-float);display:none;transition:width .2s,height .2s,inset .2s,border-radius .2s;}
+  body.show-floating-map #plannerMapWrap{display:block;}
+  #plannerMapWrap .pmw-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;background:var(--dusk);border-bottom:0.5px solid rgba(255,255,255,0.08);}
+  #plannerMapWrap .pmw-title{font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+  #plannerMapWrap .pmw-head button{font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;padding:2px 6px;border-radius:4px;}
+  #plannerMapWrap .pmw-head button:hover{color:#fff;background:rgba(255,255,255,0.1);}
+  #plannerMap{height:280px;width:100%;position:relative;background:var(--bg2);}
+  #plannerMapMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;font-style:italic;z-index:500;pointer-events:none;background:var(--bg2);}
+  .pmw-resize{position:absolute;top:0;left:0;width:16px;height:16px;z-index:10;cursor:nwse-resize;touch-action:none;background:linear-gradient(135deg,transparent 0 6px,var(--text3) 6px 7px,transparent 7px 9px,var(--text3) 9px 10px,transparent 10px);opacity:0.55;transition:opacity .15s;}
+  .pmw-resize:hover{opacity:1;}
+  #plannerMapWrap.pmw-expanded .pmw-resize,#plannerMapWrap.pmw-pill .pmw-resize{display:none;}
+  body.pmw-resizing{user-select:none;cursor:nwse-resize !important;}
+  body.pmw-resizing *{pointer-events:none;}
+  #plannerMapWrap.pmw-expanded{width:auto;inset:5vh 5vw;right:5vw;bottom:5vh;box-shadow:0 16px 48px rgba(9,16,34,0.45);}
+  #plannerMapWrap.pmw-expanded #plannerMap{height:calc(90vh - 36px);}
+  #pmw-backdrop{display:none;position:fixed;inset:0;background:rgba(9,16,34,0.45);z-index:899;}
+  body.pmw-expanded-on #pmw-backdrop{display:block;}
+  #plannerMapWrap.pmw-pill{width:auto;height:auto;border-radius:99px;cursor:pointer;}
+  #plannerMapWrap.pmw-pill .pmw-head{border-bottom:none;padding:9px 14px;}
+  #plannerMapWrap.pmw-pill .pmw-title{font-size:12px;}
+  #plannerMapWrap.pmw-pill .pmw-btn-expand,#plannerMapWrap.pmw-pill .pmw-btn-min{display:none;}
+  #plannerMapWrap.pmw-pill #plannerMap{display:none;}
+  @media(max-width:600px){#plannerMapWrap{width:calc(100vw - 28px);right:14px;bottom:14px;}#plannerMap{height:42vh;max-height:300px;}.pmw-resize{display:none !important;}}
 
   /* ── Route result card header ───────────────────────── */
   .route-result-hdr{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:14px 18px 12px;border-bottom:0.5px solid var(--border);margin:-1.25rem -1.25rem 14px;}
@@ -316,7 +397,7 @@
   /* ── Alternating leg rows in planner results ────────── */
   .plan-leg-row{padding:14px 0 6px;border-bottom:0.5px dashed var(--border);}
   .plan-leg-row:last-of-type{border-bottom:none;}
-  .plan-leg-row.alt{background:rgba(14,26,46,0.03);margin:0 -1.25rem;padding:14px 1.25rem 6px;}
+  .plan-leg-row.alt{background:rgba(14,26,46,0.03);margin-right:-1.25rem;padding-right:1.25rem;}
 
   /* ── Plan summary strip ─────────────────────────────── */
   .plan-summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
@@ -392,7 +473,7 @@
 <body>
 
 <nav>
-  <a class="logo" href="#">bysloth</a>
+  <a class="logo" href="#" onclick="goHome();return false;"><img src="public/bysloth.png" alt="" style="height:28px;width:auto;flex-shrink:0"><span>bysloth</span></a>
   <div class="nav-utils">
     <button class="nav-link active" id="navbtn_plan"    onclick="switchTab('plan',this)">Planner</button>
     <button class="nav-link"        id="navbtn_mytrips" onclick="switchTab('mytrips',this)">My Trips</button>
@@ -417,13 +498,12 @@
 
     <!-- Hero + landing (hidden when results shown) -->
     <div id="planLanding">
-      <div class="plan-hero">
-        <div class="plan-hero-sloth">
-          <img src="public/sloth-logo.svg" width="260" style="filter:brightness(0) invert(1);opacity:0.3"/>
+      <div class="plan-hero-new">
+        <div class="plan-hero-content">
+          <div class="plan-hero-kicker">Overland planner · no flights, ever</div>
+          <div class="plan-hero-title">Where do you want<br>to go <em>slowly?</em></div>
+          <div class="plan-hero-sub">Trains, buses, ferries, hitchhikes. We'll map a realistic route and tell you which legs we're not sure about.</div>
         </div>
-        <div class="plan-hero-kicker">Overland planner · no flights, ever</div>
-        <div class="plan-hero-title">Where do you want<br>to go <em>slowly?</em></div>
-        <div class="plan-hero-sub">Trains, buses, ferries, hitchhikes. We'll map a realistic route and tell you which legs we're not sure about.</div>
       </div>
     </div>
 
@@ -434,51 +514,61 @@
         <span id="planEditBarLabel" style="font-family:var(--mono);font-size:13.5px;letter-spacing:0.2px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
         <span id="planEditBarChips" class="route-hdr-chips"></span>
         <span style="flex:1"></span>
-        <button class="btn" style="font-size:11px;padding:4px 10px" onclick="openPlanSearch()"><i class="ph ph-pencil-simple"></i> Edit</button>
+        <button class="btn" style="font-size:11px;padding:4px 10px" onclick="openInlineEdit()"><i class="ph ph-pencil-simple"></i> Edit</button>
         <button class="btn" style="font-size:11px;padding:4px 10px" onclick="planRoute()">Re-run ↗</button>
       </div>
     </div>
 
     <!-- Full search form (collapsed after first search) -->
     <div id="planSearchForm">
-    <div class="card">
-      <div class="form-row">
-        <span class="lbl">From</span>
-        <input class="inp" id="pFrom" placeholder="e.g. Tbilisi"/>
-        <div class="vsep"></div>
-        <span class="lbl">To</span>
-        <input class="inp" id="pTo" placeholder="e.g. Kathmandu"/>
-      </div>
-      <div class="form-row">
-        <span class="lbl">Via</span>
-        <input class="inp" id="pVia" placeholder="Countries or cities to pass through (optional)"/>
-      </div>
-      <div class="form-row">
-        <span class="lbl">Budget</span>
-        <input class="inp" id="pBudget" placeholder="e.g. $500" style="max-width:120px"/>
-        <div class="vsep"></div>
-        <span class="lbl">Pace</span>
-        <div class="pills" id="pacePills">
-          <button class="pill on" onclick="togglePace(this,'slow')">Slow</button>
-          <button class="pill" onclick="togglePace(this,'moderate')">Moderate</button>
-          <button class="pill" onclick="togglePace(this,'fast')">Fast</button>
+    <div class="card psc-card">
+      <!-- From / To large inputs -->
+      <div class="psc-from-to">
+        <div class="psc-slot">
+          <div class="psc-slot-lbl">From</div>
+          <input class="psc-inp" id="pFrom" placeholder="e.g. Istanbul"/>
+        </div>
+        <div class="psc-arrow"><div class="psc-arrow-circle">→</div></div>
+        <div class="psc-slot" style="border-left:0.5px solid var(--border)">
+          <div class="psc-slot-lbl">To</div>
+          <input class="psc-inp" id="pTo" placeholder="e.g. Kathmandu"/>
         </div>
       </div>
-      <div class="form-row" style="flex-direction:column;gap:6px">
-        <span class="lbl" style="padding-top:0">Prefer</span>
-        <div class="pills" id="modePills">
-          <button class="pill on" onclick="toggleMode(this,'bus')">Bus</button>
-          <button class="pill on" onclick="toggleMode(this,'train')">Train</button>
-          <button class="pill" onclick="toggleMode(this,'hitchhike')">Hitchhike</button>
-          <button class="pill" onclick="toggleMode(this,'ferry')">Ferry</button>
-          <button class="pill" onclick="toggleMode(this,'shared taxi')">Shared taxi</button>
-          <button class="pill" onclick="toggleMode(this,'walking')">Walking</button>
+      <!-- Options + CTA footer -->
+      <div class="psc-footer">
+        <div class="psc-footer-opts">
+          <button class="psc-opts-toggle" onclick="togglePlanOptions(this)"><i class="ph ph-sliders" style="font-size:13px"></i> Options <span id="planOptsArrow">↑</span></button>
+          <div id="planOptions" class="open">
+            <div class="psc-chips-row">
+              <div class="psc-sep"></div>
+              <div class="pills" id="modePills">
+                <button class="pill on" onclick="toggleMode(this,'bus')">Bus</button>
+                <button class="pill on" onclick="toggleMode(this,'train')">Train</button>
+                <button class="pill" onclick="toggleMode(this,'hitchhike')">Hitchhike</button>
+                <button class="pill" onclick="toggleMode(this,'ferry')">Ferry</button>
+                <button class="pill" onclick="toggleMode(this,'shared taxi')">Shared taxi</button>
+                <button class="pill" onclick="toggleMode(this,'walking')">Walking</button>
+              </div>
+              <div class="psc-sep"></div>
+              <div class="pills" id="pacePills">
+                <button class="pill on" onclick="togglePace(this,'slow')">Slow</button>
+                <button class="pill" onclick="togglePace(this,'moderate')">Moderate</button>
+                <button class="pill" onclick="togglePace(this,'fast')">Fast</button>
+              </div>
+            </div>
+            <div class="psc-inputs-row">
+              <div class="psc-sep" style="visibility:hidden"></div>
+              <input class="psc-budget" id="pBudget" placeholder="Budget e.g. $500" style="max-width:130px"/>
+              <input class="psc-budget" id="pVia" placeholder="Via (optional)" style="max-width:150px"/>
+            </div>
+          </div>
+        </div>
+        <div class="psc-footer-cta">
+          <span id="planFormHint" style="font-size:12px;color:var(--text3)">Free · 3 routes a month · no card</span>
+          <span style="flex:1"></span>
+          <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
         </div>
       </div>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
-      <span style="font-size:12px;color:var(--text3)">Free · 3 routes a month · no card</span>
     </div>
     </div><!-- end #planSearchForm -->
 
@@ -490,7 +580,19 @@
     <!-- Summary strip (shown with results) -->
     <div id="planSummaryStrip" style="display:none"></div>
     <div id="planResult" class="result-box" style="display:none"></div>
-    <div id="routeMapWidget" class="route-map-widget" style="display:none"></div>
+    <div id="plannerMapWrap">
+      <div class="pmw-resize" title="Drag to resize" onmousedown="pmwStartResize(event)" ontouchstart="pmwStartResize(event)"></div>
+      <div class="pmw-head">
+        <span class="pmw-title"><i class="ph ph-map-pin" style="font-size:11px;margin-right:3px"></i><span id="pmwRouteLabel">Route map</span></span>
+        <span style="display:flex;gap:2px;align-items:center">
+          <button class="pmw-btn-restore" title="Open map" onclick="event.stopPropagation();setMapState('docked')" style="display:none">Open</button>
+          <button class="pmw-btn-expand" title="Expand" onclick="setMapState(_mapState==='expanded'?'docked':'expanded')">⤢</button>
+          <button class="pmw-btn-min" title="Minimize" onclick="setMapState('pill')">–</button>
+        </span>
+      </div>
+      <div id="plannerMap"><div id="plannerMapMsg" style="display:flex">Loading map…</div></div>
+    </div>
+    <div id="pmw-backdrop" onclick="setMapState('docked')"></div>
   </div>
 
   <!-- RECORD TAB -->
@@ -514,6 +616,7 @@
       <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
       <span class="save-status" id="saveStatus"></span>
     </div>
+    <div id="visitedProgress"></div>
     <div id="bookingProgress"></div>
     <div class="sumbar">
       <div class="met"><div class="met-lbl">Stops</div><div class="met-val" id="sumStops">0</div></div>
@@ -554,6 +657,13 @@
   <!-- ADMIN TAB (accessible via URL hash or admin badge) -->
   <div id="admin" class="panel">
 
+    <!-- Admin sub-tab bar -->
+    <div class="admin-stab-bar">
+      <button class="admin-stab on" id="adminStab_sites" onclick="switchAdminSubTab('sites')">Booking sites</button>
+      <button class="admin-stab" id="adminStab_review" onclick="switchAdminSubTab('review')">Review queue <span id="adminReviewBadge" style="display:none;background:var(--gold);color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px;font-family:var(--mono);font-weight:600"></span></button>
+    </div>
+
+    <div id="adminContent_sites">
     <!-- Booking sites manager -->
     <div class="card" style="margin-bottom:1rem">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
@@ -645,6 +755,30 @@
         <button onclick="clearAffStats()" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;padding:0">Clear stats</button>
       </div>
       <div id="adminAffTable"></div>
+    </div>
+    </div><!-- /adminContent_sites -->
+
+    <!-- Review queue panel -->
+    <div id="adminContent_review" style="display:none">
+      <div class="rev-header">
+        <div>
+          <div class="rev-kicker">Moderation</div>
+          <div class="rev-title">Contribution review</div>
+          <div class="rev-desc">Traveller notes wait here until approved. Guest submissions are flagged — check the source before publishing.</div>
+        </div>
+        <div class="rev-stats">
+          <div class="rev-stat"><span class="rev-stat-val" id="revStatPending" style="color:var(--gold)">0</span><span class="rev-stat-lbl">Pending</span></div>
+          <div class="rev-stat"><span class="rev-stat-val" id="revStatApproved" style="color:var(--fern)">0</span><span class="rev-stat-lbl">Approved · today</span></div>
+          <div class="rev-stat"><span class="rev-stat-val" id="revStatRejected" style="color:var(--danger-text)">0</span><span class="rev-stat-lbl">Rejected</span></div>
+        </div>
+      </div>
+      <div class="rev-filter-bar">
+        <button class="rev-ftab on" id="revFtab_pending" onclick="switchReviewFilter('pending')">Pending (<span id="revPendingCount">0</span>)</button>
+        <button class="rev-ftab" id="revFtab_approved" onclick="switchReviewFilter('approved')">Approved</button>
+        <button class="rev-ftab" id="revFtab_rejected" onclick="switchReviewFilter('rejected')">Rejected</button>
+        <button class="rev-ftab" id="revFtab_all" onclick="switchReviewFilter('all')">All</button>
+      </div>
+      <div id="revQueue"></div>
     </div>
 
   </div>
@@ -1431,6 +1565,109 @@ function renderAdminTab() {
   el.innerHTML = h;
 }
 
+// ── Admin sub-tab + review queue ────────────────────────────────
+let _adminSubTab = 'sites';
+let _reviewFilter = 'pending';
+
+const REVIEW_QUEUE = [
+  { id:'r1', status:'pending', kind:'price', route:'Istanbul → Kathmandu', leg:'Baku → Aktau · ferry', author:'@ferry_fiend', when:'12 min ago', guest:false,
+    text:'Cabin was $120 not $110 as of last week. Deck passage no longer sold to foreigners — cabins only. They take USD cash at the window.' },
+  { id:'r2', status:'pending', kind:'border', route:'Tbilisi → Yerevan', leg:'Sadakhlo crossing', author:'guest · maria.l', when:'40 min ago', guest:true,
+    text:'Crossed at Sadakhlo on foot 3 days ago. Georgian side fast; Armenian side took an hour and they wanted proof of onward travel. No Azerbaijan stamp questions.' },
+  { id:'r3', status:'pending', kind:'schedule', route:'Lisbon → Singapore', leg:'Moscow → Irkutsk · train', author:'@transsib_sara', when:'2 hours ago', guest:false,
+    text:'Train 002 now departs Yaroslavsky at 13:20 not 11:50. Restaurant car was attached the whole way — pleasant surprise.' },
+  { id:'r4', status:'pending', kind:'warning', route:'Cape Town → Cairo', leg:'Nairobi → Moyale · bus', author:'guest · t.okonkwo', when:'5 hours ago', guest:true,
+    text:'Road past Marsabit was washed out for two days in April. Buses were turning back. Check before committing to this leg in the rainy season.' }
+];
+
+function switchAdminSubTab(tab) {
+  _adminSubTab = tab;
+  document.getElementById('adminContent_sites').style.display  = tab === 'sites'  ? '' : 'none';
+  document.getElementById('adminContent_review').style.display = tab === 'review' ? '' : 'none';
+  document.querySelectorAll('.admin-stab').forEach(b => b.classList.remove('on'));
+  const btn = document.getElementById('adminStab_' + tab);
+  if (btn) btn.classList.add('on');
+  if (tab === 'review') renderReviewQueue();
+}
+
+function switchReviewFilter(f) {
+  _reviewFilter = f;
+  document.querySelectorAll('.rev-ftab').forEach(b => b.classList.remove('on'));
+  const btn = document.getElementById('revFtab_' + f);
+  if (btn) btn.classList.add('on');
+  renderReviewQueue();
+}
+
+function approveNote(id) {
+  const n = REVIEW_QUEUE.find(r => r.id === id);
+  if (n) n.status = 'approved';
+  renderReviewQueue();
+}
+
+function rejectNote(id) {
+  const n = REVIEW_QUEUE.find(r => r.id === id);
+  if (n) n.status = 'rejected';
+  renderReviewQueue();
+}
+
+function renderReviewQueue() {
+  const pending  = REVIEW_QUEUE.filter(r => r.status === 'pending');
+  const approved = REVIEW_QUEUE.filter(r => r.status === 'approved');
+  const rejected = REVIEW_QUEUE.filter(r => r.status === 'rejected');
+
+  const pendingEl  = document.getElementById('revStatPending');
+  const approvedEl = document.getElementById('revStatApproved');
+  const rejectedEl = document.getElementById('revStatRejected');
+  const countEl    = document.getElementById('revPendingCount');
+  const badge      = document.getElementById('adminReviewBadge');
+
+  if (pendingEl)  pendingEl.textContent  = pending.length;
+  if (approvedEl) approvedEl.textContent = approved.length;
+  if (rejectedEl) rejectedEl.textContent = rejected.length;
+  if (countEl)    countEl.textContent    = pending.length;
+  if (badge) { badge.textContent = pending.length; badge.style.display = pending.length ? '' : 'none'; }
+
+  const filtered = _reviewFilter === 'all' ? REVIEW_QUEUE
+    : REVIEW_QUEUE.filter(r => r.status === _reviewFilter);
+
+  const el = document.getElementById('revQueue');
+  if (!el) return;
+
+  if (!filtered.length) {
+    el.innerHTML = `<div class="rev-empty">No ${_reviewFilter === 'all' ? '' : _reviewFilter + ' '}contributions.</div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(q => {
+    const k = CONTRIB_KINDS[q.kind] || CONTRIB_KINDS.tip;
+    const actions = q.status === 'pending'
+      ? `<button class="rev-approve" onclick="approveNote('${q.id}')"><i class="ph ph-check" style="font-size:12px"></i> Approve</button>
+         <button class="rev-reject"  onclick="rejectNote('${q.id}')"><i class="ph ph-x" style="font-size:12px"></i> Reject</button>
+         <button class="rev-edit">Edit…</button>`
+      : q.status === 'approved'
+        ? `<span style="font-size:12px;color:var(--fern);font-family:var(--mono);font-weight:600">✓ Approved</span>
+           <button class="rev-reject" onclick="rejectNote('${q.id}')" style="margin-top:4px"><i class="ph ph-x" style="font-size:12px"></i> Reject</button>`
+        : `<span style="font-size:12px;color:var(--danger-text);font-family:var(--mono);font-weight:600">✕ Rejected</span>
+           <button class="rev-approve" onclick="approveNote('${q.id}')" style="margin-top:4px"><i class="ph ph-check" style="font-size:12px"></i> Approve</button>`;
+
+    return `<div class="rev-card">
+      <div style="min-width:0">
+        <div class="rev-meta">
+          <span class="rev-kind" style="color:${k.color};background:${k.bg}"><i class="ph ph-${k.icon}" style="font-size:11px"></i> ${k.label}</span>
+          <span class="rev-route">${q.route}</span>
+          <span class="rev-leg">· ${q.leg}</span>
+        </div>
+        <div class="rev-text">${q.text}</div>
+        <div class="rev-author-row">
+          <span class="rev-author-str">${q.author} · ${q.when}</span>
+          ${q.guest ? '<span class="rev-guest-pill"><i class="ph ph-user-circle-dashed" style="font-size:11px"></i> Guest</span>' : ''}
+        </div>
+      </div>
+      <div class="rev-actions">${actions}</div>
+    </div>`;
+  }).join('');
+}
+
 // ── Booking sites (unified — built-ins + custom, all editable) ───
 const DEFAULT_SITES = [
   // ── Global / multi-region buses ──
@@ -1780,7 +2017,7 @@ function switchTab(id, el) {
   if (btn) btn.classList.add('active');
   document.getElementById(id).classList.add('active');
   if (id === 'record')   { render(); }
-  if (id === 'admin')    { renderAdminTab(); }
+  if (id === 'admin')    { renderAdminTab(); renderReviewQueue(); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
   if (id === 'profile')  { renderProfilePanel(); }
   if (id === 'plan' && !lastSuggestion) { renderPlanLanding(); }
@@ -1792,6 +2029,12 @@ function switchTab(id, el) {
 }
 
 // ── Plan tab ──────────────────────────────────────────────────────
+function togglePlanOptions(btn) {
+  const panel = document.getElementById('planOptions');
+  const arrow = document.getElementById('planOptsArrow');
+  const open = panel.classList.toggle('open');
+  if (arrow) arrow.textContent = open ? '↑' : '↓';
+}
 function togglePace(el, p) {
   document.querySelectorAll('#pacePills .pill').forEach(b => b.classList.remove('on'));
   el.classList.add('on'); pace = p;
@@ -1935,6 +2178,27 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
   btn.disabled = false; btn.textContent = 'Suggest route ↗';
 }
 
+// ── Logo → planner home ───────────────────────────────────────────────
+function goHome() {
+  const form  = document.getElementById('planSearchForm');
+  const bar   = document.getElementById('planEditBar');
+  const hero  = document.getElementById('planLanding');
+  const grid  = document.getElementById('planLandingGrid');
+  const res   = document.getElementById('planResult');
+  const strip = document.getElementById('planSummaryStrip');
+  if (form)  { form.style.display = 'block'; form.classList.remove('editing'); }
+  if (bar)   bar.style.display   = 'none';
+  if (hero)  hero.style.display  = 'block';
+  if (grid)  grid.style.display  = 'block';
+  if (res)   { res.style.display = 'none'; res.style.opacity = ''; res.style.pointerEvents = ''; }
+  if (strip) { strip.style.display = 'none'; strip.style.opacity = ''; strip.style.pointerEvents = ''; }
+  const pFrom = document.getElementById('pFrom');
+  const pTo   = document.getElementById('pTo');
+  if (pFrom) pFrom.value = '';
+  if (pTo)   pTo.value   = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // ── Search ⇄ Results view switch ──────────────────────────────────────
 // Per the interaction flow, Planner Search and Route Results are separate
 // views: collapsing the search hides the hero + popular corridors and shows
@@ -1948,8 +2212,17 @@ function _collapseSearchForm(from, to) {
   const grid = document.getElementById('planLandingGrid');
   if (hero) hero.style.display = 'none';
   if (grid) grid.style.display = 'none';
-  if (form) form.style.display = 'none';
+  if (form) { form.style.display = 'none'; form.classList.remove('editing'); }
   if (bar)  bar.style.display  = 'block';
+  // Reset any inline-edit overlay state
+  const res = document.getElementById('planResult');
+  if (res) { res.style.opacity = ''; res.style.pointerEvents = ''; }
+  const strip = document.getElementById('planSummaryStrip');
+  if (strip) { strip.style.opacity = ''; strip.style.pointerEvents = ''; }
+  const planBtn2 = document.getElementById('planBtn');
+  if (planBtn2) planBtn2.textContent = 'Suggest route ↗';
+  const planHint = document.getElementById('planFormHint');
+  if (planHint) planHint.textContent = 'Free · 3 routes a month · no card';
   if (lbl)  lbl.textContent    = `${from.toLowerCase()} → ${to.toLowerCase()}`;
   if (chips) {
     const modeChips = (prefModes || []).map(m => `<span class="route-hdr-chip">${m}</span>`).join('');
@@ -1958,19 +2231,38 @@ function _collapseSearchForm(from, to) {
   }
 }
 
-function openPlanSearch() {
+// Inline Edit: shows search form above the current results without resetting the view.
+// Matches interaction flow: "Same search form persists → click Edit → refine inline, results refresh"
+function openInlineEdit() {
   const form = document.getElementById('planSearchForm');
   const bar  = document.getElementById('planEditBar');
-  if (form) { form.style.display = 'block'; document.getElementById('pFrom')?.focus(); }
-  if (bar)  bar.style.display  = 'none';
-  // Re-show hero + landing grid; hide stale results
-  const hl = document.getElementById('planLanding');
-  if (hl) hl.style.display = 'block';
-  const lg = document.getElementById('planLandingGrid');
-  if (lg) lg.style.display = 'block';
-  document.getElementById('planResult').style.display       = 'none';
-  document.getElementById('planSummaryStrip').style.display = 'none';
-  hideRouteMap();
+  if (form) { form.style.display = 'block'; form.classList.add('editing'); document.getElementById('pFrom')?.focus(); }
+  if (bar)  bar.style.display = 'none';
+  // Dim results while editing — keep them visible for context
+  const res = document.getElementById('planResult');
+  if (res) { res.style.opacity = '0.35'; res.style.pointerEvents = 'none'; }
+  const strip = document.getElementById('planSummaryStrip');
+  if (strip) { strip.style.opacity = '0.35'; strip.style.pointerEvents = 'none'; }
+  const btn = document.getElementById('planBtn');
+  if (btn) btn.textContent = 'Update results →';
+  const hint = document.getElementById('planFormHint');
+  if (hint) hint.innerHTML = '<a href="#" onclick="cancelInlineEdit(event)" style="color:var(--text3);font-size:12px;text-decoration:none">← Back to results</a>';
+}
+
+function cancelInlineEdit(e) {
+  if (e) e.preventDefault();
+  const form = document.getElementById('planSearchForm');
+  const bar  = document.getElementById('planEditBar');
+  if (form) { form.style.display = 'none'; form.classList.remove('editing'); }
+  if (bar)  bar.style.display = 'block';
+  const res = document.getElementById('planResult');
+  if (res) { res.style.opacity = ''; res.style.pointerEvents = ''; }
+  const strip = document.getElementById('planSummaryStrip');
+  if (strip) { strip.style.opacity = ''; strip.style.pointerEvents = ''; }
+  const btn = document.getElementById('planBtn');
+  if (btn) btn.textContent = 'Suggest route ↗';
+  const hint = document.getElementById('planFormHint');
+  if (hint) hint.textContent = 'Free · 3 routes a month · no card';
 }
 
 const CONF = {
@@ -1987,104 +2279,246 @@ const CONFLICT_LEVELS = {
 
 // ── Floating route map widget (results page) ──────────────────────────
 // [lon, lat] for common overland cities; unknown routes fall back to a clean
-// left-to-right schematic so the widget always renders.
-const CITY_COORDS = {
-  istanbul:[28.98,41.01], ankara:[32.85,39.93], tbilisi:[44.79,41.72], baku:[49.87,40.41],
-  yerevan:[44.51,40.18], tashkent:[69.24,41.31], samarkand:[66.98,39.65], bishkek:[74.59,42.87],
-  almaty:[76.95,43.24], kashgar:[75.99,39.47], kunming:[102.83,24.88], lhasa:[91.17,29.65],
-  kathmandu:[85.32,27.71], pokhara:[83.99,28.21], delhi:[77.21,28.61], tehran:[51.39,35.69],
-  yazd:[54.37,31.90], dubai:[55.27,25.20], oslo:[10.75,59.91], stockholm:[18.07,59.33],
-  helsinki:[24.94,60.17], copenhagen:[12.57,55.68], lisbon:[-9.14,38.72], madrid:[-3.70,40.42],
-  tarifa:[-5.60,36.01], tangier:[-5.83,35.76], marrakech:[-7.98,31.63], paris:[2.35,48.85],
-  munich:[11.58,48.14], vienna:[16.37,48.21], budapest:[19.04,47.50], bucharest:[26.10,44.43],
-  belgrade:[20.46,44.79], sofia:[23.32,42.70], hanoi:[105.83,21.03], hue:[107.58,16.46],
-  'da nang':[108.22,16.05], 'ho chi minh city':[106.66,10.78], bangkok:[100.50,13.76],
-  'phnom penh':[104.89,11.56], vientiane:[102.60,17.97], 'kuala lumpur':[101.69,3.14],
-  singapore:[103.82,1.35], london:[-0.13,51.51], berlin:[13.40,52.52], warsaw:[21.01,52.23],
-  moscow:[37.62,55.75], 'ulaanbaatar':[106.92,47.92], beijing:[116.41,39.90], tokyo:[139.69,35.69],
-  'cape town':[18.42,-33.92], 'dar es salaam':[39.28,-6.79], nairobi:[36.82,-1.29],
-  'addis ababa':[38.74,9.03], khartoum:[32.53,15.50], cairo:[31.24,30.04],
-};
-let _routeMapStops = null;
+// ── Floating route map (Leaflet + OSM + OSRM road-match) ─────────────────
+const GEO_CACHE_KEY = 'slw_geo_cache';
+let _geoCache = {};
+try { _geoCache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY) || '{}'); } catch(e) {}
 
-function routeMapStops(d) {
-  const names = d.stops?.length ? d.stops.map(s => s.name)
-              : (d.legs?.length ? [d.legs[0].from, ...d.legs.map(l => l.to)] : []);
-  const clean = names.filter(Boolean);
-  if (clean.length < 2) return null;
-  const looked = clean.map(n => ({ n, c: CITY_COORDS[n.trim().toLowerCase()] }));
-  if (looked.every(k => k.c)) return looked.map(k => ({ label: k.n, lon: k.c[0], lat: k.c[1] }));
-  // Fallback: schematic left-to-right with a gentle arc
-  const N = clean.length;
-  return clean.map((n, i) => ({ label: n, lon: i, lat: Math.sin(i / Math.max(1, N - 1) * Math.PI) * 0.6 }));
+let _mapInstance    = null;
+let _mapMarkers     = [];
+let _mapLines       = [];
+let _osrmMapCache   = {};
+let _mapState       = 'docked';   // 'docked' | 'expanded' | 'pill'
+let _mapUpdating    = false;
+let _mapNeedsUpdate = false;
+let _plannerStops   = [];         // [{name}] built from current route suggestion
+let _plannerLegs    = [];         // [{mode}]
+
+async function geocodeStop(name) {
+  if (!name?.trim()) return null;
+  const key = name.trim().toLowerCase();
+  const cached = _geoCache[key];
+  if (cached && (Date.now() - cached.ts) < 30 * 24 * 60 * 60 * 1000) return cached;
+  try {
+    const res  = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(name)}&limit=1&lang=en`);
+    const data = await res.json();
+    const feat = data?.features?.[0];
+    if (feat) {
+      const [lon, lat] = feat.geometry.coordinates;
+      const result = { lat, lon, ts: Date.now() };
+      _geoCache[key] = result;
+      try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch(e) {}
+      return result;
+    }
+  } catch(e) { console.warn('Geocode failed:', name, e.message); }
+  return null;
 }
 
-function buildRouteMapSvg(stops, VW, VH) {
-  const lons = stops.map(s => s.lon), lats = stops.map(s => s.lat);
-  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
-  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-  const sLon = (maxLon - minLon) || 10, sLat = (maxLat - minLat) || 6;
-  const pLon = sLon * 0.16, pLat = sLat * 0.30, px = 34, py = 26;
-  const sx = lon => ((lon - minLon + pLon) / (sLon + 2 * pLon)) * (VW - 2 * px) + px;
-  const sy = lat => ((maxLat + pLat - lat) / (sLat + 2 * pLat)) * (VH - 2 * py) + py;
-  const pts = stops.map(s => ({ ...s, x: sx(s.lon), y: sy(s.lat) }));
-  const poly = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-  const route = '#FF5014', ink = '#13213A';
-  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" height="${VH}" preserveAspectRatio="xMidYMid slice" style="display:block;background:#F0EAE7">
-    <defs><pattern id="rmGrid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0 L0 0 0 34" fill="none" stroke="rgba(14,26,46,0.07)" stroke-width="0.5"/></pattern></defs>
-    <rect width="${VW}" height="${VH}" fill="url(#rmGrid)"/>
-    <polyline points="${poly}" fill="none" stroke="rgba(255,80,20,0.20)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="${poly}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="${poly}" fill="none" stroke="${route}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-    ${pts.map((p, i) => { const end = i === 0 || i === pts.length - 1; const ty = (i % 2 === 0 ? p.y - 11 : p.y + 16).toFixed(1);
-      return `<g><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="#fff" stroke="${end ? ink : route}" stroke-width="2"/><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.5" fill="${end ? ink : route}"/><text x="${p.x.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="9.5" font-weight="600" fill="#0E1A2E" font-family="system-ui" style="paint-order:stroke;stroke:#F0EAE7;stroke-width:3px;stroke-linejoin:round">${p.label}</text></g>`; }).join('')}
-  </svg>`;
+function setMapState(next) {
+  _mapState = next;
+  const wrap = document.getElementById('plannerMapWrap');
+  if (!wrap) return;
+  wrap.classList.remove('pmw-expanded', 'pmw-pill');
+  document.body.classList.remove('pmw-expanded-on');
+  const restore = wrap.querySelector('.pmw-btn-restore');
+  if (restore) restore.style.display = 'none';
+  if (next === 'expanded') {
+    wrap.classList.add('pmw-expanded');
+    document.body.classList.add('pmw-expanded-on');
+  } else if (next === 'pill') {
+    wrap.classList.add('pmw-pill');
+    if (restore) restore.style.display = '';
+    wrap.onclick = (e) => { if (e.target.tagName !== 'BUTTON') setMapState('docked'); };
+  } else {
+    wrap.onclick = null;
+  }
+  if (next !== 'pill') updatePlannerMap();
+}
+
+let _pmwResize = null;
+function pmwStartResize(ev) {
+  if (_mapState !== 'docked') return;
+  const wrap  = document.getElementById('plannerMapWrap');
+  const mapEl = document.getElementById('plannerMap');
+  if (!wrap || !mapEl) return;
+  ev.preventDefault();
+  const t = ev.touches ? ev.touches[0] : ev;
+  const r = wrap.getBoundingClientRect();
+  _pmwResize = { startX: t.clientX, startY: t.clientY, startW: r.width, startH: r.height,
+    headH: wrap.querySelector('.pmw-head')?.offsetHeight || 36 };
+  document.body.classList.add('pmw-resizing');
+  window.addEventListener('mousemove', pmwOnResize, { passive: false });
+  window.addEventListener('mouseup',   pmwEndResize);
+  window.addEventListener('touchmove', pmwOnResize, { passive: false });
+  window.addEventListener('touchend',  pmwEndResize);
+}
+function pmwOnResize(ev) {
+  if (!_pmwResize) return;
+  ev.preventDefault();
+  const t  = ev.touches ? ev.touches[0] : ev;
+  const dx = _pmwResize.startX - t.clientX;
+  const dy = _pmwResize.startY - t.clientY;
+  const w  = Math.min(window.innerWidth  * 0.9, Math.max(260, _pmwResize.startW + dx));
+  const h  = Math.min(window.innerHeight * 0.9, Math.max(200, _pmwResize.startH + dy));
+  const wrap  = document.getElementById('plannerMapWrap');
+  const mapEl = document.getElementById('plannerMap');
+  if (wrap)  { wrap.style.width  = w + 'px'; wrap.style.transition = 'none'; }
+  if (mapEl) { mapEl.style.height = (h - _pmwResize.headH) + 'px'; }
+}
+function pmwEndResize() {
+  if (!_pmwResize) return;
+  _pmwResize = null;
+  document.body.classList.remove('pmw-resizing');
+  window.removeEventListener('mousemove', pmwOnResize);
+  window.removeEventListener('mouseup',   pmwEndResize);
+  window.removeEventListener('touchmove', pmwOnResize);
+  window.removeEventListener('touchend',  pmwEndResize);
+  const wrap  = document.getElementById('plannerMapWrap');
+  const mapEl = document.getElementById('plannerMap');
+  try { localStorage.setItem('slw_map_size', JSON.stringify({ w: wrap?.style.width || '', h: mapEl?.style.height || '' })); } catch(e) {}
+  setTimeout(() => {
+    if (wrap) wrap.style.transition = '';
+    if (_mapInstance) { try { _mapInstance.invalidateSize(); } catch(e) {} }
+  }, 50);
+}
+(function restoreMapSize() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('slw_map_size') || 'null');
+    if (!saved) return;
+    const apply = () => {
+      const wrap  = document.getElementById('plannerMapWrap');
+      const mapEl = document.getElementById('plannerMap');
+      if (wrap  && saved.w) wrap.style.width   = saved.w;
+      if (mapEl && saved.h) mapEl.style.height = saved.h;
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+    else apply();
+  } catch(e) {}
+})();
+
+
+async function updatePlannerMap() {
+  if (_mapUpdating) { _mapNeedsUpdate = true; return; }
+  const mapEl = document.getElementById('plannerMap');
+  const msgEl = document.getElementById('plannerMapMsg');
+  if (!mapEl) return;
+  if (_mapState === 'pill') return;
+  if (!document.body.classList.contains('show-floating-map')) return;
+
+  const namedStops = _plannerStops.filter(s => s.name?.trim());
+  if (namedStops.length < 2) {
+    if (msgEl) { msgEl.style.display = 'flex'; msgEl.textContent = 'No stops to plot'; }
+    return;
+  }
+  if (msgEl) msgEl.style.display = 'none';
+
+  if (!_mapInstance) {
+    if (typeof L === 'undefined') {
+      if (msgEl) { msgEl.style.display = 'flex'; msgEl.textContent = 'Loading map…'; }
+      setTimeout(updatePlannerMap, 800);
+      return;
+    }
+    try {
+      _mapInstance = L.map(mapEl, { zoomControl: true, scrollWheelZoom: false, attributionControl: true });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(_mapInstance);
+    } catch(e) { console.warn('Leaflet init error:', e.message); return; }
+  } else {
+    try { _mapInstance.invalidateSize(); } catch(e) {}
+  }
+
+  try { _mapMarkers.forEach(m => m.remove()); } catch(e) {} _mapMarkers = [];
+  try { _mapLines.forEach(l => l.remove()); }   catch(e) {} _mapLines   = [];
+
+  if (msgEl) { msgEl.style.display = 'flex'; msgEl.textContent = 'Locating stops…'; }
+  _mapUpdating    = true;
+  _mapNeedsUpdate = false;
+  let geoResults;
+  try { geoResults = await Promise.all(_plannerStops.map(s => geocodeStop(s.name))); }
+  catch(e) { geoResults = _plannerStops.map(() => null); }
+  _mapUpdating = false;
+  const coords = geoResults.map(geo => geo ? [geo.lat, geo.lon] : null);
+  if (msgEl) msgEl.style.display = 'none';
+  if (_mapNeedsUpdate) { updatePlannerMap(); return; }
+
+  // Draw leg lines — OSRM road geometry for land modes, straight dashed for air/sea
+  const _osrmProfile = { bus:'driving', car:'driving', taxi:'driving', 'shared taxi':'driving',
+    hitchhike:'driving', motorbike:'driving', train:'driving', cycle:'cycling', walk:'foot', walking:'foot' };
+  for (let i = 0; i < _plannerStops.length - 1; i++) {
+    if (!coords[i] || !coords[i + 1]) continue;
+    const mode  = _plannerLegs[i]?.mode || 'bus';
+    const color = MODE_COLORS[mode] || '#FF5014';
+    const isAir = mode === 'flight';
+    const isSea = mode === 'ferry';
+    const dash  = isAir ? '8 10' : (mode === 'walk' || mode === 'walking' || mode === 'cycle') ? '4 6' : null;
+    if (isAir || isSea) {
+      _mapLines.push(L.polyline([coords[i], coords[i + 1]], { color, weight: 2.5, opacity: 0.7, dashArray: isAir ? '8 10' : '4 8' }).addTo(_mapInstance));
+    } else {
+      const placeholder = L.polyline([coords[i], coords[i + 1]], { color, weight: 2, opacity: 0.3, dashArray: dash }).addTo(_mapInstance);
+      _mapLines.push(placeholder);
+      ((_i => {
+        (async () => {
+          const profile = _osrmProfile[mode] || 'driving';
+          const [lat1, lon1] = coords[_i], [lat2, lon2] = coords[_i + 1];
+          const cKey = `${profile}:${lon1.toFixed(4)},${lat1.toFixed(4)}:${lon2.toFixed(4)},${lat2.toFixed(4)}`;
+          let latlngs = _osrmMapCache[cKey];
+          if (!latlngs) {
+            await new Promise(res => setTimeout(res, _i * 160));
+            try {
+              const r = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`);
+              const d = await r.json();
+              if (d.code === 'Ok' && d.routes?.[0]?.geometry?.coordinates?.length)
+                latlngs = _osrmMapCache[cKey] = d.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+            } catch(e) {}
+          }
+          if (latlngs) {
+            const idx = _mapLines.indexOf(placeholder);
+            if (idx >= 0) { placeholder.remove(); _mapLines[idx] = L.polyline(latlngs, { color, weight: 3, opacity: 0.82, dashArray: dash }).addTo(_mapInstance); }
+          } else {
+            try { placeholder.setStyle({ opacity: 0.7, weight: 3 }); } catch(e) {}
+          }
+        })();
+      }))(i);
+    }
+  }
+
+  // Numbered stop markers
+  for (let i = 0; i < _plannerStops.length; i++) {
+    if (!coords[i]) continue;
+    const bg = i === 0 ? '#FF5014' : i === _plannerStops.length - 1 ? '#091022' : '#13213A';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:22px;height:22px;border-radius:50%;background:${bg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Albert Sans',sans-serif;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.28)">${i + 1}</div>`,
+      iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -14],
+    });
+    _mapMarkers.push(L.marker(coords[i], { icon })
+      .bindPopup(`<div style="font-family:'Albert Sans',sans-serif;font-size:13px"><strong>${_plannerStops[i].name}</strong></div>`)
+      .addTo(_mapInstance));
+  }
+
+  const valid = coords.filter(Boolean);
+  if (valid.length >= 2) { try { _mapInstance.fitBounds(L.latLngBounds(valid), { padding: [28, 28], maxZoom: 10 }); } catch(e) {} }
+  else if (valid.length === 1) { try { _mapInstance.setView(valid[0], 7); } catch(e) {} }
 }
 
 function showRouteMap(d) {
-  const el = document.getElementById('routeMapWidget');
-  if (!el) return;
-  const stops = routeMapStops(d);
-  if (!stops) { hideRouteMap(); return; }
-  _routeMapStops = stops;
-  const w = el._w || 320, h = el._h || 180;
-  el._w = w; el._h = h;
-  el.style.display = 'block';
-  el.style.width = w + 'px';
-  el.classList.remove('min');
-  el.innerHTML = `
-    <div class="route-map-hdr">
-      <i class="ph ph-map-trifold" style="font-size:13px;color:var(--sage)"></i>
-      <span class="rm-title">${stops[0].label} → ${stops[stops.length - 1].label}</span>
-      <i class="ph ph-minus rm-min" onclick="toggleRouteMapMin()" title="Minimise"></i>
-    </div>
-    <div class="route-map-body">
-      <div class="route-map-resize" onmousedown="routeMapResizeStart(event)" title="Drag to resize"></div>
-      ${buildRouteMapSvg(stops, w, h)}
-    </div>`;
+  const names = d.stops?.length ? d.stops.map(s => s.name)
+    : (d.legs?.length ? [d.legs[0].from, ...d.legs.map(l => l.to)] : []);
+  _plannerStops = names.filter(Boolean).map(name => ({ name }));
+  _plannerLegs  = (d.legs || []).map(l => ({ mode: l.mode }));
+  if (_plannerStops.length < 2) { hideRouteMap(); return; }
+  const lbl = document.getElementById('pmwRouteLabel');
+  if (lbl) lbl.textContent = `${_plannerStops[0].name} → ${_plannerStops[_plannerStops.length - 1].name}`;
+  document.body.classList.add('show-floating-map');
+  if (_mapState === 'pill') setMapState('docked');
+  else updatePlannerMap();
 }
-function hideRouteMap() { const el = document.getElementById('routeMapWidget'); if (el) el.style.display = 'none'; }
-function toggleRouteMapMin() {
-  const el = document.getElementById('routeMapWidget');
-  el.classList.toggle('min');
-  const ic = el.querySelector('.rm-min');
-  if (ic) ic.className = 'ph ' + (el.classList.contains('min') ? 'ph-plus' : 'ph-minus') + ' rm-min';
-}
-function routeMapResizeStart(e) {
-  e.preventDefault();
-  const el = document.getElementById('routeMapWidget');
-  const x0 = e.clientX, y0 = e.clientY, w0 = el._w || el.offsetWidth, h0 = el._h || 180;
-  const mv = (ev) => {
-    // Anchored bottom-right: dragging the top-left handle up/left grows the widget.
-    const w = Math.max(220, Math.min(560, w0 - (ev.clientX - x0)));
-    const h = Math.max(120, Math.min(480, h0 - (ev.clientY - y0)));
-    el._w = w; el._h = h; el.style.width = w + 'px';
-    const body = el.querySelector('.route-map-body');
-    if (body) body.innerHTML = `<div class="route-map-resize" onmousedown="routeMapResizeStart(event)" title="Drag to resize"></div>` + buildRouteMapSvg(_routeMapStops, w, h);
-  };
-  const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); };
-  document.addEventListener('mousemove', mv);
-  document.addEventListener('mouseup', up);
+
+function hideRouteMap() {
+  document.body.classList.remove('show-floating-map');
+  if (_mapState === 'expanded') setMapState('docked');
 }
 
 function renderConfidenceBadge(confidence) {
@@ -2158,6 +2592,49 @@ function renderPlanSuggestion(d, fromCache = false) {
     h += `<div style="padding:10px 14px;border:0.5px dashed var(--warn-border);border-radius:var(--radius);background:var(--warn-bg);margin-bottom:12px;font-size:12px;line-height:1.5;color:var(--warn-text)">
       <span style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-right:6px">Honesty note</span>
       ${uncertainLegs.length} leg${uncertainLegs.length>1?'s':''} on this route ${uncertainLegs.length>1?'are':'is'} marked <strong>check</strong> or <strong>uncertain</strong> — verify schedules before booking.
+    </div>`;
+  }
+
+  // ── Elevation profile (decorative — shape generated from stop count) ──────
+  const _epStops = d.stops || [];
+  const _epN = _epStops.length;
+  if (_epN >= 2) {
+    const _epW = 820, _epH = 76, _epSeaY = _epH - 2;
+    const wpts = _epStops.map((s, i) => {
+      const t = i / (_epN - 1);
+      const midBias = Math.sin(Math.PI * t) * 48;
+      const na = Math.sin(i * 2.7 + 0.4) * 8;
+      const nb = Math.cos(i * 1.1) * 5;
+      return [Math.round(t * _epW), Math.max(10, Math.min(_epSeaY - 3, Math.round(_epSeaY - midBias - na - nb - 8)))];
+    });
+    const allPts = [];
+    for (let wi = 0; wi < wpts.length - 1; wi++) {
+      const [x1, y1] = wpts[wi], [x2, y2] = wpts[wi + 1];
+      const steps = Math.max(6, Math.round((x2 - x1) / 18));
+      for (let s = 0; s <= steps; s++) {
+        const t2 = s / steps;
+        const x = Math.round(x1 + (x2 - x1) * t2);
+        const noise = Math.sin(x * 0.23) * 5 + Math.cos(x * 0.07) * 3;
+        const y = Math.round(y1 + (y2 - y1) * t2 + noise * Math.sin(Math.PI * t2) * 0.5);
+        allPts.push([x, Math.max(10, Math.min(_epSeaY - 3, y))]);
+      }
+    }
+    allPts.push(wpts[wpts.length - 1]);
+    const _epLine = 'M ' + allPts.map(([x, y]) => `${x},${y}`).join(' L ');
+    const _epFill = _epLine + ` L ${_epW},${_epSeaY} L 0,${_epSeaY} Z`;
+    const _epLbls = wpts.map(([x], i) =>
+      `<span style="position:absolute;left:${(_epN===1?50:x/_epW*100).toFixed(1)}%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap">${_epStops[i].name||''}</span>`
+    ).join('');
+    h += `<div style="margin-top:16px;padding:14px 0 4px;border-top:0.5px solid var(--border)">
+      <svg viewBox="0 0 ${_epW} ${_epH}" width="100%" height="60" preserveAspectRatio="none" style="display:block">
+        <path d="${_epFill}" fill="rgba(255,80,20,0.06)"/>
+        <path d="${_epLine}" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+      <div style="position:relative;height:18px;margin-top:4px">${_epLbls}</div>
+      <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:0.2px">
+        <span>Elevation profile · illustrative</span>
+        <span>${_epStops[0]?.name||''}&thinsp;→&thinsp;${_epStops[_epN-1]?.name||''}</span>
+      </div>
     </div>`;
   }
 
@@ -2352,16 +2829,30 @@ function autoFillDates(fromIdx) {
 }
 
 function render() {
-  renderSegs(); renderTl(); updateSum(); renderBookingProgress(); renderBudgetBar();
+  renderSegs(); renderTl(); updateSum(); renderBookingProgress(); renderBudgetBar(); renderVisitedProgress();
   if (lastSuggestion) renderPlanSuggestion(lastSuggestion, lastSuggestion._from_cache || false);
+}
+
+function renderVisitedProgress() {
+  const el = document.getElementById('visitedProgress');
+  if (!el) return;
+  const named = stops.filter(s => s.name);
+  if (!named.length) { el.innerHTML = ''; return; }
+  const visited = named.filter(s => s.visited).length;
+  const pct = Math.round(visited / named.length * 100);
+  el.innerHTML = `<div class="rec-vis-bar">
+    <span>${visited}/${named.length} stops visited</span>
+    <div class="rec-vis-bar-track"><div class="rec-vis-bar-fill" style="width:${pct}%"></div></div>
+    <span>${pct}%</span>
+  </div>`;
 }
 
 function renderSegs() {
   const el = document.getElementById('segs'); let h = '';
   stops.forEach((s, i) => {
     const isF = i === 0, isL = i === stops.length - 1;
+    const dotCls = isF ? ' s' : isL ? ' e' : s.visited ? ' v' : '';
 
-    // Compute depart date = arrive date + days stay
     let departHtml = '';
     if (s.date && s.days) {
       const dep = new Date(s.date + 'T00:00');
@@ -2373,12 +2864,14 @@ function renderSegs() {
 
     h += `<div class="seg">
       <div class="seg-l">
-        <div class="dot${isF?' s':isL?' e':''}"></div>
+        <div class="dot${dotCls}"></div>
         ${!isL ? '<div class="vl"></div>' : ''}
       </div>
       <div style="flex:1">
         <div class="stop-card">
           <div class="stop-city-row">
+            <button class="stop-vis-btn${s.visited?' on':''}" title="${s.visited?'Visited':'Mark visited'}"
+              onclick="stops[${i}].visited=!stops[${i}].visited;renderSegs();renderVisitedProgress()">✓</button>
             <input class="sinp-lg" placeholder="City / place" value="${s.name}"
               oninput="stops[${i}].name=this.value;renderTl();updateSum()"/>
             ${stops.length > 2 ? `<button class="rm" onclick="removeStop(${i})">×</button>` : ''}
@@ -2390,10 +2883,12 @@ function renderSegs() {
             ${departHtml}
             ${daysBadge}
           </div>
+          <textarea class="stop-diary" rows="2"
+            placeholder="Notes from ${s.name||'this stop'}…"
+            oninput="stops[${i}].diary=this.value">${s.diary||''}</textarea>
         </div>
         ${!isL ? renderLeg(i) : ''}
         ${!isL ? `<button class="insert-stop-btn" onclick="insertStop(${i})">+ Insert stop here</button>` : ''}
-        ${isL && s.name ? renderFinalStay(i) : ''}
       </div>
     </div>`;
   });
@@ -2409,54 +2904,39 @@ function renderLeg(i) {
   const modeColor  = MODE_COLORS[leg.mode] || 'var(--fern)';
   const modeTint   = MODE_TINTS[leg.mode]  || '#E0EBD6';
   const isEditing  = editingLegModes.has(i);
-  const isExpanded = expandedLegs.has(i);
   const nextStop   = stops[i+1];
-  const stayCity   = nextStop?.name || '—';
 
-  // ── Compact summary row (always visible) ──────────────────────────
-  const summaryRow = `<div class="leg-summary-row" onclick="toggleLegExpand(${i})">
-    <div class="leg-mode-icon" style="background:${modeColor}"><i class="ph ${iconCls}"></i></div>
-    <span class="leg-route-lbl">${fromCity||'?'} → ${toCity||'?'}</span>
-    ${leg.cost ? `<span class="leg-cost-lbl">${getCurrSym()}${leg.cost}</span>` : ''}
-    ${leg.km   ? `<span class="leg-cost-lbl" style="color:var(--text3)">${leg.km} km</span>` : ''}
-    ${leg.booked ? `<span class="booked-pill on" style="font-size:10px;padding:2px 7px;pointer-events:none">✓</span>` : ''}
-    <span class="leg-expand-chevron${isExpanded?' open':''}">▾</span>
-  </div>`;
-
-  if (!isExpanded) {
-    return `<div class="leg-card${leg.booked?' leg-booked':''}">${summaryRow}</div>`;
-  }
-
-  // ── Expanded detail ────────────────────────────────────────────────
   const modeSection = isEditing
-    ? `<div style="margin:8px 0 6px">
-         <div class="pills" style="flex-wrap:wrap">
-           ${MODES.map(m=>`<button class="mp${leg.mode===m?' on':''}" onclick="setMode(${i},'${m}')">${MI[m]}</button>`).join('')}
-         </div>
-         <button class="leg-edit-btn" style="margin-top:4px" onclick="editingLegModes.delete(${i});renderSegs()">Cancel</button>
-       </div>`
-    : `<div style="display:flex;align-items:center;gap:6px;font-size:12px;margin:8px 0 4px">
-         <span style="width:22px;height:22px;border-radius:6px;background:${modeTint};color:${modeColor};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
-           <i class="ph ${iconCls}" style="font-size:13px"></i>
-         </span>
-         <span style="text-transform:capitalize;font-weight:500;color:${modeColor}">${leg.mode||'bus'}</span>
-         ${leg.hours ? `<span style="color:var(--text3)">· ${leg.hours}h</span>` : ''}
-         <button class="leg-edit-btn" onclick="editingLegModes.add(${i});renderSegs()">Edit</button>
-       </div>`;
+    ? `<div style="margin:4px 0 6px">
+        <div class="pills" style="flex-wrap:wrap">
+          ${MODES.map(m=>`<button class="mp${leg.mode===m?' on':''}" onclick="setMode(${i},'${m}')">${MI[m]}</button>`).join('')}
+        </div>
+        <button class="leg-edit-btn" style="margin-top:4px" onclick="editingLegModes.delete(${i});renderSegs()">Cancel</button>
+      </div>`
+    : `<div style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:5px">
+        <span style="width:20px;height:20px;border-radius:5px;background:${modeTint};color:${modeColor};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ph ${iconCls}" style="font-size:11px"></i></span>
+        <span style="text-transform:capitalize;font-weight:500;color:${modeColor}">${leg.mode||'bus'}</span>
+        ${leg.hours ? `<span style="color:var(--text3)">· ${leg.hours}h</span>` : ''}
+        <button class="leg-edit-btn" onclick="editingLegModes.add(${i});renderSegs()">Edit</button>
+      </div>`;
 
-  const metricsRow = `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+  const metricsRow = `<div style="display:flex;gap:4px;align-items:center;margin-bottom:4px;flex-wrap:wrap">
     <input class="linp" type="number" placeholder="cost" value="${leg.cost||''}"
       oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].cost=+this.value;updateSum();renderBudgetBar()"/>
     <span class="lsep">${getCurrSym()}</span>
     <input class="linp" type="number" placeholder="km" value="${leg.km||''}"
       oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].km=+this.value;updateSum()"/>
     <span class="lsep">km</span>
-    ${leg.hours ? `<span style="font-size:11px;color:var(--text3)">~${leg.hours}h</span>` : ''}
+    ${leg.hours ? `<span style="font-size:11px;color:var(--text3)">${leg.hours}h</span>` : ''}
   </div>`;
+
+  const transportLinks = showAff && fromCity && toCity
+    ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites||[], leg.legRegion||'', leg.infoSites||[])
+    : '';
 
   const bookedSection = `<div style="margin-top:6px">
     <button class="booked-pill${leg.booked?' on':''}"
-      onclick="if(!legs[${i}])legs[${i}]={};legs[${i}].booked=!legs[${i}].booked;if(legs[${i}].booked)expandedLegs.delete(${i});renderSegs();renderBookingProgress()">
+      onclick="if(!legs[${i}])legs[${i}]={};legs[${i}].booked=!legs[${i}].booked;renderSegs();renderBookingProgress()">
       ${leg.booked ? '✓ Booked' : 'Mark as booked'}
     </button>
     ${leg.booked ? `<div class="booking-rec">
@@ -2467,53 +2947,53 @@ function renderLeg(i) {
     </div>` : ''}
   </div>`;
 
-  const transportLinks = showAff && fromCity && toCity
-    ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites||[], leg.legRegion||'', leg.infoSites||[])
-    : '';
-
-  // Stay section — collapsible sub-panel
   const stayBooked = nextStop?.accomBooked || false;
-  const stayId = `stay_${i}`;
-  const staySection = nextStop ? `
-    <div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">
-      <div class="stay-toggle" onclick="var el=document.getElementById('${stayId}'),c=this.querySelector('.stay-chevron');el.style.display=el.style.display==='block'?'none':'block';c.classList.toggle('open')">
-        <i class="ph ph-bed"></i>
-        <span>Stay: <strong>${nextStop.name||'…'}</strong>${nextStop.days?` · ${nextStop.days}d`:''}</span>
-        <button class="booked-pill${stayBooked?' on':''}" style="margin-left:auto;pointer-events:none;font-size:10px;padding:2px 7px">${stayBooked?'✓ Booked':'Not booked'}</button>
-        <span class="stay-chevron">▾</span>
-      </div>
-      <div id="${stayId}" class="stay-links-drop" style="display:none">
-        <div style="margin-bottom:6px">
-          <button class="booked-pill${stayBooked?' on':''}"
-            onclick="if(!stops[${i+1}])stops[${i+1}]={};stops[${i+1}].accomBooked=!stops[${i+1}].accomBooked;renderSegs();renderBookingProgress()">
-            ${stayBooked ? '✓ Stay booked' : 'Mark stay as booked'}
-          </button>
-          ${stayBooked ? `<div class="booking-rec">
-            <div class="booking-rec-row"><i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
-              <input placeholder="Ref #" value="${nextStop?.accomRef||''}" oninput="stops[${i+1}].accomRef=this.value"/></div>
-            <div class="booking-rec-row"><i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
-              <input placeholder="Booking URL" value="${nextStop?.accomUrl||''}" oninput="stops[${i+1}].accomUrl=this.value"/></div>
-          </div>` : ''}
-        </div>
-        ${showAff && nextStop.name ? renderAccommodationLinks(nextStop.name, nextStop.accomSites||[], nextStop.accomNote||'') : ''}
-      </div>
-    </div>` : '';
+  const staySection = nextStop?.name
+    ? `<div>
+        <button class="booked-pill${stayBooked?' on':''}"
+          onclick="if(!stops[${i+1}])stops[${i+1}]={};stops[${i+1}].accomBooked=!stops[${i+1}].accomBooked;renderSegs();renderBookingProgress()">
+          ${stayBooked ? '✓ Stay booked' : 'Book stay'}
+        </button>
+        ${stayBooked ? `<div class="booking-rec">
+          <div class="booking-rec-row"><i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
+            <input placeholder="Ref #" value="${nextStop?.accomRef||''}" oninput="stops[${i+1}].accomRef=this.value"/></div>
+          <div class="booking-rec-row"><i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
+            <input placeholder="Booking URL" value="${nextStop?.accomUrl||''}" oninput="stops[${i+1}].accomUrl=this.value"/></div>
+        </div>` : ''}
+        ${showAff ? renderAccommodationLinks(nextStop.name, nextStop.accomSites||[], nextStop.accomNote||'') : ''}
+      </div>`
+    : `<div style="font-size:12px;color:var(--text3)">Add next stop name for accommodation links.</div>`;
 
   const contribs = renderContribBlock(i);
 
-  return `<div class="leg-card${leg.booked?' leg-booked':''}">
-    ${summaryRow}
-    <div class="leg-detail">
-      ${modeSection}
-      ${metricsRow}
-      ${leg.notes ? `<div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-style:italic">${leg.notes}</div>` : ''}
-      ${renderConfidenceBadge(leg.confidence||'uncertain')}
-      ${renderConflictAlert(leg.conflict, false)}
-      ${transportLinks}
-      ${bookedSection}
-      ${staySection}
-      ${contribs ? `<div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">${contribs}</div>` : ''}
+  return `<div class="leg-card${leg.booked?' leg-booked':''}" style="border-left:3px solid ${modeColor}">
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 6px;border-bottom:0.5px solid var(--border)">
+      <span style="width:20px;height:20px;border-radius:5px;background:${modeTint};color:${modeColor};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ph ${iconCls}" style="font-size:11px"></i></span>
+      <span style="font-size:13px;font-weight:600;color:var(--text)">${fromCity||'?'} → ${toCity||'?'}</span>
+      ${leg.cost ? `<span class="leg-cost-lbl">${getCurrSym()}${leg.cost}</span>` : ''}
+      ${leg.km   ? `<span class="leg-cost-lbl" style="color:var(--text3)">${leg.km} km</span>` : ''}
+      ${leg.booked ? `<span class="booked-pill on" style="font-size:10px;padding:2px 7px;pointer-events:none">✓</span>` : ''}
     </div>
+    <div class="leg-grid" style="padding:8px 10px 10px">
+      <div class="leg-col leg-col-b">
+        <div class="leg-col-lbl">Journey</div>
+        ${modeSection}
+        ${metricsRow}
+        ${leg.notes ? `<div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-style:italic">${leg.notes}</div>` : ''}
+        ${renderConfidenceBadge(leg.confidence||'uncertain')}
+        ${renderConflictAlert(leg.conflict, false)}
+      </div>
+      <div class="leg-col leg-col-b">
+        <div class="leg-col-lbl">Transport</div>
+        ${transportLinks || '<div style="font-size:12px;color:var(--text3)">No links for this leg.</div>'}
+        ${bookedSection}
+      </div>
+      <div class="leg-col leg-col-b">
+        <div class="leg-col-lbl">Stay at ${nextStop?.name || toCity || '—'}</div>
+        ${staySection}
+      </div>
+    </div>
+    ${contribs ? `<div style="margin-top:4px;padding:6px 10px 8px;border-top:0.5px solid var(--border)">${contribs}</div>` : ''}
   </div>`;
 }
 
@@ -2595,11 +3075,10 @@ function renderBookingProgress() {
 
 function updateSum() {
   document.getElementById('sumStops').textContent = stops.length;
-  document.getElementById('sumCurr').textContent  = getCurr();
   document.getElementById('budgCurr').textContent = getCurr();
   const tc = legs.reduce((a, l) => a + (+l.cost || 0), 0);
   const tk = legs.reduce((a, l) => a + (+l.km   || 0), 0);
-  document.getElementById('sumCost').innerHTML = Math.round(tc) + ' <span class="met-u">' + getCurr() + '</span>';
+  document.getElementById('sumCost').innerHTML = Math.round(tc) + ' <span class="met-u" id="sumCurr">' + getCurr() + '</span>';
   document.getElementById('sumDist').innerHTML = Math.round(tk) + ' <span class="met-u">km</span>';
   const dates = stops.map(s => s.date ? new Date(s.date + 'T00:00') : null).filter(Boolean);
   let days = '—';
@@ -2834,7 +3313,16 @@ function showContribModal(legIdx, legKey) {
             <i class="ph ph-info" style="font-size:11px"></i> First-person only. No affiliate links. Other travellers will vote on this.
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:10px;margin-bottom:14px" id="contribPriceRow">
+          <div>
+            <div class="contrib-field-lbl">Price paid <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-family:var(--body)">· optional</span></div>
+            <div style="display:grid;grid-template-columns:56px 1fr;gap:6px">
+              <select id="contribPriceCurr" class="contrib-inp" style="padding:7px 4px">
+                <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option><option>AUD</option><option>THB</option>
+              </select>
+              <input class="contrib-inp" id="contribPrice" type="number" placeholder="Amount" min="0"/>
+            </div>
+          </div>
           <div>
             <div class="contrib-field-lbl">When were you there? <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-family:var(--body)">· optional</span></div>
             <input class="contrib-inp" id="contribWhen" placeholder="e.g. March 2025"/>
@@ -2844,13 +3332,19 @@ function showContribModal(legIdx, legKey) {
             <input class="contrib-inp" id="contribAuthor" placeholder="@handle or anonymous"/>
           </div>
         </div>
-        <div style="margin-bottom:18px">
+        <div style="margin-bottom:10px">
           <div class="contrib-field-lbl">How do you know?</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">${sourcesHtml}</div>
         </div>
+        <div style="margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:0.5px dashed var(--border2);border-radius:var(--radius);color:var(--text3);font-size:12px;cursor:pointer;background:var(--bg2)">
+            <i class="ph ph-paperclip" style="font-size:14px"></i>
+            Attach a photo · optional — ticket, timetable, or schedule photo
+          </div>
+        </div>
       </div>
       <div class="contrib-modal-footer">
-        <div style="font-size:11px;color:var(--text3);flex:1;line-height:1.5">Your note goes live immediately. Other travellers can upvote or flag it.</div>
+        <div style="font-size:11px;color:var(--text3);flex:1;line-height:1.5">Posting as <strong style="color:var(--text2)">${currentUser?.email?.split('@')[0]||'you'}</strong> · Notes go live immediately. Travellers can upvote or confirm.</div>
         <button class="btn" onclick="closeContribModal()">Cancel</button>
         <button class="btn btn-primary" id="contribSubmitBtn" onclick="submitContrib()"><i class="ph ph-paper-plane-tilt" style="font-size:12px"></i> Post note</button>
       </div>
@@ -2892,15 +3386,18 @@ async function submitContrib() {
   const when   = document.getElementById('contribWhen')?.value.trim() || 'recently';
   const author = document.getElementById('contribAuthor')?.value.trim()
                || currentUser?.email?.split('@')[0] || 'anonymous';
+  const priceAmt  = document.getElementById('contribPrice')?.value;
+  const priceCurr = document.getElementById('contribPriceCurr')?.value;
+  const price = priceAmt ? `${priceCurr} ${priceAmt}` : null;
   const btn = document.getElementById('contribSubmitBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
   await contribStorage.addToLeg(_contribModalState.legKey, {
     kind:   _contribModalState.kind,
-    text, when, author,
+    text, when, author, price,
     source: _contribModalState.source,
   });
   closeContribModal();
-  renderSegs(); // refresh to show new note
+  renderSegs();
 }
 
 // ── Plan landing: hero + corridors + recent ───────────────────────────
@@ -2951,7 +3448,8 @@ function renderPlanLanding() {
       </div>
       ${recentHtml}
       <div style="margin-top:8px;padding-top:10px;border-top:0.5px dashed var(--border)">
-        <button class="btn" style="width:100%" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New empty trip</button>
+        ${!currentUser ? (() => { const g = guestRoutesUsed(); const left = Math.max(0, GUEST_FREE_ROUTES - g.count); return `<div style="font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:0.5px;margin-bottom:8px">${left} of ${GUEST_FREE_ROUTES} free searches left this month</div>`; })() : ''}
+        <button class="btn" style="width:100%" onclick="goToMyTrips()">See my trips →</button>
       </div>
     </div>
   </div>
@@ -2963,8 +3461,7 @@ function renderPlanLanding() {
 function loadCorridorSearch(from, to) {
   document.getElementById('pFrom').value = from;
   document.getElementById('pTo').value   = to;
-  // Auto-trigger plan
-  planRoute();
+  document.getElementById('pFrom').focus();
 }
 
 // ── Budget progress bar ───────────────────────────────────────────────
@@ -2993,14 +3490,15 @@ function renderMyTripsPanel() {
   const trips = (storage.get('trips') || []).slice().reverse();
 
   const stateOf = (t) => {
+    if (t.status === 'maybe') return { label:'Maybe someday', cls:'maybe', color:'#A07840' };
     const ls = t.legs || [];
     const allBooked = ls.length && ls.every(l => l.booked);
     const anyBooked = ls.some(l => l.booked);
-    if (allBooked)  return { label:'Confirmed',   cls:'confirmed', color:'var(--moss)' };
-    if (anyBooked)  return { label:'In progress', cls:'progress',  color:'var(--gold)' };
+    if (allBooked)  return { label:'Confirmed',      cls:'confirmed', color:'var(--moss)' };
+    if (anyBooked)  return { label:'In progress',    cls:'progress',  color:'var(--gold)' };
     const hasStops = (t.stops||[]).some(s => s.name);
-    if (hasStops)   return { label:'Planned',     cls:'planned',   color:'var(--fern)' };
-    return             { label:'Draft',        cls:'draft',     color:'var(--text3)' };
+    if (hasStops)   return { label:'Planned',        cls:'planned',   color:'var(--fern)' };
+    return             { label:'Draft',           cls:'draft',     color:'var(--text3)' };
   };
 
   if (!trips.length) {
@@ -3029,10 +3527,11 @@ function renderMyTripsPanel() {
     planned:   tagged.filter(x => x.st.cls === 'planned').length,
     confirmed: tagged.filter(x => x.st.cls === 'confirmed').length,
     draft:     tagged.filter(x => x.st.cls === 'draft').length,
+    maybe:     tagged.filter(x => x.st.cls === 'maybe').length,
   };
   const TABS = [
     ['all','All'],['progress','In progress'],['planned','Planned'],
-    ['confirmed','Confirmed'],['draft','Draft'],
+    ['confirmed','Confirmed'],['draft','Draft'],['maybe','Maybe someday'],
   ];
   const tabsHtml = TABS.map(([key,label]) =>
     `<button class="mytrips-ftab${myTripsFilter===key?' active':''}" onclick="setMyTripsFilter('${key}')">${label} (${counts[key]||0})</button>`

@@ -32,7 +32,9 @@ body {
 
 /* ── Left pitch panel ─────────────────────────────────────── */
 .auth-left {
-  background: linear-gradient(180deg, #091022 0%, #13213A 100%);
+  background:
+    linear-gradient(to bottom, rgba(9,16,34,0.65) 0%, rgba(9,16,34,0.80) 100%),
+    url('public/hero-collage.jpg') center/cover no-repeat;
   padding: 48px 56px;
   position: relative;
   overflow: hidden;
@@ -113,20 +115,10 @@ body {
   text-transform: uppercase;
 }
 
-.auth-bg-sloth {
-  position: absolute;
-  right: -60px;
-  bottom: -30px;
-  opacity: 0.12;
-  pointer-events: none;
-}
 .auth-version {
-  position: absolute;
-  left: 56px;
-  top: 96px;
   font-family: var(--mono);
   font-size: 10px;
-  color: rgba(255,255,255,0.28);
+  color: rgba(255,255,255,0.35);
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
@@ -334,7 +326,7 @@ body {
 <!-- ── Left pitch panel ──────────────────────────────── -->
 <div class="auth-left">
   <a class="auth-logo" href="index.html">
-    <img src="public/sloth-logo.svg" height="30" style="filter:brightness(0) invert(1);opacity:0.85"/>
+    <img src="public/bysloth.png" alt="" style="height:24px;width:auto;flex-shrink:0"/>
     <span class="auth-logo-text">bysloth</span>
   </a>
 
@@ -366,10 +358,6 @@ body {
 
   <div class="auth-version">v0.4 · private beta</div>
 
-  <!-- Decorative sloth -->
-  <div class="auth-bg-sloth">
-    <img src="public/sloth-logo.svg" width="360" style="filter:brightness(0) invert(1);opacity:0.12"/>
-  </div>
 </div>
 
 <!-- ── Right form panel ──────────────────────────────── -->

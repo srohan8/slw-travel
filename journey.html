@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>bysloth · Public journey</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Albert+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#FAFAF7;--bg2:#F3F3EE;--bg3:#EEEEE8;--text:#0F1A0B;--text2:#3D4D38;--text3:#8A9484;
+    --fern:#1E3A5C;--sage:#FF5014;--moss:#13213A;--dusk:#091022;--mist:#D4E3CC;--gold:#C9A84C;
+    --border:rgba(15,26,11,0.1);--border2:rgba(15,26,11,0.18);--cream:#F5F0E8;
+    --radius:8px;--radius-lg:14px;--radius-pill:99px;
+    --serif:'Sora',system-ui,sans-serif;--mono:'JetBrains Mono','Courier New',monospace;--body:'Albert Sans',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh;}
+  a{color:inherit;text-decoration:none;}
+
+  /* ── Public header ── */
+  .pub-nav{background:var(--dusk);padding:12px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .pub-nav-logo{display:flex;align-items:center;gap:8px;color:var(--cream);font-family:var(--body);font-size:20px;font-weight:500;letter-spacing:-0.6px;}
+  .pub-nav-right{display:flex;align-items:center;gap:14px;}
+  .pub-label{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,240,232,0.55);}
+  .pub-cta{background:var(--sage);color:#fff;padding:7px 16px;border-radius:var(--radius-pill);font-weight:600;font-size:13px;cursor:pointer;text-decoration:none;transition:opacity .15s;}
+  .pub-cta:hover{opacity:.88;}
+
+  /* ── Layout ── */
+  .content{max-width:720px;margin:0 auto;padding:0 1.5rem;}
+
+  /* ── Cover ── */
+  .cover{padding:3.5rem 0 0;}
+  .cover-kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);margin-bottom:14px;}
+  .cover-h1{font-family:var(--serif);font-size:clamp(32px,5vw,46px);font-weight:300;letter-spacing:-1px;line-height:1.05;color:var(--text);}
+  .cover-h1 em{font-style:italic;color:var(--fern);}
+  .author-row{display:flex;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .author-avatar{width:30px;height:30px;border-radius:50%;background:var(--mist);display:flex;align-items:center;justify-content:center;color:var(--moss);font-weight:700;font-size:13px;flex-shrink:0;}
+  .author-stats{font-family:var(--mono);font-size:12px;color:var(--text3);}
+  .cover-intro{font-family:var(--serif);font-size:18px;line-height:1.65;color:var(--text2);margin-top:24px;font-style:italic;}
+
+  /* ── Route map ── */
+  #journeyMap{width:100%;height:260px;border-radius:var(--radius-lg);overflow:hidden;margin-top:26px;border:0.5px solid var(--border);background:var(--bg2);}
+
+  /* ── Diary ── */
+  .diary-section{padding:0 0 2rem;}
+  .diary-entry{padding-top:40px;margin-top:40px;border-top:0.5px solid var(--border);}
+  .entry-dateline{display:flex;align-items:baseline;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+  .entry-date{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--fern);}
+  .entry-city{font-family:var(--serif);font-size:30px;font-weight:400;letter-spacing:-0.4px;color:var(--text);}
+  .entry-cc{font-family:var(--mono);font-size:12px;color:var(--text3);}
+  .entry-body{font-size:15.5px;line-height:1.8;color:var(--text);margin-top:6px;}
+  .entry-next{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--text3);background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-pill);padding:6px 14px;}
+  .entry-next-icon{width:20px;height:20px;border-radius:6px;background:var(--mist);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+  /* ── Footer CTA ── */
+  .footer-cta{max-width:720px;margin:56px auto 0;padding:0 1.5rem;}
+  .footer-cta-card{background:var(--dusk);border-radius:var(--radius-lg);padding:34px 32px;text-align:center;}
+  .footer-cta-title{font-family:var(--serif);font-size:24px;font-weight:300;color:var(--cream);letter-spacing:-0.3px;}
+  .footer-cta-title em{font-style:normal;color:var(--sage);}
+  .footer-cta-sub{font-size:13px;color:rgba(245,240,232,0.6);margin-top:8px;line-height:1.6;}
+  .footer-cta-btns{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+  .footer-btn-primary{background:var(--sage);color:#fff;padding:10px 22px;border-radius:var(--radius-pill);font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;transition:opacity .15s;}
+  .footer-btn-primary:hover{opacity:.88;}
+  .footer-btn-secondary{border:0.5px solid rgba(245,240,232,0.3);color:var(--cream);padding:10px 22px;border-radius:var(--radius-pill);font-size:14px;cursor:pointer;text-decoration:none;transition:opacity .15s;}
+  .footer-btn-secondary:hover{opacity:.7;}
+  .footer-spacer{height:56px;}
+
+  /* ── Utilities ── */
+  .sep{color:var(--text3);}
+</style>
+</head>
+<body>
+
+<!-- Public header -->
+<nav class="pub-nav">
+  <a class="pub-nav-logo" href="index.html">
+    <img src="public/bysloth.png" alt="" style="height:26px;width:auto"/>
+    <span>bysloth</span>
+  </a>
+  <div class="pub-nav-right">
+    <span class="pub-label">Public journey</span>
+    <a class="pub-cta" href="app.html">Plan your own →</a>
+  </div>
+</nav>
+
+<!-- Cover -->
+<div class="content cover" id="cover">
+  <div class="cover-kicker" id="coverKicker">A slow journey · Spring 2024</div>
+  <h1 class="cover-h1" id="coverTitle">Istanbul to Kathmandu,<br><em>overland.</em></h1>
+  <div class="author-row">
+    <div class="author-avatar" id="authorAvatar">S</div>
+    <span style="font-size:14px;color:var(--text2)">by <strong style="color:var(--text)" id="authorName">Sam Oduya</strong></span>
+    <span class="sep">·</span>
+    <span class="author-stats" id="routeStats">43 days · 9 cities · 6 countries · no flights</span>
+  </div>
+  <div id="journeyMap"></div>
+  <p class="cover-intro" id="coverIntro">Forty-three days on trains, buses and one very slow ferry across the Caspian. No planes, no rush — here is how it actually went, leg by leg.</p>
+</div>
+
+<!-- Diary entries -->
+<div class="content diary-section" id="diarySection"></div>
+
+<!-- Footer CTA -->
+<div class="footer-cta">
+  <div class="footer-cta-card">
+    <div class="footer-cta-title">Travelled slowly with <em>bysloth</em></div>
+    <div class="footer-cta-sub">Map your own overland route — trains, buses, ferries. No flights, ever.</div>
+    <div class="footer-cta-btns">
+      <a class="footer-btn-primary" href="app.html">Plan a route</a>
+      <a class="footer-btn-secondary" href="auth.html">Create account</a>
+    </div>
+  </div>
+  <div class="footer-spacer"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── Sample journey data (replace via URL params ?trip=... in a full impl) ──
+const JOURNEY = {
+  kicker: 'A slow journey · Spring 2024',
+  title: 'Istanbul to Kathmandu,\noverland.',
+  author: 'Sam Oduya',
+  stats: '43 days · 9 cities · 6 countries · no flights',
+  intro: 'Forty-three days on trains, buses and one very slow ferry across the Caspian. No planes, no rush — here is how it actually went, leg by leg.',
+  stops: [
+    { label:'Istanbul',  lat:41.01, lon:28.98 },
+    { label:'Tbilisi',   lat:41.69, lon:44.83 },
+    { label:'Baku',      lat:40.41, lon:49.87 },
+    { label:'Aktau',     lat:43.65, lon:51.18 },
+    { label:'Almaty',    lat:43.23, lon:76.95 },
+  ],
+  diary: [
+    { city:'Istanbul', cc:'Türkiye', date:'May 2', mode:'train', iconCls:'ph-train',
+      next:'Night train · 12h to Ankara',
+      body:'Took the night train from Haydarpaşa. The compartment smelled like pine resin and old velvet. Met a retired engineer going to Konya for his niece\'s wedding — he insisted I take half his simit and showed me photos of every bridge he\'d ever built.' },
+    { city:'Tbilisi', cc:'Georgia', date:'May 8', mode:'bus', iconCls:'ph-bus',
+      next:'Marshrutka · 18h to Baku',
+      body:'The Bosphorus is just a rumour from here; it\'s all oak and fog and switchback roads. My guesthouse in the Old Town had a balcony hanging over the Mtkvari, and the owner left a carafe of homemade wine outside my door every evening without a word.' },
+    { city:'Baku', cc:'Azerbaijan', date:'May 13', mode:'ferry', iconCls:'ph-boat',
+      next:'Caspian ferry · ~30h to Aktau',
+      body:'Three hours at the Red Bridge crossing. The customs officer asked where I was headed; when I said Almaty she laughed and said "long way." Correct. Spent the wait for the ferry walking the seafront, eating pomegranate seeds out of a paper cone.' },
+    { city:'Aktau', cc:'Kazakhstan', date:'May 15', mode:'train', iconCls:'ph-train',
+      next:'Train · 32h to Almaty',
+      body:'The Caspian at dawn looks like hammered pewter. Disembarkation took four hours; the ship had arrived at 2am and nobody seemed to be expecting us. Found a guesthouse near the port and slept until noon. The steppe begins immediately outside town — flat and silver and going on forever.' },
+    { city:'Almaty', cc:'Kazakhstan', date:'May 18', mode:null, iconCls:null,
+      next:null,
+      body:'End of this chapter. The mountains appeared three hours before Almaty did — white teeth against a blue sky. I\'m staying in the Arasan baths neighbourhood and planning the next leg to Bishkek over tea with a couple I met on the train.' },
+  ]
+};
+
+// ── Render cover ─────────────────────────────────────────────────────
+document.getElementById('coverKicker').textContent  = JOURNEY.kicker;
+document.getElementById('coverTitle').innerHTML     = JOURNEY.title.replace('\n','<br>').replace(/overland\./,'<em>overland.</em>');
+document.getElementById('authorName').textContent   = JOURNEY.author;
+document.getElementById('authorAvatar').textContent = JOURNEY.author[0].toUpperCase();
+document.getElementById('routeStats').textContent   = JOURNEY.stats;
+document.getElementById('coverIntro').textContent   = JOURNEY.intro;
+
+// ── Route map ────────────────────────────────────────────────────────
+const map = L.map('journeyMap', { zoomControl:true, attributionControl:false, scrollWheelZoom:false });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',{maxZoom:15}).addTo(map);
+
+const latLngs = JOURNEY.stops.map(s => [s.lat, s.lon]);
+L.polyline(latLngs, { color:'#FF5014', weight:2, opacity:0.7, dashArray:'5 6' }).addTo(map);
+
+const dotIcon = (label, first, last) => L.divIcon({
+  className:'',
+  html:`<div style="width:8px;height:8px;border-radius:50%;background:${first?'#1E3A5C':last?'#FF5014':'#8A9484'};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>`,
+  iconSize:[8,8], iconAnchor:[4,4]
+});
+
+JOURNEY.stops.forEach((s, i) => {
+  const isFirst = i===0, isLast = i===JOURNEY.stops.length-1;
+  L.marker([s.lat, s.lon], { icon: dotIcon(s.label, isFirst, isLast) })
+    .bindTooltip(s.label, { permanent: true, direction:'top', className:'', offset:[0,-6],
+      pane:'tooltipPane' })
+    .addTo(map);
+});
+
+map.fitBounds(L.latLngBounds(latLngs).pad(0.2));
+
+// ── Diary entries ────────────────────────────────────────────────────
+const diaryEl = document.getElementById('diarySection');
+diaryEl.innerHTML = JOURNEY.diary.map((d, i) => {
+  const nextEntry = JOURNEY.diary[i + 1];
+  const nextChip = d.next ? `<div class="entry-next">
+    ${d.iconCls ? `<span class="entry-next-icon"><i class="ph ${d.iconCls}" style="font-size:12px;color:#3D4D38"></i></span>` : ''}
+    Onward to ${nextEntry ? nextEntry.city : ''} · ${d.next}
+  </div>` : '';
+  return `<article class="diary-entry">
+    <div class="entry-dateline">
+      <span class="entry-date">${d.date}</span>
+      <h2 class="entry-city">${d.city}</h2>
+      <span class="entry-cc">${d.cc}</span>
+    </div>
+    <p class="entry-body">${d.body}</p>
+    ${nextChip}
+  </article>`;
+}).join('');
+</script>
+</body>
+</html>
