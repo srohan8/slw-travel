@@ -1835,11 +1835,7 @@ async function planRoute() {
   }
   // ── End cache lookup ──────────────────────────────────────────────
 
-  // Hide landing, show result area
-  const lg = document.getElementById('planLandingGrid');
-  if (lg) lg.style.display = 'none';
-  const hl = document.getElementById('planLanding');
-  if (hl) hl.style.display = 'none';
+  // Switch to the results view (hides hero + corridors, shows route header)
   _collapseSearchForm(from, to);
 
   const btn    = document.getElementById('planBtn');
@@ -1923,12 +1919,19 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
   btn.disabled = false; btn.textContent = 'Suggest route ↗';
 }
 
-// ── Search form show/hide ─────────────────────────────────────────────
+// ── Search ⇄ Results view switch ──────────────────────────────────────
+// Per the interaction flow, Planner Search and Route Results are separate
+// views: collapsing the search hides the hero + popular corridors and shows
+// only the compact route header + results.
 function _collapseSearchForm(from, to) {
   const form = document.getElementById('planSearchForm');
   const bar  = document.getElementById('planEditBar');
   const lbl  = document.getElementById('planEditBarLabel');
   const chips= document.getElementById('planEditBarChips');
+  const hero = document.getElementById('planLanding');
+  const grid = document.getElementById('planLandingGrid');
+  if (hero) hero.style.display = 'none';
+  if (grid) grid.style.display = 'none';
   if (form) form.style.display = 'none';
   if (bar)  bar.style.display  = 'block';
   if (lbl)  lbl.textContent    = `${from.toLowerCase()} → ${to.toLowerCase()}`;
