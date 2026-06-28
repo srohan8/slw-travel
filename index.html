@@ -44,10 +44,15 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
 
 /* ── Nav ─────────────────────────────────────────────────────── */
 .nav {
-  background: var(--floodBg);
+  background: transparent;
   padding: 13px 22px;
   display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; z-index: 20;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+  transition: background .25s, box-shadow .25s;
+}
+.nav.scrolled {
+  background: var(--floodBg);
+  box-shadow: 0 2px 12px rgba(9,16,34,0.3);
 }
 .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
 .nav-logo img { height: 26px; }
@@ -70,7 +75,7 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
 /* ── Hero ─────────────────────────────────────────────────────── */
 .hero {
   background: var(--floodBg); color: var(--cream);
-  padding: 76px 0; position: relative; overflow: hidden; min-height: 440px;
+  padding: 130px 0 90px; position: relative; overflow: hidden; min-height: 500px;
 }
 .hero-img {
   position: absolute; inset: 0;
@@ -78,7 +83,7 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
 }
 .hero-scrim {
   position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(90deg, rgba(8,8,10,0.55) 0%, rgba(8,8,10,0.32) 42%, rgba(8,8,10,0.06) 100%);
+  background: linear-gradient(180deg, rgba(8,8,10,0.45) 0%, rgba(8,8,10,0.25) 50%, rgba(8,8,10,0.55) 100%);
 }
 .hero-corner {
   position: absolute; font-family: var(--mono); font-size: 10px;
@@ -87,6 +92,7 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
 .hero-inner {
   max-width: 860px; margin: 0 auto; padding: 0 1.25rem;
   position: relative; z-index: 1;
+  text-align: center; display: flex; flex-direction: column; align-items: center;
 }
 .kicker {
   font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
@@ -97,14 +103,14 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
   font-family: var(--serif); font-weight: 300;
   font-size: clamp(44px, 7vw, 68px);
   line-height: 1.02; letter-spacing: -1.2px;
-  margin: 12px 0 20px; max-width: 560px;
+  margin: 12px 0 20px;
 }
 .hero-h1 em { font-style: italic; color: var(--sage); }
 .hero-sub {
   font-size: 16px; line-height: 1.55;
   color: rgba(255,255,255,0.72); max-width: 460px;
 }
-.hero-cta { display: flex; gap: 10px; align-items: center; margin-top: 28px; flex-wrap: wrap; }
+.hero-cta { display: flex; gap: 10px; align-items: center; margin-top: 28px; flex-wrap: wrap; justify-content: center; }
 .btn-orange {
   background: var(--sage); color: #fff; padding: 12px 22px;
   border-radius: var(--radiusPill); font-size: 14px; font-weight: 600;
@@ -535,6 +541,15 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
       var el = document.getElementById(id);
       if(el) el.addEventListener('keydown', function(e){ if(e.key==='Enter') launchDemo(); });
     });
+    // Transparent nav over hero → solid on scroll
+    var nav = document.querySelector('.nav');
+    var hero = document.querySelector('.hero');
+    function onScroll() {
+      var threshold = hero ? hero.offsetHeight - nav.offsetHeight : 100;
+      nav.classList.toggle('scrolled', window.scrollY > threshold);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
   });
 </script>
 </body>
