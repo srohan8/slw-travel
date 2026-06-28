@@ -4725,43 +4725,106 @@ function jdRenderInvite(state) {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
         <div>
           <div class="jd-invite-title"><i class="ph ph-users-three"></i> Invite collaborators</div>
-          <div class="jd-invite-sub">Share this trip with travellers who can view or co-edit.</div>
+          <div class="jd-invite-sub">Search bysloth users by name or email.</div>
         </div>
         <button onclick="jdCloseInvite()" style="background:none;border:none;font-size:18px;color:var(--text3);cursor:pointer;line-height:1">×</button>
       </div>
       ${state === 'loading' ? `<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Loading…</div>` : `
-      <div class="jd-invite-row">
-        <input id="jdInviteEmail" type="email" placeholder="Email address" onkeydown="if(event.key==='Enter')jdSendInvite()"/>
-        <div class="jd-role-toggle">
-          <button class="jd-role-opt${_jdInviteRole==='edit'?' on':''}" onclick="jdSetRole('edit')">Can edit</button>
-          <button class="jd-role-opt${_jdInviteRole==='view'?' on':''}" onclick="jdSetRole('view')">Can view</button>
+      <div style="position:relative;margin-bottom:12px">
+        <div class="jd-invite-row" style="margin-bottom:0">
+          <input id="jdInviteSearch" type="text" placeholder="Search by name or email…" autocomplete="off"
+            oninput="jdSearchUsers(this.value)"
+            onkeydown="if(event.key==='Escape')jdCloseUserDropdown()"/>
+          <div class="jd-role-toggle">
+            <button class="jd-role-opt${_jdInviteRole==='edit'?' on':''}" onclick="jdSetRole('edit')">Can edit</button>
+            <button class="jd-role-opt${_jdInviteRole==='view'?' on':''}" onclick="jdSetRole('view')">Can view</button>
+          </div>
         </div>
+        <div id="jdUserDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:10;max-height:180px;overflow-y:auto;margin-top:4px"></div>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center" id="jdSendBtn" onclick="jdSendInvite()"><i class="ph ph-paper-plane-tilt"></i> Send invite</button>
       ${collabs.length ? `<div class="jd-invite-list">
         ${collabs.map((c,i)=>`<div class="jd-invite-item">
           <div class="jd-invite-item-av ${c.role}">${c.avatar}</div>
-          <span class="jd-invite-item-email">${c.email}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name||c.email}</div>
+            ${c.name ? `<div style="font-size:11px;color:var(--text3)">${c.email}</div>` : ''}
+          </div>
           <span class="jd-invite-item-role">can ${c.role}</span>
           <button class="jd-invite-item-remove" onclick="jdRemoveCollab('${c.id||i}')" title="Remove">×</button>
         </div>`).join('')}
-      </div>` : ''}`}
+      </div>` : `<div style="font-size:12px;color:var(--text3);text-align:center;padding:10px 0">No collaborators yet.</div>`}`}
     </div>
   </div>`;
-  if (state !== 'loading') setTimeout(() => { const inp=document.getElementById('jdInviteEmail'); if(inp)inp.focus(); }, 0);
+  if (state !== 'loading') setTimeout(() => { const inp=document.getElementById('jdInviteSearch'); if(inp)inp.focus(); }, 0);
 }
 
-function jdSetRole(r) { _jdInviteRole = r; jdRenderInvite(); setTimeout(()=>{ const inp=document.getElementById('jdInviteEmail'); if(inp)inp.focus(); },0); }
+let _jdSelectedUser = null; // { id, email, name }
+let _jdSearchTimer = null;
+
+function jdSetRole(r) {
+  _jdInviteRole = r;
+  jdRenderInvite();
+  setTimeout(() => { const inp = document.getElementById('jdInviteSearch'); if(inp) inp.focus(); }, 0);
+}
+
+async function jdSearchUsers(q) {
+  _jdSelectedUser = null;
+  const dd = document.getElementById('jdUserDropdown');
+  if (!dd) return;
+  q = (q||'').trim();
+  if (q.length < 2) { dd.style.display = 'none'; return; }
+  clearTimeout(_jdSearchTimer);
+  _jdSearchTimer = setTimeout(async () => {
+    dd.style.display = 'block';
+    dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--text3)">Searching…</div>`;
+    const { data } = await sb.from('profiles')
+      .select('id,email,display_name')
+      .or(`email.ilike.%${q}%,display_name.ilike.%${q}%`)
+      .neq('id', currentUser?.id || '')
+      .limit(6);
+    if (!data || !data.length) {
+      dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--text3)">No users found.</div>`;
+      return;
+    }
+    dd.innerHTML = data.map(u => {
+      const name = u.display_name || u.email.split('@')[0];
+      const alreadyAdded = _jdCollabs.some(c => c.email === u.email);
+      return `<div onclick="${alreadyAdded ? '' : `jdSelectUser('${u.id}','${u.email.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}');event.stopPropagation()`}"
+        style="padding:9px 14px;display:flex;align-items:center;gap:10px;cursor:${alreadyAdded?'default':'pointer'};opacity:${alreadyAdded?0.45:1};${alreadyAdded?'':' '}transition:background .1s"
+        onmouseenter="if(!${alreadyAdded})this.style.background='var(--bg2)'" onmouseleave="this.style.background=''">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--moss);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--cream);flex-shrink:0">${name[0].toUpperCase()}</div>
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${name}</div>
+          <div style="font-size:11px;color:var(--text3)">${u.email}</div>
+        </div>
+        ${alreadyAdded ? `<span style="font-size:10px;color:var(--text3);margin-left:auto">Added</span>` : ''}
+      </div>`;
+    }).join('');
+  }, 280);
+}
+
+function jdSelectUser(id, email, name) {
+  _jdSelectedUser = { id, email, name };
+  const inp = document.getElementById('jdInviteSearch');
+  if (inp) inp.value = name + ' (' + email + ')';
+  jdCloseUserDropdown();
+  jdSendInvite();
+}
+
+function jdCloseUserDropdown() {
+  const dd = document.getElementById('jdUserDropdown');
+  if (dd) dd.style.display = 'none';
+}
 
 async function jdSendInvite() {
-  const inp = document.getElementById('jdInviteEmail');
-  const email = (inp?.value||'').trim().toLowerCase();
-  if (!email || !email.includes('@')) { if(inp){inp.style.borderColor='var(--danger-text)';setTimeout(()=>inp.style.borderColor='',1500);} return; }
+  const user = _jdSelectedUser;
+  if (!user) return;
+  const { id: userId, email, name } = user;
   const t = _journeyTrip; if (!t) return;
-  if (_jdCollabs.find(c=>c.email===email)) { if(inp)inp.value=''; return; }
+  if (_jdCollabs.find(c => c.email === email)) { jdRenderInvite(); return; }
 
-  const btn = document.getElementById('jdSendBtn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ph ph-circle-notch"></i> Sending…'; }
+  _jdSelectedUser = null;
+  const entry = { email, name, role: _jdInviteRole, avatar: (name||email)[0].toUpperCase() };
 
   if (currentUser) {
     const { data, error } = await sb.from('trip_collaborators').insert({
@@ -4770,19 +4833,14 @@ async function jdSendInvite() {
       invitee_email: email,
       role: _jdInviteRole,
     }).select('id').single();
-    if (!error && data) {
-      _jdCollabs.push({ id: data.id, email, role: _jdInviteRole, avatar: email[0].toUpperCase() });
-    }
+    if (!error && data) entry.id = data.id;
   } else {
-    // Offline fallback — localStorage only
     if (!t.collaborators) t.collaborators = [];
-    const entry = { email, role: _jdInviteRole, avatar: email[0].toUpperCase() };
     t.collaborators.push(entry);
-    _jdCollabs.push(entry);
     jdPersist();
   }
 
-  if(inp) inp.value='';
+  _jdCollabs.push(entry);
   jdRefreshCollabStrip();
   jdRenderInvite();
 }
