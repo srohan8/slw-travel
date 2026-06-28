@@ -85,6 +85,14 @@
   .thinking{color:var(--text3);font-style:italic;display: flex;align-items: center;gap: 8px;}
   .thinking::before{content: ''; width: 12px; height: 12px; border: 2px solid var(--text3); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;}
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* ── Vehicle progress loader ───────────────────────────────────────── */
+  .route-loader{display:flex;flex-direction:column;align-items:center;padding:28px 16px;gap:14px;}
+  .rl-track{position:relative;width:100%;max-width:300px;height:40px;}
+  .rl-road{position:absolute;bottom:0;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,var(--border) 0,var(--border) 10px,transparent 10px,transparent 18px);animation:rl-scroll 0.5s linear infinite;}
+  .rl-vehicle{position:absolute;bottom:4px;font-size:22px;line-height:1;animation:rl-drive 2.2s ease-in-out infinite;will-change:transform,left;}
+  .rl-label{font-size:12px;color:var(--text3);font-style:italic;min-height:18px;text-align:center;}
+  @keyframes rl-scroll{to{background-position:-28px 0;}}
+  @keyframes rl-drive{0%{left:-36px;opacity:0;}8%{opacity:1;}85%{opacity:1;}100%{left:calc(100% + 36px);opacity:0;}}
   .sec-lbl{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem;}
   .sumbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
   .met{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;box-shadow: var(--shadow);transition: transform 0.2s;}
@@ -847,7 +855,7 @@
 <body>
 
 <nav>
-  <a class="logo" href="#" onclick="goHome();return false;"><img src="../public/bysloth.png" alt="" style="height:28px;width:auto;flex-shrink:0"><span>bysloth</span></a>
+  <a class="logo" href="#" onclick="goHome();return false;"><img src="/public/bysloth.png" alt="" style="height:28px;width:auto;flex-shrink:0"><span>bysloth</span></a>
   <div class="nav-utils">
     <button class="nav-link active" id="navbtn_plan"      onclick="switchTab('plan',this)">Planner</button>
     <button class="nav-link"        id="navbtn_mytrips"  onclick="switchTab('mytrips',this)">My Trips</button>
@@ -1434,6 +1442,12 @@ async function init() {
   const seedParam = params.get('seed');
   if (seedParam === 'clear') clearDemoData();
   else if (seedParam) seedDemoData();
+  // Auto-strip any demo seed trips (id starts with 'demo-') left in localStorage
+  else {
+    const _trips = storage.get('trips') || [];
+    const _clean = _trips.filter(t => !t.id?.startsWith('demo-'));
+    if (_clean.length < _trips.length) { storage.set('trips', _clean); localStorage.removeItem('slw_contribs'); }
+  }
 
   loadCustomSitesIntoAFF();
   render();
@@ -2814,7 +2828,8 @@ async function planRoute() {
   btn.disabled = true; btn.textContent = 'Planning...';
   const res = document.getElementById('planResult');
   res.style.display = 'block';
-  res.innerHTML = '<span class="thinking">Finding the best overland route...</span>';
+  res.innerHTML = `<div class="route-loader"><div class="rl-track"><div class="rl-road"></div><span class="rl-vehicle">🚌</span></div><div class="rl-label">Finding the best overland route...</div></div>`;
+  _startRouteLoader(res);
 
   try {
     // Build site hint for AI so it knows what options exist
@@ -2886,10 +2901,37 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
     updateUsageBars();
   } catch (e) {
     console.error('planRoute error:', e);
+    _stopRouteLoader();
     res.innerHTML = `<span style="color:var(--danger-text)">Could not get a suggestion — ${e.message || 'unknown error'}. Try again.</span>`;
   }
+  _stopRouteLoader();
   btn.disabled = false; btn.textContent = 'Suggest route ↗';
 }
+
+// ── Vehicle route loader ──────────────────────────────────────────────
+const _rlVehicles = [
+  { icon:'🚌', label:'Scanning bus routes...' },
+  { icon:'🚂', label:'Checking train schedules...' },
+  { icon:'⛴️', label:'Routing across waterways...' },
+  { icon:'🚲', label:'Mapping cycle paths...' },
+  { icon:'🚗', label:'Finding road connections...' },
+];
+let _rlIdx = 0, _rlTimer = null;
+function _startRouteLoader(container) {
+  _rlIdx = 0;
+  clearTimeout(_rlTimer);
+  const tick = () => {
+    const v = _rlVehicles[_rlIdx % _rlVehicles.length];
+    const vEl = container.querySelector('.rl-vehicle');
+    const lEl = container.querySelector('.rl-label');
+    if (vEl) { vEl.style.animation = 'none'; vEl.textContent = v.icon; void vEl.offsetWidth; vEl.style.animation = ''; }
+    if (lEl) lEl.textContent = v.label;
+    _rlIdx++;
+    _rlTimer = setTimeout(tick, 2200);
+  };
+  tick();
+}
+function _stopRouteLoader() { clearTimeout(_rlTimer); _rlTimer = null; }
 
 // ── Logo → planner home ───────────────────────────────────────────────
 function goHome() {
