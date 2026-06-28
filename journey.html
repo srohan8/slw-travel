@@ -101,7 +101,7 @@
 <!-- Public header -->
 <nav class="pub-nav">
   <a class="pub-nav-logo" href="/">
-    <img src="public/bysloth.png" alt="" style="height:26px;width:auto"/>
+    <img src="/public/bysloth.png" alt="" style="height:26px;width:auto"/>
     <span>bysloth</span>
   </a>
   <div class="pub-nav-links">
@@ -150,7 +150,7 @@
 // ── Auth-aware nav: logged-in users see the app menu (shared localStorage session) ──
 function pubSignOut() {
   try { Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k)); } catch(e) {}
-  location.href = 'index.html';
+  location.href = '/';
 }
 function pubLoggedInUser() {
   let session = null;
@@ -297,10 +297,24 @@ async function geocodePub(name) {
   } catch(e) {}
   return null;
 }
+const SUPA_URL = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
 async function buildJourneyFromTrip(id) {
-  let trips = [];
-  try { trips = JSON.parse(localStorage.getItem('slw_trips') || '[]'); } catch(e) {}
-  const t = trips.find(x => x.id === id);
+  // Try localStorage first (fast), then fall back to Supabase (works on shared links)
+  let t = null;
+  try {
+    const trips = JSON.parse(localStorage.getItem('slw_trips') || '[]');
+    t = trips.find(x => x.id === id) || null;
+  } catch(e) {}
+  if (!t) {
+    try {
+      const res = await fetch(`${SUPA_URL}/rest/v1/trips?id=eq.${encodeURIComponent(id)}&select=data`, {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` }
+      });
+      const rows = await res.json();
+      if (rows?.[0]?.data) t = rows[0].data;
+    } catch(e) {}
+  }
   if (!t) return null;
   const stops = (t.stops || []).filter(s => s.name);
   const legs = t.legs || [];
