@@ -473,6 +473,31 @@
   .jd-title{font-size:26px;font-weight:700;letter-spacing:-0.4px;color:var(--text);line-height:1.1;}
   .jd-sub{font-family:var(--mono);font-size:12px;color:var(--text3);margin-top:4px;}
   .jd-header-actions{display:flex;gap:8px;flex-shrink:0;align-items:center;}
+  .jd-collab-wrap{display:flex;align-items:center;}
+  .jd-collab-av{width:26px;height:26px;border-radius:50%;border:2px solid var(--bg3);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-left:-8px;cursor:default;position:relative;}
+  .jd-collab-av:first-child{margin-left:0;}
+  .jd-collab-av.edit{background:var(--moss);color:var(--cream);}
+  .jd-collab-av.view{background:var(--sand2);color:var(--text2);}
+  .jd-collab-add{width:26px;height:26px;border-radius:50%;background:var(--bg);border:0.5px dashed var(--border2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-left:-8px;}
+  .jd-invite-modal{position:fixed;inset:0;z-index:900;background:rgba(9,16,34,0.45);display:flex;align-items:center;justify-content:center;}
+  .jd-invite-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:380px;max-width:calc(100vw - 32px);padding:22px 24px;}
+  .jd-invite-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
+  .jd-invite-sub{font-size:12px;color:var(--text3);margin-bottom:18px;}
+  .jd-invite-row{display:flex;gap:8px;margin-bottom:14px;}
+  .jd-invite-row input{flex:1;font-size:13px;padding:8px 11px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit;outline:none;}
+  .jd-invite-row input:focus{border-color:var(--fern);}
+  .jd-role-toggle{display:flex;border:0.5px solid var(--border2);border-radius:var(--radius);overflow:hidden;}
+  .jd-role-opt{padding:7px 12px;font-size:11.5px;cursor:pointer;background:transparent;border:none;font-family:inherit;color:var(--text2);}
+  .jd-role-opt.on{background:var(--moss);color:var(--cream);font-weight:600;}
+  .jd-invite-list{margin-top:16px;border-top:0.5px solid var(--border);padding-top:14px;display:flex;flex-direction:column;gap:8px;}
+  .jd-invite-item{display:flex;align-items:center;gap:10px;font-size:12.5px;}
+  .jd-invite-item-av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+  .jd-invite-item-av.edit{background:var(--moss);color:var(--cream);}
+  .jd-invite-item-av.view{background:var(--sand2);color:var(--text2);}
+  .jd-invite-item-email{flex:1;color:var(--text2);}
+  .jd-invite-item-role{font-size:11px;color:var(--text3);font-family:var(--mono);}
+  .jd-invite-item-remove{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;}
+  .jd-invite-item-remove:hover{color:var(--danger-text);}
   .jd-rec-cta{font-size:12px;padding:7px 14px;border-radius:var(--radius-pill);background:var(--sage);color:var(--cta-text);border:none;cursor:pointer;font-family:var(--body);font-weight:600;display:inline-flex;align-items:center;gap:6px;}
   .jd-rec-dot{width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block;}
   .jd-tabs{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:18px;}
@@ -953,6 +978,7 @@
       <input class="trip-title" placeholder="Name your trip..." value="My overland journey" id="tripTitle" style="flex:1"/>
       <button class="import-route-btn" onclick="openImportModal()" title="Import a route from GPX, Excel or CSV"><i class="ph ph-upload-simple" style="font-size:13px"></i> Import a route</button>
       <button class="btn editor-delete-btn" id="deleteTripBtn" onclick="deleteCurrentTrip()" style="display:none" title="Delete this trip"><i class="ph ph-trash" style="font-size:13px"></i> Delete</button>
+      <button class="btn" id="shareLinkBtn" onclick="shareTripLink()" title="Copy shareable link"><i class="ph ph-share-network" style="font-size:13px"></i> Share link</button>
       <button class="btn" onclick="cancelEditTrip()">Cancel</button>
       <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
       <span class="save-status" id="saveStatus"></span>
@@ -4519,6 +4545,11 @@ function renderJourneyDetail() {
       <div class="jd-sub">${first.toLowerCase()} → ${last.toLowerCase()}${dateRange ? ' · ' + dateRange : ''}</div>
     </div>
     <div class="jd-header-actions">
+      <button class="btn" style="font-size:12px;padding:6px 14px" onclick="jdShareTrip('${t.id}')"><i class="ph ph-export"></i> Share</button>
+      <div class="jd-collab-wrap" id="jdCollabWrap">
+        ${(t.collaborators||[]).map((c,i)=>`<div class="jd-collab-av ${c.role}" title="${c.email} · can ${c.role}" style="z-index:${10-i}">${c.avatar||c.email[0].toUpperCase()}</div>`).join('')}
+        <button class="jd-collab-add" onclick="jdOpenInvite()" title="Invite collaborators"><i class="ph ph-plus" style="font-size:11px;color:var(--text3)"></i></button>
+      </div>
       ${recStarted
         ? `<button class="jd-rec-cta" onclick="openRecordJournal(_journeyTrip)"><span class="jd-rec-dot"></span> Recording · Edit journal</button>`
         : `<button class="btn" style="font-size:12px;padding:6px 14px" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
@@ -4622,6 +4653,91 @@ function jdJourneyTabHTML(t, stops, legs, m) {
   return h;
 }
 
+function jdShareTrip(id) {
+  const trips = storage.get('trips') || [];
+  const t = trips.find(x => x.id === id);
+  if (!t) return;
+  const base = window.location.origin;
+  const url = t.public_slug ? `${base}/journey/${t.public_slug}` : `${base}/journey.html?id=${id}`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.querySelector('.jd-header-actions .btn');
+      if (btn) { const orig = btn.innerHTML; btn.innerHTML = '<i class="ph ph-check"></i> Copied!'; setTimeout(() => { btn.innerHTML = orig; }, 2000); }
+    }).catch(() => prompt('Copy this link:', url));
+  } else {
+    prompt('Copy this link:', url);
+  }
+}
+let _jdInviteRole = 'edit';
+function jdOpenInvite() {
+  let el = document.getElementById('jdInviteModal');
+  if (!el) { el = document.createElement('div'); el.id = 'jdInviteModal'; document.body.appendChild(el); }
+  _jdInviteRole = 'edit';
+  jdRenderInvite();
+}
+function jdRenderInvite() {
+  const el = document.getElementById('jdInviteModal');
+  if (!el) return;
+  const t = _journeyTrip; if (!t) return;
+  const collabs = t.collaborators || [];
+  el.innerHTML = `<div class="jd-invite-modal" onclick="if(event.target===this)jdCloseInvite()">
+    <div class="jd-invite-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <div>
+          <div class="jd-invite-title"><i class="ph ph-users-three"></i> Invite collaborators</div>
+          <div class="jd-invite-sub">Share this trip with travellers who can view or co-edit.</div>
+        </div>
+        <button onclick="jdCloseInvite()" style="background:none;border:none;font-size:18px;color:var(--text3);cursor:pointer;line-height:1">×</button>
+      </div>
+      <div class="jd-invite-row">
+        <input id="jdInviteEmail" type="email" placeholder="Email address" onkeydown="if(event.key==='Enter')jdSendInvite()"/>
+        <div class="jd-role-toggle">
+          <button class="jd-role-opt${_jdInviteRole==='edit'?' on':''}" onclick="jdSetRole('edit')">Can edit</button>
+          <button class="jd-role-opt${_jdInviteRole==='view'?' on':''}" onclick="jdSetRole('view')">Can view</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="jdSendInvite()"><i class="ph ph-paper-plane-tilt"></i> Send invite</button>
+      ${collabs.length ? `<div class="jd-invite-list">
+        ${collabs.map((c,i)=>`<div class="jd-invite-item">
+          <div class="jd-invite-item-av ${c.role}">${c.avatar||c.email[0].toUpperCase()}</div>
+          <span class="jd-invite-item-email">${c.email}</span>
+          <span class="jd-invite-item-role">can ${c.role}</span>
+          <button class="jd-invite-item-remove" onclick="jdRemoveCollab(${i})" title="Remove">×</button>
+        </div>`).join('')}
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+function jdSetRole(r) { _jdInviteRole = r; jdRenderInvite(); setTimeout(()=>{ const inp=document.getElementById('jdInviteEmail'); if(inp)inp.focus(); },0); }
+function jdSendInvite() {
+  const inp = document.getElementById('jdInviteEmail');
+  const email = (inp?.value||'').trim().toLowerCase();
+  if (!email || !email.includes('@')) { if(inp){inp.style.borderColor='var(--danger-text)';setTimeout(()=>inp.style.borderColor='',1500);} return; }
+  const t = _journeyTrip; if (!t) return;
+  if (!t.collaborators) t.collaborators = [];
+  if (t.collaborators.find(c=>c.email===email)) { if(inp)inp.value=''; return; }
+  t.collaborators.push({ email, role: _jdInviteRole, avatar: email[0].toUpperCase() });
+  jdPersist();
+  if(inp) inp.value='';
+  jdRenderInvite();
+  // Refresh avatar strip in header
+  const wrap = document.getElementById('jdCollabWrap');
+  if (wrap) {
+    const addBtn = wrap.querySelector('.jd-collab-add');
+    const av = document.createElement('div');
+    av.className = `jd-collab-av ${_jdInviteRole}`;
+    av.title = `${email} · can ${_jdInviteRole}`;
+    av.textContent = email[0].toUpperCase();
+    wrap.insertBefore(av, addBtn);
+  }
+}
+function jdRemoveCollab(idx) {
+  const t = _journeyTrip; if (!t || !t.collaborators) return;
+  t.collaborators.splice(idx, 1);
+  jdPersist();
+  jdRenderInvite();
+}
+function jdCloseInvite() { const el=document.getElementById('jdInviteModal'); if(el)el.innerHTML=''; }
 function jdStartRecording() {
   if (!_journeyTrip) return;
   _journeyTrip.recordingStarted = true;
