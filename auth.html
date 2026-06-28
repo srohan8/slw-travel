@@ -11,20 +11,30 @@
 function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'});}
 (function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
 </script>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&family=Sora:wght@300;400;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --moss:#2D4A2D; --fern:#4A7C4A; --sage:#8BAF7A; --mist:#D4E3CC;
-  --cream:#F5F0E8; --sand:#E8DFD0; --dusk:#2D4A2D; --gold:#C9A84C;
-  --bg:#FAF7F2; --bg2:#F2EDE4; --text:#2D4A2D; --text2:#4A6040; --text3:#9AA880;
-  --border:rgba(45,74,45,0.15); --border2:rgba(45,74,45,0.3);
-  --radius:10px; --radius-lg:16px;
-  --serif:'Cormorant Garamond',Georgia,serif;
-  --body:'DM Sans',system-ui,sans-serif;
-  --mono:'DM Mono','Courier New',monospace;
+  --fern: #1E3A5C;
+  --sage: #FF5014;
+  --moss: #13213A;
+  --floodBg: #091022;
+  --cream: #FFFFFF;
+  --bg: #FFFFFF;
+  --bg2: #FAF6F4;
+  --text: #0E1A2E;
+  --text2: #2C4060;
+  --text3: #94A0B0;
+  --border: rgba(14,26,46,0.15);
+  --border2: rgba(14,26,46,0.30);
+  --radius: 8px;
+  --radiusLg: 14px;
+  --radiusPill: 999px;
+  --serif: 'Sora', Georgia, serif;
+  --body: 'Albert Sans', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
 }
 
 html, body { height: 100%; }
@@ -38,14 +48,30 @@ body {
 
 /* ── Left pitch panel ─────────────────────────────────────── */
 .auth-left {
-  background: linear-gradient(180deg, #0D120D 0%, #17231A 100%);
+  background: #1E3A5C;
   padding: 48px 56px;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   color: var(--cream);
+}
+
+.auth-left-hero {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.auth-left-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.55) 100%);
+  pointer-events: none;
 }
 
 .auth-logo {
@@ -53,15 +79,27 @@ body {
   align-items: center;
   gap: 8px;
   text-decoration: none;
+  position: relative;
+  z-index: 1;
 }
+.auth-logo img { height: 24px; }
 .auth-logo-text {
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 300;
-  color: var(--cream);
-  letter-spacing: -0.3px;
+  font-family: var(--body);
+  font-size: 18px;
+  font-weight: 500;
+  color: #FFFFFF;
 }
-.auth-logo-text em { font-style: italic; color: var(--sage); }
+
+.auth-version {
+  position: absolute;
+  left: 56px;
+  top: 96px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(212,227,204,0.3);
+  letter-spacing: 1.5px;
+  z-index: 1;
+}
 
 .auth-left-body {
   position: relative;
@@ -69,14 +107,16 @@ body {
   margin-top: auto;
   margin-bottom: 40px;
 }
+
 .kicker {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: var(--sage);
+  color: #FF5014;
   font-weight: 400;
 }
+
 .auth-left-h {
   font-family: var(--serif);
   font-weight: 300;
@@ -86,13 +126,13 @@ body {
   margin: 12px 0 18px;
   color: var(--cream);
 }
-.auth-left-h em { font-style: italic; color: var(--sage); }
+.auth-left-h em { font-style: italic; color: #FF5014; }
 
 .auth-left-sub {
   font-size: 14px;
   line-height: 1.55;
   color: rgba(245,240,232,0.65);
-  max-width: 340px;
+  max-width: 360px;
 }
 
 .auth-trust {
@@ -100,46 +140,27 @@ body {
   gap: 24px;
   margin-top: 32px;
   padding-top: 20px;
-  border-top: 0.5px solid rgba(245,240,232,0.13);
+  border-top: 0.5px solid rgba(245,240,232,0.15);
 }
-.auth-trust-item {}
 .auth-trust-n {
-  font-family: var(--serif);
+  font-family: var(--body);
   font-size: 22px;
-  font-weight: 300;
+  font-weight: 700;
   color: var(--cream);
-  letter-spacing: -0.3px;
 }
 .auth-trust-l {
+  font-family: var(--mono);
   font-size: 10px;
   color: rgba(212,227,204,0.5);
   margin-top: 2px;
-  font-family: var(--mono);
   letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
-
-.auth-bg-sloth {
-  position: absolute;
-  right: -60px;
-  bottom: -30px;
-  opacity: 0.12;
-  pointer-events: none;
-}
-.auth-version {
-  position: absolute;
-  left: 56px;
-  top: 96px;
-  font-family: var(--mono);
-  font-size: 10px;
-  color: rgba(212,227,204,0.28);
-  letter-spacing: 1.5px;
   text-transform: uppercase;
 }
 
 /* ── Right form panel ─────────────────────────────────────── */
 .auth-right {
-  background: var(--bg);
+  background: #FFFFFF;
+  color: #0E1A2E;
   padding: 48px 56px;
   display: flex;
   flex-direction: column;
@@ -155,15 +176,14 @@ body {
 /* Tab switcher */
 .auth-tabs {
   display: flex;
-  gap: 2px;
-  border-bottom: 0.5px solid var(--border);
+  border-bottom: 0.5px solid rgba(14,26,46,0.15);
   margin-bottom: 28px;
 }
 .auth-tab {
   font-size: 13px;
-  padding: 10px 2px;
-  margin-right: 22px;
-  color: var(--text3);
+  padding: 10px 0;
+  margin-right: 24px;
+  color: #94A0B0;
   cursor: pointer;
   border: none;
   background: none;
@@ -173,9 +193,18 @@ body {
   transition: color .15s;
 }
 .auth-tab.active {
-  color: var(--text);
+  color: #0E1A2E;
   font-weight: 500;
-  border-bottom-color: var(--fern);
+  border-bottom-color: #1E3A5C;
+}
+
+.auth-kicker {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #1E3A5C;
+  font-weight: 400;
 }
 
 .auth-title {
@@ -184,8 +213,8 @@ body {
   font-weight: 300;
   letter-spacing: -0.4px;
   margin-top: 4px;
-  margin-bottom: 22px;
-  color: var(--text);
+  margin-bottom: 24px;
+  color: #0E1A2E;
   line-height: 1.1;
 }
 
@@ -196,10 +225,10 @@ body {
   justify-content: center;
   gap: 10px;
   padding: 11px 14px;
-  border: 0.5px solid var(--border2);
-  border-radius: 10px;
-  background: var(--bg);
-  color: var(--text);
+  border: 0.5px solid rgba(14,26,46,0.30);
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #0E1A2E;
   font-size: 13px;
   font-weight: 500;
   font-family: var(--body);
@@ -208,27 +237,30 @@ body {
   transition: background .15s;
   margin-bottom: 8px;
 }
+.oauth-btn:last-of-type { margin-bottom: 0; }
 .oauth-btn:hover { background: var(--bg2); }
 .oauth-btn:disabled { opacity: 0.4; cursor: default; }
+
+.oauth-group { margin-bottom: 18px; }
 
 /* Divider */
 .auth-or {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 16px 0;
+  margin: 18px 0;
 }
 .auth-or::before, .auth-or::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--border);
+  background: rgba(14,26,46,0.15);
 }
 .auth-or span {
   font-size: 10px;
   font-family: var(--mono);
   letter-spacing: 2px;
-  color: var(--text3);
+  color: #94A0B0;
   text-transform: uppercase;
 }
 
@@ -239,34 +271,36 @@ body {
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--text3);
+  color: #94A0B0;
   font-weight: 600;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 6px;
 }
 .field-lbl a {
-  color: var(--fern);
+  color: #1E3A5C;
   font-size: 11px;
   text-decoration: none;
   text-transform: none;
   letter-spacing: 0;
   cursor: pointer;
   font-family: var(--body);
+  font-weight: 400;
 }
 .field-inp {
   font-size: 14px;
-  color: var(--text);
-  border: 0.5px solid var(--border2);
+  color: #0E1A2E;
+  border: 0.5px solid rgba(14,26,46,0.30);
   border-radius: 8px;
-  background: var(--bg);
+  background: #FFFFFF;
   padding: 11px 13px;
   outline: none;
   font-family: var(--body);
   width: 100%;
   transition: border-color .15s;
 }
-.field-inp:focus { border-color: var(--fern); }
+.field-inp:focus { border-color: #1E3A5C; }
 
 /* Remember me */
 .remember-row {
@@ -274,27 +308,28 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: var(--text2);
+  color: #2C4060;
   margin: 6px 0 0;
+  cursor: pointer;
 }
-.remember-row input { accent-color: var(--fern); }
+.remember-row input { accent-color: #1E3A5C; }
 
 /* Submit */
 .auth-submit {
-  margin-top: 14px;
+  margin-top: 10px;
   padding: 12px 20px;
-  border-radius: 10px;
+  border-radius: 999px;
   border: none;
-  background: var(--fern);
+  background: #13213A;
   color: var(--cream);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: var(--body);
   cursor: pointer;
   width: 100%;
   transition: background .15s;
 }
-.auth-submit:hover { background: #3D6B3D; }
+.auth-submit:hover { background: #1E3A5C; }
 .auth-submit:disabled { opacity: 0.5; cursor: default; }
 
 /* Message */
@@ -306,29 +341,30 @@ body {
   line-height: 1.5;
 }
 .auth-msg.err { color: #C4622D; }
-.auth-msg.ok  { color: var(--fern); }
+.auth-msg.ok  { color: #1E3A5C; }
 
 /* Footer note */
 .auth-fine {
   font-size: 11px;
-  color: var(--text3);
+  color: #94A0B0;
   text-align: center;
-  margin-top: 20px;
+  margin-top: 22px;
   line-height: 1.6;
 }
-.auth-fine a { color: var(--fern); text-decoration: underline; cursor: pointer; }
+.auth-fine a { color: #1E3A5C; text-decoration: none; cursor: pointer; }
+.auth-fine a:hover { text-decoration: underline; }
 
 .auth-skip {
   font-size: 12px;
-  color: var(--text3);
+  color: #94A0B0;
   text-align: center;
   margin-top: 10px;
   cursor: pointer;
 }
-.auth-skip:hover { color: var(--text2); }
+.auth-skip:hover { color: #2C4060; }
 
 /* Mobile */
-@media(max-width: 680px) {
+@media(max-width: 768px) {
   body { grid-template-columns: 1fr; }
   .auth-left { display: none; }
   .auth-right { padding: 32px 24px; }
@@ -338,31 +374,36 @@ body {
 <body>
 
 <!-- ── Cookie consent banner ── -->
-<div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#2D4A2D;color:#F5F0E8;padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
-  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:#8BAF7A;">Learn&nbsp;more</a></span>
+<div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#13213A;color:#F5F0E8;padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'Albert Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
+  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:#FF5014;">Learn&nbsp;more</a></span>
   <div style="display:flex;gap:8px;flex-shrink:0;">
-    <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(245,240,232,0.35);color:#F5F0E8;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
-    <button onclick="slwConsent('accepted')" style="background:#8BAF7A;border:none;color:#2D4A2D;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
+    <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(245,240,232,0.35);color:#F5F0E8;padding:7px 16px;border-radius:999px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
+    <button onclick="slwConsent('accepted')" style="background:#FF5014;border:none;color:#FFFFFF;padding:7px 16px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
   </div>
 </div>
 <script>function slwConsent(c){localStorage.setItem('slw_cookie_consent',c);var b=document.getElementById('slw-consent-banner');if(b)b.style.display='none';if(c==='accepted'&&typeof initPostHog==='function')initPostHog();}</script>
 
 <!-- ── Left pitch panel ──────────────────────────────── -->
 <div class="auth-left">
+  <img class="auth-left-hero" src="public/hero-collage.jpg" alt=""/>
+  <div class="auth-left-gradient"></div>
+
   <a class="auth-logo" href="index.html">
-    <img src="public/sloth-logo.svg" height="30" style="filter:brightness(0) invert(1);opacity:0.85"/>
-    <span class="auth-logo-text">SLW <em>Travel</em></span>
+    <img src="/public/bysloth.png" height="24"/>
+    <span class="auth-logo-text">bysloth</span>
   </a>
+
+  <div class="auth-version">v0.4 · private beta</div>
 
   <div class="auth-left-body">
     <div class="kicker">Overland planner · Community-verified</div>
     <h1 class="auth-left-h">
       Every leg<br>
-      <em>double-checked</em><br>
+      <em style="font-style:italic;color:#FF5014">double-checked</em><br>
       by someone<br>
       who was there.
     </h1>
-    <p class="auth-left-sub">SLW routes are planned by an AI and verified by travellers. Join 2,400+ contributors keeping borders, prices, and schedules honest.</p>
+    <p class="auth-left-sub">bysloth routes are planned by an AI and verified by travellers. Join 2,400+ contributors keeping borders, prices, and schedules honest.</p>
 
     <div class="auth-trust">
       <div class="auth-trust-item">
@@ -379,13 +420,6 @@ body {
       </div>
     </div>
   </div>
-
-  <div class="auth-version">v0.4 · private beta</div>
-
-  <!-- Decorative sloth -->
-  <div class="auth-bg-sloth">
-    <img src="public/sloth-logo.svg" width="360" style="filter:brightness(0) invert(1);opacity:0.12"/>
-  </div>
 </div>
 
 <!-- ── Right form panel ──────────────────────────────── -->
@@ -394,26 +428,28 @@ body {
 
     <!-- Tab switcher -->
     <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign in</button>
-      <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Create account</button>
+      <button class="auth-tab active" id="tabSignin" onclick="switchTab('signin')">Sign in</button>
+      <button class="auth-tab"        id="tabSignup" onclick="switchTab('signup')">Create account</button>
     </div>
 
     <!-- ── Sign in ── -->
-    <div id="panel-signin">
-      <div class="kicker">Welcome back</div>
+    <div id="formSignin">
+      <div class="auth-kicker">Welcome back</div>
       <div class="auth-title">Plan the next slow one.</div>
 
-      <button class="oauth-btn" onclick="oauthGoogle()" disabled title="Google sign-in coming soon">
-        <i class="ph ph-google-logo" style="font-size:16px"></i> Continue with Google
-      </button>
-      <button class="oauth-btn" onclick="oauthApple()" disabled title="Apple sign-in coming soon">
-        <i class="ph ph-apple-logo" style="font-size:16px"></i> Continue with Apple
-      </button>
+      <div class="oauth-group">
+        <button class="oauth-btn" onclick="oauthGoogle()">
+          <i class="ph ph-google-logo" style="font-size:16px"></i> Continue with Google
+        </button>
+        <button class="oauth-btn" onclick="oauthApple()">
+          <i class="ph ph-apple-logo" style="font-size:16px"></i> Continue with Apple
+        </button>
+      </div>
 
       <div class="auth-or"><span>or</span></div>
 
       <div class="field">
-        <div class="field-lbl">Email</div>
+        <div class="field-lbl"><span>Email</span></div>
         <input class="field-inp" type="email" id="si-email" placeholder="you@example.com" autocomplete="email"/>
       </div>
       <div class="field">
@@ -433,25 +469,27 @@ body {
     </div>
 
     <!-- ── Create account ── -->
-    <div id="panel-signup" style="display:none">
-      <div class="kicker">Join 2,400+ travellers</div>
+    <div id="formSignup" style="display:none">
+      <div class="auth-kicker">Join 2,400+ travellers</div>
       <div class="auth-title">Start your slow journey.</div>
 
-      <button class="oauth-btn" onclick="oauthGoogle()" disabled title="Google sign-in coming soon">
-        <i class="ph ph-google-logo" style="font-size:16px"></i> Continue with Google
-      </button>
-      <button class="oauth-btn" onclick="oauthApple()" disabled title="Apple sign-in coming soon">
-        <i class="ph ph-apple-logo" style="font-size:16px"></i> Continue with Apple
-      </button>
+      <div class="oauth-group">
+        <button class="oauth-btn" onclick="oauthGoogle()">
+          <i class="ph ph-google-logo" style="font-size:16px"></i> Continue with Google
+        </button>
+        <button class="oauth-btn" onclick="oauthApple()">
+          <i class="ph ph-apple-logo" style="font-size:16px"></i> Continue with Apple
+        </button>
+      </div>
 
       <div class="auth-or"><span>or</span></div>
 
       <div class="field">
-        <div class="field-lbl">Email</div>
+        <div class="field-lbl"><span>Email</span></div>
         <input class="field-inp" type="email" id="su-email" placeholder="you@example.com" autocomplete="email"/>
       </div>
       <div class="field">
-        <div class="field-lbl">Password</div>
+        <div class="field-lbl"><span>Password</span></div>
         <input class="field-inp" type="password" id="su-pass" placeholder="Min 8 characters" autocomplete="new-password"/>
       </div>
 
@@ -462,10 +500,10 @@ body {
 
     <!-- ── Forgot password ── -->
     <div id="panel-forgot" style="display:none">
-      <div class="kicker">Reset password</div>
+      <div class="auth-kicker">Reset password</div>
       <div class="auth-title">We'll send a link.</div>
       <div class="field">
-        <div class="field-lbl">Email</div>
+        <div class="field-lbl"><span>Email</span></div>
         <input class="field-inp" type="email" id="fp-email" placeholder="you@example.com"/>
       </div>
       <button class="auth-submit" onclick="sendReset()">Send reset link →</button>
@@ -474,7 +512,7 @@ body {
     </div>
 
     <p class="auth-fine">
-      By continuing you agree to our <a>Terms</a> and <a>Privacy Policy</a>.<br>
+      By continuing, you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.<br>
       No flights. No data sold.
     </p>
   </div>
@@ -502,13 +540,13 @@ body {
 
   function applySignupGate() {
     if (_signupsEnabled) return;
-    document.getElementById('tab-signup').style.display = 'none';
-    document.getElementById('panel-signup').innerHTML =
-      '<div class="kicker">Signups paused</div>' +
+    document.getElementById('tabSignup').style.display = 'none';
+    document.getElementById('formSignup').innerHTML =
+      '<div class="auth-kicker">Signups paused</div>' +
       '<div class="auth-title">New accounts temporarily unavailable.</div>' +
       '<p style="font-size:13px;color:var(--text2);line-height:1.55;margin-top:12px">We\'ve paused new sign-ups while we scale. Existing accounts are unaffected — sign in on the left. Check back soon.</p>';
     // If URL requested signup, bounce back to signin
-    const active = document.querySelector('#panel-signup[style*="block"]');
+    const active = document.querySelector('#formSignup[style*="block"]');
     if (active || new URLSearchParams(location.search).get('tab') === 'signup') {
       switchTab('signin');
     }
@@ -519,11 +557,29 @@ body {
   if (urlTab === 'signup') switchTab('signup');
 
   function switchTab(tab) {
-    ['signin','signup','forgot'].forEach(t => {
-      document.getElementById('panel-' + t).style.display = t === tab ? 'block' : 'none';
-    });
-    document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
-    document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+    // Handle signin / signup panels
+    const signinPanel = document.getElementById('formSignin');
+    const signupPanel = document.getElementById('formSignup');
+    const forgotPanel = document.getElementById('panel-forgot');
+
+    if (tab === 'signin') {
+      signinPanel.style.display = 'block';
+      signupPanel.style.display = 'none';
+      forgotPanel.style.display = 'none';
+    } else if (tab === 'signup') {
+      signinPanel.style.display = 'none';
+      signupPanel.style.display = 'block';
+      forgotPanel.style.display = 'none';
+    } else if (tab === 'forgot') {
+      signinPanel.style.display = 'none';
+      signupPanel.style.display = 'none';
+      forgotPanel.style.display = 'block';
+    }
+
+    const tabSignin = document.getElementById('tabSignin');
+    const tabSignup = document.getElementById('tabSignup');
+    tabSignin.classList.toggle('active', tab === 'signin');
+    tabSignup.classList.toggle('active', tab === 'signup');
   }
 
   function showForgot() { switchTab('forgot'); }
@@ -540,7 +596,7 @@ body {
     const pass  = document.getElementById('si-pass').value;
     if (!email || !pass) return setMsg('si-msg', 'Please fill in all fields', true);
     setMsg('si-msg', 'Signing in…');
-    const btn = document.querySelector('#panel-signin .auth-submit');
+    const btn = document.querySelector('#formSignin .auth-submit');
     btn.disabled = true;
     const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     btn.disabled = false;
@@ -555,7 +611,7 @@ body {
     if (!email || !pass) return setMsg('su-msg', 'Please fill in all fields', true);
     if (pass.length < 8) return setMsg('su-msg', 'Password must be 8+ characters', true);
     setMsg('su-msg', 'Creating account…');
-    const btn = document.querySelector('#panel-signup .auth-submit');
+    const btn = document.querySelector('#formSignup .auth-submit');
     btn.disabled = true;
     const { error } = await sb.auth.signUp({ email, password: pass });
     btn.disabled = false;
@@ -598,10 +654,11 @@ body {
   // Enter key
   document.addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
-    const active = document.querySelector('[id^="panel-"]:not([style*="display: none"])');
-    if (active?.id === 'panel-signin')  signIn();
-    if (active?.id === 'panel-signup')  signUp();
-    if (active?.id === 'panel-forgot')  sendReset();
+    const forgotVisible = document.getElementById('panel-forgot').style.display !== 'none';
+    const signupVisible = document.getElementById('formSignup').style.display !== 'none';
+    if (forgotVisible) sendReset();
+    else if (signupVisible) signUp();
+    else signIn();
   });
 </script>
 </body>

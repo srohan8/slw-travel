@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>bysloth — App</title>
 <link rel="icon" type="image/png" href="../public/bysloth.png"/>
-<script>(function(){var p=new URLSearchParams(location.search).get('p');if(p){var q=new URLSearchParams(location.search);q.delete('p');var qs=q.toString();history.replaceState(null,'',p+(qs?'?'+qs:'')+(location.hash||''));}})()</script>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Albert+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
@@ -16,17 +15,17 @@
   :root {
     /* Brand palette — bysloth · Signal theme (navy + electric orange) */
     --fern:#1E3A5C;--sage:#FF5014;--moss:#13213A;
-    --cream:#FFFFFF;--sand:#FAF6F4;--sand2:#FAF6F4;
-    --bark:#6B4F3A;--rust:#C4622D;--dusk:#091022;--mist:#D6E4F0;--gold:#FFB800;
+    --cream:#FFFFFF;--sand:#F8F4F2;--sand2:#F0EAE7;
+    --bark:#3A2A24;--rust:#FF5014;--dusk:#091022;--mist:#FFD9CC;--gold:#FFB800;
     /* Semantic — surfaces all white, slightly warm inset */
     --bg:#FFFFFF;--bg2:#FAF6F4;--bg3:#FFFFFF;
     --text:#0E1A2E;--text2:#2C4060;--text3:#94A0B0;
     --border:rgba(14,26,46,0.15);--border2:rgba(14,26,46,0.30);
     --info-bg:rgba(30,58,92,0.08);--info-text:#1E3A5C;--info-border:rgba(30,58,92,0.25);
-    --success-bg:rgba(74,124,74,0.10);--success-text:#3A6B3A;--success-border:rgba(74,124,74,0.28);
+    --success-bg:rgba(30,58,92,0.08);--success-text:#1E3A5C;--success-border:rgba(30,58,92,0.25);
     --warn-bg:#FEF9ED;--warn-text:#5C4200;--warn-border:rgba(133,100,0,0.3);
     --danger-bg:#FDF0EC;--danger-text:#8B2A00;--danger-border:rgba(196,98,45,0.3);
-    --green:#4A7C4A;--blue:#2E6FA8;--amber:#FFB800;
+    --blue:#2E6FA8;--amber:#FFB800;
     --cta-text:#ffffff;
     --radius:10px;--radius-lg:16px;--radius-pill:9999px;
     --shadow:0 2px 8px rgba(0,0,0,0.06);
@@ -823,7 +822,7 @@
 <body>
 
 <nav>
-  <a class="logo" href="#" onclick="goHome();return false;"><img src="public/bysloth.png" alt="" style="height:28px;width:auto;flex-shrink:0"><span>bysloth</span></a>
+  <a class="logo" href="#" onclick="goHome();return false;"><img src="../public/bysloth.png" alt="" style="height:28px;width:auto;flex-shrink:0"><span>bysloth</span></a>
   <div class="nav-utils">
     <button class="nav-link active" id="navbtn_plan"      onclick="switchTab('plan',this)">Planner</button>
     <button class="nav-link"        id="navbtn_mytrips"  onclick="switchTab('mytrips',this)">My Trips</button>
@@ -1207,11 +1206,11 @@ const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Wal
 // Signal · transport mode accent colors (Session-2 §8 values)
 const MODE_COLORS = {
   bus:          '#6B4F3A', // bark
-  train:        '#4A7C4A', // fern green
+  train:        '#1E3A5C', // fern navy
   hitchhike:    '#C4622D', // rust
   ferry:        '#2E6FA8', // ocean blue
-  walk:         '#9AA880', // muted sage
-  walking:      '#9AA880',
+  walk:         '#94A0B0', // text3 grey
+  walking:      '#94A0B0',
   cycle:        '#2E6FA8',
   taxi:         '#B45309', // amber-brown
   flight:       '#5B7FA6', // slate
@@ -1220,8 +1219,8 @@ const MODE_COLORS = {
 
 // Mode → tint (light bg for icon chip)
 const MODE_TINTS = {
-  bus:'#F4EADE', train:'#E6EFE6', ferry:'#EBF4FC', hitchhike:'#FBE3D4',
-  walk:'#F0F4ED', walking:'#F0F4ED', cycle:'#EBF4FC',
+  bus:'#F4EADE', train:'rgba(30,58,92,0.08)', ferry:'#EBF4FC', hitchhike:'#FBE3D4',
+  walk:'#F2F4F6', walking:'#F2F4F6', cycle:'#EBF4FC',
   taxi:'#FEF3C7', flight:'#E8EFF5', 'shared taxi':'#FEF3C7',
 };
 
@@ -1559,14 +1558,17 @@ function updateNavAuth() {
   const badge   = document.getElementById('userBadge');
   const signOut = document.getElementById('signOutBtn');
   const signIn  = document.getElementById('signInBtn');
+  const gatedTabs = ['navbtn_mytrips','navbtn_journals','navbtn_profile','navbtn_admin'];
   if (currentUser) {
     badge.textContent = currentUser.email?.split('@')[0] || 'User';
     signOut.style.display = 'inline-block';
     signIn.style.display  = 'none';
+    gatedTabs.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
   } else {
     badge.textContent = 'Guest';
     signOut.style.display = 'none';
     signIn.style.display  = 'inline-block';
+    gatedTabs.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
   }
 }
 
@@ -1808,7 +1810,7 @@ async function callAI(prompt, maxTokens = 8000) {
   }
   const r = await fetch(url, {
     method: 'POST', headers,
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
   });
   const d = await r.json();
   if (!r.ok || d.error) {
@@ -3680,7 +3682,7 @@ function renderLeg(i) {
   const toCity     = stops[i+1]?.name || '';
   const iconCls    = MODE_ICONS[leg.mode] || 'ph-path';
   const modeColor  = MODE_COLORS[leg.mode] || 'var(--fern)';
-  const modeTint   = MODE_TINTS[leg.mode]  || '#E0EBD6';
+  const modeTint   = MODE_TINTS[leg.mode]  || '#E0EAF2';
   const isEditing  = editingLegModes.has(i);
   const nextStop   = stops[i+1];
 
@@ -4689,7 +4691,7 @@ async function jdInitMap(stops, legs) {
     const first = i===0, last = i===coords.length-1;
     L.circleMarker([c.lat, c.lon], {
       radius: first||last ? 6 : 5, color:'#fff', weight:2,
-      fillColor: c.visited ? '#1E3A5C' : last ? '#FF5014' : '#8A9484', fillOpacity:1
+      fillColor: c.visited ? '#1E3A5C' : last ? '#FF5014' : '#94A0B0', fillOpacity:1
     }).bindTooltip(c.name, { permanent:true, direction:'top', offset:[0,-8], className:'' }).addTo(_jdMap);
   });
   // GPS "you are here" dot (mid-leg transitProgress)
@@ -5192,7 +5194,7 @@ async function recInitStickyMap() {
   L.polyline(ll, { color:'#FF5014', weight:2.5, opacity:0.75, dashArray:'5 7' }).addTo(_recMap);
   coords.forEach((c, i) => {
     const first=i===0, lastC=i===coords.length-1;
-    L.circleMarker([c.lat,c.lon], { radius:first||lastC?6:5, color:'#fff', weight:2, fillColor:c.visited?'#1E3A5C':lastC?'#FF5014':'#8A9484', fillOpacity:1 })
+    L.circleMarker([c.lat,c.lon], { radius:first||lastC?6:5, color:'#fff', weight:2, fillColor:c.visited?'#1E3A5C':lastC?'#FF5014':'#94A0B0', fillOpacity:1 })
       .bindTooltip(c.name, { permanent:true, direction:'top', offset:[0,-8], className:'' }).addTo(_recMap);
   });
   const ti = coords.findIndex(c => c.transitProgress != null);
