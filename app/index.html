@@ -5623,23 +5623,7 @@ function setMyTripsFilter(f) {
 }
 
 // ── Shared Journals browse ─────────────────────────────────────
-const SAMPLE_JOURNALS = [
-  { id:'j1', title:'Istanbul to Kathmandu, overland', sub:'43 days · Silk Road · no flights', traveler:'Sam Oduya', avatar:'S', days:43, cities:9, km:7200,
-    tags:['Trans-Caspian','Central Asia'], excerpt:'Forty-three days on trains, buses and one very slow ferry across the Caspian. No planes, no rush.',
-    date:'May 2024', region:'Trans-Caspian', authorId:'sam-oduya' },
-  { id:'j2', title:'Lisbon to Singapore via the steppe', sub:'71 days · Trans-Siberian · overland', traveler:'María García', avatar:'M', days:71, cities:14, km:15400,
-    tags:['Europe','Southeast Asia'], excerpt:'Crossed twelve borders without once boarding a plane. The Trans-Mongolian was the longest single train ride of my life.',
-    date:'Aug 2024', region:'Southeast Asia', authorId:'maria-g' },
-  { id:'j3', title:'Cape Town to Cairo by public bus', sub:'55 days · East Africa · overland', traveler:'Theo Nkosi', avatar:'T', days:55, cities:11, km:9800,
-    tags:['Africa'], excerpt:'Everyone said take the tourist truck. We took the local buses instead and met people we still talk to today.',
-    date:'Jan 2025', region:'Africa', authorId:'theo-n' },
-  { id:'j4', title:'Oslo to Marrakech by night train', sub:'16 days · Europe · overnight sleepers', traveler:'Ingrid Larsen', avatar:'I', days:16, cities:7, km:4100,
-    tags:['Europe'], excerpt:'Fell asleep in Oslo, woke up in Paris. Then again in Madrid. Then Algeciras. Then the ferry.',
-    date:'Mar 2025', region:'Europe', authorId:'ingrid-l' },
-  { id:'j5', title:'Bangkok to London the slow way', sub:'79 days · Central Asia · Caucasus', traveler:'James Chen', avatar:'J', days:79, cities:18, km:13600,
-    tags:['Central Asia','Europe'], excerpt:'The checkpoint at the Uzbek–Kazakh border took four hours. Worth it for what came after.',
-    date:'Oct 2024', region:'Trans-Caspian', authorId:'james-c' },
-];
+// No sample journals — only real user-published trips appear here.
 
 let _jrnlFilter = 'all';
 let _jrnlSearch = '';
@@ -5666,7 +5650,7 @@ function renderJournalsPanel() {
       date: t.published_at ? new Date(t.published_at).toLocaleDateString('en',{month:'short',year:'numeric'}) : 'Just now',
     };
   });
-  const ALL_JOURNALS = [...realJournals, ...SAMPLE_JOURNALS];
+  const ALL_JOURNALS = realJournals;
 
   const myIds = currentUser ? ALL_JOURNALS.filter(j => j.authorId === currentUser.id).map(j => j.id) : [];
   const chips = ['all','My Journals','Trans-Caspian','Southeast Asia','Americas','Africa','Europe'];
@@ -5736,7 +5720,16 @@ function renderJournalsPanel() {
       </div>
     </div>`).join('')}</div>` : '';
 
-  const emptyHtml = !filtered.length ? '<div class="jrnl-empty">No journeys match — try a different filter.</div>' : '';
+  const emptyHtml = !filtered.length ? `
+    <div class="jrnl-empty" style="text-align:center;padding:48px 16px">
+      <i class="ph ph-book-open" style="font-size:36px;color:var(--text3);display:block;margin-bottom:12px"></i>
+      ${_jrnlFilter === 'My Journals'
+        ? `<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">No published journals yet</div>
+           <div style="font-size:13px;color:var(--text3);margin-bottom:18px">Save a trip and publish it to share your journey here.</div>
+           <button class="btn" onclick="switchTab('mytrips',document.getElementById('navbtn_mytrips'))">Go to My Trips →</button>`
+        : `<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">No journeys here yet</div>
+           <div style="font-size:13px;color:var(--text3)">Be the first — publish your overland trip to appear in this feed.</div>`}
+    </div>` : '';
 
   el.innerHTML = `
     <div class="jrnl-header">
