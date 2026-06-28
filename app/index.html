@@ -379,6 +379,12 @@
   #planOptions.open{display:flex;}
   .psc-chips-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .psc-inputs-row{display:flex;align-items:center;gap:8px;}
+  .psc-inp-wrap{display:flex;align-items:center;gap:8px;}
+  .psc-inp-wrap .psc-inp{width:auto;flex:1;min-width:0;}
+  .psc-slot-icon{font-size:16px;flex-shrink:0;display:none;}
+  .psc-slot-icon--from{color:var(--fern);}
+  .psc-slot-icon--to{color:var(--text3);}
+  .psc-transport-lbl{display:none;font-family:var(--mono);font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;width:100%;}
 
   /* ── Plan landing grid ──────────────────────────────── */
   .plan-landing-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:1.2rem;}
@@ -892,18 +898,30 @@
     .bn-item.bn-active span{font-weight:600;}
 
     /* ── Plan tab ───────────────────────────────────────── */
+    #guestBanner{display:none !important;}
+    .plan-hero-new{padding:20px 16px 16px !important;text-align:left !important;}
+    .plan-hero-kicker{font-size:9.5px;}
+    .plan-hero-title{font-size:30px !important;font-weight:300 !important;letter-spacing:-0.5px !important;}
+    .plan-hero-sub{display:none;}
     .psc-from-to{grid-template-columns:1fr !important;}
-    .psc-arrow{display:none !important;}
-    .psc-slot{border-bottom:0.5px solid var(--border);padding:12px 0;}
-    .psc-slot:last-child{border-bottom:none;}
-    .psc-footer{flex-direction:column;gap:10px;}
-    .psc-footer-opts{width:100%;}
-    .psc-footer-cta{flex-direction:column;align-items:stretch;gap:8px;}
-    .psc-footer-cta .btn-primary{width:100%;padding:13px;justify-content:center;}
-    .psc-chips-row{flex-wrap:wrap;gap:6px;}
-    .psc-inputs-row{flex-direction:column;}
-    .plan-hero-new{padding:1.5rem 1rem 1rem !important;}
-    .plan-hero-title{font-size:26px !important;}
+    .psc-slot{padding:14px 16px !important;border-bottom:0.5px solid var(--border);border-left:none !important;}
+    .psc-slot:last-child{border-bottom:none;padding-top:4px !important;}
+    .psc-arrow{display:flex !important;justify-content:flex-start !important;padding:0 14px;height:32px;gap:8px;align-items:center;}
+    .psc-arrow::after{content:'';flex:1;height:0.5px;background:var(--border);align-self:center;}
+    .psc-inp{font-size:21px !important;}
+    .psc-slot-icon{display:block;}
+    .psc-footer{gap:0;}
+    .psc-opts-toggle{display:none !important;}
+    #planOptions{display:flex !important;}
+    .psc-transport-lbl{display:block;}
+    #pacePills{display:none !important;}
+    .psc-inputs-row{display:none !important;}
+    .psc-chips-row .psc-sep{display:none !important;}
+    .psc-footer-opts{padding:10px 16px !important;border-top:0.5px solid var(--border);gap:0;}
+    .psc-footer-cta{flex-direction:column;align-items:stretch;padding:8px 12px 14px !important;gap:8px;border-top:none !important;}
+    .psc-footer-cta .btn-primary{width:100%;padding:13px;justify-content:center;font-size:15px;}
+    #planFormHint{display:none;}
+    .import-route-btn{width:100%;justify-content:center;}
     .plan-landing-grid{grid-template-columns:1fr !important;}
     .plan-edit-bar{flex-wrap:wrap;gap:8px;}
     .sumbar{display:flex !important;overflow-x:auto;gap:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:1.25rem;}
@@ -1025,12 +1043,12 @@
       <div class="psc-from-to">
         <div class="psc-slot">
           <div class="psc-slot-lbl">From</div>
-          <input class="psc-inp" id="pFrom" placeholder="e.g. Istanbul"/>
+          <div class="psc-inp-wrap"><i class="ph ph-map-pin psc-slot-icon psc-slot-icon--from"></i><input class="psc-inp" id="pFrom" placeholder="e.g. Istanbul"/></div>
         </div>
-        <div class="psc-arrow"><div class="psc-arrow-circle">→</div></div>
+        <div class="psc-arrow"><div class="psc-arrow-circle"><i class="ph ph-arrows-down-up" style="font-size:13px"></i></div></div>
         <div class="psc-slot" style="border-left:0.5px solid var(--border)">
           <div class="psc-slot-lbl">To</div>
-          <input class="psc-inp" id="pTo" placeholder="e.g. Kathmandu"/>
+          <div class="psc-inp-wrap"><i class="ph ph-flag psc-slot-icon psc-slot-icon--to"></i><input class="psc-inp" id="pTo" placeholder="e.g. Kathmandu"/></div>
         </div>
       </div>
       <!-- Options + CTA footer -->
@@ -1038,6 +1056,7 @@
         <div class="psc-footer-opts">
           <button class="psc-opts-toggle" onclick="togglePlanOptions(this)"><i class="ph ph-sliders" style="font-size:13px"></i> Options <span id="planOptsArrow">↑</span></button>
           <div id="planOptions" class="open">
+            <div class="psc-transport-lbl">Transport</div>
             <div class="psc-chips-row">
               <div class="psc-sep"></div>
               <div class="pills" id="modePills">
