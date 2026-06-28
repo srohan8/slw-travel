@@ -5,14 +5,14 @@
     { "source": "/journey", "destination": "/journey.html" },
     { "source": "/journey/**", "destination": "/journey.html" },
     { "source": "/auth", "destination": "/auth.html" },
-    { "source": "/planner", "destination": "/app.html" },
-    { "source": "/planner/**", "destination": "/app.html" },
-    { "source": "/route", "destination": "/app.html" },
-    { "source": "/trips", "destination": "/app.html" },
-    { "source": "/trips/**", "destination": "/app.html" },
-    { "source": "/journals", "destination": "/app.html" },
-    { "source": "/journals/**", "destination": "/app.html" },
-    { "source": "/profile", "destination": "/app.html" },
-    { "source": "/admin", "destination": "/app.html" }
+    { "source": "/planner", "destination": "/app/index.html" },
+    { "source": "/planner/**", "destination": "/app/index.html" },
+    { "source": "/route", "destination": "/app/index.html" },
+    { "source": "/trips", "destination": "/app/index.html" },
+    { "source": "/trips/**", "destination": "/app/index.html" },
+    { "source": "/journals", "destination": "/app/index.html" },
+    { "source": "/journals/**", "destination": "/app/index.html" },
+    { "source": "/profile", "destination": "/app/index.html" },
+    { "source": "/admin", "destination": "/app/index.html" }
   ]
 }
