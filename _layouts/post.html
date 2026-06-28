@@ -61,14 +61,15 @@ article h1 em { font-style:italic; color:var(--sage); }
 .post-tags { margin-top:36px; padding-top:20px; border-top:1px solid var(--border); font-family:var(--mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); }
 .post-tags span { display:inline-block; margin-right:10px; }
 
-.site-footer{background:var(--dusk);padding:32px 24px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px;margin-top:60px}
-.site-footer-inner{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
-.site-footer-tools{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
-.site-footer-tools a{color:rgba(255,255,255,0.7);text-decoration:none;transition:color .2s}
-.site-footer-tools a:hover{color:#fff}
-.site-footer-policy{display:flex;gap:16px;justify-content:center}
-.site-footer-policy a{color:rgba(255,255,255,0.45);text-decoration:none}
-.site-footer-copy{color:rgba(255,255,255,0.35)}
+.site-footer{max-width:860px;margin:32px auto 0;padding:20px 1.25rem 48px;border-top:0.5px solid var(--border)}
+.site-footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.site-footer-logo{display:flex;align-items:center;gap:7px;text-decoration:none}
+.site-footer-logo img{height:20px;opacity:0.7}
+.site-footer-logo-text{font-size:14px;font-weight:500;color:var(--text2);font-family:var(--body)}
+.site-footer-links{display:flex;gap:18px;flex-wrap:wrap}
+.site-footer-links a{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .2s}
+.site-footer-links a:hover{color:var(--text2)}
+.site-footer-copy{font-family:var(--mono);font-size:11px;color:var(--text3)}
 </style>
 </head>
 <body>
@@ -128,17 +129,18 @@ article h1 em { font-style:italic; color:var(--sage); }
 
 <footer class="site-footer">
   <div class="site-footer-inner">
-    <div class="site-footer-tools">
-      <a href="/how-long">Journey time estimator</a>
-      <a href="/carbon">CO₂ calculator</a>
-      <a href="/bike-on-train">Bike on train lookup</a>
-      <a href="/app">Trip planner</a>
-    </div>
-    <div class="site-footer-policy">
-      <a href="/privacy">Privacy policy</a>
-      <a href="/terms">Terms of use</a>
-    </div>
-    <div class="site-footer-copy">By Sloth · Go the long way. On purpose.</div>
+    <a class="site-footer-logo" href="{{ '/' | relative_url }}">
+      <img src="{{ '/public/bysloth.png' | relative_url }}" alt="bysloth"/>
+      <span class="site-footer-logo-text">bysloth</span>
+    </a>
+    <nav class="site-footer-links">
+      <a href="{{ '/how-long' | relative_url }}">Time estimator</a>
+      <a href="{{ '/carbon' | relative_url }}">CO₂ calc</a>
+      <a href="{{ '/bike-on-train' | relative_url }}">Bike on train</a>
+      <a href="{{ '/blog/' | relative_url }}">Blog</a>
+      <a href="{{ '/privacy/' | relative_url }}">Privacy</a>
+    </nav>
+    <span class="site-footer-copy">© 2026 · Lisbon</span>
   </div>
 </footer>
 

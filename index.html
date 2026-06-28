@@ -175,6 +175,21 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
 
 /* ── Sections ─────────────────────────────────────────────────── */
 .section { max-width: 860px; margin: 64px auto 0; padding: 0 1.25rem; }
+
+/* ── Tools strip ──────────────────────────────────────────────── */
+.tools-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 16px; }
+.tool-card {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--bg); border: 0.5px solid var(--border);
+  border-radius: var(--radiusLg); padding: 1.1rem 1.2rem;
+  transition: border-color .2s, box-shadow .2s;
+}
+.tool-card:hover { border-color: var(--border2); box-shadow: 0 4px 16px rgba(14,26,46,0.08); }
+.tool-card-icon { font-size: 22px; margin-bottom: 10px; }
+.tool-card-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 5px; font-family: var(--body); }
+.tool-card-desc { font-size: 13px; color: var(--text3); line-height: 1.5; }
+.tool-card-link { font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--sage); margin-top: 10px; display: block; }
+@media(max-width:600px){ .tools-grid { grid-template-columns: 1fr; } }
 .section-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
 
 /* ── Pillars ──────────────────────────────────────────────────── */
@@ -484,6 +499,33 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
   </div>
 </div>
 
+<!-- ── Free tools ─────────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-header">
+    <span class="kicker">Free tools</span>
+  </div>
+  <div class="tools-grid">
+    <a class="tool-card" href="/how-long">
+      <div class="tool-card-icon">⏱</div>
+      <div class="tool-card-name">Journey time estimator</div>
+      <div class="tool-card-desc">How long does it actually take overland? Days, cost range, sample route.</div>
+      <span class="tool-card-link">Try it →</span>
+    </a>
+    <a class="tool-card" href="/carbon">
+      <div class="tool-card-icon">🌿</div>
+      <div class="tool-card-name">CO₂ calculator</div>
+      <div class="tool-card-desc">See exactly how much carbon you save by skipping the flight.</div>
+      <span class="tool-card-link">Calculate →</span>
+    </a>
+    <a class="tool-card" href="/bike-on-train">
+      <div class="tool-card-icon">🚲</div>
+      <div class="tool-card-name">Bike on train lookup</div>
+      <div class="tool-card-desc">Which trains, buses and ferries accept bikes? 30+ operators covered.</div>
+      <span class="tool-card-link">Look up →</span>
+    </a>
+  </div>
+</div>
+
 <!-- ── Final CTA ──────────────────────────────────────────────────── -->
 <div class="section">
   <div class="final-cta-card">
@@ -504,12 +546,14 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
       <span class="footer-logo-text">bysloth</span>
     </a>
     <nav class="footer-links">
-      <a href="/blog/">Manifesto</a>
-      <a href="/safety/">Safety</a>
+      <a href="/how-long">Time estimator</a>
+      <a href="/carbon">CO₂ calc</a>
+      <a href="/bike-on-train">Bike on train</a>
+      <a href="/blog/">Blog</a>
       <a href="/privacy/">Privacy</a>
       <a href="mailto:hello@bysloth.com">Contact</a>
     </nav>
-    <span class="footer-copy">© 2025 · Lisbon</span>
+    <span class="footer-copy">© 2026 · Lisbon</span>
   </div>
 </footer>
 

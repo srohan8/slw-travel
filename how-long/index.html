@@ -132,14 +132,15 @@ a:hover{text-decoration:underline}
 .gate-skip:hover{color:var(--text2)}
 
 /* Footer */
-.footer{background:var(--dusk);padding:32px 24px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px;margin-top:60px}
-.footer-inner{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
-.footer-tools{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
-.footer-tools a{color:rgba(212,227,204,0.7);text-decoration:none;transition:color .2s}
-.footer-tools a:hover{color:var(--cream)}
-.footer-policy{display:flex;gap:16px;justify-content:center}
-.footer-policy a{color:rgba(212,227,204,0.45);text-decoration:none;transition:color .2s}
-.footer-policy a:hover{color:rgba(212,227,204,0.8)}
+.footer{max-width:860px;margin:32px auto 0;padding:20px 1.25rem 48px;border-top:0.5px solid var(--border)}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.footer-logo{display:flex;align-items:center;gap:7px;text-decoration:none}
+.footer-logo img{height:20px;opacity:0.7}
+.footer-logo-text{font-size:14px;font-weight:500;color:var(--text2);font-family:var(--body)}
+.footer-links{display:flex;gap:18px;flex-wrap:wrap}
+.footer-links a{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--text2)}
+.footer-copy{font-family:var(--mono);font-size:11px;color:var(--text3)}
 .footer-copy{color:rgba(212,227,204,0.35)}
 </style>
 </head>
@@ -283,18 +284,18 @@ a:hover{text-decoration:underline}
 <!-- Footer -->
 <footer class="footer">
   <div class="footer-inner">
-    <div class="footer-tools">
-      <a href="/carbon">CO₂ calculator</a>
-      <a href="/how-long">Journey time estimator</a>
-      <a href="/bike-on-train">Bike on train lookup</a>
-      <a href="/app">Trip planner</a>
-      <a href="/blog">Blog</a>
-    </div>
-    <div class="footer-policy">
-      <a href="/privacy">Privacy policy</a>
-      <a href="/terms">Terms of use</a>
-    </div>
-    <div class="footer-copy">By Sloth · Go the long way. On purpose.</div>
+    <a class="footer-logo" href="/">
+      <img src="/public/bysloth.png" alt="bysloth"/>
+      <span class="footer-logo-text">bysloth</span>
+    </a>
+    <nav class="footer-links">
+      <a href="/how-long">Time estimator</a>
+      <a href="/carbon">CO₂ calc</a>
+      <a href="/bike-on-train">Bike on train</a>
+      <a href="/blog/">Blog</a>
+      <a href="/privacy/">Privacy</a>
+    </nav>
+    <span class="footer-copy">© 2026 · Lisbon</span>
   </div>
 </footer>
 
