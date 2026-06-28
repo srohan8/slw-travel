@@ -824,6 +824,24 @@
 
   .bottom-nav{display:none;}
   .mobile-header{display:none;}
+  .mobile-splash{display:none;}
+  .mobile-splash.show{
+    position:fixed;inset:0;z-index:500;
+    display:flex;flex-direction:column;overflow:hidden;
+    background:var(--dusk);
+  }
+  .mobile-splash-cta-primary{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--sage);color:#fff;
+    font-family:var(--body);font-size:15px;font-weight:600;
+    padding:14px 20px;border-radius:var(--radius);text-decoration:none;
+  }
+  .mobile-splash-cta-ghost{
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid rgba(245,240,232,0.22);color:var(--cream);background:transparent;
+    font-family:var(--body);font-size:15px;font-weight:500;
+    padding:14px 20px;border-radius:var(--radius);text-decoration:none;
+  }
 
   @media(max-width:640px){
 
@@ -1698,6 +1716,13 @@ function updateNavAuth() {
     signOut.style.display = 'none';
     signIn.style.display  = 'inline-block';
   }
+  updateMobileSplash();
+}
+
+function updateMobileSplash() {
+  const splash = document.getElementById('mobileSplash');
+  if (!splash) return;
+  splash.classList.toggle('show', window.innerWidth <= 640 && !currentUser);
 }
 
 async function signOut() {
@@ -5944,5 +5969,41 @@ function mobileHeaderSync(id) {
     <i class="ph ph-user-circle"></i><span>Profile</span>
   </button>
 </nav>
+
+<!-- ── Mobile splash / landing screen (logged-out, mobile only) ── -->
+<div id="mobileSplash" class="mobile-splash">
+  <div style="position:absolute;right:-30px;bottom:60px;width:260px;height:320px;opacity:0.08;pointer-events:none">
+    <svg viewBox="0 0 260 320" width="100%" height="100%" fill="none">
+      <path d="M30 300 C 80 250, 100 200, 150 160 C 200 120, 220 80, 240 40" stroke="#FF5014" stroke-width="2.5" stroke-dasharray="5 10" stroke-linecap="round"/>
+      <circle cx="30" cy="300" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="30" cy="300" r="3" fill="#FF5014"/>
+      <circle cx="150" cy="160" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="150" cy="160" r="3" fill="#FF5014"/>
+      <circle cx="240" cy="40" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="240" cy="40" r="3" fill="#FF5014"/>
+      <circle cx="240" cy="40" r="22" stroke="#FF5014" stroke-width="1" opacity="0.5" fill="none"/>
+    </svg>
+  </div>
+  <div style="flex:1;padding:40px 28px 32px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:44px">
+      <img src="public/bysloth.png" alt="" style="height:38px;width:auto;flex-shrink:0">
+      <div style="font-family:var(--body);font-size:22px;font-weight:700;color:var(--cream);letter-spacing:-0.5px;line-height:1">bysloth</div>
+    </div>
+    <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);font-weight:600;margin-bottom:10px">Overland planner · no flights, ever</div>
+    <div style="font-family:var(--serif);font-size:40px;font-weight:300;line-height:1.05;letter-spacing:-0.8px;color:var(--cream);margin-bottom:18px">Go the long<br>way. <em style="font-style:normal;color:var(--sage)">On purpose.</em></div>
+    <div style="font-size:14px;line-height:1.65;color:rgba(245,240,232,0.62);margin-bottom:40px;max-width:290px">Trains, buses, ferries, shared taxis, the occasional hitch. We map a realistic route and flag the legs we can't verify.</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <a href="auth.html" class="mobile-splash-cta-primary">Plan your first route <i class="ph ph-arrow-right" style="font-size:16px"></i></a>
+      <a href="auth.html" class="mobile-splash-cta-ghost">Sign in</a>
+    </div>
+    <div style="margin-top:24px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:rgba(245,240,232,0.3);text-align:center;text-transform:uppercase">Free · 3 routes a month · no card required</div>
+  </div>
+  <div style="border-top:0.5px solid rgba(245,240,232,0.1);padding:14px 28px;display:flex;gap:24px;position:relative;z-index:1">
+    <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--cream);letter-spacing:-0.3px">2,140</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(245,240,232,0.4);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">legs verified</div></div>
+    <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--cream);letter-spacing:-0.3px">23</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(245,240,232,0.4);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">countries</div></div>
+    <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--cream);letter-spacing:-0.3px">no flights</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(245,240,232,0.4);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">ever</div></div>
+  </div>
+</div>
+<script>
+  // Show splash immediately on mobile before async auth resolves; init() hides it if logged in.
+  if (window.innerWidth <= 640) document.getElementById('mobileSplash').classList.add('show');
+</script>
 </body>
 </html>
