@@ -4521,7 +4521,8 @@ function renderJourneyDetail() {
     <div class="jd-header-actions">
       ${recStarted
         ? `<button class="jd-rec-cta" onclick="openRecordJournal(_journeyTrip)"><span class="jd-rec-dot"></span> Recording · Edit journal</button>`
-        : `<button class="jd-rec-cta" onclick="jdStartRecording()"><i class="ph ph-record-fill" style="font-size:11px"></i> Start recording</button>`}
+        : `<button class="btn" style="font-size:12px;padding:6px 14px" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
+           <button class="jd-rec-cta" onclick="jdStartRecording()"><i class="ph ph-record-fill" style="font-size:11px"></i> Start recording</button>`}
     </div>
   </div>
   <div class="jd-tabs">
