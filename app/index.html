@@ -823,6 +823,7 @@
      ════════════════════════════════════════════════════════ */
 
   .bottom-nav{display:none;}
+  .mobile-header{display:none;}
 
   @media(max-width:640px){
 
@@ -830,9 +831,25 @@
     body{padding-bottom:64px;}
     .container{padding:1rem 0.875rem 0;}
 
-    /* ── Top nav: hide tab buttons ──────────────────────── */
-    .nav-link{display:none !important;}
-    .nav-vsep{display:none;}
+    /* ── Top nav: hidden; replaced by mobile header ─────── */
+    nav{display:none !important;}
+
+    /* ── Mobile header ──────────────────────────────────── */
+    .mobile-header{
+      display:flex;align-items:center;height:56px;padding:0 6px;
+      background:var(--bg);border-bottom:0.5px solid var(--border);
+      position:sticky;top:0;z-index:100;
+    }
+    .mobile-header-title{
+      flex:1;padding:0 10px;
+      font-family:var(--serif);font-size:17px;font-weight:600;
+      color:var(--text);line-height:1.2;
+    }
+    .mobile-header-back{
+      display:none;background:none;border:none;cursor:pointer;
+      color:var(--text);padding:8px;-webkit-tap-highlight-color:transparent;
+    }
+    .mobile-header-back.visible{display:flex;align-items:center;justify-content:center;}
 
     /* ── Bottom nav ─────────────────────────────────────── */
     .bottom-nav{
@@ -947,6 +964,11 @@
     <button class="btn" onclick="signOut()" id="signOutBtn" style="display:none">Sign out</button>
   </div>
 </nav>
+
+<div class="mobile-header" id="mobileHeader">
+  <button class="mobile-header-back" id="mobileHeaderBack"><i class="ph ph-arrow-left" style="font-size:20px"></i></button>
+  <div class="mobile-header-title" id="mobileHeaderTitle">Planner</div>
+</div>
 
 <div class="container">
 
@@ -2654,6 +2676,7 @@ function switchTab(id, el) {
   else hideRouteMap();
   setScreenUrl(id);
   if (typeof bnSync === 'function') bnSync(id);
+  if (typeof mobileHeaderSync === 'function') mobileHeaderSync(id);
 }
 
 // ── Plan tab ──────────────────────────────────────────────────────
@@ -5881,6 +5904,23 @@ function bnSync(id) {
     el.classList.add('bn-active');
     const icon = el.querySelector('i'), base = el.dataset.icon;
     if (icon && base) icon.className = `ph ph-${base}-fill`;
+  }
+}
+
+// ── Mobile header sync ────────────────────────────────────────────
+const MOBILE_TITLES = {
+  plan:'Planner', mytrips:'My Trips', journals:'Journals',
+  profile:'Profile', admin:'Admin',
+  journey:'Journey', record:'New Journey', recordjournal:'New Entry'
+};
+function mobileHeaderSync(id) {
+  const titleEl = document.getElementById('mobileHeaderTitle');
+  if (titleEl) titleEl.textContent = MOBILE_TITLES[id] || id;
+  const backBtn = document.getElementById('mobileHeaderBack');
+  if (backBtn) {
+    const isDetail = id === 'journey' || id === 'recordjournal';
+    backBtn.classList.toggle('visible', isDetail);
+    backBtn.onclick = isDetail ? () => switchTab('mytrips', document.getElementById('navbtn_mytrips')) : null;
   }
 }
 </script>
