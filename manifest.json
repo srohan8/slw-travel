@@ -2,8 +2,8 @@
   "name": "By Sloth",
   "short_name": "Sloth",
   "description": "Overland trip planner for people who choose the ground over the sky. Trains, buses, ferries, shared taxis — with confidence ratings and community notes.",
-  "start_url": "/app.html",
-  "id": "/app.html",
+  "start_url": "/app/",
+  "id": "/app/",
   "display": "standalone",
   "background_color": "#F8F6F1",
   "theme_color": "#2D4A2D",
@@ -50,14 +50,14 @@
       "name": "Plan a route",
       "short_name": "Plan",
       "description": "Start planning a new overland trip",
-      "url": "/app.html#plan",
+      "url": "/app/plan",
       "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
     },
     {
       "name": "My trips",
       "short_name": "Trips",
       "description": "View your saved trips",
-      "url": "/app.html#mytrips",
+      "url": "/app/mytrips",
       "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
     }
   ]

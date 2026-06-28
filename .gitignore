@@ -12,6 +12,13 @@ _site/
 .jekyll-cache/
 .jekyll-metadata
 
+# Capacitor / Android
+android/app/build/
+android/.gradle/
+android/local.properties
+android/keystore.properties
+*.jks
+
 # OS
 .DS_Store
 Thumbs.db

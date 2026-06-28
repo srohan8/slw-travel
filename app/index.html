@@ -15,7 +15,7 @@
   :root {
     /* Brand palette — bysloth · Signal theme (navy + electric orange) */
     --fern:#1E3A5C;--sage:#FF5014;--moss:#13213A;
-    --cream:#FFFFFF;--sand:#F8F4F2;--sand2:#F0EAE7;
+    --cream:#FFFFFF;--sand:#FAF6F4;--sand2:#FAF6F4;
     --bark:#3A2A24;--rust:#FF5014;--dusk:#091022;--mist:#FFD9CC;--gold:#FFB800;
     /* Semantic — surfaces all white, slightly warm inset */
     --bg:#FFFFFF;--bg2:#FAF6F4;--bg3:#FFFFFF;
@@ -379,6 +379,12 @@
   #planOptions.open{display:flex;}
   .psc-chips-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .psc-inputs-row{display:flex;align-items:center;gap:8px;}
+  .psc-inp-wrap{display:flex;align-items:center;gap:8px;}
+  .psc-inp-wrap .psc-inp{width:auto;flex:1;min-width:0;}
+  .psc-slot-icon{font-size:16px;flex-shrink:0;display:none;}
+  .psc-slot-icon--from{color:var(--fern);}
+  .psc-slot-icon--to{color:var(--text3);}
+  .psc-transport-lbl{display:none;font-family:var(--mono);font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;width:100%;}
 
   /* ── Plan landing grid ──────────────────────────────── */
   .plan-landing-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:1.2rem;}
@@ -473,31 +479,6 @@
   .jd-title{font-size:26px;font-weight:700;letter-spacing:-0.4px;color:var(--text);line-height:1.1;}
   .jd-sub{font-family:var(--mono);font-size:12px;color:var(--text3);margin-top:4px;}
   .jd-header-actions{display:flex;gap:8px;flex-shrink:0;align-items:center;}
-  .jd-collab-wrap{display:flex;align-items:center;}
-  .jd-collab-av{width:26px;height:26px;border-radius:50%;border:2px solid var(--bg3);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-left:-8px;cursor:default;position:relative;}
-  .jd-collab-av:first-child{margin-left:0;}
-  .jd-collab-av.edit{background:var(--moss);color:var(--cream);}
-  .jd-collab-av.view{background:var(--sand2);color:var(--text2);}
-  .jd-collab-add{width:26px;height:26px;border-radius:50%;background:var(--bg);border:0.5px dashed var(--border2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-left:-8px;}
-  .jd-invite-modal{position:fixed;inset:0;z-index:900;background:rgba(9,16,34,0.45);display:flex;align-items:center;justify-content:center;}
-  .jd-invite-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:380px;max-width:calc(100vw - 32px);padding:22px 24px;}
-  .jd-invite-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
-  .jd-invite-sub{font-size:12px;color:var(--text3);margin-bottom:18px;}
-  .jd-invite-row{display:flex;gap:8px;margin-bottom:14px;}
-  .jd-invite-row input{flex:1;font-size:13px;padding:8px 11px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit;outline:none;}
-  .jd-invite-row input:focus{border-color:var(--fern);}
-  .jd-role-toggle{display:flex;border:0.5px solid var(--border2);border-radius:var(--radius);overflow:hidden;}
-  .jd-role-opt{padding:7px 12px;font-size:11.5px;cursor:pointer;background:transparent;border:none;font-family:inherit;color:var(--text2);}
-  .jd-role-opt.on{background:var(--moss);color:var(--cream);font-weight:600;}
-  .jd-invite-list{margin-top:16px;border-top:0.5px solid var(--border);padding-top:14px;display:flex;flex-direction:column;gap:8px;}
-  .jd-invite-item{display:flex;align-items:center;gap:10px;font-size:12.5px;}
-  .jd-invite-item-av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
-  .jd-invite-item-av.edit{background:var(--moss);color:var(--cream);}
-  .jd-invite-item-av.view{background:var(--sand2);color:var(--text2);}
-  .jd-invite-item-email{flex:1;color:var(--text2);}
-  .jd-invite-item-role{font-size:11px;color:var(--text3);font-family:var(--mono);}
-  .jd-invite-item-remove{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;}
-  .jd-invite-item-remove:hover{color:var(--danger-text);}
   .jd-rec-cta{font-size:12px;padding:7px 14px;border-radius:var(--radius-pill);background:var(--sage);color:var(--cta-text);border:none;cursor:pointer;font-family:var(--body);font-weight:600;display:inline-flex;align-items:center;gap:6px;}
   .jd-rec-dot{width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block;}
   .jd-tabs{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:18px;}
@@ -842,12 +823,168 @@
   .budget-bar-track{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;flex-shrink:0;}
   .budget-bar-fill{height:100%;border-radius:99px;background:var(--fern);transition:width 0.3s ease;}
   .budget-bar-pct{font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap;}
+
+  /* ════════════════════════════════════════════════════════
+     MOBILE  ≤640px  — responsive layer for phone & Android
+     ════════════════════════════════════════════════════════ */
+
+  .bottom-nav{display:none;}
+  .mobile-header{display:none;}
+  .mobile-splash{display:none;}
+  .mobile-splash.show{
+    position:fixed;inset:0;z-index:500;
+    display:flex;flex-direction:column;overflow:hidden;
+    background:var(--dusk);
+  }
+  .mobile-splash-cta-primary{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--sage);color:#fff;
+    font-family:var(--body);font-size:15px;font-weight:600;
+    padding:14px 20px;border-radius:var(--radius);text-decoration:none;
+  }
+  .mobile-splash-cta-ghost{
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid rgba(245,240,232,0.22);color:var(--cream);background:transparent;
+    font-family:var(--body);font-size:15px;font-weight:500;
+    padding:14px 20px;border-radius:var(--radius);text-decoration:none;
+  }
+
+  @media(max-width:640px){
+
+    /* ── Global chrome ──────────────────────────────────── */
+    body{padding-bottom:64px;}
+    .container{padding:1rem 0.875rem 0;}
+
+    /* ── Top nav: hidden; replaced by mobile header ─────── */
+    nav:not(#bottomNav){display:none !important;}
+
+    /* ── Mobile header ──────────────────────────────────── */
+    .mobile-header{
+      display:flex;align-items:center;height:56px;padding:0 6px;
+      background:var(--bg);border-bottom:0.5px solid var(--border);
+      position:sticky;top:0;z-index:100;
+    }
+    .mobile-header-title{
+      flex:1;padding:0 10px;
+      font-family:var(--serif);font-size:17px;font-weight:600;
+      color:var(--text);line-height:1.2;
+    }
+    .mobile-header-back{
+      display:none;background:none;border:none;cursor:pointer;
+      color:var(--text);padding:8px;-webkit-tap-highlight-color:transparent;
+    }
+    .mobile-header-back.visible{display:flex;align-items:center;justify-content:center;}
+
+    /* ── Bottom nav ─────────────────────────────────────── */
+    .bottom-nav{
+      display:flex;
+      position:fixed;top:auto;bottom:0;left:0;right:0;
+      height:56px;
+      background:var(--bg);
+      border-top:0.5px solid var(--border);
+      z-index:200;
+      padding-bottom:env(safe-area-inset-bottom,0px);
+    }
+    .bn-item{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:2px;border:none;background:none;cursor:pointer;
+      color:var(--text3);
+      font-family:var(--body);padding:6px 0;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .bn-item i{font-size:22px;line-height:1;}
+    .bn-item span{font-family:var(--mono);font-size:8px;letter-spacing:0.5px;text-transform:uppercase;line-height:1.2;font-weight:400;}
+    .bn-item.bn-active{color:var(--sage);}
+    .bn-item.bn-active span{font-weight:600;}
+
+    /* ── Plan tab ───────────────────────────────────────── */
+    #guestBanner{display:none !important;}
+    .plan-hero-new{padding:20px 16px 16px !important;text-align:left !important;}
+    .plan-hero-kicker{font-size:9.5px;}
+    .plan-hero-title{font-size:30px !important;font-weight:300 !important;letter-spacing:-0.5px !important;}
+    .plan-hero-sub{display:none;}
+    .psc-from-to{grid-template-columns:1fr !important;}
+    .psc-slot{padding:14px 16px !important;border-bottom:0.5px solid var(--border);border-left:none !important;}
+    .psc-slot:last-child{border-bottom:none;padding-top:4px !important;}
+    .psc-arrow{display:flex !important;justify-content:flex-start !important;padding:0 14px;height:32px;gap:8px;align-items:center;}
+    .psc-arrow::after{content:'';flex:1;height:0.5px;background:var(--border);align-self:center;}
+    .psc-inp{font-size:21px !important;}
+    .psc-slot-icon{display:block;}
+    .psc-footer{gap:0;}
+    .psc-opts-toggle{display:none !important;}
+    #planOptions{display:flex !important;}
+    .psc-transport-lbl{display:block;}
+    #pacePills{display:none !important;}
+    .psc-inputs-row{display:none !important;}
+    .psc-chips-row .psc-sep{display:none !important;}
+    .psc-footer-opts{padding:10px 16px !important;border-top:0.5px solid var(--border);gap:0;}
+    .psc-footer-cta{flex-direction:column;align-items:stretch;padding:8px 12px 14px !important;gap:8px;border-top:none !important;}
+    .psc-footer-cta .btn-primary{width:100%;padding:13px;justify-content:center;font-size:15px;}
+    #planFormHint{display:none;}
+    .import-route-btn{width:100%;justify-content:center;}
+    .plan-landing-grid{grid-template-columns:1fr !important;}
+    .plan-edit-bar{flex-wrap:wrap;gap:8px;}
+    .sumbar{display:flex !important;overflow-x:auto;gap:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:1.25rem;}
+    .sumbar::-webkit-scrollbar{display:none;}
+    .sumbar .met{flex:0 0 auto;min-width:88px;}
+    .advisory-grid{grid-template-columns:1fr !important;}
+    .leg-grid{grid-template-columns:1fr !important;}
+    #plannerMapWrap{bottom:64px !important;}
+
+    /* ── My Trips — table → cards ───────────────────────── */
+    .mytrips-hdr{flex-direction:column;align-items:flex-start;gap:10px;}
+    .mytrips-serif-title{font-size:22px !important;}
+    .mytrips-table-hdr{display:none !important;}
+    .mytrips-table{border:none !important;background:transparent !important;}
+    .mytrips-table-row{
+      display:flex !important;flex-direction:column;
+      grid-template-columns:unset !important;
+      padding:14px !important;
+      background:var(--bg);border:0.5px solid var(--border);
+      border-radius:var(--radius-lg);margin-bottom:10px;
+      gap:6px;
+    }
+    .mytrips-table-row > *{display:flex !important;align-items:center;}
+    .mytrips-yearly{grid-template-columns:repeat(2,1fr) !important;}
+    .mytrips-tabs{flex-wrap:wrap;gap:6px;}
+    .mytrips-jgrid{grid-template-columns:1fr !important;}
+
+    /* ── Journey Detail ─────────────────────────────────── */
+    .jd-header{flex-direction:column;align-items:flex-start;gap:8px;}
+    .jd-title{font-size:20px !important;}
+    .jd-summary{grid-template-columns:repeat(2,1fr) !important;}
+    .jd-leg-cards{grid-template-columns:1fr !important;}
+    .jd-tabs{flex-wrap:wrap;}
+
+    /* ── Record Journal ─────────────────────────────────── */
+    .rj-header{flex-wrap:wrap;gap:8px;}
+    .rj-card-grid{grid-template-columns:1fr !important;}
+    .rj-sticky{bottom:64px !important;}
+    .rj-gutter{display:none;}
+
+    /* ── Journals ───────────────────────────────────────── */
+    .jrnl-header-top{flex-direction:column;gap:10px;}
+    .jrnl-search{width:100% !important;}
+    .jrnl-search input{width:100% !important;}
+    .jrnl-featured{grid-template-columns:1fr !important;}
+    .jrnl-feat-img{height:180px;}
+    .jrnl-body{padding:16px !important;}
+
+    /* ── Profile ────────────────────────────────────────── */
+    .profile-hero-grid{grid-template-columns:56px 1fr !important;gap:12px !important;}
+    .profile-hero-grid > *:nth-child(3){grid-column:1 / -1;text-align:left;}
+    .profile-meta-grid{grid-template-columns:1fr !important;}
+    .profile-badges-grid{display:flex !important;overflow-x:auto;gap:10px;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;}
+    .profile-badges-grid::-webkit-scrollbar{display:none;}
+    .profile-badges-grid > div{flex:0 0 82px;}
+
+  }
 </style>
 </head>
 <body>
 
 <nav>
-  <a class="logo" href="#" onclick="goHome();return false;"><img src="../public/bysloth.png" alt="" style="height:28px;width:auto;flex-shrink:0"><span>bysloth</span></a>
+  <a class="logo" href="#" onclick="goHome();return false;"><img src="public/bysloth.png" alt="" style="height:28px;width:auto;flex-shrink:0"><span>bysloth</span></a>
   <div class="nav-utils">
     <button class="nav-link active" id="navbtn_plan"      onclick="switchTab('plan',this)">Planner</button>
     <button class="nav-link"        id="navbtn_mytrips"  onclick="switchTab('mytrips',this)">My Trips</button>
@@ -863,6 +1000,11 @@
     <button class="btn" onclick="signOut()" id="signOutBtn" style="display:none">Sign out</button>
   </div>
 </nav>
+
+<div class="mobile-header" id="mobileHeader">
+  <button class="mobile-header-back" id="mobileHeaderBack"><i class="ph ph-arrow-left" style="font-size:20px"></i></button>
+  <div class="mobile-header-title" id="mobileHeaderTitle">Planner</div>
+</div>
 
 <div class="container">
 
@@ -901,12 +1043,12 @@
       <div class="psc-from-to">
         <div class="psc-slot">
           <div class="psc-slot-lbl">From</div>
-          <input class="psc-inp" id="pFrom" placeholder="e.g. Istanbul"/>
+          <div class="psc-inp-wrap"><i class="ph ph-map-pin psc-slot-icon psc-slot-icon--from"></i><input class="psc-inp" id="pFrom" placeholder="e.g. Istanbul"/></div>
         </div>
-        <div class="psc-arrow"><div class="psc-arrow-circle">→</div></div>
+        <div class="psc-arrow"><div class="psc-arrow-circle"><i class="ph ph-arrows-down-up" style="font-size:13px"></i></div></div>
         <div class="psc-slot" style="border-left:0.5px solid var(--border)">
           <div class="psc-slot-lbl">To</div>
-          <input class="psc-inp" id="pTo" placeholder="e.g. Kathmandu"/>
+          <div class="psc-inp-wrap"><i class="ph ph-flag psc-slot-icon psc-slot-icon--to"></i><input class="psc-inp" id="pTo" placeholder="e.g. Kathmandu"/></div>
         </div>
       </div>
       <!-- Options + CTA footer -->
@@ -914,6 +1056,7 @@
         <div class="psc-footer-opts">
           <button class="psc-opts-toggle" onclick="togglePlanOptions(this)"><i class="ph ph-sliders" style="font-size:13px"></i> Options <span id="planOptsArrow">↑</span></button>
           <div id="planOptions" class="open">
+            <div class="psc-transport-lbl">Transport</div>
             <div class="psc-chips-row">
               <div class="psc-sep"></div>
               <div class="pills" id="modePills">
@@ -978,7 +1121,6 @@
       <input class="trip-title" placeholder="Name your trip..." value="My overland journey" id="tripTitle" style="flex:1"/>
       <button class="import-route-btn" onclick="openImportModal()" title="Import a route from GPX, Excel or CSV"><i class="ph ph-upload-simple" style="font-size:13px"></i> Import a route</button>
       <button class="btn editor-delete-btn" id="deleteTripBtn" onclick="deleteCurrentTrip()" style="display:none" title="Delete this trip"><i class="ph ph-trash" style="font-size:13px"></i> Delete</button>
-      <button class="btn" id="shareLinkBtn" onclick="shareTripLink()" title="Copy shareable link"><i class="ph ph-share-network" style="font-size:13px"></i> Share link</button>
       <button class="btn" onclick="cancelEditTrip()">Cancel</button>
       <button class="btn btn-primary" onclick="saveCurrentTrip()">Save</button>
       <span class="save-status" id="saveStatus"></span>
@@ -1232,11 +1374,11 @@ const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Wal
 // Signal · transport mode accent colors (Session-2 §8 values)
 const MODE_COLORS = {
   bus:          '#6B4F3A', // bark
-  train:        '#1E3A5C', // fern navy
+  train:        '#4A7C4A', // fern green
   hitchhike:    '#C4622D', // rust
   ferry:        '#2E6FA8', // ocean blue
-  walk:         '#94A0B0', // text3 grey
-  walking:      '#94A0B0',
+  walk:         '#9AA880', // muted sage
+  walking:      '#9AA880',
   cycle:        '#2E6FA8',
   taxi:         '#B45309', // amber-brown
   flight:       '#5B7FA6', // slate
@@ -1245,8 +1387,8 @@ const MODE_COLORS = {
 
 // Mode → tint (light bg for icon chip)
 const MODE_TINTS = {
-  bus:'#F4EADE', train:'rgba(30,58,92,0.08)', ferry:'#EBF4FC', hitchhike:'#FBE3D4',
-  walk:'#F2F4F6', walking:'#F2F4F6', cycle:'#EBF4FC',
+  bus:'#F4EADE', train:'#E6EFE6', ferry:'#EBF4FC', hitchhike:'#FBE3D4',
+  walk:'#F0F4ED', walking:'#F0F4ED', cycle:'#EBF4FC',
   taxi:'#FEF3C7', flight:'#E8EFF5', 'shared taxi':'#FEF3C7',
 };
 
@@ -1584,18 +1726,22 @@ function updateNavAuth() {
   const badge   = document.getElementById('userBadge');
   const signOut = document.getElementById('signOutBtn');
   const signIn  = document.getElementById('signInBtn');
-  const gatedTabs = ['navbtn_mytrips','navbtn_journals','navbtn_profile','navbtn_admin'];
   if (currentUser) {
     badge.textContent = currentUser.email?.split('@')[0] || 'User';
     signOut.style.display = 'inline-block';
     signIn.style.display  = 'none';
-    gatedTabs.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
   } else {
     badge.textContent = 'Guest';
     signOut.style.display = 'none';
     signIn.style.display  = 'inline-block';
-    gatedTabs.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
   }
+  updateMobileSplash();
+}
+
+function updateMobileSplash() {
+  const splash = document.getElementById('mobileSplash');
+  if (!splash) return;
+  splash.classList.toggle('show', window.innerWidth <= 640 && !currentUser);
 }
 
 async function signOut() {
@@ -1836,7 +1982,7 @@ async function callAI(prompt, maxTokens = 8000) {
   }
   const r = await fetch(url, {
     method: 'POST', headers,
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
   });
   const d = await r.json();
   if (!r.ok || d.error) {
@@ -2573,6 +2719,8 @@ function switchTab(id, el) {
   if (id === 'plan' && lastSuggestion && resultsVisible) showRouteMap(lastSuggestion);
   else hideRouteMap();
   setScreenUrl(id);
+  if (typeof bnSync === 'function') bnSync(id);
+  if (typeof mobileHeaderSync === 'function') mobileHeaderSync(id);
 }
 
 // ── Plan tab ──────────────────────────────────────────────────────
@@ -3708,7 +3856,7 @@ function renderLeg(i) {
   const toCity     = stops[i+1]?.name || '';
   const iconCls    = MODE_ICONS[leg.mode] || 'ph-path';
   const modeColor  = MODE_COLORS[leg.mode] || 'var(--fern)';
-  const modeTint   = MODE_TINTS[leg.mode]  || '#E0EAF2';
+  const modeTint   = MODE_TINTS[leg.mode]  || '#E0EBD6';
   const isEditing  = editingLegModes.has(i);
   const nextStop   = stops[i+1];
 
@@ -4448,14 +4596,11 @@ let _jdDiaryTimer = null;
 
 function openJourneyDetail(trip) {
   _journeyTrip = trip;
-  _jdCollabs = trip.collaborators || [];
   _jdTab = 'journey';
   if (_jdMap) { try { _jdMap.remove(); } catch(e){} _jdMap = null; }
   switchTab('journey', null);
   document.getElementById('navbtn_mytrips')?.classList.add('active');
   renderJourneyDetail();
-  // Load collaborators from Supabase in background and refresh strip
-  if (currentUser && trip.id) jdLoadCollabs();
 }
 
 function switchJourneyTab(tab) {
@@ -4540,10 +4685,7 @@ function renderJourneyDetail() {
 
   // §9 Session-2: "State 0" — trip saved but recording not started yet.
   const recStarted = !!t.recordingStarted || stops.some(s => s.visited || (s.diary && s.diary.trim()));
-  let h = `<div class="jd-back" style="display:flex;align-items:center;justify-content:space-between">
-    <span onclick="goToMyTrips()" style="cursor:pointer"><i class="ph ph-arrow-left"></i> My Trips</span>
-    <button class="btn" style="font-size:12px;padding:5px 13px" onclick="jdShareTrip('${t.id}')"><i class="ph ph-export"></i> Share</button>
-  </div>
+  let h = `<div class="jd-back" onclick="goToMyTrips()"><i class="ph ph-arrow-left"></i> My Trips</div>
   <div class="jd-header">
     <div style="flex:1">
       <div class="jd-kicker">Journey · ${recStarted ? (visited < total ? 'in progress' : 'complete') : 'ready to record'}</div>
@@ -4551,14 +4693,9 @@ function renderJourneyDetail() {
       <div class="jd-sub">${first.toLowerCase()} → ${last.toLowerCase()}${dateRange ? ' · ' + dateRange : ''}</div>
     </div>
     <div class="jd-header-actions">
-      <div class="jd-collab-wrap" id="jdCollabWrap">
-        ${(t.collaborators||[]).map((c,i)=>`<div class="jd-collab-av ${c.role}" title="${c.email} · can ${c.role}" style="z-index:${10-i}">${c.avatar||c.email[0].toUpperCase()}</div>`).join('')}
-        <button class="jd-collab-add" onclick="jdOpenInvite()" title="Invite collaborators"><i class="ph ph-user-plus" style="font-size:12px;color:var(--text3)"></i></button>
-      </div>
       ${recStarted
         ? `<button class="jd-rec-cta" onclick="openRecordJournal(_journeyTrip)"><span class="jd-rec-dot"></span> Recording · Edit journal</button>`
-        : `<button class="btn" style="font-size:12px;padding:6px 14px" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
-           <button class="jd-rec-cta" onclick="jdStartRecording()"><i class="ph ph-record-fill" style="font-size:11px"></i> Start recording</button>`}
+        : `<button class="jd-rec-cta" onclick="jdStartRecording()"><i class="ph ph-record-fill" style="font-size:11px"></i> Start recording</button>`}
     </div>
   </div>
   <div class="jd-tabs">
@@ -4658,208 +4795,6 @@ function jdJourneyTabHTML(t, stops, legs, m) {
   return h;
 }
 
-function jdShareTrip(id) {
-  const trips = storage.get('trips') || [];
-  const t = trips.find(x => x.id === id);
-  if (!t) return;
-  const base = window.location.origin;
-  const url = t.public_slug ? `${base}/journey/${t.public_slug}` : `${base}/journey.html?id=${id}`;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => {
-      const btn = document.querySelector('.jd-header-actions .btn');
-      if (btn) { const orig = btn.innerHTML; btn.innerHTML = '<i class="ph ph-check"></i> Copied!'; setTimeout(() => { btn.innerHTML = orig; }, 2000); }
-    }).catch(() => prompt('Copy this link:', url));
-  } else {
-    prompt('Copy this link:', url);
-  }
-}
-let _jdInviteRole = 'edit';
-let _jdCollabs = []; // loaded from Supabase
-
-async function jdLoadCollabs() {
-  const t = _journeyTrip; if (!t) return;
-  if (!currentUser) { _jdCollabs = t.collaborators || []; return; }
-  const { data } = await sb.from('trip_collaborators')
-    .select('id,invitee_email,role,invited_at')
-    .eq('trip_id', t.id)
-    .order('invited_at', { ascending: true });
-  _jdCollabs = (data || []).map(r => ({
-    id: r.id, email: r.invitee_email, role: r.role,
-    avatar: r.invitee_email[0].toUpperCase()
-  }));
-  // Sync back to trip object + header strip
-  t.collaborators = _jdCollabs;
-  jdRefreshCollabStrip();
-}
-
-function jdRefreshCollabStrip() {
-  const wrap = document.getElementById('jdCollabWrap');
-  if (!wrap) return;
-  const addBtn = wrap.querySelector('.jd-collab-add');
-  wrap.querySelectorAll('.jd-collab-av').forEach(el => el.remove());
-  _jdCollabs.forEach((c, i) => {
-    const av = document.createElement('div');
-    av.className = `jd-collab-av ${c.role}`;
-    av.title = `${c.email} · can ${c.role}`;
-    av.style.zIndex = 10 - i;
-    av.textContent = c.avatar;
-    wrap.insertBefore(av, addBtn);
-  });
-}
-
-async function jdOpenInvite() {
-  let el = document.getElementById('jdInviteModal');
-  if (!el) { el = document.createElement('div'); el.id = 'jdInviteModal'; document.body.appendChild(el); }
-  _jdInviteRole = 'edit';
-  jdRenderInvite('loading');
-  await jdLoadCollabs();
-  jdRenderInvite();
-}
-
-function jdRenderInvite(state) {
-  const el = document.getElementById('jdInviteModal');
-  if (!el) return;
-  const collabs = _jdCollabs;
-  el.innerHTML = `<div class="jd-invite-modal" onclick="if(event.target===this)jdCloseInvite()">
-    <div class="jd-invite-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-        <div>
-          <div class="jd-invite-title"><i class="ph ph-users-three"></i> Invite collaborators</div>
-          <div class="jd-invite-sub">Search bysloth users by name or email.</div>
-        </div>
-        <button onclick="jdCloseInvite()" style="background:none;border:none;font-size:18px;color:var(--text3);cursor:pointer;line-height:1">×</button>
-      </div>
-      ${state === 'loading' ? `<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Loading…</div>` : `
-      <div style="position:relative;margin-bottom:12px">
-        <div class="jd-invite-row" style="margin-bottom:0">
-          <input id="jdInviteSearch" type="text" placeholder="Search by name or email…" autocomplete="off"
-            oninput="jdSearchUsers(this.value)"
-            onkeydown="if(event.key==='Escape')jdCloseUserDropdown()"/>
-          <div class="jd-role-toggle">
-            <button class="jd-role-opt${_jdInviteRole==='edit'?' on':''}" onclick="jdSetRole('edit')">Can edit</button>
-            <button class="jd-role-opt${_jdInviteRole==='view'?' on':''}" onclick="jdSetRole('view')">Can view</button>
-          </div>
-        </div>
-        <div id="jdUserDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:10;max-height:180px;overflow-y:auto;margin-top:4px"></div>
-      </div>
-      ${collabs.length ? `<div class="jd-invite-list">
-        ${collabs.map((c,i)=>`<div class="jd-invite-item">
-          <div class="jd-invite-item-av ${c.role}">${c.avatar}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name||c.email}</div>
-            ${c.name ? `<div style="font-size:11px;color:var(--text3)">${c.email}</div>` : ''}
-          </div>
-          <span class="jd-invite-item-role">can ${c.role}</span>
-          <button class="jd-invite-item-remove" onclick="jdRemoveCollab('${c.id||i}')" title="Remove">×</button>
-        </div>`).join('')}
-      </div>` : `<div style="font-size:12px;color:var(--text3);text-align:center;padding:10px 0">No collaborators yet.</div>`}`}
-    </div>
-  </div>`;
-  if (state !== 'loading') setTimeout(() => { const inp=document.getElementById('jdInviteSearch'); if(inp)inp.focus(); }, 0);
-}
-
-let _jdSelectedUser = null; // { id, email, name }
-let _jdSearchTimer = null;
-
-function jdSetRole(r) {
-  _jdInviteRole = r;
-  jdRenderInvite();
-  setTimeout(() => { const inp = document.getElementById('jdInviteSearch'); if(inp) inp.focus(); }, 0);
-}
-
-async function jdSearchUsers(q) {
-  _jdSelectedUser = null;
-  const dd = document.getElementById('jdUserDropdown');
-  if (!dd) return;
-  q = (q||'').trim();
-  if (q.length < 2) { dd.style.display = 'none'; return; }
-  clearTimeout(_jdSearchTimer);
-  _jdSearchTimer = setTimeout(async () => {
-    dd.style.display = 'block';
-    dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--text3)">Searching…</div>`;
-    const { data } = await sb.from('profiles')
-      .select('id,email,display_name')
-      .or(`email.ilike.%${q}%,display_name.ilike.%${q}%`)
-      .neq('id', currentUser?.id || '')
-      .limit(6);
-    if (!data || !data.length) {
-      dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--text3)">No users found.</div>`;
-      return;
-    }
-    dd.innerHTML = data.map(u => {
-      const name = u.display_name || u.email.split('@')[0];
-      const alreadyAdded = _jdCollabs.some(c => c.email === u.email);
-      return `<div onclick="${alreadyAdded ? '' : `jdSelectUser('${u.id}','${u.email.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}');event.stopPropagation()`}"
-        style="padding:9px 14px;display:flex;align-items:center;gap:10px;cursor:${alreadyAdded?'default':'pointer'};opacity:${alreadyAdded?0.45:1};${alreadyAdded?'':' '}transition:background .1s"
-        onmouseenter="if(!${alreadyAdded})this.style.background='var(--bg2)'" onmouseleave="this.style.background=''">
-        <div style="width:28px;height:28px;border-radius:50%;background:var(--moss);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--cream);flex-shrink:0">${name[0].toUpperCase()}</div>
-        <div style="min-width:0">
-          <div style="font-size:13px;font-weight:500;color:var(--text)">${name}</div>
-          <div style="font-size:11px;color:var(--text3)">${u.email}</div>
-        </div>
-        ${alreadyAdded ? `<span style="font-size:10px;color:var(--text3);margin-left:auto">Added</span>` : ''}
-      </div>`;
-    }).join('');
-  }, 280);
-}
-
-function jdSelectUser(id, email, name) {
-  _jdSelectedUser = { id, email, name };
-  const inp = document.getElementById('jdInviteSearch');
-  if (inp) inp.value = name + ' (' + email + ')';
-  jdCloseUserDropdown();
-  jdSendInvite();
-}
-
-function jdCloseUserDropdown() {
-  const dd = document.getElementById('jdUserDropdown');
-  if (dd) dd.style.display = 'none';
-}
-
-async function jdSendInvite() {
-  const user = _jdSelectedUser;
-  if (!user) return;
-  const { id: userId, email, name } = user;
-  const t = _journeyTrip; if (!t) return;
-  if (_jdCollabs.find(c => c.email === email)) { jdRenderInvite(); return; }
-
-  _jdSelectedUser = null;
-  const entry = { email, name, role: _jdInviteRole, avatar: (name||email)[0].toUpperCase() };
-
-  if (currentUser) {
-    const { data, error } = await sb.from('trip_collaborators').insert({
-      trip_id: t.id,
-      invited_by: currentUser.id,
-      invitee_email: email,
-      role: _jdInviteRole,
-    }).select('id').single();
-    if (!error && data) entry.id = data.id;
-  } else {
-    if (!t.collaborators) t.collaborators = [];
-    t.collaborators.push(entry);
-    jdPersist();
-  }
-
-  _jdCollabs.push(entry);
-  jdRefreshCollabStrip();
-  jdRenderInvite();
-}
-
-async function jdRemoveCollab(idOrIdx) {
-  const isUuid = typeof idOrIdx === 'string' && idOrIdx.includes('-');
-  if (isUuid && currentUser) {
-    await sb.from('trip_collaborators').delete().eq('id', idOrIdx);
-    _jdCollabs = _jdCollabs.filter(c => c.id !== idOrIdx);
-  } else {
-    const idx = parseInt(idOrIdx, 10);
-    _jdCollabs.splice(idx, 1);
-    if (_journeyTrip) { _journeyTrip.collaborators = _jdCollabs; jdPersist(); }
-  }
-  jdRefreshCollabStrip();
-  jdRenderInvite();
-}
-
-function jdCloseInvite() { const el=document.getElementById('jdInviteModal'); if(el)el.innerHTML=''; }
 function jdStartRecording() {
   if (!_journeyTrip) return;
   _journeyTrip.recordingStarted = true;
@@ -4930,7 +4865,7 @@ async function jdInitMap(stops, legs) {
     const first = i===0, last = i===coords.length-1;
     L.circleMarker([c.lat, c.lon], {
       radius: first||last ? 6 : 5, color:'#fff', weight:2,
-      fillColor: c.visited ? '#1E3A5C' : last ? '#FF5014' : '#94A0B0', fillOpacity:1
+      fillColor: c.visited ? '#1E3A5C' : last ? '#FF5014' : '#8A9484', fillOpacity:1
     }).bindTooltip(c.name, { permanent:true, direction:'top', offset:[0,-8], className:'' }).addTo(_jdMap);
   });
   // GPS "you are here" dot (mid-leg transitProgress)
@@ -5433,7 +5368,7 @@ async function recInitStickyMap() {
   L.polyline(ll, { color:'#FF5014', weight:2.5, opacity:0.75, dashArray:'5 7' }).addTo(_recMap);
   coords.forEach((c, i) => {
     const first=i===0, lastC=i===coords.length-1;
-    L.circleMarker([c.lat,c.lon], { radius:first||lastC?6:5, color:'#fff', weight:2, fillColor:c.visited?'#1E3A5C':lastC?'#FF5014':'#94A0B0', fillOpacity:1 })
+    L.circleMarker([c.lat,c.lon], { radius:first||lastC?6:5, color:'#fff', weight:2, fillColor:c.visited?'#1E3A5C':lastC?'#FF5014':'#8A9484', fillOpacity:1 })
       .bindTooltip(c.name, { permanent:true, direction:'top', offset:[0,-8], className:'' }).addTo(_recMap);
   });
   const ti = coords.findIndex(c => c.transitProgress != null);
@@ -5762,10 +5697,59 @@ async function renderProfilePanel() {
     return;
   }
 
+  // ── Mobile layout ─────────────────────────────────────────────────
+  if (window.innerWidth <= 640) {
+    el.innerHTML = `
+    <div style="background:var(--dusk);padding:20px 18px 22px;margin:-1rem -0.875rem 0">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+        <div style="width:60px;height:60px;border-radius:50%;background:var(--moss);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:26px;color:var(--cream);border:2px solid var(--sage);flex-shrink:0">${initials}</div>
+        <div>
+          <div style="font-family:var(--serif);font-size:22px;font-weight:400;color:var(--cream);letter-spacing:-0.3px">${displayName}</div>
+          <div style="font-family:var(--mono);font-size:9.5px;color:rgba(245,240,232,0.5);margin-top:3px">${handle}${location ? ' · ' + location : ''}</div>
+          <div style="display:flex;gap:6px;margin-top:5px">
+            <span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:9999px;background:rgba(255,184,0,0.15);color:var(--gold);border:0.5px solid rgba(255,184,0,0.27)">⭑ Contributor</span>
+          </div>
+        </div>
+        <div style="margin-left:auto;text-align:right;flex-shrink:0">
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;color:rgba(245,240,232,0.45);text-transform:uppercase;margin-bottom:2px">Karma</div>
+          <div style="font-family:var(--body);font-size:36px;font-weight:700;color:var(--gold);letter-spacing:-0.8px;line-height:1">${karma.toLocaleString()}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:rgba(245,240,232,0.4);margin-top:2px">${totalVotes} upvotes</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,255,255,0.06);border-radius:var(--radius);overflow:hidden">
+        ${[[''+totalNotes,'Notes'],[''+totalVotes,'Upvotes'],[''+totalConf,'Confirmed'],[''+trips.length,'Trips']].map(([v,l],i)=>`
+          <div style="padding:10px 0;text-align:center;${i>0?'border-left:0.5px solid rgba(255,255,255,0.08)':''}">
+            <div style="font-family:var(--body);font-size:20px;font-weight:700;color:var(--cream);letter-spacing:-0.3px">${v}</div>
+            <div style="font-family:var(--mono);font-size:8.5px;color:rgba(245,240,232,0.4);margin-top:2px;letter-spacing:0.5px">${l}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div style="padding:16px 0 80px">
+      <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--fern);font-weight:600;margin-bottom:10px">Badges · ${BADGES.filter(b=>b.earned).length} / ${BADGES.length}</div>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+        ${BADGES.map(b=>`
+          <div style="flex-shrink:0;background:${b.tint};border:0.5px solid var(--border);border-radius:var(--radius);padding:9px 11px;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:68px;opacity:${b.dim?0.4:1}">
+            <div style="width:32px;height:32px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center"><i class="${b.icon}" style="font-size:16px;color:${b.color}"></i></div>
+            <div style="font-size:10.5px;font-weight:700;color:var(--text);text-align:center;line-height:1.2">${b.label}</div>
+            <div style="font-size:8.5px;color:${b.color};font-family:var(--mono);text-align:center;line-height:1.2">${b.sub}</div>
+          </div>`).join('')}
+      </div>
+
+      <div style="border-top:0.5px solid var(--border);padding-top:14px;display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+        <span style="font-size:12px;color:var(--fern);cursor:pointer;font-family:var(--mono);letter-spacing:0.3px">Account settings</span>
+        <span style="font-size:12px;color:var(--fern);cursor:pointer;font-family:var(--mono);letter-spacing:0.3px">Notifications</span>
+        <span style="font-size:12px;color:var(--fern);cursor:pointer;font-family:var(--mono);letter-spacing:0.3px">Export data</span>
+      </div>
+      <button style="font-size:12px;padding:8px 18px;border-radius:9999px;border:0.5px solid rgba(255,80,20,0.33);color:var(--sage);background:transparent;cursor:pointer;font-family:var(--body)" onclick="signOut()">Sign out</button>
+    </div>`;
+    return;
+  }
+
   el.innerHTML = `
 
   <!-- ── Hero identity card ───────────────────────────── -->
-  <div style="background:var(--dusk);color:var(--cream);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:16px;position:relative;overflow:hidden;display:grid;grid-template-columns:72px 1fr auto;gap:20px;align-items:center">
+  <div class="profile-hero-grid" style="background:var(--dusk);color:var(--cream);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:16px;position:relative;overflow:hidden;display:grid;grid-template-columns:72px 1fr auto;gap:20px;align-items:center">
     <div style="width:72px;height:72px;border-radius:50%;background:var(--moss);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:32px;font-weight:400;border:2px solid var(--sage);flex-shrink:0">${initials}</div>
     <div style="min-width:0">
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage)">Contributor${memberSince?' · since '+memberSince:''}</div>
@@ -5803,7 +5787,7 @@ async function renderProfilePanel() {
   </div>
 
   <!-- ── Karma breakdown + Badges ─────────────────────── -->
-  <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-bottom:16px">
+  <div class="profile-meta-grid" style="display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-bottom:16px">
 
     <!-- Karma breakdown -->
     <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
@@ -5828,7 +5812,7 @@ async function renderProfilePanel() {
     <!-- Badges -->
     <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:12px">Badges · ${BADGES.filter(b=>b.earned).length} earned</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="profile-badges-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
         ${BADGES.map(b=>`
           <div style="text-align:center;padding:10px 4px;border-radius:var(--radius);background:${b.dim?'transparent':b.tint};border:${b.dim?'0.5px dashed var(--border2)':'0.5px solid var(--border)'};opacity:${b.dim?0.45:1}">
             <i class="ph ${b.icon}" style="font-size:20px;color:${b.color}"></i>
@@ -5998,6 +5982,96 @@ function exportTrip() {
 
 // ── Start ─────────────────────────────────────────────────────────
 init();
+
+// ── Bottom nav sync ───────────────────────────────────────────────
+function bnSync(id) {
+  const map = { journey:'mytrips', recordjournal:'mytrips', record:'plan', admin:'plan' };
+  const target = map[id] || id;
+  document.querySelectorAll('.bn-item').forEach(b => {
+    b.classList.remove('bn-active');
+    const icon = b.querySelector('i'), base = b.dataset.icon;
+    if (icon && base) icon.className = `ph ph-${base}`;
+  });
+  const el = document.getElementById('bn_' + target);
+  if (el) {
+    el.classList.add('bn-active');
+    const icon = el.querySelector('i'), base = el.dataset.icon;
+    if (icon && base) icon.className = `ph-fill ph-${base}`;
+  }
+}
+
+// ── Mobile header sync ────────────────────────────────────────────
+const MOBILE_TITLES = {
+  plan:'Planner', mytrips:'My Trips', journals:'Journals',
+  profile:'Profile', admin:'Admin',
+  journey:'Journey', record:'New Journey', recordjournal:'New Entry'
+};
+function mobileHeaderSync(id) {
+  const titleEl = document.getElementById('mobileHeaderTitle');
+  if (titleEl) titleEl.textContent = MOBILE_TITLES[id] || id;
+  const backBtn = document.getElementById('mobileHeaderBack');
+  if (backBtn) {
+    const isDetail = id === 'journey' || id === 'recordjournal';
+    backBtn.classList.toggle('visible', isDetail);
+    backBtn.onclick = isDetail ? () => switchTab('mytrips', document.getElementById('navbtn_mytrips')) : null;
+  }
+}
+</script>
+
+<!-- ── Mobile bottom nav ──────────────────────────────────────── -->
+<nav id="bottomNav" class="bottom-nav" aria-label="Navigation">
+  <button class="bn-item bn-active" id="bn_plan" data-icon="compass"
+    onclick="switchTab('plan',document.getElementById('navbtn_plan'))">
+    <i class="ph-fill ph-compass"></i><span>Planner</span>
+  </button>
+  <button class="bn-item" id="bn_mytrips" data-icon="suitcase-simple"
+    onclick="switchTab('mytrips',document.getElementById('navbtn_mytrips'))">
+    <i class="ph ph-suitcase-simple"></i><span>Trips</span>
+  </button>
+  <button class="bn-item" id="bn_journals" data-icon="book-open"
+    onclick="switchTab('journals',document.getElementById('navbtn_journals'))">
+    <i class="ph ph-book-open"></i><span>Journals</span>
+  </button>
+  <button class="bn-item" id="bn_profile" data-icon="user-circle"
+    onclick="switchTab('profile',document.getElementById('navbtn_profile'))">
+    <i class="ph ph-user-circle"></i><span>Profile</span>
+  </button>
+</nav>
+
+<!-- ── Mobile splash / landing screen (logged-out, mobile only) ── -->
+<div id="mobileSplash" class="mobile-splash">
+  <div style="position:absolute;right:-30px;bottom:60px;width:260px;height:320px;opacity:0.08;pointer-events:none">
+    <svg viewBox="0 0 260 320" width="100%" height="100%" fill="none">
+      <path d="M30 300 C 80 250, 100 200, 150 160 C 200 120, 220 80, 240 40" stroke="#FF5014" stroke-width="2.5" stroke-dasharray="5 10" stroke-linecap="round"/>
+      <circle cx="30" cy="300" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="30" cy="300" r="3" fill="#FF5014"/>
+      <circle cx="150" cy="160" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="150" cy="160" r="3" fill="#FF5014"/>
+      <circle cx="240" cy="40" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="240" cy="40" r="3" fill="#FF5014"/>
+      <circle cx="240" cy="40" r="22" stroke="#FF5014" stroke-width="1" opacity="0.5" fill="none"/>
+    </svg>
+  </div>
+  <div style="flex:1;padding:40px 28px 32px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:44px">
+      <img src="public/bysloth.png" alt="" style="height:38px;width:auto;flex-shrink:0">
+      <div style="font-family:var(--body);font-size:22px;font-weight:700;color:var(--cream);letter-spacing:-0.5px;line-height:1">bysloth</div>
+    </div>
+    <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);font-weight:600;margin-bottom:10px">Overland planner · no flights, ever</div>
+    <div style="font-family:var(--serif);font-size:40px;font-weight:300;line-height:1.05;letter-spacing:-0.8px;color:var(--cream);margin-bottom:18px">Go the long<br>way. <em style="font-style:normal;color:var(--sage)">On purpose.</em></div>
+    <div style="font-size:14px;line-height:1.65;color:rgba(245,240,232,0.62);margin-bottom:40px;max-width:290px">Trains, buses, ferries, shared taxis, the occasional hitch. We map a realistic route and flag the legs we can't verify.</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="document.getElementById('mobileSplash').classList.remove('show')" class="mobile-splash-cta-primary">Plan your first route <i class="ph ph-arrow-right" style="font-size:16px"></i></button>
+      <a href="auth.html" class="mobile-splash-cta-ghost">Sign in</a>
+    </div>
+    <div style="margin-top:24px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:rgba(245,240,232,0.3);text-align:center;text-transform:uppercase">Free · 3 routes a month · no card required</div>
+  </div>
+  <div style="border-top:0.5px solid rgba(245,240,232,0.1);padding:14px 28px;display:flex;gap:24px;position:relative;z-index:1">
+    <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--cream);letter-spacing:-0.3px">2,140</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(245,240,232,0.4);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">legs verified</div></div>
+    <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--cream);letter-spacing:-0.3px">23</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(245,240,232,0.4);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">countries</div></div>
+    <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--cream);letter-spacing:-0.3px">no flights</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(245,240,232,0.4);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">ever</div></div>
+  </div>
+</div>
+<script>
+  // Show splash immediately on mobile before async auth resolves; init() hides it if logged in.
+  if (window.innerWidth <= 640) document.getElementById('mobileSplash').classList.add('show');
 </script>
 </body>
 </html>

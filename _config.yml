@@ -26,6 +26,10 @@ exclude:
   - node_modules
   - .claude
   - vendor
+  - package.json
+  - package-lock.json
+  - capacitor.config.ts
+  - android
 
 keep_files:
   - public
