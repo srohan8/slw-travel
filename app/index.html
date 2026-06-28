@@ -4441,7 +4441,7 @@ function renderMyTripsPanel() {
       const safeT = JSON.stringify(t).replace(/"/g,'&quot;');
       const isMaybe = st.cls === 'maybe';
       // Trip lifecycle: recording in progress vs. published journal.
-      const hasActivity = !!t.recordingStarted || (t.stops||[]).some(s => s.visited || (s.diary && s.diary.trim()));
+      const hasActivity = !t.recordingStopped && (!!t.recordingStarted || (t.stops||[]).some(s => s.visited || (s.diary && s.diary.trim())));
       const isPublished = !!t.published;
       const isRecording = hasActivity && !isPublished;
       return `<div class="mytrips-table-row" style="cursor:pointer;${isMaybe?'opacity:0.65':''}" onclick="openJourneyDetail(${safeT})" title="View journey">
@@ -4617,7 +4617,7 @@ function renderJourneyDetail() {
     : '';
 
   // §9 Session-2: "State 0" — trip saved but recording not started yet.
-  const recStarted = !!t.recordingStarted || stops.some(s => s.visited || (s.diary && s.diary.trim()));
+  const recStarted = !t.recordingStopped && (!!t.recordingStarted || stops.some(s => s.visited || (s.diary && s.diary.trim())));
   let h = `<div class="jd-back" style="display:flex;align-items:center;justify-content:space-between">
     <span onclick="goToMyTrips()" style="cursor:pointer"><i class="ph ph-arrow-left"></i> My Trips</span>
     <button class="btn" style="font-size:12px;padding:5px 13px" onclick="jdShareTrip('${t.id}')"><i class="ph ph-export"></i> Share</button>
