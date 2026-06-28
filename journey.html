@@ -332,10 +332,14 @@ async function buildJourneyFromTrip(id) {
     };
   });
 
+  const viewer = pubLoggedInUser();
+  const authorName = viewer?.user_metadata?.display_name
+    || (viewer?.email ? viewer.email.split('@')[0] : null)
+    || 'A bysloth traveller';
   return {
     kicker: t.journal_title ? 'A slow journey' : 'A slow journey',
     title: `${stops[0].name} to ${stops[stops.length-1].name},\noverland.`,
-    author: 'A bysloth traveller',
+    author: authorName,
     stats: `${days||'—'} days · ${stops.length} cities${totalKm?` · ${totalKm.toLocaleString()} km`:''} · no flights`,
     intro: (t.notes||'').trim() || `An overland journey from ${stops[0].name} to ${stops[stops.length-1].name} — trains, buses and ferries, no flights.`,
     stops: mapStops.length >= 2 ? mapStops : JOURNEY.stops,
