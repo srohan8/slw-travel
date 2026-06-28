@@ -4537,7 +4537,10 @@ function renderJourneyDetail() {
 
   // §9 Session-2: "State 0" — trip saved but recording not started yet.
   const recStarted = !!t.recordingStarted || stops.some(s => s.visited || (s.diary && s.diary.trim()));
-  let h = `<div class="jd-back" onclick="goToMyTrips()"><i class="ph ph-arrow-left"></i> My Trips</div>
+  let h = `<div class="jd-back" style="display:flex;align-items:center;justify-content:space-between">
+    <span onclick="goToMyTrips()" style="cursor:pointer"><i class="ph ph-arrow-left"></i> My Trips</span>
+    <button class="btn" style="font-size:12px;padding:5px 13px" onclick="jdShareTrip('${t.id}')"><i class="ph ph-export"></i> Share</button>
+  </div>
   <div class="jd-header">
     <div style="flex:1">
       <div class="jd-kicker">Journey · ${recStarted ? (visited < total ? 'in progress' : 'complete') : 'ready to record'}</div>
@@ -4545,7 +4548,6 @@ function renderJourneyDetail() {
       <div class="jd-sub">${first.toLowerCase()} → ${last.toLowerCase()}${dateRange ? ' · ' + dateRange : ''}</div>
     </div>
     <div class="jd-header-actions">
-      <button class="btn" style="font-size:12px;padding:6px 14px" onclick="jdShareTrip('${t.id}')"><i class="ph ph-export"></i> Share</button>
       <div class="jd-collab-wrap" id="jdCollabWrap">
         ${(t.collaborators||[]).map((c,i)=>`<div class="jd-collab-av ${c.role}" title="${c.email} · can ${c.role}" style="z-index:${10-i}">${c.avatar||c.email[0].toUpperCase()}</div>`).join('')}
         <button class="jd-collab-add" onclick="jdOpenInvite()" title="Invite collaborators"><i class="ph ph-plus" style="font-size:11px;color:var(--text3)"></i></button>
