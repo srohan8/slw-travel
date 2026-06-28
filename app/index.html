@@ -817,6 +817,110 @@
   .budget-bar-track{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;flex-shrink:0;}
   .budget-bar-fill{height:100%;border-radius:99px;background:var(--fern);transition:width 0.3s ease;}
   .budget-bar-pct{font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap;}
+
+  /* ════════════════════════════════════════════════════════
+     MOBILE  ≤640px  — responsive layer for phone & Android
+     ════════════════════════════════════════════════════════ */
+
+  .bottom-nav{display:none;}
+
+  @media(max-width:640px){
+
+    /* ── Global chrome ──────────────────────────────────── */
+    body{padding-bottom:64px;}
+    .container{padding:1rem 0.875rem 0;}
+
+    /* ── Top nav: hide tab buttons ──────────────────────── */
+    .nav-link{display:none !important;}
+    .nav-vsep{display:none;}
+
+    /* ── Bottom nav ─────────────────────────────────────── */
+    .bottom-nav{
+      display:flex;
+      position:fixed;bottom:0;left:0;right:0;
+      height:56px;
+      background:var(--dusk);
+      border-top:0.5px solid rgba(255,255,255,0.12);
+      z-index:200;
+      padding-bottom:env(safe-area-inset-bottom,0px);
+    }
+    .bn-item{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:2px;border:none;background:none;cursor:pointer;
+      color:rgba(255,255,255,0.4);
+      font-family:var(--body);padding:6px 0;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .bn-item i{font-size:22px;line-height:1;}
+    .bn-item span{font-family:var(--mono);font-size:8px;letter-spacing:0.5px;text-transform:uppercase;line-height:1.2;}
+    .bn-item.bn-active{color:var(--sage);}
+
+    /* ── Plan tab ───────────────────────────────────────── */
+    .psc-from-to{grid-template-columns:1fr !important;}
+    .psc-arrow{display:none !important;}
+    .psc-slot{border-bottom:0.5px solid var(--border);padding:12px 0;}
+    .psc-slot:last-child{border-bottom:none;}
+    .psc-footer{flex-direction:column;gap:10px;}
+    .psc-footer-opts{width:100%;}
+    .psc-footer-cta{flex-direction:column;align-items:stretch;gap:8px;}
+    .psc-footer-cta .btn-primary{width:100%;padding:13px;justify-content:center;}
+    .psc-chips-row{flex-wrap:wrap;gap:6px;}
+    .psc-inputs-row{flex-direction:column;}
+    .plan-hero-new{padding:1.5rem 1rem 1rem !important;}
+    .plan-hero-title{font-size:26px !important;}
+    .plan-landing-grid{grid-template-columns:1fr !important;}
+    .plan-edit-bar{flex-wrap:wrap;gap:8px;}
+    .sumbar{grid-template-columns:repeat(2,1fr);}
+    .advisory-grid{grid-template-columns:1fr !important;}
+    .leg-grid{grid-template-columns:1fr !important;}
+    #plannerMapWrap{bottom:64px !important;}
+
+    /* ── My Trips — table → cards ───────────────────────── */
+    .mytrips-hdr{flex-direction:column;align-items:flex-start;gap:10px;}
+    .mytrips-serif-title{font-size:22px !important;}
+    .mytrips-table-hdr{display:none !important;}
+    .mytrips-table{border:none !important;background:transparent !important;}
+    .mytrips-table-row{
+      display:flex !important;flex-direction:column;
+      grid-template-columns:unset !important;
+      padding:14px !important;
+      background:var(--bg);border:0.5px solid var(--border);
+      border-radius:var(--radius-lg);margin-bottom:10px;
+      gap:6px;
+    }
+    .mytrips-table-row > *{display:flex !important;align-items:center;}
+    .mytrips-yearly{grid-template-columns:repeat(2,1fr) !important;}
+    .mytrips-tabs{flex-wrap:wrap;gap:6px;}
+    .mytrips-jgrid{grid-template-columns:1fr !important;}
+
+    /* ── Journey Detail ─────────────────────────────────── */
+    .jd-header{flex-direction:column;align-items:flex-start;gap:8px;}
+    .jd-title{font-size:20px !important;}
+    .jd-summary{grid-template-columns:repeat(2,1fr) !important;}
+    .jd-leg-cards{grid-template-columns:1fr !important;}
+    .jd-tabs{flex-wrap:wrap;}
+
+    /* ── Record Journal ─────────────────────────────────── */
+    .rj-header{flex-wrap:wrap;gap:8px;}
+    .rj-card-grid{grid-template-columns:1fr !important;}
+    .rj-sticky{bottom:64px !important;}
+    .rj-gutter{display:none;}
+
+    /* ── Journals ───────────────────────────────────────── */
+    .jrnl-header-top{flex-direction:column;gap:10px;}
+    .jrnl-search{width:100% !important;}
+    .jrnl-search input{width:100% !important;}
+    .jrnl-featured{grid-template-columns:1fr !important;}
+    .jrnl-feat-img{height:180px;}
+    .jrnl-body{padding:16px !important;}
+    .jrnl-grid{grid-template-columns:1fr !important;}
+
+    /* ── Profile ────────────────────────────────────────── */
+    .profile-hero-grid{grid-template-columns:56px 1fr !important;gap:12px !important;}
+    .profile-stats-grid{grid-template-columns:repeat(2,1fr) !important;}
+    .profile-badges-grid{grid-template-columns:repeat(3,1fr) !important;}
+
+  }
 </style>
 </head>
 <body>
@@ -2544,6 +2648,7 @@ function switchTab(id, el) {
   if (id === 'plan' && lastSuggestion && resultsVisible) showRouteMap(lastSuggestion);
   else hideRouteMap();
   setScreenUrl(id);
+  if (typeof bnSync === 'function') bnSync(id);
 }
 
 // ── Plan tab ──────────────────────────────────────────────────────
@@ -5756,6 +5861,36 @@ function exportTrip() {
 
 // ── Start ─────────────────────────────────────────────────────────
 init();
+
+// ── Bottom nav sync ───────────────────────────────────────────────
+function bnSync(id) {
+  // Map sub-panels back to their parent bottom-nav tab
+  const map = { journey:'mytrips', recordjournal:'mytrips', record:'plan', admin:'plan' };
+  const target = map[id] || id;
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('bn-active'));
+  const el = document.getElementById('bn_' + target);
+  if (el) el.classList.add('bn-active');
+}
 </script>
+
+<!-- ── Mobile bottom nav ──────────────────────────────────────── -->
+<nav id="bottomNav" class="bottom-nav" aria-label="Navigation">
+  <button class="bn-item bn-active" id="bn_plan"
+    onclick="switchTab('plan',document.getElementById('navbtn_plan'))">
+    <i class="ph ph-compass"></i><span>Planner</span>
+  </button>
+  <button class="bn-item" id="bn_mytrips"
+    onclick="switchTab('mytrips',document.getElementById('navbtn_mytrips'))">
+    <i class="ph ph-suitcase-simple"></i><span>Trips</span>
+  </button>
+  <button class="bn-item" id="bn_journals"
+    onclick="switchTab('journals',document.getElementById('navbtn_journals'))">
+    <i class="ph ph-book-open"></i><span>Journals</span>
+  </button>
+  <button class="bn-item" id="bn_profile"
+    onclick="switchTab('profile',document.getElementById('navbtn_profile'))">
+    <i class="ph ph-user-circle"></i><span>Profile</span>
+  </button>
+</nav>
 </body>
 </html>
