@@ -11,20 +11,20 @@
 function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'});}
 (function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
 </script>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Albert+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --moss:#2D4A2D; --fern:#4A7C4A; --sage:#8BAF7A; --mist:#D4E3CC;
-  --cream:#F5F0E8; --sand:#E8DFD0; --dusk:#2D4A2D; --gold:#C9A84C;
-  --bg:#FAF7F2; --bg2:#F2EDE4; --text:#2D4A2D; --text2:#4A6040; --text3:#9AA880;
-  --border:rgba(45,74,45,0.15); --border2:rgba(45,74,45,0.3);
+  --moss:#13213A; --fern:#1E3A5C; --sage:#FF5014; --mist:#FFD9CC;
+  --cream:#FFFFFF; --sand:#F8F4F2; --dusk:#091022; --gold:#FFB800;
+  --bg:#FFFFFF; --bg2:#FAF6F4; --text:#0E1A2E; --text2:#2C4060; --text3:#94A0B0;
+  --border:rgba(14,26,46,0.15); --border2:rgba(14,26,46,0.3);
   --radius:10px; --radius-lg:16px;
-  --serif:'Cormorant Garamond',Georgia,serif;
-  --body:'DM Sans',system-ui,sans-serif;
-  --mono:'DM Mono','Courier New',monospace;
+  --serif:'Sora',system-ui,sans-serif;
+  --body:'Albert Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono','Courier New',monospace;
 }
 
 html, body { height: 100%; }
@@ -38,7 +38,7 @@ body {
 
 /* ── Left pitch panel ─────────────────────────────────────── */
 .auth-left {
-  background: linear-gradient(180deg, #0D120D 0%, #17231A 100%);
+  background: var(--dusk);
   padding: 48px 56px;
   position: relative;
   overflow: hidden;
@@ -55,13 +55,12 @@ body {
   text-decoration: none;
 }
 .auth-logo-text {
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 300;
-  color: var(--cream);
-  letter-spacing: -0.3px;
+  font-family: var(--body);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.4px;
 }
-.auth-logo-text em { font-style: italic; color: var(--sage); }
 
 .auth-left-body {
   position: relative;
@@ -86,7 +85,7 @@ body {
   margin: 12px 0 18px;
   color: var(--cream);
 }
-.auth-left-h em { font-style: italic; color: var(--sage); }
+.auth-left-h em { font-style: normal; color: var(--sage); }
 
 .auth-left-sub {
   font-size: 14px;
@@ -282,19 +281,19 @@ body {
 /* Submit */
 .auth-submit {
   margin-top: 14px;
-  padding: 12px 20px;
+  padding: 13px 20px;
   border-radius: 10px;
   border: none;
-  background: var(--fern);
-  color: var(--cream);
-  font-size: 14px;
+  background: var(--sage);
+  color: #fff;
+  font-size: 15px;
   font-weight: 600;
   font-family: var(--body);
   cursor: pointer;
   width: 100%;
   transition: background .15s;
 }
-.auth-submit:hover { background: #3D6B3D; }
+.auth-submit:hover { background: #e04510; }
 .auth-submit:disabled { opacity: 0.5; cursor: default; }
 
 /* Message */
@@ -327,15 +326,35 @@ body {
 }
 .auth-skip:hover { color: var(--text2); }
 
-/* Mobile */
+/* Mobile brand header (replaces left panel on mobile) */
+.auth-mobile-brand { display: none; background: var(--dusk); padding: 14px 20px 22px; flex-shrink: 0; }
+.auth-mobile-brand-top { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.auth-mobile-back { width: 36px; height: 36px; background: rgba(255,255,255,0.08); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; flex-shrink: 0; margin-left: -4px; }
+.auth-mobile-logo-text { font-family: var(--body); font-size: 17px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+.auth-mobile-brand-h { font-family: var(--serif); font-size: 28px; font-weight: 300; color: #fff; letter-spacing: -0.4px; line-height: 1.1; }
+.auth-mobile-brand-sub { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 6px; }
+
 @media(max-width: 680px) {
-  body { grid-template-columns: 1fr; }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
   .auth-left { display: none; }
-  .auth-right { padding: 32px 24px; }
+  .auth-mobile-brand { display: flex; flex-direction: column; }
+  .auth-right { padding: 20px 22px; flex: 1; }
+  .auth-form-wrap { max-width: none; }
 }
 </style>
 </head>
 <body>
+
+<!-- ── Mobile brand header (shows on ≤680px instead of left panel) ── -->
+<div class="auth-mobile-brand" id="authMobileBrand">
+  <div class="auth-mobile-brand-top">
+    <a href="/app/" class="auth-mobile-back"><i class="ph ph-arrow-left" style="font-size:20px"></i></a>
+    <img src="public/bysloth.png" alt="" style="height:24px;width:auto;flex-shrink:0">
+    <span class="auth-mobile-logo-text">bysloth</span>
+  </div>
+  <div class="auth-mobile-brand-h" id="authBrandH">Welcome back.</div>
+  <div class="auth-mobile-brand-sub" id="authBrandSub">Sign in to save trips and contribute notes.</div>
+</div>
 
 <!-- ── Cookie consent banner ── -->
 <div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#2D4A2D;color:#F5F0E8;padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
@@ -349,42 +368,34 @@ body {
 
 <!-- ── Left pitch panel ──────────────────────────────── -->
 <div class="auth-left">
-  <a class="auth-logo" href="index.html">
-    <img src="public/sloth-logo.svg" height="30" style="filter:brightness(0) invert(1);opacity:0.85"/>
-    <span class="auth-logo-text">SLW <em>Travel</em></span>
+  <a class="auth-logo" href="/app/">
+    <img src="public/bysloth.png" height="28" style="width:auto;flex-shrink:0"/>
+    <span class="auth-logo-text">bysloth</span>
   </a>
 
   <div class="auth-left-body">
-    <div class="kicker">Overland planner · Community-verified</div>
+    <div class="kicker">Overland planner · No flights, ever</div>
     <h1 class="auth-left-h">
-      Every leg<br>
-      <em>double-checked</em><br>
-      by someone<br>
-      who was there.
+      Go the long<br>
+      way.<br>
+      <em>On purpose.</em>
     </h1>
-    <p class="auth-left-sub">SLW routes are planned by an AI and verified by travellers. Join 2,400+ contributors keeping borders, prices, and schedules honest.</p>
+    <p class="auth-left-sub">Trains, buses, ferries, shared taxis, the occasional hitch. We map a realistic route and flag the legs we can't verify.</p>
 
     <div class="auth-trust">
       <div class="auth-trust-item">
-        <div class="auth-trust-n">2,400+</div>
-        <div class="auth-trust-l">Contributors</div>
-      </div>
-      <div class="auth-trust-item">
-        <div class="auth-trust-n">18,600</div>
-        <div class="auth-trust-l">Notes verified</div>
+        <div class="auth-trust-n">2,140</div>
+        <div class="auth-trust-l">Legs verified</div>
       </div>
       <div class="auth-trust-item">
         <div class="auth-trust-n">23</div>
-        <div class="auth-trust-l">Countries live</div>
+        <div class="auth-trust-l">Countries</div>
+      </div>
+      <div class="auth-trust-item">
+        <div class="auth-trust-n">no flights</div>
+        <div class="auth-trust-l">ever</div>
       </div>
     </div>
-  </div>
-
-  <div class="auth-version">v0.4 · private beta</div>
-
-  <!-- Decorative sloth -->
-  <div class="auth-bg-sloth">
-    <img src="public/sloth-logo.svg" width="360" style="filter:brightness(0) invert(1);opacity:0.12"/>
   </div>
 </div>
 
@@ -518,12 +529,21 @@ body {
   const urlTab = new URLSearchParams(window.location.search).get('tab');
   if (urlTab === 'signup') switchTab('signup');
 
+  const BRAND_COPY = {
+    signin:  ['Welcome back.',      'Sign in to save trips and contribute notes.'],
+    signup:  ['Join the slow road.','Free account, no card needed.'],
+    forgot:  ['Reset password.',    'Enter your email and we\'ll send a link.'],
+  };
   function switchTab(tab) {
     ['signin','signup','forgot'].forEach(t => {
       document.getElementById('panel-' + t).style.display = t === tab ? 'block' : 'none';
     });
     document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
     document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+    const [h, sub] = BRAND_COPY[tab] || [];
+    const bh = document.getElementById('authBrandH'), bs = document.getElementById('authBrandSub');
+    if (bh && h) bh.textContent = h;
+    if (bs && sub) bs.textContent = sub;
   }
 
   function showForgot() { switchTab('forgot'); }
