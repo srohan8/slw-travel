@@ -15,7 +15,7 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
 (function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
 </script>
 <meta name="description" content="Long-form overland route guides, border-crossing notes, and field reports from SLW Travel."/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&family=Sora:wght@300;400;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -25,9 +25,9 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
   --bg:#FFFFFF; --bg2:#FAF6F4; --bg3:#F8F4F2;
   --text:#0E1A2E; --text2:#2C4060; --text3:#94A0B0;
   --border:rgba(14,26,46,0.15);
-  --serif:'Cormorant Garamond',Georgia,serif;
-  --body:'DM Sans',system-ui,sans-serif;
-  --mono:'DM Mono','Courier New',monospace;
+  --serif:'Sora',Georgia,serif;
+  --body:'Albert Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono','Courier New',monospace;
 }
 body { font-family:var(--body); background:var(--bg3); color:var(--text); min-height:100vh; }
 
@@ -38,8 +38,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   box-shadow:0 2px 12px rgba(9,16,34,0.3);
 }
 .mkt-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
-.mkt-logo-text { font-family:var(--serif); font-weight:300; font-size:19px; color:var(--cream); letter-spacing:-0.3px; }
-.mkt-logo-text em { font-style:italic; color:var(--sage); }
+.mkt-logo-text { font-family:var(--body); font-weight:500; font-size:18px; color:#fff; letter-spacing:0; }
 .mkt-nav-links { display:flex; gap:22px; align-items:center; font-size:13px; }
 .mkt-nav-links a { color:rgba(212,227,204,0.55); text-decoration:none; transition:color .2s; }
 .mkt-nav-links a:hover, .mkt-nav-links a.active { color:var(--cream); }
@@ -96,8 +95,8 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 
 <header class="mkt-nav">
   <a class="mkt-logo" href="{{ '/' | relative_url }}">
-    <img src="{{ '/public/sloth-logo.svg' | relative_url }}" height="32" style="filter:brightness(0) invert(1);opacity:0.9"/>
-    <span class="mkt-logo-text">SLW <em>Travel</em></span>
+    <img src="{{ '/public/bysloth.png' | relative_url }}" height="26" alt="bysloth"/>
+    <span class="mkt-logo-text">bysloth</span>
   </a>
   <div class="mkt-nav-links">
     <a href="{{ '/' | relative_url }}">Home</a>
