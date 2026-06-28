@@ -21,34 +21,34 @@ posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --moss:#2D4A2D;--fern:#4A7C4A;--sage:#8BAF7A;--mist:#D4E3CC;
-  --cream:#F5F0E8;--sand:#E8DFD0;
-  --bg:#FAF7F2;--bg2:#F2EDE4;--bg3:#EDE8DC;
-  --text:#2D4A2D;--text2:#4A6040;--text3:#7A9870;
-  --border:rgba(45,74,45,0.15);--border2:rgba(45,74,45,0.25);
-  --rust:#C4622D;--amber:#B8820A;
+  --moss:#13213A;--fern:#1E3A5C;--sage:#FF5014;--dusk:#091022;
+  --cream:#FFFFFF;--sand:#F8F4F2;
+  --bg:#FFFFFF;--bg2:#FAF6F4;--bg3:#F8F4F2;
+  --text:#0E1A2E;--text2:#2C4060;--text3:#94A0B0;
+  --border:rgba(14,26,46,0.15);--border2:rgba(14,26,46,0.30);
+  --rust:#FF5014;--amber:#B8820A;--gold:#FFB800;
   --serif:'Cormorant Garamond',Georgia,serif;
   --body:'DM Sans',system-ui,sans-serif;
   --mono:'DM Mono','Courier New',monospace;
-  --radius:10px;--shadow:0 2px 12px rgba(26,43,26,0.09);
+  --radius:10px;--shadow:0 2px 12px rgba(14,26,46,0.09);
 }
 body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh}
 a{color:var(--fern);text-decoration:none}
 a:hover{text-decoration:underline}
 
 /* Nav */
-.nav{background:var(--moss);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(26,43,26,0.2)}
+.nav{background:var(--dusk);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(9,16,34,0.3)}
 .nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none}
 .nav-logo-text{font-family:var(--serif);font-weight:300;font-size:19px;color:var(--cream);letter-spacing:-0.3px}
 .nav-logo-text em{font-style:italic;color:var(--sage)}
 .nav-links{display:flex;gap:20px;align-items:center;font-size:13px;color:rgba(212,227,204,0.6)}
 .nav-links a{color:rgba(212,227,204,0.6);text-decoration:none;transition:color .2s}
 .nav-links a:hover{color:var(--cream)}
-.nav-cta{background:var(--sage);color:var(--moss);padding:7px 15px;border-radius:99px;font-weight:600;font-size:12px;border:none;font-family:var(--body);cursor:pointer;letter-spacing:0.2px;text-decoration:none}
+.nav-cta{background:var(--sage);color:#fff;padding:7px 15px;border-radius:99px;font-weight:600;font-size:12px;border:none;font-family:var(--body);cursor:pointer;letter-spacing:0.2px;text-decoration:none}
 @media(max-width:600px){.nav-links{display:none}}
 
 /* Hero */
-.hero{background:var(--moss);color:var(--cream);padding:52px 0 72px;position:relative;overflow:hidden}
+.hero{background:var(--dusk);color:var(--cream);padding:52px 0 72px;position:relative;overflow:hidden}
 .hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--bg3);clip-path:ellipse(55% 100% at 50% 100%)}
 .inner{max-width:780px;margin:0 auto;padding:0 1.5rem}
 .kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);margin-bottom:12px}
@@ -63,8 +63,8 @@ a:hover{text-decoration:underline}
 .calc-inp{font-size:15px;color:var(--text);border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);padding:11px 14px;outline:none;font-family:var(--body);width:100%;transition:border-color .15s}
 .calc-inp:focus{border-color:var(--fern);background:var(--bg)}
 .calc-inp::placeholder{color:var(--text3)}
-.calc-btn{width:100%;background:var(--fern);color:white;border:none;border-radius:var(--radius);padding:13px;font-size:14px;font-weight:600;font-family:var(--body);cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px}
-.calc-btn:hover{background:#3D6B3D}
+.calc-btn{width:100%;background:var(--sage);color:#fff;border:none;border-radius:var(--radius);padding:13px;font-size:14px;font-weight:600;font-family:var(--body);cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.calc-btn:hover{background:#e6470f}
 .calc-btn:disabled{background:var(--text3);cursor:not-allowed}
 .calc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
 .calc-chip{font-size:11px;padding:5px 11px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:var(--body);transition:border-color .15s}
@@ -125,7 +125,7 @@ a:hover{text-decoration:underline}
 .meth-body th{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3)}
 
 /* Footer */
-.footer{background:var(--moss);padding:32px 24px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px}
+.footer{background:var(--dusk);padding:32px 24px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px}
 .footer-inner{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
 .footer-tools{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
 .footer-tools a{color:rgba(212,227,204,0.7);text-decoration:none;transition:color .2s}
@@ -264,6 +264,7 @@ a:hover{text-decoration:underline}
       <a href="/how-long">Journey time estimator</a>
       <a href="/bike-on-train">Bike on train lookup</a>
       <a href="/app">Trip planner</a>
+      <a href="/blog">Blog</a>
     </div>
     <div class="footer-policy">
       <a href="/privacy">Privacy policy</a>

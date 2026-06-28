@@ -19,12 +19,12 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --moss:#2D4A2D; --fern:#4A7C4A; --sage:#8BAF7A; --mist:#D4E3CC;
-  --cream:#F5F0E8; --sand:#E8DFD0;
-  --bark:#6B4F3A; --rust:#C4622D; --dusk:#2D4A2D; --gold:#C9A84C;
-  --bg:#FAF7F2; --bg3:var(--cream);
-  --text:#2D4A2D; --text2:#4A6040; --text3:#9AA880;
-  --border:rgba(45,74,45,0.15);
+  --moss:#13213A; --fern:#1E3A5C; --sage:#FF5014; --dusk:#091022;
+  --cream:#FFFFFF; --sand:#F8F4F2;
+  --bark:#3A2A24; --rust:#FF5014; --gold:#FFB800;
+  --bg:#FFFFFF; --bg2:#FAF6F4; --bg3:#F8F4F2;
+  --text:#0E1A2E; --text2:#2C4060; --text3:#94A0B0;
+  --border:rgba(14,26,46,0.15);
   --serif:'Cormorant Garamond',Georgia,serif;
   --body:'DM Sans',system-ui,sans-serif;
   --mono:'DM Mono','Courier New',monospace;
@@ -32,10 +32,10 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
 body { font-family:var(--body); background:var(--bg3); color:var(--text); min-height:100vh; }
 
 .mkt-nav {
-  background:var(--moss); color:var(--cream);
+  background:var(--dusk); color:var(--cream);
   padding:13px 22px; display:flex; align-items:center; justify-content:space-between;
   position:sticky; top:0; z-index:20;
-  box-shadow:0 2px 12px rgba(26,43,26,0.2);
+  box-shadow:0 2px 12px rgba(9,16,34,0.3);
 }
 .mkt-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
 .mkt-logo-text { font-family:var(--serif); font-weight:300; font-size:19px; color:var(--cream); letter-spacing:-0.3px; }
@@ -44,13 +44,13 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .mkt-nav-links a { color:rgba(212,227,204,0.55); text-decoration:none; transition:color .2s; }
 .mkt-nav-links a:hover, .mkt-nav-links a.active { color:var(--cream); }
 .mkt-cta-pill {
-  background:var(--sage); color:var(--dusk); padding:6px 14px; border-radius:99px;
+  background:var(--sage); color:#fff; padding:6px 14px; border-radius:99px;
   font-weight:600; font-size:12px; cursor:pointer; letter-spacing:0.2px;
   border:none; font-family:var(--body); text-decoration:none; display:inline-block;
 }
 @media(max-width:640px){ .mkt-nav-links a:not(.active) { display:none; } }
 
-.blog-hero { background:var(--dusk); color:var(--cream); padding:60px 22px 48px; }
+.blog-hero { background:var(--dusk); color:var(--cream); padding:60px 22px 48px; border-bottom:none; }
 .blog-hero-inner { max-width:860px; margin:0 auto; }
 .kicker { font-family:var(--mono); font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--sage); }
 .blog-h1 { font-family:var(--serif); font-weight:300; font-size:clamp(38px,6vw,58px); line-height:1.05; letter-spacing:-1px; margin:10px 0 14px; }
@@ -71,18 +71,25 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 
 .empty { padding:40px 0; text-align:center; color:var(--text3); font-size:14px; }
 
-footer { text-align:center; padding:32px; color:var(--text3); font-size:12px; font-family:var(--mono); letter-spacing:1px; }
-footer a { color:var(--fern); text-decoration:none; }
+.site-footer{background:var(--dusk);padding:32px 24px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px;margin-top:60px}
+.site-footer-inner{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
+.site-footer-tools{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+.site-footer-tools a{color:rgba(255,255,255,0.7);text-decoration:none;transition:color .2s}
+.site-footer-tools a:hover{color:#fff}
+.site-footer-policy{display:flex;gap:16px;justify-content:center}
+.site-footer-policy a{color:rgba(255,255,255,0.45);text-decoration:none;transition:color .2s}
+.site-footer-policy a:hover{color:rgba(255,255,255,0.8)}
+.site-footer-copy{color:rgba(255,255,255,0.35)}
 </style>
 </head>
 <body>
 
 <!-- ── Cookie consent banner ── -->
-<div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#2D4A2D;color:#F5F0E8;padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
-  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:#8BAF7A;">Learn&nbsp;more</a></span>
+<div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#0D1B2E;color:rgba(255,255,255,0.75);padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.4);">
+  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:rgba(255,255,255,0.5);text-decoration:underline">Learn&nbsp;more</a></span>
   <div style="display:flex;gap:8px;flex-shrink:0;">
-    <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(245,240,232,0.35);color:#F5F0E8;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
-    <button onclick="slwConsent('accepted')" style="background:#8BAF7A;border:none;color:#2D4A2D;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
+    <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.6);padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
+    <button onclick="slwConsent('accepted')" style="background:#FF5014;border:none;color:#fff;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
   </div>
 </div>
 <script>function slwConsent(c){localStorage.setItem('slw_cookie_consent',c);var b=document.getElementById('slw-consent-banner');if(b)b.style.display='none';if(c==='accepted'&&typeof initPostHog==='function')initPostHog();}</script>
@@ -122,8 +129,20 @@ footer a { color:var(--fern); text-decoration:none; }
   </div>
 </main>
 
-<footer>
-  <a href="/">← slw.travel</a> · go the long way, on purpose
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="site-footer-tools">
+      <a href="/how-long">Journey time estimator</a>
+      <a href="/carbon">CO₂ calculator</a>
+      <a href="/bike-on-train">Bike on train lookup</a>
+      <a href="/app">Trip planner</a>
+    </div>
+    <div class="site-footer-policy">
+      <a href="/privacy">Privacy policy</a>
+      <a href="/terms">Terms of use</a>
+    </div>
+    <div class="site-footer-copy">By Sloth · Go the long way. On purpose.</div>
+  </div>
 </footer>
 
 </body>
