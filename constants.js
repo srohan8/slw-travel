@@ -7,7 +7,9 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 const PROXY_URL = 'YOUR_RAILWAY_PROXY_URL';   // replace after deploying proxy
 
-const ADMIN_PASSWORD = 'YOUR_ADMIN_PASSWORD'; // replace with something strong
+// Admin access is gated by Supabase auth + profiles.is_admin — no shared password.
+// To make a user an admin, run in Supabase SQL editor:
+//   update public.profiles set is_admin = true where email = 'you@example.com';
 
 const PLANS = {
   free: {
@@ -44,6 +46,6 @@ const AVOID_REGIONS = [
 ];
 
 export {
-  SUPABASE_URL, SUPABASE_ANON, PROXY_URL, ADMIN_PASSWORD,
+  SUPABASE_URL, SUPABASE_ANON, PROXY_URL,
   PLANS, MODES, MODE_LABELS, AVOID_REGIONS
 };

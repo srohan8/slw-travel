@@ -3,26 +3,34 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>bysloth — Go the long way. On purpose.</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Albert+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<title>By Sloth — Go the long way. On purpose.</title>
+<!-- Google Ads tag -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18271935883"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','AW-18271935883');</script>
+<script src="https://app.minnal.io/track/7c00ae17-46ed-4f8a-9276-84b122dd2ff5.js"></script>
+<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ai Ri init Vi Yi Rr zi Gi Zi capture calculateEventProperties en register register_once register_for_session unregister unregister_for_session sn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync an identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty rn Ki createPersonProfile setInternalOrTestUser nn $i hn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Xi debug Mr tn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'});}
+(function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --moss:#13213A; --fern:#1E3A5C; --sage:#FF5014; --mist:#FFD9CC;
-  --cream:#FFFFFF; --sand:#F8F4F2; --sand2:#F0EAE7;
-  --bark:#3A2A24; --rust:#FF5014; --dusk:#091022; --gold:#FFB800;
-  --bg:#FFFFFF; --bg2:#FAF6F4; --bg3:#FFFFFF;
-  --text:#0E1A2E; --text2:#2C4060; --text3:#94A0B0;
-  --border:rgba(14,26,46,0.15); --border2:rgba(14,26,46,0.30);
-  --fern-rgb:30,58,92; --cta-text:#FFFFFF;
-  --radius:10px; --radius-lg:16px; --radius-pill:9999px;
-  --shadow:0 2px 8px rgba(14,26,46,0.07);
-  --shadow-float:0 8px 28px rgba(14,26,46,0.22);
-  --serif:'Sora',system-ui,sans-serif;
-  --body:'Albert Sans',system-ui,sans-serif;
-  --mono:'JetBrains Mono','Courier New',monospace;
+  --moss:#2D4A2D; --fern:#4A7C4A; --sage:#8BAF7A; --mist:#D4E3CC;
+  --cream:#F5F0E8; --sand:#E8DFD0; --sand2:#EDE8DC;
+  --bark:#6B4F3A; --rust:#C4622D; --dusk:#2D4A2D; --gold:#C9A84C;
+  --bg:#FAF7F2; --bg2:#F2EDE4; --bg3:var(--cream);
+  --text:#2D4A2D; --text2:#4A6040; --text3:#9AA880;
+  --border:rgba(45,74,45,0.15); --border2:rgba(45,74,45,0.3);
+  --fern-rgb:74,124,74;
+  --radius:10px; --radius-lg:16px;
+  --shadow:0 2px 8px rgba(26,43,26,0.07);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono','Courier New',monospace;
 }
 body { font-family:var(--body); background:var(--bg3); color:var(--text); min-height:100vh; }
 @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
@@ -30,19 +38,19 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 
 /* ── Marketing header ─────────────────────────────────────────── */
 .mkt-nav {
-  background:var(--dusk); color:var(--cream);
+  background:var(--moss); color:var(--cream);
   padding:13px 22px; display:flex; align-items:center; justify-content:space-between;
   position:sticky; top:0; z-index:20;
-  box-shadow:0 2px 12px rgba(14,26,46,0.2);
+  box-shadow:0 2px 12px rgba(26,43,26,0.2);
 }
 .mkt-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
-.mkt-logo-text { font-family:var(--body); font-weight:500; font-size:20px; color:var(--cream); letter-spacing:-0.6px; }
-.mkt-logo-text em { font-style:normal; color:var(--sage); }
+.mkt-logo-text { font-family:var(--serif); font-weight:300; font-size:19px; color:var(--cream); letter-spacing:-0.3px; }
+.mkt-logo-text em { font-style:italic; color:var(--sage); }
 .mkt-nav-links { display:flex; gap:22px; align-items:center; font-size:13px; }
-.mkt-nav-links span { color:rgba(255,255,255,0.55); cursor:pointer; transition:color .2s; }
+.mkt-nav-links span { color:rgba(212,227,204,0.55); cursor:pointer; transition:color .2s; }
 .mkt-nav-links span:hover { color:var(--cream); }
 .mkt-cta-pill {
-  background:var(--sage); color:var(--cta-text); padding:6px 14px; border-radius:99px;
+  background:var(--sage); color:var(--dusk); padding:6px 14px; border-radius:99px;
   font-weight:600; font-size:12px; cursor:pointer; letter-spacing:0.2px;
   border:none; font-family:var(--body); transition:opacity .15s;
 }
@@ -51,10 +59,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 
 /* ── Hero ─────────────────────────────────────────────────────── */
 .hero {
-  background:
-    linear-gradient(to right, rgba(9,16,34,0.90) 45%, rgba(9,16,34,0.45) 100%),
-    url('public/hero-collage.jpg') center/cover no-repeat;
-  color:var(--cream);
+  background:var(--dusk); color:var(--cream);
   padding:60px 0 52px; position:relative; overflow:hidden;
 }
 .hero-inner { max-width:860px; margin:0 auto; padding:0 1.25rem; position:relative; z-index:1; }
@@ -64,7 +69,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 }
 .hero-corner {
   position:absolute; font-family:var(--mono); font-size:10px;
-  color:rgba(255,255,255,0.4); letter-spacing:1.5px; text-transform:uppercase;
+  color:rgba(212,227,204,0.4); letter-spacing:1.5px; text-transform:uppercase;
 }
 .kicker {
   font-family:var(--mono); font-size:10px; letter-spacing:3px;
@@ -78,7 +83,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .hero-sub { font-size:16px; line-height:1.55; color:rgba(245,240,232,0.72); max-width:460px; }
 .hero-cta { display:flex; gap:10px; align-items:center; margin-top:26px; flex-wrap:wrap; }
 .hero-btn-primary {
-  background:var(--sage); color:var(--cta-text); padding:12px 22px; border-radius:99px;
+  background:var(--sage); color:var(--dusk); padding:12px 22px; border-radius:99px;
   font-weight:600; font-size:14px; cursor:pointer; letter-spacing:0.2px;
   display:inline-flex; align-items:center; gap:8px; border:none; font-family:var(--body);
   transition:opacity .15s;
@@ -91,7 +96,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 }
 .hero-btn-ghost:hover { border-color:rgba(245,240,232,0.6); }
 .hero-free-lbl {
-  font-size:11px; font-family:var(--mono); color:rgba(255,255,255,0.5);
+  font-size:11px; font-family:var(--mono); color:rgba(212,227,204,0.5);
   letter-spacing:1px; text-transform:uppercase; margin-left:8px;
 }
 .hero-stats {
@@ -101,15 +106,14 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .hero-stat { padding-left:18px; border-left:0.5px solid rgba(245,240,232,0.13); }
 .hero-stat:first-child { padding-left:0; border-left:none; }
 .hero-stat-n { font-family:var(--serif); font-size:28px; font-weight:300; color:var(--cream); letter-spacing:-0.5px; }
-.hero-stat-l { font-size:11px; color:rgba(255,255,255,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
+.hero-stat-l { font-size:11px; color:rgba(212,227,204,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
 @media(max-width:600px){ .hero-stats{grid-template-columns:repeat(2,1fr);gap:10px;} .hero-stat{border:none;padding:0;} }
-@media(max-width:640px){ .hero-photo-col{display:none;} }
 
 /* ── Demo search strip ─────────────────────────────────────────── */
 .demo-strip-wrap { max-width:860px; margin:-28px auto 0; padding:0 1.25rem; position:relative; z-index:2; }
 .demo-strip {
   background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg);
-  padding:1.1rem 1.25rem; box-shadow:0 10px 28px rgba(14,26,46,0.15);
+  padding:1.1rem 1.25rem; box-shadow:0 10px 28px rgba(26,43,26,0.15);
 }
 .demo-inputs { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:center; }
 .demo-inp {
@@ -118,11 +122,11 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 }
 .demo-inp:focus { border-color:var(--fern); background:var(--bg); }
 .demo-btn {
-  background:var(--sage); color:var(--cta-text); border:none; border-radius:var(--radius-pill);
-  padding:10px 18px; font-size:13px; font-weight:700; font-family:var(--body); cursor:pointer;
+  background:var(--fern); color:var(--cream); border:none; border-radius:var(--radius);
+  padding:10px 18px; font-size:13px; font-weight:600; font-family:var(--body); cursor:pointer;
   white-space:nowrap; transition:background .15s;
 }
-.demo-btn:hover { background:var(--fern); }
+.demo-btn:hover { background:#3D6B3D; }
 .demo-chips { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; align-items:center; }
 .demo-chip {
   font-size:11px; padding:5px 11px; border-radius:99px;
@@ -130,12 +134,6 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   color:var(--text2); cursor:pointer; font-family:var(--body); transition:border-color .15s;
 }
 .demo-chip:hover { border-color:var(--fern); color:var(--text); }
-.demo-pill {
-  font-size:11px; padding:4px 10px; border-radius:99px;
-  border:0.5px solid var(--border2); background:transparent;
-  color:var(--text3); cursor:pointer; font-family:var(--body); transition:all .15s;
-}
-.demo-pill.on { background:var(--sage); border-color:var(--sage); color:#fff; }
 @media(max-width:580px){ .demo-inputs{grid-template-columns:1fr; gap:8px;} }
 
 /* ── Content sections ─────────────────────────────────────────── */
@@ -178,7 +176,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   font-size:11px; font-weight:500; padding:2px 8px; border-radius:99px;
   border:0.5px solid transparent;
 }
-.conf-verified { background:#EAF5EE; color:#2D7D46; border-color:rgba(45,125,70,0.25); }
+.conf-verified { background:#D4E3CC; color:#2D4A2D; border-color:rgba(45,74,45,0.3); }
 .conf-check    { background:#faeeda; color:#633806; border-color:rgba(133,79,11,0.3); }
 .conf-uncertain{ background:#FDF0EC; color:#8B2A00; border-color:rgba(196,98,45,0.3); }
 @media(max-width:580px){ .route-row{grid-template-columns:1fr auto;} .route-modes,.route-stat:not(:last-child){display:none;} }
@@ -212,7 +210,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .price-card-pro  { background:var(--dusk); border:0.5px solid var(--dusk); color:var(--cream); }
 .price-tag { font-family:var(--serif); font-size:36px; font-weight:300; letter-spacing:-0.5px; }
 .price-period { font-size:12px; color:var(--text3); font-family:var(--mono); }
-.price-card-pro .price-period { color:rgba(255,255,255,0.5); }
+.price-card-pro .price-period { color:rgba(212,227,204,0.5); }
 .price-feature { font-size:13px; line-height:1.7; display:flex; gap:8px; align-items:center; }
 .price-feature-free { color:var(--text2); }
 .price-feature-pro  { color:rgba(245,240,232,0.8); }
@@ -243,8 +241,8 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 /* ── Footer ─────────────────────────────────────────────────────── */
 .footer { max-width:860px; margin:32px auto 0; padding:20px 1.25rem 40px; border-top:0.5px solid var(--border); }
 .footer-inner { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
-.footer-logo { font-family:var(--body); font-weight:500; font-size:16px; color:var(--text2); letter-spacing:-0.4px; }
-.footer-logo em { font-style:normal; color:var(--fern); }
+.footer-logo { font-family:var(--serif); font-size:15px; color:var(--text2); }
+.footer-logo em { font-style:italic; color:var(--fern); }
 .footer-links { display:flex; gap:18px; font-size:11px; color:var(--text3); font-family:var(--mono); letter-spacing:1px; text-transform:uppercase; }
 .footer-links span { cursor:pointer; } .footer-links span:hover { color:var(--text2); }
 .footer-copy { font-size:11px; color:var(--text3); font-family:var(--mono); }
@@ -268,14 +266,14 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   min-height:480px;
 }
 .auth-left-logo { display:flex; align-items:center; gap:8px; }
-.auth-left-logo span { font-family:var(--body); font-size:22px; font-weight:500; color:var(--cream); letter-spacing:-0.6px; }
-.auth-left-logo span em { font-style:normal; color:var(--sage); }
+.auth-left-logo span { font-family:var(--serif); font-size:22px; font-weight:300; color:var(--cream); letter-spacing:-0.3px; }
+.auth-left-logo span em { font-style:italic; color:var(--sage); }
 .auth-left-h { font-family:var(--serif); font-size:clamp(32px,4.5vw,48px); font-weight:300; line-height:1.05; letter-spacing:-1px; margin:12px 0 18px; color:var(--cream); }
 .auth-left-h em { font-style:italic; color:var(--sage); }
 .auth-left-sub { font-size:14px; line-height:1.55; color:rgba(245,240,232,0.65); max-width:340px; }
 .auth-trust { display:flex; gap:24px; margin-top:28px; padding-top:18px; border-top:0.5px solid rgba(245,240,232,0.12); }
 .auth-trust-n { font-family:var(--serif); font-size:22px; font-weight:300; color:var(--cream); letter-spacing:-0.3px; }
-.auth-trust-l { font-size:10px; color:rgba(255,255,255,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
+.auth-trust-l { font-size:10px; color:rgba(212,227,204,0.5); margin-top:2px; font-family:var(--mono); letter-spacing:0.8px; text-transform:uppercase; }
 .auth-bg-sloth { position:absolute; right:-60px; bottom:-30px; opacity:0.12; pointer-events:none; }
 .auth-right { background:var(--bg); padding:44px 48px; display:flex; flex-direction:column; justify-content:center; }
 .auth-tabs-row { display:flex; gap:2px; border-bottom:0.5px solid var(--border); margin-bottom:24px; }
@@ -301,13 +299,13 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .auth-inp:focus { border-color:var(--fern); }
 .auth-submit {
   margin-top:14px; padding:12px 20px; border-radius:10px; border:none;
-  background:var(--moss); color:var(--cream); font-size:14px; font-weight:600;
+  background:var(--fern); color:var(--cream); font-size:14px; font-weight:600;
   font-family:var(--body); cursor:pointer; width:100%; transition:background .15s;
 }
-.auth-submit:hover { background:var(--fern); }
+.auth-submit:hover { background:#3D6B3D; }
 .auth-close {
   position:absolute; top:14px; right:14px; background:rgba(245,240,232,0.08); border:none;
-  color:rgba(255,255,255,0.6); width:28px; height:28px; border-radius:50%; cursor:pointer;
+  color:rgba(212,227,204,0.6); width:28px; height:28px; border-radius:50%; cursor:pointer;
   font-size:14px; display:flex; align-items:center; justify-content:center; z-index:5;
   font-family:var(--body);
 }
@@ -324,16 +322,32 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 </head>
 <body>
 
+<!-- ── Cookie consent banner ── -->
+<div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#2D4A2D;color:#F5F0E8;padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
+  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:#8BAF7A;">Learn&nbsp;more</a></span>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(245,240,232,0.35);color:#F5F0E8;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
+    <button onclick="slwConsent('accepted')" style="background:#8BAF7A;border:none;color:#2D4A2D;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
+  </div>
+</div>
+<script>function slwConsent(c){localStorage.setItem('slw_cookie_consent',c);var b=document.getElementById('slw-consent-banner');if(b)b.style.display='none';if(c==='accepted'&&typeof initPostHog==='function')initPostHog();}</script>
+
+<!-- ── Maintenance banner (hidden unless admin_settings.maintenance_mode=true) ─ -->
+<div id="maintenanceBanner" style="display:none;background:#C4622D;color:#fff;padding:10px 22px;text-align:center;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;font-weight:500;letter-spacing:0.2px">
+  <i class="ph ph-wrench" style="font-size:13px;vertical-align:-1px"></i>
+  <span id="maintenanceBannerText">Maintenance in progress — some features may be temporarily unavailable.</span>
+</div>
+
 <!-- ── Marketing header ──────────────────────────────────────── -->
 <header class="mkt-nav">
   <a class="mkt-logo" href="#">
-    <img src="public/bysloth.png" alt="" style="height:26px;width:auto;flex-shrink:0"/>
-    <span class="mkt-logo-text">bysloth</span>
+    <img src="public/sloth-logo.svg" height="32" style="filter:brightness(0) invert(1);opacity:0.9"/>
+    <span class="mkt-logo-text">By <em>Sloth</em></span>
   </a>
   <div class="mkt-nav-links">
     <span onclick="scrollTo('.section-pillars')">How it works</span>
     <span onclick="scrollTo('.section-routes')">Routes</span>
-    <span onclick="scrollTo('.section-pricing')">Pricing</span>
+    <span onclick="window.location='blog/'">Blog</span>
     <span onclick="window.location='auth.html'">Sign in</span>
     <button class="mkt-cta-pill" onclick="window.location='auth.html?tab=signup'">Start planning →</button>
   </div>
@@ -344,18 +358,25 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   <div class="hero-corner" style="left:22px;top:22px">lat 41.0082 · lon 28.9784 — Istanbul</div>
   <div class="hero-corner" style="right:22px;top:22px">v0.4 · private beta</div>
 
+  <!-- Decorative sloth -->
+  <div class="hero-sloth">
+    <img src="public/sloth-logo.svg" width="520" style="filter:brightness(0) saturate(100%) invert(62%) sepia(18%) saturate(400%) hue-rotate(70deg) brightness(95%)"/>
+  </div>
+
   <div class="hero-inner">
-        <div class="kicker">A planner for overland travel</div>
-        <h1 class="hero-h1">
-          Go the long way.<br>
-          <em>On purpose.</em>
-        </h1>
-        <p class="hero-sub">Trains, buses, ferries, shared taxis, the occasional hitch. bysloth maps a realistic overland route between any two cities — and is honest about the legs it isn't sure about.</p>
-        <div class="hero-cta">
-          <button class="hero-btn-primary" onclick="window.location='auth.html?tab=signup'">Plan your first route <span>→</span></button>
-          <button class="hero-btn-ghost" onclick="window.location='auth.html'">Sign in</button>
-          <span class="hero-free-lbl">Free · 3 routes/mo</span>
-        </div>
+    <div class="kicker">A planner for overland travel</div>
+    <h1 class="hero-h1">
+      Go the long way.<br>
+      <em>On purpose.</em>
+    </h1>
+    <p class="hero-sub">Trains, buses, ferries, shared taxis, the occasional hitch. SLW maps a realistic overland route between any two cities — and is honest about the legs it isn't sure about.</p>
+
+    <div class="hero-cta">
+      <button class="hero-btn-primary" onclick="window.location='auth.html?tab=signup'">Plan your first route <span>→</span></button>
+      <button class="hero-btn-ghost" onclick="window.location='auth.html'">Sign in</button>
+      <span class="hero-free-lbl">Free · 3 routes/mo</span>
+    </div>
+
     <div class="hero-stats">
       <div class="hero-stat"><div class="hero-stat-n">2,140</div><div class="hero-stat-l">Verified overland legs</div></div>
       <div class="hero-stat"><div class="hero-stat-n">23</div><div class="hero-stat-l">Countries mapped</div></div>
@@ -377,32 +398,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
       <input class="demo-inp" id="demoTo"   value="Tokyo, Japan"     placeholder="To…"/>
       <button class="demo-btn" onclick="launchDemo()">Plan route →</button>
     </div>
-    <!-- Options panel -->
-    <div id="demoOpts" style="margin-top:10px;border-top:0.5px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <button style="font-size:12px;color:var(--text3);background:none;border:none;cursor:default;font-family:var(--body);display:flex;align-items:center;gap:4px;padding:0;flex-shrink:0"><i class="ph ph-sliders" style="font-size:13px"></i> Options</button>
-        <div style="width:0.5px;height:14px;background:var(--border);flex-shrink:0"></div>
-        <div id="demoModePills" style="display:flex;gap:5px;flex-wrap:wrap">
-          <button class="demo-pill on" onclick="toggleDemoPill(this)">Bus</button>
-          <button class="demo-pill on" onclick="toggleDemoPill(this)">Train</button>
-          <button class="demo-pill" onclick="toggleDemoPill(this)">Hitchhike</button>
-          <button class="demo-pill" onclick="toggleDemoPill(this)">Ferry</button>
-          <button class="demo-pill" onclick="toggleDemoPill(this)">Shared taxi</button>
-          <button class="demo-pill" onclick="toggleDemoPill(this)">Walking</button>
-        </div>
-        <div style="width:0.5px;height:14px;background:var(--border);flex-shrink:0"></div>
-        <div id="demoPacePills" style="display:flex;gap:5px">
-          <button class="demo-pill on" onclick="toggleDemoPacePill(this)">Slow</button>
-          <button class="demo-pill" onclick="toggleDemoPacePill(this)">Moderate</button>
-          <button class="demo-pill" onclick="toggleDemoPacePill(this)">Fast</button>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;padding-left:77px">
-        <input class="demo-inp" id="demoBudget" placeholder="Budget e.g. $500" style="max-width:140px;font-size:12px;padding:7px 10px"/>
-        <input class="demo-inp" id="demoVia"    placeholder="Via (optional)"   style="max-width:150px;font-size:12px;padding:7px 10px"/>
-      </div>
-    </div>
-    <div class="demo-chips" style="margin-top:10px">
+    <div class="demo-chips">
       <span style="font-size:11px;color:var(--text3);margin-right:4px">Or start with:</span>
       <span class="demo-chip" onclick="setDemoAndLaunch('Istanbul, Turkey','Kathmandu, Nepal')">Istanbul → Kathmandu</span>
       <span class="demo-chip" onclick="setDemoAndLaunch('Cape Town, South Africa','Cairo, Egypt')">Cape Town → Cairo</span>
@@ -489,7 +485,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
       <div class="kicker" style="color:var(--bark)">Field notes</div>
       <blockquote class="fieldnotes-quote">
         "Finally, a planner that admits when it doesn't know.
-        I spent <em>ten minutes</em> on bysloth instead of ten hours on forums."
+        I spent <em>ten minutes</em> on SLW instead of ten hours on forums."
       </blockquote>
       <div style="display:flex;align-items:center;gap:10px;margin-top:18px">
         <div style="width:36px;height:36px;border-radius:50%;background:var(--moss);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:16px">M</div>
@@ -519,42 +515,28 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   </div>
 </div>
 
-<!-- ── Pricing ───────────────────────────────────────────────────── -->
-<div class="section section-gap section-pricing">
-  <div class="kicker">Pricing</div>
-  <div class="pricing-grid">
-    <div class="price-card price-card-free">
-      <div class="kicker" style="color:var(--fern)">Free</div>
-      <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px">
-        <div class="price-tag">€0</div>
-        <div class="price-period">forever</div>
-      </div>
-      <div style="margin-top:14px;border-top:0.5px dashed var(--border);padding-top:12px">
-        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> 3 routes per month</div>
-        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Core modes (train, bus, ferry)</div>
-        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Confidence badges</div>
-        <div class="price-feature price-feature-free"><i class="ph ph-check" style="color:var(--fern);font-size:12px"></i> Basic journal</div>
-      </div>
-      <button class="price-cta price-cta-free" onclick="window.location='auth.html?tab=signup'">Start free →</button>
-    </div>
-    <div class="price-card price-card-pro">
-      <div class="pro-rec-badge"><i class="ph ph-sparkle" style="font-size:11px"></i> Recommended</div>
-      <div class="kicker" style="color:var(--sage)">Pro</div>
-      <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px">
-        <div class="price-tag">€6</div>
-        <div class="price-period">per month</div>
-      </div>
-      <div style="margin-top:14px;border-top:0.5px dashed rgba(255,255,255,0.2);padding-top:12px">
-        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Unlimited routes</div>
-        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Shared taxi + hitch legs</div>
-        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Live conflict alerts</div>
-        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Offline export · GPX + PDF</div>
-        <div class="price-feature price-feature-pro"><i class="ph ph-check" style="color:var(--sage);font-size:12px"></i> Shared trips with editors</div>
-      </div>
-      <button class="price-cta price-cta-pro" onclick="window.location='auth.html?tab=signup'">Try Pro free for 14 days →</button>
-    </div>
+<!-- ── From the blog ──────────────────────────────────────────────── -->
+<div class="section section-gap">
+  <div style="max-width:700px;margin:0 auto">
+    <div class="kicker" style="color:var(--fern)">Field notes</div>
+    <h2 style="font-family:var(--serif);font-weight:300;font-size:clamp(28px,4vw,40px);letter-spacing:-0.5px;margin:8px 0 28px;line-height:1.1">From the <em style="font-style:italic;color:var(--fern)">blog</em></h2>
+    <div id="blog-preview" style="border-top:0.5px solid var(--border)"></div>
+    <a href="/blog/" style="display:inline-block;margin-top:22px;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--fern);text-decoration:none">All posts →</a>
   </div>
 </div>
+<script>
+fetch('/feed.json').then(function(r){return r.json();}).then(function(posts){
+  var el=document.getElementById('blog-preview');
+  if(!el||!posts.length)return;
+  el.innerHTML=posts.slice(0,3).map(function(p){
+    return '<a href="'+p.url+'" style="display:block;padding:18px 0;border-bottom:0.5px solid var(--border);text-decoration:none;color:inherit">'+
+      '<div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:5px">'+p.date+'</div>'+
+      '<div style="font-family:var(--serif);font-size:22px;font-weight:400;color:var(--text);line-height:1.2;margin-bottom:6px">'+p.title+'</div>'+
+      (p.excerpt?'<div style="font-size:13px;color:var(--text2);line-height:1.55">'+p.excerpt+'</div>':'')+
+    '</a>';
+  }).join('');
+}).catch(function(){});
+</script>
 
 <!-- ── Final CTA ─────────────────────────────────────────────────── -->
 <div class="section section-gap">
@@ -563,24 +545,28 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
     <div class="final-cta-h">The slow way is the <em>only</em> way<br>to really see a place.</div>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap">
       <button class="hero-btn-primary" onclick="window.location='auth.html?tab=signup'">Plan your first route →</button>
-      <button class="hero-btn-ghost" style="border-color:rgba(255,255,255,0.25);color:var(--cream)">Read the manifesto</button>
+      <button class="hero-btn-ghost" style="border-color:rgba(212,227,204,0.25);color:var(--cream)">Read the manifesto</button>
     </div>
   </div>
 </div>
 
 <!-- ── Footer ─────────────────────────────────────────────────────── -->
-<div class="section section-gap-sm">
-  <footer class="footer-inner" style="padding:20px 0 40px;border-top:0.5px solid var(--border)">
-    <div style="display:flex;align-items:center;gap:8px">
-      <img src="public/bysloth.png" alt="" style="height:20px;width:auto;opacity:0.7"/>
-      <span class="footer-logo">bysloth</span>
+<footer style="background:var(--moss);padding:32px 24px;font-size:12px;font-family:var(--mono);letter-spacing:0.5px;margin-top:60px">
+  <div style="max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center">
+    <div style="display:flex;flex-wrap:wrap;gap:16px;justify-content:center">
+      <a href="/carbon" style="color:rgba(212,227,204,0.7);text-decoration:none">CO₂ calculator</a>
+      <a href="/how-long" style="color:rgba(212,227,204,0.7);text-decoration:none">Journey time estimator</a>
+      <a href="/bike-on-train" style="color:rgba(212,227,204,0.7);text-decoration:none">Bike on train lookup</a>
+      <a href="/app" style="color:rgba(212,227,204,0.7);text-decoration:none">Trip planner</a>
+      <a href="/blog/" style="color:rgba(212,227,204,0.7);text-decoration:none">Blog</a>
     </div>
-    <div class="footer-links">
-      <span>Manifesto</span><span>Safety</span><span>Privacy</span><span>Contact</span>
+    <div style="display:flex;gap:16px;justify-content:center">
+      <a href="/privacy" style="color:rgba(212,227,204,0.45);text-decoration:none">Privacy policy</a>
+      <a href="/terms" style="color:rgba(212,227,204,0.45);text-decoration:none">Terms of use</a>
     </div>
-    <div class="footer-copy">© 2025 · Lisbon</div>
-  </footer>
-</div>
+    <div style="color:rgba(212,227,204,0.35)">By Sloth · Go the long way. On purpose.</div>
+  </div>
+</footer>
 
 <!-- ── Auth modal ────────────────────────────────────────────────── -->
 <div class="auth-overlay" id="authOverlay" onclick="maybeCloseAuth(event)">
@@ -588,24 +574,27 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
     <!-- Left pitch -->
     <div class="auth-left">
       <div class="auth-left-logo">
-        <img src="public/bysloth.png" alt="" style="height:24px;width:auto;flex-shrink:0"/>
-        <span>bysloth</span>
+        <img src="public/sloth-logo.svg" height="30" style="filter:brightness(0) invert(1);opacity:0.85"/>
+        <span>By <em>Sloth</em></span>
       </div>
       <div style="position:relative;z-index:1;margin-top:auto;margin-bottom:36px">
         <div class="kicker" style="color:var(--sage)">Overland planner · Community-verified</div>
         <h2 class="auth-left-h">Every leg<br><em>double-checked</em><br>by someone<br>who was there.</h2>
-        <p class="auth-left-sub">bysloth routes are planned by an AI and verified by travellers. Join 2,400+ contributors keeping borders, prices, and schedules honest.</p>
+        <p class="auth-left-sub">By Sloth routes are planned by an AI and verified by travellers. Join 2,400+ contributors keeping borders, prices, and schedules honest.</p>
         <div class="auth-trust">
           <div><div class="auth-trust-n">2,400+</div><div class="auth-trust-l">Contributors</div></div>
           <div><div class="auth-trust-n">18,600</div><div class="auth-trust-l">Notes verified</div></div>
           <div><div class="auth-trust-n">23</div><div class="auth-trust-l">Countries live</div></div>
         </div>
       </div>
+      <div class="auth-bg-sloth">
+        <img src="public/sloth-logo.svg" width="320" style="filter:brightness(0) invert(1);opacity:0.1"/>
+      </div>
       <button class="auth-close" onclick="closeAuth()">×</button>
     </div>
     <!-- Right form -->
     <div class="auth-right" style="position:relative">
-      <button class="auth-close" style="background:rgba(14,26,46,0.06);color:var(--text3);position:absolute;top:14px;right:14px" onclick="closeAuth()">×</button>
+      <button class="auth-close" style="background:rgba(45,74,45,0.07);color:var(--text3);position:absolute;top:14px;right:14px" onclick="closeAuth()">×</button>
       <div class="auth-tabs-row">
         <button class="auth-tab active" id="atab-signin"  onclick="switchAuthTab('signin')">Sign in</button>
         <button class="auth-tab"        id="atab-signup" onclick="switchAuthTab('signup')">Create account</button>
@@ -668,9 +657,17 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
   const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
+  // ── Maintenance banner (driven by admin_settings.maintenance_mode) ──
+  sb.from('admin_settings').select('key, value').eq('key', 'maintenance_mode')
+    .then(({ data }) => {
+      const raw = data?.[0]?.value;
+      const on = typeof raw === 'string' ? JSON.parse(raw) === true : raw === true;
+      if (on) document.getElementById('maintenanceBanner').style.display = 'block';
+    });
+
   // ── Session check: redirect if already signed in ───────────────
   sb.auth.getSession().then(({ data: { session } }) => {
-    if (session) window.location.href = 'app.html';
+    if (session) window.location.href = '/app';
   });
 
   // ── Auth modal ────────────────────────────────────────────────
@@ -705,7 +702,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
     setMsg('si-msg', 'Signing in…');
     const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) return setMsg('si-msg', error.message, true);
-    window.location.href = 'app.html';
+    window.location.href = '/app';
   }
 
   async function signUp() {
@@ -722,20 +719,13 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   async function signInGoogle() {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/app.html' }
+      options: { redirectTo: window.location.origin + '/app' }
     });
     if (error) setMsg('si-msg', error.message, true);
   }
 
   function skipToApp() {
-    window.location.href = 'app.html?guest=1';
-  }
-
-  // ── Demo pill toggles ─────────────────────────────────────────
-  function toggleDemoPill(btn) { btn.classList.toggle('on'); }
-  function toggleDemoPacePill(btn) {
-    btn.closest('#demoPacePills').querySelectorAll('.demo-pill').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
+    window.location.href = '/app?guest=1';
   }
 
   // ── Demo launch ───────────────────────────────────────────────
@@ -750,7 +740,7 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   function launchDemo() {
     const from = encodeURIComponent(document.getElementById('demoFrom').value);
     const to   = encodeURIComponent(document.getElementById('demoTo').value);
-    window.location.href = `app.html?from=${from}&to=${to}`;
+    window.location.href = `/app?from=${from}&to=${to}`;
   }
 
   // ── Smooth scroll helper ──────────────────────────────────────

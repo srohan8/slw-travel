@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>By Sloth</title>
+</head>
+<body>
+<script>
+(function() {
+  var path = window.location.pathname;
+
+  // App tab paths — /app/record, /app/trips, etc.
+  // Store the tab in sessionStorage, redirect to /app, let the app restore it.
+  if (path.startsWith('/app/')) {
+    var tab = path.replace('/app/', '').split('/')[0];
+    var valid = ['plan','record','mytrips','profile','admin'];
+    if (valid.indexOf(tab) > -1) {
+      try { sessionStorage.setItem('_slw_tab', tab); } catch(e) {}
+      window.location.replace('/app');
+      return;
+    }
+  }
+
+  // Everything else → home
+  window.location.replace('/');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#2D4A2D"/>
+  <text x="256" y="310" font-family="Georgia, serif" font-size="180" font-weight="300"
+        fill="white" text-anchor="middle" letter-spacing="-4">SLW</text>
+  <text x="256" y="370" font-family="Courier New, monospace" font-size="48" font-weight="400"
+        fill="rgba(255,255,255,0.6)" text-anchor="middle" letter-spacing="8">TRAVEL</text>
+</svg>

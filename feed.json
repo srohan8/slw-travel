@@ -1,0 +1,5 @@
+---
+layout: null
+permalink: /feed.json
+---
+[{% for post in site.posts limit: 6 %}{"title":{{ post.title | jsonify }},"url":"{{ post.url }}","date":"{{ post.date | date: "%Y-%m-%d" }}","excerpt":{{ post.excerpt | strip_html | truncate: 160 | jsonify }}}{% unless forloop.last %},{% endunless %}{% endfor %}]

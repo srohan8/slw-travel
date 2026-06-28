@@ -1,0 +1,17 @@
+{
+  "name": "slw-travel-proxy",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "AI proxy server + daily conflict-zone refresh cron for slw.travel",
+  "main": "server.js",
+  "scripts": {
+    "start":   "node server.js",
+    "refresh": "node refresh-advisories.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "express": "^4.18.2"
+  }
+}

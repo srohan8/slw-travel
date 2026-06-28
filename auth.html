@@ -3,22 +3,27 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Sign in — bysloth</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Albert+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Sign in — SLW Travel</title>
+<script src="https://app.minnal.io/track/7c00ae17-46ed-4f8a-9276-84b122dd2ff5.js"></script>
+<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ai Ri init Vi Yi Rr zi Gi Zi capture calculateEventProperties en register register_once register_for_session unregister unregister_for_session sn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync an identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty rn Ki createPersonProfile setInternalOrTestUser nn $i hn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Xi debug Mr tn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'});}
+(function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --moss:#13213A; --fern:#1E3A5C; --sage:#FF5014; --mist:#FFD9CC;
-  --cream:#FFFFFF; --sand:#F8F4F2; --dusk:#091022; --gold:#FFB800;
-  --bg:#FFFFFF; --bg2:#FAF6F4; --text:#0E1A2E; --text2:#2C4060; --text3:#94A0B0;
-  --border:rgba(14,26,46,0.15); --border2:rgba(14,26,46,0.30);
-  --cta-text:#FFFFFF;
-  --radius:10px; --radius-lg:16px; --radius-pill:9999px;
-  --serif:'Sora',system-ui,sans-serif;
-  --body:'Albert Sans',system-ui,sans-serif;
-  --mono:'JetBrains Mono','Courier New',monospace;
+  --moss:#2D4A2D; --fern:#4A7C4A; --sage:#8BAF7A; --mist:#D4E3CC;
+  --cream:#F5F0E8; --sand:#E8DFD0; --dusk:#2D4A2D; --gold:#C9A84C;
+  --bg:#FAF7F2; --bg2:#F2EDE4; --text:#2D4A2D; --text2:#4A6040; --text3:#9AA880;
+  --border:rgba(45,74,45,0.15); --border2:rgba(45,74,45,0.3);
+  --radius:10px; --radius-lg:16px;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono','Courier New',monospace;
 }
 
 html, body { height: 100%; }
@@ -32,9 +37,7 @@ body {
 
 /* ── Left pitch panel ─────────────────────────────────────── */
 .auth-left {
-  background:
-    linear-gradient(to bottom, rgba(9,16,34,0.65) 0%, rgba(9,16,34,0.80) 100%),
-    url('public/hero-collage.jpg') center/cover no-repeat;
+  background: linear-gradient(180deg, #0D120D 0%, #17231A 100%);
   padding: 48px 56px;
   position: relative;
   overflow: hidden;
@@ -51,13 +54,13 @@ body {
   text-decoration: none;
 }
 .auth-logo-text {
-  font-family: var(--body);
+  font-family: var(--serif);
   font-size: 22px;
-  font-weight: 500;
+  font-weight: 300;
   color: var(--cream);
-  letter-spacing: -0.6px;
+  letter-spacing: -0.3px;
 }
-.auth-logo-text em { font-style: normal; color: var(--sage); }
+.auth-logo-text em { font-style: italic; color: var(--sage); }
 
 .auth-left-body {
   position: relative;
@@ -108,17 +111,27 @@ body {
 }
 .auth-trust-l {
   font-size: 10px;
-  color: rgba(255,255,255,0.5);
+  color: rgba(212,227,204,0.5);
   margin-top: 2px;
   font-family: var(--mono);
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
 
+.auth-bg-sloth {
+  position: absolute;
+  right: -60px;
+  bottom: -30px;
+  opacity: 0.12;
+  pointer-events: none;
+}
 .auth-version {
+  position: absolute;
+  left: 56px;
+  top: 96px;
   font-family: var(--mono);
   font-size: 10px;
-  color: rgba(255,255,255,0.35);
+  color: rgba(212,227,204,0.28);
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
@@ -271,16 +284,16 @@ body {
   padding: 12px 20px;
   border-radius: 10px;
   border: none;
-  background: var(--sage);
-  color: var(--cta-text);
+  background: var(--fern);
+  color: var(--cream);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--body);
   cursor: pointer;
   width: 100%;
   transition: background .15s;
 }
-.auth-submit:hover { background: #E0440C; }
+.auth-submit:hover { background: #3D6B3D; }
 .auth-submit:disabled { opacity: 0.5; cursor: default; }
 
 /* Message */
@@ -323,11 +336,21 @@ body {
 </head>
 <body>
 
+<!-- ── Cookie consent banner ── -->
+<div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#2D4A2D;color:#F5F0E8;padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
+  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:#8BAF7A;">Learn&nbsp;more</a></span>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(245,240,232,0.35);color:#F5F0E8;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
+    <button onclick="slwConsent('accepted')" style="background:#8BAF7A;border:none;color:#2D4A2D;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
+  </div>
+</div>
+<script>function slwConsent(c){localStorage.setItem('slw_cookie_consent',c);var b=document.getElementById('slw-consent-banner');if(b)b.style.display='none';if(c==='accepted'&&typeof initPostHog==='function')initPostHog();}</script>
+
 <!-- ── Left pitch panel ──────────────────────────────── -->
 <div class="auth-left">
   <a class="auth-logo" href="index.html">
-    <img src="public/bysloth.png" alt="" style="height:24px;width:auto;flex-shrink:0"/>
-    <span class="auth-logo-text">bysloth</span>
+    <img src="public/sloth-logo.svg" height="30" style="filter:brightness(0) invert(1);opacity:0.85"/>
+    <span class="auth-logo-text">SLW <em>Travel</em></span>
   </a>
 
   <div class="auth-left-body">
@@ -338,7 +361,7 @@ body {
       by someone<br>
       who was there.
     </h1>
-    <p class="auth-left-sub">bysloth routes are planned by an AI and verified by travellers. Join 2,400+ contributors keeping borders, prices, and schedules honest.</p>
+    <p class="auth-left-sub">SLW routes are planned by an AI and verified by travellers. Join 2,400+ contributors keeping borders, prices, and schedules honest.</p>
 
     <div class="auth-trust">
       <div class="auth-trust-item">
@@ -358,6 +381,10 @@ body {
 
   <div class="auth-version">v0.4 · private beta</div>
 
+  <!-- Decorative sloth -->
+  <div class="auth-bg-sloth">
+    <img src="public/sloth-logo.svg" width="360" style="filter:brightness(0) invert(1);opacity:0.12"/>
+  </div>
 </div>
 
 <!-- ── Right form panel ──────────────────────────────── -->
@@ -459,8 +486,32 @@ body {
 
   // Redirect if already signed in
   sb.auth.getSession().then(({ data: { session } }) => {
-    if (session) window.location.href = 'app.html';
+    if (session) window.location.href = '/app';
   });
+
+  // ── Signup gate (admin_settings.new_signups_enabled) ───────────
+  let _signupsEnabled = true;
+  sb.from('admin_settings').select('key, value').eq('key', 'new_signups_enabled')
+    .then(({ data }) => {
+      const raw = data?.[0]?.value;
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      _signupsEnabled = parsed !== false;   // default on if missing
+      applySignupGate();
+    });
+
+  function applySignupGate() {
+    if (_signupsEnabled) return;
+    document.getElementById('tab-signup').style.display = 'none';
+    document.getElementById('panel-signup').innerHTML =
+      '<div class="kicker">Signups paused</div>' +
+      '<div class="auth-title">New accounts temporarily unavailable.</div>' +
+      '<p style="font-size:13px;color:var(--text2);line-height:1.55;margin-top:12px">We\'ve paused new sign-ups while we scale. Existing accounts are unaffected — sign in on the left. Check back soon.</p>';
+    // If URL requested signup, bounce back to signin
+    const active = document.querySelector('#panel-signup[style*="block"]');
+    if (active || new URLSearchParams(location.search).get('tab') === 'signup') {
+      switchTab('signin');
+    }
+  }
 
   // Read ?tab= param
   const urlTab = new URLSearchParams(window.location.search).get('tab');
@@ -493,10 +544,11 @@ body {
     const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     btn.disabled = false;
     if (error) return setMsg('si-msg', error.message, true);
-    window.location.href = 'app.html';
+    window.location.href = '/app';
   }
 
   async function signUp() {
+    if (!_signupsEnabled) return setMsg('su-msg', 'New sign-ups are temporarily paused.', true);
     const email = document.getElementById('su-email').value.trim();
     const pass  = document.getElementById('su-pass').value;
     if (!email || !pass) return setMsg('su-msg', 'Please fill in all fields', true);
@@ -525,7 +577,7 @@ body {
   async function oauthGoogle() {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/app.html' }
+      options: { redirectTo: window.location.origin + '/app' }
     });
     if (error) setMsg('si-msg', error.message, true);
   }
@@ -533,13 +585,13 @@ body {
   async function oauthApple() {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'apple',
-      options: { redirectTo: window.location.origin + '/app.html' }
+      options: { redirectTo: window.location.origin + '/app' }
     });
     if (error) setMsg('si-msg', error.message, true);
   }
 
   function skipToApp() {
-    window.location.href = 'app.html?guest=1';
+    window.location.href = '/app?guest=1';
   }
 
   // Enter key
