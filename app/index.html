@@ -4448,11 +4448,14 @@ let _jdDiaryTimer = null;
 
 function openJourneyDetail(trip) {
   _journeyTrip = trip;
+  _jdCollabs = trip.collaborators || [];
   _jdTab = 'journey';
   if (_jdMap) { try { _jdMap.remove(); } catch(e){} _jdMap = null; }
   switchTab('journey', null);
   document.getElementById('navbtn_mytrips')?.classList.add('active');
   renderJourneyDetail();
+  // Load collaborators from Supabase in background and refresh strip
+  if (currentUser && trip.id) jdLoadCollabs();
 }
 
 function switchJourneyTab(tab) {
@@ -4671,17 +4674,52 @@ function jdShareTrip(id) {
   }
 }
 let _jdInviteRole = 'edit';
-function jdOpenInvite() {
+let _jdCollabs = []; // loaded from Supabase
+
+async function jdLoadCollabs() {
+  const t = _journeyTrip; if (!t) return;
+  if (!currentUser) { _jdCollabs = t.collaborators || []; return; }
+  const { data } = await sb.from('trip_collaborators')
+    .select('id,invitee_email,role,invited_at')
+    .eq('trip_id', t.id)
+    .order('invited_at', { ascending: true });
+  _jdCollabs = (data || []).map(r => ({
+    id: r.id, email: r.invitee_email, role: r.role,
+    avatar: r.invitee_email[0].toUpperCase()
+  }));
+  // Sync back to trip object + header strip
+  t.collaborators = _jdCollabs;
+  jdRefreshCollabStrip();
+}
+
+function jdRefreshCollabStrip() {
+  const wrap = document.getElementById('jdCollabWrap');
+  if (!wrap) return;
+  const addBtn = wrap.querySelector('.jd-collab-add');
+  wrap.querySelectorAll('.jd-collab-av').forEach(el => el.remove());
+  _jdCollabs.forEach((c, i) => {
+    const av = document.createElement('div');
+    av.className = `jd-collab-av ${c.role}`;
+    av.title = `${c.email} · can ${c.role}`;
+    av.style.zIndex = 10 - i;
+    av.textContent = c.avatar;
+    wrap.insertBefore(av, addBtn);
+  });
+}
+
+async function jdOpenInvite() {
   let el = document.getElementById('jdInviteModal');
   if (!el) { el = document.createElement('div'); el.id = 'jdInviteModal'; document.body.appendChild(el); }
   _jdInviteRole = 'edit';
+  jdRenderInvite('loading');
+  await jdLoadCollabs();
   jdRenderInvite();
 }
-function jdRenderInvite() {
+
+function jdRenderInvite(state) {
   const el = document.getElementById('jdInviteModal');
   if (!el) return;
-  const t = _journeyTrip; if (!t) return;
-  const collabs = t.collaborators || [];
+  const collabs = _jdCollabs;
   el.innerHTML = `<div class="jd-invite-modal" onclick="if(event.target===this)jdCloseInvite()">
     <div class="jd-invite-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
@@ -4691,6 +4729,7 @@ function jdRenderInvite() {
         </div>
         <button onclick="jdCloseInvite()" style="background:none;border:none;font-size:18px;color:var(--text3);cursor:pointer;line-height:1">×</button>
       </div>
+      ${state === 'loading' ? `<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Loading…</div>` : `
       <div class="jd-invite-row">
         <input id="jdInviteEmail" type="email" placeholder="Email address" onkeydown="if(event.key==='Enter')jdSendInvite()"/>
         <div class="jd-role-toggle">
@@ -4698,47 +4737,70 @@ function jdRenderInvite() {
           <button class="jd-role-opt${_jdInviteRole==='view'?' on':''}" onclick="jdSetRole('view')">Can view</button>
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="jdSendInvite()"><i class="ph ph-paper-plane-tilt"></i> Send invite</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" id="jdSendBtn" onclick="jdSendInvite()"><i class="ph ph-paper-plane-tilt"></i> Send invite</button>
       ${collabs.length ? `<div class="jd-invite-list">
         ${collabs.map((c,i)=>`<div class="jd-invite-item">
-          <div class="jd-invite-item-av ${c.role}">${c.avatar||c.email[0].toUpperCase()}</div>
+          <div class="jd-invite-item-av ${c.role}">${c.avatar}</div>
           <span class="jd-invite-item-email">${c.email}</span>
           <span class="jd-invite-item-role">can ${c.role}</span>
-          <button class="jd-invite-item-remove" onclick="jdRemoveCollab(${i})" title="Remove">×</button>
+          <button class="jd-invite-item-remove" onclick="jdRemoveCollab('${c.id||i}')" title="Remove">×</button>
         </div>`).join('')}
-      </div>` : ''}
+      </div>` : ''}`}
     </div>
   </div>`;
+  if (state !== 'loading') setTimeout(() => { const inp=document.getElementById('jdInviteEmail'); if(inp)inp.focus(); }, 0);
 }
+
 function jdSetRole(r) { _jdInviteRole = r; jdRenderInvite(); setTimeout(()=>{ const inp=document.getElementById('jdInviteEmail'); if(inp)inp.focus(); },0); }
-function jdSendInvite() {
+
+async function jdSendInvite() {
   const inp = document.getElementById('jdInviteEmail');
   const email = (inp?.value||'').trim().toLowerCase();
   if (!email || !email.includes('@')) { if(inp){inp.style.borderColor='var(--danger-text)';setTimeout(()=>inp.style.borderColor='',1500);} return; }
   const t = _journeyTrip; if (!t) return;
-  if (!t.collaborators) t.collaborators = [];
-  if (t.collaborators.find(c=>c.email===email)) { if(inp)inp.value=''; return; }
-  t.collaborators.push({ email, role: _jdInviteRole, avatar: email[0].toUpperCase() });
-  jdPersist();
-  if(inp) inp.value='';
-  jdRenderInvite();
-  // Refresh avatar strip in header
-  const wrap = document.getElementById('jdCollabWrap');
-  if (wrap) {
-    const addBtn = wrap.querySelector('.jd-collab-add');
-    const av = document.createElement('div');
-    av.className = `jd-collab-av ${_jdInviteRole}`;
-    av.title = `${email} · can ${_jdInviteRole}`;
-    av.textContent = email[0].toUpperCase();
-    wrap.insertBefore(av, addBtn);
+  if (_jdCollabs.find(c=>c.email===email)) { if(inp)inp.value=''; return; }
+
+  const btn = document.getElementById('jdSendBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ph ph-circle-notch"></i> Sending…'; }
+
+  if (currentUser) {
+    const { data, error } = await sb.from('trip_collaborators').insert({
+      trip_id: t.id,
+      invited_by: currentUser.id,
+      invitee_email: email,
+      role: _jdInviteRole,
+    }).select('id').single();
+    if (!error && data) {
+      _jdCollabs.push({ id: data.id, email, role: _jdInviteRole, avatar: email[0].toUpperCase() });
+    }
+  } else {
+    // Offline fallback — localStorage only
+    if (!t.collaborators) t.collaborators = [];
+    const entry = { email, role: _jdInviteRole, avatar: email[0].toUpperCase() };
+    t.collaborators.push(entry);
+    _jdCollabs.push(entry);
+    jdPersist();
   }
-}
-function jdRemoveCollab(idx) {
-  const t = _journeyTrip; if (!t || !t.collaborators) return;
-  t.collaborators.splice(idx, 1);
-  jdPersist();
+
+  if(inp) inp.value='';
+  jdRefreshCollabStrip();
   jdRenderInvite();
 }
+
+async function jdRemoveCollab(idOrIdx) {
+  const isUuid = typeof idOrIdx === 'string' && idOrIdx.includes('-');
+  if (isUuid && currentUser) {
+    await sb.from('trip_collaborators').delete().eq('id', idOrIdx);
+    _jdCollabs = _jdCollabs.filter(c => c.id !== idOrIdx);
+  } else {
+    const idx = parseInt(idOrIdx, 10);
+    _jdCollabs.splice(idx, 1);
+    if (_journeyTrip) { _journeyTrip.collaborators = _jdCollabs; jdPersist(); }
+  }
+  jdRefreshCollabStrip();
+  jdRenderInvite();
+}
+
 function jdCloseInvite() { const el=document.getElementById('jdInviteModal'); if(el)el.innerHTML=''; }
 function jdStartRecording() {
   if (!_journeyTrip) return;
