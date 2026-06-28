@@ -357,11 +357,11 @@ body {
 </div>
 
 <!-- ── Cookie consent banner ── -->
-<div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#2D4A2D;color:#F5F0E8;padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
-  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:#8BAF7A;">Learn&nbsp;more</a></span>
+<div id="slw-consent-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#0D1B2E;color:rgba(255,255,255,0.75);padding:14px 22px;align-items:center;justify-content:space-between;gap:16px;font-size:13px;font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 -1px 0 rgba(255,255,255,0.06),0 -4px 20px rgba(0,0,0,0.4);">
+  <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:rgba(255,255,255,0.5);text-decoration:underline">Learn&nbsp;more</a></span>
   <div style="display:flex;gap:8px;flex-shrink:0;">
-    <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(245,240,232,0.35);color:#F5F0E8;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
-    <button onclick="slwConsent('accepted')" style="background:#8BAF7A;border:none;color:#2D4A2D;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
+    <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.6);padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
+    <button onclick="slwConsent('accepted')" style="background:#FF5014;border:none;color:#fff;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
   </div>
 </div>
 <script>function slwConsent(c){localStorage.setItem('slw_cookie_consent',c);var b=document.getElementById('slw-consent-banner');if(b)b.style.display='none';if(c==='accepted'&&typeof initPostHog==='function')initPostHog();}</script>

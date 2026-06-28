@@ -866,8 +866,8 @@
     <select id="currSel" onchange="render()">
       <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option><option>AUD</option><option>CAD</option><option>JPY</option><option>THB</option>
     </select>
-    <span class="user-badge" id="userBadge" style="cursor:pointer" onclick="currentUser?switchTab('profile',document.getElementById('navbtn_profile')):window.location.href='auth.html'">Guest</span>
-    <button class="btn" onclick="window.location.href='auth.html'" id="signInBtn">Sign in</button>
+    <span class="user-badge" id="userBadge" style="cursor:pointer" onclick="currentUser?switchTab('profile',document.getElementById('navbtn_profile')):goToAuth()">Guest</span>
+    <button class="btn" onclick="goToAuth()" id="signInBtn">Sign in</button>
     <button class="btn" onclick="signOut()" id="signOutBtn" style="display:none">Sign out</button>
   </div>
 </nav>
@@ -1421,7 +1421,10 @@ async function init() {
   updateNavAuth();
 
   // Sync trips from Supabase → localStorage if signed in
-  if (currentUser) await syncTripsFromCloud();
+  if (currentUser) {
+    await syncTripsFromCloud();
+    _restorePendingRoute();
+  }
 
   // Keep auth in sync across tabs / token refresh.
   // Skip INITIAL_SESSION — getSession() above is authoritative for first load.
@@ -1536,7 +1539,7 @@ async function persistTripCloud(trip) {
 async function saveCurrentTrip() {
   if (!currentUser) {
     const el = document.getElementById('saveStatus');
-    if (el) el.innerHTML = `<a href="auth.html" style="color:var(--rust);font-size:12px">Sign in to save trips →</a>`;
+    if (el) el.innerHTML = `<a href="#" onclick="goToAuth();return false;" style="color:var(--rust);font-size:12px">Sign in to save trips →</a>`;
     return;
   }
   document.getElementById('saveStatus').textContent = 'Saving...';
@@ -1656,7 +1659,7 @@ function renderGuestBanner() {
     <i class="ph ph-user-circle-dashed" style="font-size:15px;color:var(--moss);flex-shrink:0"></i>
     <span><strong>${left} of ${GUEST_FREE_ROUTES} free routes</strong> left this month · sign up to save trips</span>
     <span style="flex:1"></span>
-    <a href="auth.html?return=planner" class="guest-banner-cta">Create free account →</a>`;
+    <a href="#" onclick="goToAuth('planner');return false;" class="guest-banner-cta">Create free account →</a>`;
 }
 
 // ── Demo data seeder (visit app.html?seed=1 to load, ?seed=clear to wipe) ──
@@ -2908,6 +2911,37 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
   btn.disabled = false; btn.textContent = 'Suggest route ↗';
 }
 
+// ── Auth redirect helpers ─────────────────────────────────────────────
+// Save any in-progress route before navigating away to auth, so it can
+// be restored when the user returns after signing in.
+function goToAuth(returnPath) {
+  if (lastSuggestion) {
+    const from = document.getElementById('pFrom')?.value?.trim() || '';
+    const to   = document.getElementById('pTo')?.value?.trim() || '';
+    localStorage.setItem('slw_pending_route', JSON.stringify({ from, to, suggestion: lastSuggestion }));
+  }
+  window.location.href = 'auth.html' + (returnPath ? '?return=' + returnPath : '');
+}
+function _restorePendingRoute() {
+  try {
+    const raw = localStorage.getItem('slw_pending_route');
+    if (!raw) return;
+    localStorage.removeItem('slw_pending_route');
+    const { from, to, suggestion } = JSON.parse(raw);
+    if (!suggestion) return;
+    const pFrom = document.getElementById('pFrom');
+    const pTo   = document.getElementById('pTo');
+    if (pFrom) pFrom.value = from || '';
+    if (pTo)   pTo.value   = to   || '';
+    lastSuggestion = suggestion;
+    _collapseSearchForm(from || 'from', to || 'to');
+    const res = document.getElementById('planResult');
+    if (res) res.style.display = 'block';
+    renderPlanSuggestion(suggestion, true);
+    switchTab('plan', document.getElementById('navbtn_plan'));
+  } catch(e) {}
+}
+
 // ── Vehicle route loader ──────────────────────────────────────────────
 const _rlVehicles = [
   { icon:'🚌', label:'Scanning bus routes...' },
@@ -3447,7 +3481,7 @@ function renderPlanSuggestion(d, fromCache = false) {
 
 function adoptRoute() {
   if (!lastSuggestion) return;
-  if (!currentUser) { window.location.href = 'auth.html?return=planner'; return; }
+  if (!currentUser) { goToAuth('planner'); return; }
   const d = lastSuggestion; stops = []; legs = []; editingLegModes.clear();
   currentTripId = null;   // always creates a new trip on next save
   expandedLegs.clear();
@@ -3495,7 +3529,7 @@ function buildTripFromSuggestion(d, name) {
 }
 function openSaveRouteModal() {
   if (!lastSuggestion) return;
-  if (!currentUser) { window.location.href = 'auth.html?return=planner'; return; }
+  if (!currentUser) { goToAuth('planner'); return; }
   renderSaveRouteModal(false);
 }
 function closeSaveRouteModal() {
@@ -4103,7 +4137,7 @@ function showGuestContributeGate(legIdx, legKey) {
           <button class="oauth-btn-sm" onclick="window.location.href='auth.html?return=planner'"><i class="ph ph-apple-logo" style="font-size:14px"></i> Apple</button>
         </div>
         <input id="gateEmail" placeholder="you@email.com" style="width:100%;font-size:13.5px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);outline:none;font-family:var(--body);color:var(--text);margin-bottom:10px"/>
-        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="window.location.href='auth.html?return=planner'">Create account &amp; continue →</button>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="goToAuth('planner')">Create account &amp; continue →</button>
         <div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border);display:flex;align-items:flex-start;gap:8px">
           <i class="ph ph-shield-check" style="font-size:14px;color:var(--sage);margin-top:1px;flex-shrink:0"></i>
           <span style="font-size:11.5px;color:var(--text3);line-height:1.55">Every submission is reviewed before publishing. We never post automatically and we don't share your email.</span>
