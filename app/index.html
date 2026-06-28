@@ -852,9 +852,146 @@
   .budget-bar-track{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;flex-shrink:0;}
   .budget-bar-fill{height:100%;border-radius:99px;background:var(--fern);transition:width 0.3s ease;}
   .budget-bar-pct{font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap;}
+
+  /* ── Mobile chrome ───────────────────────────────────── */
+  .bottom-nav{display:none;}
+  .mobile-header{display:none;}
+  .mobile-splash{display:none;}
+  .mobile-splash.show{
+    position:fixed;inset:0;z-index:500;
+    display:flex;flex-direction:column;overflow:hidden;
+    background:var(--dusk);
+  }
+  .mobile-splash-cta-primary{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--sage);color:#fff;
+    font-family:var(--body);font-size:15px;font-weight:600;
+    padding:14px 20px;border-radius:var(--radius);text-decoration:none;
+  }
+  .mobile-splash-cta-ghost{
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid rgba(245,240,232,0.22);color:var(--cream);background:transparent;
+    font-family:var(--body);font-size:15px;font-weight:500;
+    padding:14px 20px;border-radius:var(--radius);text-decoration:none;
+  }
+
+  @media(max-width:640px){
+    body{padding-bottom:64px;}
+    .container{padding:1rem 0.875rem 0;}
+    nav:not(#bottomNav){display:none !important;}
+    .mobile-header{
+      display:flex;align-items:center;height:56px;padding:0 6px;
+      background:var(--bg);border-bottom:0.5px solid var(--border);
+      position:sticky;top:0;z-index:100;
+    }
+    .mobile-header-title{
+      flex:1;padding:0 10px;
+      font-family:var(--serif);font-size:17px;font-weight:600;
+      color:var(--text);line-height:1.2;
+    }
+    .mobile-header-back{
+      display:none;background:none;border:none;cursor:pointer;
+      color:var(--text);padding:8px;-webkit-tap-highlight-color:transparent;
+    }
+    .mobile-header-back.visible{display:flex;align-items:center;justify-content:center;}
+    .bottom-nav{
+      display:flex;
+      position:fixed;top:auto;bottom:0;left:0;right:0;
+      height:56px;
+      background:var(--bg);
+      border-top:0.5px solid var(--border);
+      z-index:200;
+      padding-bottom:env(safe-area-inset-bottom,0px);
+    }
+    .bn-item{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:2px;border:none;background:none;cursor:pointer;
+      color:var(--text3);
+      font-family:var(--body);padding:6px 0;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .bn-item i{font-size:22px;line-height:1;}
+    .bn-item span{font-family:var(--mono);font-size:8px;letter-spacing:0.5px;text-transform:uppercase;line-height:1.2;font-weight:400;}
+    .bn-item.bn-active{color:var(--sage);}
+    .bn-item.bn-active span{font-weight:600;}
+    #guestBanner{display:none !important;}
+    .plan-hero-new{padding:20px 16px 16px !important;text-align:left !important;}
+    .plan-hero-kicker{font-size:9.5px;}
+    .plan-hero-title{font-size:30px !important;font-weight:300 !important;letter-spacing:-0.5px !important;}
+    .plan-hero-sub{display:none;}
+    .psc-from-to{grid-template-columns:1fr !important;}
+    .psc-slot{padding:14px 16px !important;border-bottom:0.5px solid var(--border);border-left:none !important;}
+    .psc-slot:last-child{border-bottom:none;padding-top:4px !important;}
+    .psc-arrow{display:flex !important;justify-content:flex-start !important;padding:0 14px;height:32px;gap:8px;align-items:center;}
+    .psc-arrow::after{content:'';flex:1;height:0.5px;background:var(--border);align-self:center;}
+    .psc-inp{font-size:21px !important;}
+    .psc-slot-icon{display:block;}
+    .psc-footer{gap:0;}
+    .psc-opts-toggle{display:none !important;}
+    #planOptions{display:flex !important;}
+    .psc-transport-lbl{display:block;}
+    #pacePills{display:none !important;}
+    .psc-inputs-row{display:none !important;}
+    .psc-chips-row .psc-sep{display:none !important;}
+    .psc-footer-opts{padding:10px 16px !important;border-top:0.5px solid var(--border);gap:0;}
+    .psc-footer-cta{flex-direction:column;align-items:stretch;padding:8px 12px 14px !important;gap:8px;border-top:none !important;}
+    .psc-footer-cta .btn-primary{width:100%;padding:13px;justify-content:center;font-size:15px;}
+    #planFormHint{display:none;}
+    .import-route-btn{width:100%;justify-content:center;}
+    .plan-landing-grid{grid-template-columns:1fr !important;}
+    .plan-edit-bar{flex-wrap:wrap;gap:8px;}
+    .sumbar{display:flex !important;overflow-x:auto;gap:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:1.25rem;}
+    .sumbar::-webkit-scrollbar{display:none;}
+    .sumbar .met{flex:0 0 auto;min-width:88px;}
+    .advisory-grid{grid-template-columns:1fr !important;}
+    .leg-grid{grid-template-columns:1fr !important;}
+    #plannerMapWrap{bottom:64px !important;}
+    .mytrips-hdr{flex-direction:column;align-items:flex-start;gap:10px;}
+    .mytrips-serif-title{font-size:22px !important;}
+    .mytrips-table-hdr{display:none !important;}
+    .mytrips-table{border:none !important;background:transparent !important;}
+    .mytrips-table-row{
+      display:flex !important;flex-direction:column;
+      grid-template-columns:unset !important;
+      padding:14px !important;
+      background:var(--bg);border:0.5px solid var(--border);
+      border-radius:var(--radius-lg);margin-bottom:10px;
+      gap:6px;
+    }
+    .mytrips-table-row > *{display:flex !important;align-items:center;}
+    .mytrips-yearly{grid-template-columns:repeat(2,1fr) !important;}
+    .mytrips-tabs{flex-wrap:wrap;gap:6px;}
+    .mytrips-jgrid{grid-template-columns:1fr !important;}
+    .jd-header{flex-direction:column;align-items:flex-start;gap:8px;}
+    .jd-title{font-size:20px !important;}
+    .jd-summary{grid-template-columns:repeat(2,1fr) !important;}
+    .jd-leg-cards{grid-template-columns:1fr !important;}
+    .jd-tabs{flex-wrap:wrap;}
+    .rj-header{flex-wrap:wrap;gap:8px;}
+    .rj-card-grid{grid-template-columns:1fr !important;}
+    .rj-sticky{bottom:64px !important;}
+    .rj-gutter{display:none;}
+    .jrnl-header-top{flex-direction:column;gap:10px;}
+    .jrnl-search{width:100% !important;}
+    .jrnl-search input{width:100% !important;}
+    .jrnl-featured{grid-template-columns:1fr !important;}
+    .jrnl-feat-img{height:180px;}
+    .jrnl-body{padding:16px !important;}
+    .profile-hero-grid{grid-template-columns:56px 1fr !important;gap:12px !important;}
+    .profile-hero-grid > *:nth-child(3){grid-column:1 / -1;text-align:left;}
+    .profile-meta-grid{grid-template-columns:1fr !important;}
+    .profile-badges-grid{display:flex !important;overflow-x:auto;gap:10px;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;}
+    .profile-badges-grid::-webkit-scrollbar{display:none;}
+    .profile-badges-grid > div{flex:0 0 82px;}
+  }
 </style>
 </head>
 <body>
+
+<div class="mobile-header" id="mobileHeader">
+  <button class="mobile-header-back" id="mobileHeaderBack"><i class="ph ph-arrow-left" style="font-size:20px"></i></button>
+  <div class="mobile-header-title" id="mobileHeaderTitle">Planner</div>
+</div>
 
 <nav>
   <a class="logo" href="#" onclick="goHome();return false;"><img src="/public/bysloth.png" alt="" style="height:28px;width:auto;flex-shrink:0"><span>bysloth</span></a>
@@ -1618,6 +1755,13 @@ function updateNavAuth() {
     if (signIn) signIn.style.display = 'inline-block';
     gatedTabs.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
   }
+  updateMobileSplash();
+}
+
+function updateMobileSplash() {
+  const splash = document.getElementById('mobileSplash');
+  if (!splash) return;
+  splash.classList.toggle('show', window.innerWidth <= 640 && !currentUser);
 }
 
 async function signOut() {
@@ -2595,6 +2739,8 @@ function switchTab(id, el) {
   if (id === 'plan' && lastSuggestion && resultsVisible) showRouteMap(lastSuggestion);
   else hideRouteMap();
   setScreenUrl(id);
+  if (typeof bnSync === 'function') bnSync(id);
+  if (typeof mobileHeaderSync === 'function') mobileHeaderSync(id);
 }
 
 // ── Plan tab ──────────────────────────────────────────────────────
@@ -6088,8 +6234,96 @@ function exportTrip() {
   a.download = (title || 'trip') + '.txt'; a.click();
 }
 
+// ── Mobile bottom nav sync ────────────────────────────────────────
+function bnSync(id) {
+  const map = { journey:'mytrips', recordjournal:'mytrips', record:'plan', admin:'plan' };
+  const target = map[id] || id;
+  document.querySelectorAll('.bn-item').forEach(b => {
+    b.classList.remove('bn-active');
+    const icon = b.querySelector('i'), base = b.dataset.icon;
+    if (icon && base) icon.className = `ph ph-${base}`;
+  });
+  const el = document.getElementById('bn_' + target);
+  if (el) {
+    el.classList.add('bn-active');
+    const icon = el.querySelector('i'), base = el.dataset.icon;
+    if (icon && base) icon.className = `ph-fill ph-${base}`;
+  }
+}
+
+const MOBILE_TITLES = {
+  plan:'Planner', mytrips:'My Trips', journals:'Journals',
+  profile:'Profile', admin:'Admin',
+  journey:'Journey', record:'New Journey', recordjournal:'New Entry'
+};
+function mobileHeaderSync(id) {
+  const titleEl = document.getElementById('mobileHeaderTitle');
+  if (titleEl) titleEl.textContent = MOBILE_TITLES[id] || id;
+  const backBtn = document.getElementById('mobileHeaderBack');
+  if (backBtn) {
+    const isDetail = id === 'journey' || id === 'recordjournal';
+    backBtn.classList.toggle('visible', isDetail);
+    backBtn.onclick = isDetail ? () => switchTab('mytrips', document.getElementById('navbtn_mytrips')) : null;
+  }
+}
+
 // ── Start ─────────────────────────────────────────────────────────
 init();
+</script>
+
+<!-- ── Mobile bottom nav ──────────────────────────────────────── -->
+<nav id="bottomNav" class="bottom-nav" aria-label="Navigation">
+  <button class="bn-item bn-active" id="bn_plan" data-icon="compass"
+    onclick="switchTab('plan',document.getElementById('navbtn_plan'))">
+    <i class="ph-fill ph-compass"></i><span>Planner</span>
+  </button>
+  <button class="bn-item" id="bn_mytrips" data-icon="suitcase-simple"
+    onclick="switchTab('mytrips',document.getElementById('navbtn_mytrips'))">
+    <i class="ph ph-suitcase-simple"></i><span>Trips</span>
+  </button>
+  <button class="bn-item" id="bn_journals" data-icon="book-open"
+    onclick="switchTab('journals',document.getElementById('navbtn_journals'))">
+    <i class="ph ph-book-open"></i><span>Journals</span>
+  </button>
+  <button class="bn-item" id="bn_profile" data-icon="user-circle"
+    onclick="switchTab('profile',document.getElementById('navbtn_profile'))">
+    <i class="ph ph-user-circle"></i><span>Profile</span>
+  </button>
+</nav>
+
+<!-- ── Mobile splash / landing screen (logged-out, mobile only) ── -->
+<div id="mobileSplash" class="mobile-splash">
+  <div style="position:absolute;right:-30px;bottom:60px;width:260px;height:320px;opacity:0.08;pointer-events:none">
+    <svg viewBox="0 0 260 320" width="100%" height="100%" fill="none">
+      <path d="M30 300 C 80 250, 100 200, 150 160 C 200 120, 220 80, 240 40" stroke="#FF5014" stroke-width="2.5" stroke-dasharray="5 10" stroke-linecap="round"/>
+      <circle cx="30" cy="300" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="30" cy="300" r="3" fill="#FF5014"/>
+      <circle cx="150" cy="160" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="150" cy="160" r="3" fill="#FF5014"/>
+      <circle cx="240" cy="40" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="240" cy="40" r="3" fill="#FF5014"/>
+      <circle cx="240" cy="40" r="22" stroke="#FF5014" stroke-width="1" opacity="0.5" fill="none"/>
+    </svg>
+  </div>
+  <div style="flex:1;padding:40px 28px 32px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:44px">
+      <img src="public/bysloth.png" alt="" style="height:38px;width:auto;flex-shrink:0">
+      <div style="font-family:var(--body);font-size:22px;font-weight:700;color:var(--cream);letter-spacing:-0.5px;line-height:1">bysloth</div>
+    </div>
+    <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);font-weight:600;margin-bottom:10px">Overland planner · no flights, ever</div>
+    <div style="font-family:var(--serif);font-size:40px;font-weight:300;line-height:1.05;letter-spacing:-0.8px;color:var(--cream);margin-bottom:18px">Go the long<br>way. <em style="font-style:normal;color:var(--sage)">On purpose.</em></div>
+    <div style="font-size:14px;line-height:1.65;color:rgba(245,240,232,0.62);margin-bottom:40px;max-width:290px">Trains, buses, ferries, shared taxis, the occasional hitch. We map a realistic route and flag the legs we can't verify.</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="document.getElementById('mobileSplash').classList.remove('show')" class="mobile-splash-cta-primary">Plan your first route <i class="ph ph-arrow-right" style="font-size:16px"></i></button>
+      <a href="auth.html" class="mobile-splash-cta-ghost">Sign in</a>
+    </div>
+    <div style="margin-top:24px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:rgba(245,240,232,0.3);text-align:center;text-transform:uppercase">Free · 3 routes a month · no card required</div>
+  </div>
+  <div style="border-top:0.5px solid rgba(245,240,232,0.1);padding:14px 28px;display:flex;gap:24px;position:relative;z-index:1">
+    <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--cream);letter-spacing:-0.3px">2,140</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(245,240,232,0.4);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">legs verified</div></div>
+    <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--cream);letter-spacing:-0.3px">23</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(245,240,232,0.4);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">countries</div></div>
+    <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--cream);letter-spacing:-0.3px">no flights</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(245,240,232,0.4);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">ever</div></div>
+  </div>
+</div>
+<script>
+  if (window.innerWidth <= 640) document.getElementById('mobileSplash').classList.add('show');
 </script>
 </body>
 </html>
