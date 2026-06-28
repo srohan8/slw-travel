@@ -5996,7 +5996,7 @@ function bnSync(id) {
   if (el) {
     el.classList.add('bn-active');
     const icon = el.querySelector('i'), base = el.dataset.icon;
-    if (icon && base) icon.className = `ph ph-${base}-fill`;
+    if (icon && base) icon.className = `ph-fill ph-${base}`;
   }
 }
 
@@ -6022,7 +6022,7 @@ function mobileHeaderSync(id) {
 <nav id="bottomNav" class="bottom-nav" aria-label="Navigation">
   <button class="bn-item bn-active" id="bn_plan" data-icon="compass"
     onclick="switchTab('plan',document.getElementById('navbtn_plan'))">
-    <i class="ph ph-compass-fill"></i><span>Planner</span>
+    <i class="ph-fill ph-compass"></i><span>Planner</span>
   </button>
   <button class="bn-item" id="bn_mytrips" data-icon="suitcase-simple"
     onclick="switchTab('mytrips',document.getElementById('navbtn_mytrips'))">
