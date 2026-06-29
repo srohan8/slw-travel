@@ -3627,7 +3627,8 @@ function renderPlanSuggestion(d, fromCache = false) {
   const _epStops = d.stops || [];
   const _epN = _epStops.length;
   if (_epN >= 2) {
-    const _epW = Math.max(820, _epN * 52), _epH = 76, _epSeaY = _epH - 2;
+    const _epPerStop = Math.max(60, Math.max(..._epStops.map(s => (s.name||'').length * 5.8 + 24)));
+    const _epW = Math.max(820, _epN * _epPerStop), _epH = 76, _epSeaY = _epH - 2;
     const wpts = _epStops.map((s, i) => {
       const t = i / (_epN - 1);
       const midBias = Math.sin(Math.PI * t) * 48;
@@ -3653,15 +3654,21 @@ function renderPlanSuggestion(d, fromCache = false) {
     const _epLbls = wpts.map(([x], i) =>
       `<span style="position:absolute;left:${x}px;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap">${_epStops[i].name||''}</span>`
     ).join('');
+    const _eid = 'elev_' + Math.random().toString(36).slice(2,8);
+    const _btnBase = 'position:absolute;top:0;bottom:18px;width:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:18px;color:var(--text3);z-index:2';
     h += `<div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border)">
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;cursor:grab">
-        <div style="width:${_epW}px">
-          <svg viewBox="0 0 ${_epW} ${_epH}" width="${_epW}" height="60" style="display:block">
-            <path d="${_epFill}" fill="rgba(255,80,20,0.06)"/>
-            <path d="${_epLine}" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linejoin="round"/>
-          </svg>
-          <div style="position:relative;height:18px;margin-top:4px">${_epLbls}</div>
+      <div style="position:relative">
+        <button style="${_btnBase};left:0;background:linear-gradient(to right,var(--bg) 55%,transparent)" onclick="document.getElementById('${_eid}').scrollBy({left:-220,behavior:'smooth'})">‹</button>
+        <div id="${_eid}" style="overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 36px">
+          <div style="width:${_epW}px">
+            <svg viewBox="0 0 ${_epW} ${_epH}" width="${_epW}" height="60" style="display:block">
+              <path d="${_epFill}" fill="rgba(255,80,20,0.06)"/>
+              <path d="${_epLine}" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+            <div style="position:relative;height:18px;margin-top:4px">${_epLbls}</div>
+          </div>
         </div>
+        <button style="${_btnBase};right:0;background:linear-gradient(to left,var(--bg) 55%,transparent)" onclick="document.getElementById('${_eid}').scrollBy({left:220,behavior:'smooth'})">›</button>
       </div>
       <div class="elev-footer" style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:0.2px">
         <span>Elevation profile · illustrative</span>
@@ -4816,7 +4823,8 @@ function jdSaveDiary(i, val) {
 function jdElevationHTML(epStops) {
   const n = epStops.length;
   if (n < 2) return '';
-  const W = Math.max(820, n * 52), H = 76, seaY = H - 2;
+  const perStop = Math.max(60, Math.max(...epStops.map(s => (s.name||'').length * 5.8 + 24)));
+  const W = Math.max(820, n * perStop), H = 76, seaY = H - 2;
   const wpts = epStops.map((s, i) => {
     const t = i / (n - 1);
     const midBias = Math.sin(Math.PI * t) * 48;
@@ -4837,15 +4845,21 @@ function jdElevationHTML(epStops) {
   const line = 'M ' + pts.map(([x, y]) => `${x},${y}`).join(' L ');
   const fill = line + ` L ${W},${seaY} L 0,${seaY} Z`;
   const lbls = wpts.map(([x], i) => `<span style="position:absolute;left:${x}px;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap">${epStops[i].name||''}</span>`).join('');
+  const eid = 'elev_' + Math.random().toString(36).slice(2,8);
+  const btnBase = 'position:absolute;top:0;bottom:18px;width:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:18px;color:var(--text3);z-index:2';
   return `<div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border)">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;cursor:grab">
-      <div style="width:${W}px">
-        <svg viewBox="0 0 ${W} ${H}" width="${W}" height="60" style="display:block">
-          <path d="${fill}" fill="rgba(255,80,20,0.06)"/>
-          <path d="${line}" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>
-        <div style="position:relative;height:18px;margin-top:4px">${lbls}</div>
+    <div style="position:relative">
+      <button style="${btnBase};left:0;background:linear-gradient(to right,var(--bg) 55%,transparent)" onclick="document.getElementById('${eid}').scrollBy({left:-220,behavior:'smooth'})">‹</button>
+      <div id="${eid}" style="overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 36px">
+        <div style="width:${W}px">
+          <svg viewBox="0 0 ${W} ${H}" width="${W}" height="60" style="display:block">
+            <path d="${fill}" fill="rgba(255,80,20,0.06)"/>
+            <path d="${line}" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          <div style="position:relative;height:18px;margin-top:4px">${lbls}</div>
+        </div>
       </div>
+      <button style="${btnBase};right:0;background:linear-gradient(to left,var(--bg) 55%,transparent)" onclick="document.getElementById('${eid}').scrollBy({left:220,behavior:'smooth'})">›</button>
     </div>
     <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:0.2px">
       <span>Elevation profile · illustrative</span>
