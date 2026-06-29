@@ -4939,11 +4939,12 @@ function jdJourneyTabHTML(t, stops, legs, m) {
   </div>`;
 
   // Route overview
-  const advisories = [];
-  legs.forEach(l => { if (l.conflict?.note) advisories.push(l.conflict.note); });
+  const conflictAdvisories = legs.filter(l => l.conflict?.note).map(l => l.conflict.note);
+  const uncertainLegs = legs.filter(l => l.confidence === 'uncertain' || l.confidence === 'check');
   const desc = t.notes || `An overland journey from ${stops[0]?.name||'?'} to ${stops[stops.length-1]?.name||'?'}.`;
   h += `<div class="res-overview-card"><div class="res-overview-hdr"><span class="res-overview-lbl">Route overview</span></div><div class="res-overview-body">
-    <p style="font-size:13.5px;line-height:1.65;color:var(--text);margin:0">${desc}</p>
+    <p style="font-size:13.5px;line-height:1.65;color:var(--text);margin:0 0 ${conflictAdvisories.length?'12px':'0'}">${desc}</p>
+    ${conflictAdvisories.length ? `<div class="advisory-grid">${conflictAdvisories.map(a=>`<div class="advisory-strip">${a}</div>`).join('')}</div>` : ''}
   </div></div>`;
 
   // Leg sections — per stop: header + diary + outgoing leg cards
@@ -4999,8 +5000,9 @@ function jdJourneyTabHTML(t, stops, legs, m) {
   });
 
   // Honesty note + elevation at bottom of legs
-  if (advisories.length) {
-    h += `<div class="advisory-grid" style="margin-top:16px">${advisories.map(a=>`<div class="advisory-strip">${a}</div>`).join('')}</div>`;
+  if (uncertainLegs.length) {
+    const note = `<span style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600">Honesty note</span> — ${uncertainLegs.length} leg${uncertainLegs.length>1?'s':''} on this route marked <strong>check</strong> or <strong>uncertain</strong> — verify schedules before booking.`;
+    h += `<div class="advisory-grid" style="margin-top:16px"><div class="advisory-strip">${note}</div></div>`;
   }
   h += jdElevationHTML(stops);
 
