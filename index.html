@@ -563,6 +563,9 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
   const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
+  // ── Capacitor guard: native app should never show this page ─────
+  if (window.Capacitor) { window.location.replace('/app/'); }
+
   // ── Session check: redirect if already signed in ──────────────
   (function(){
     try {
