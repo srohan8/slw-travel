@@ -858,21 +858,28 @@
 
 /* ── App loading splash ───────────────────── */
 #appSplash{
-  position:fixed;inset:0;z-index:99999;
+  position:fixed;inset:0;z-index:99999;overflow:hidden;
   background:#091022;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
   transition:opacity 0.4s ease, visibility 0.4s ease;
 }
 #appSplash.hide{opacity:0;visibility:hidden;}
+#appSplashCompassWrap{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;animation:splashCompassSpin 80s linear infinite;
+}
+@keyframes splashCompassSpin{to{transform:rotate(360deg)}}
 @keyframes splashIn{from{opacity:0;transform:scale(0.88)}to{opacity:1;transform:scale(1)}}
-@keyframes splashPulse{0%,100%{opacity:1}50%{opacity:0.6}}
-#appSplashLogo{animation:splashIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+@keyframes splashPulse{0%,100%{opacity:1}50%{opacity:0.5}}
+#appSplashLogo{position:relative;z-index:1;animation:splashIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards;}
 #appSplashWord{
-  font-family:'Albert Sans',sans-serif;font-size:22px;font-weight:500;
-  color:#fff;letter-spacing:-0.5px;
+  position:relative;z-index:1;
+  font-family:'Albert Sans',sans-serif;font-size:32px;font-weight:500;
+  color:#fff;letter-spacing:-0.8px;
   animation:splashIn 0.45s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 #appSplashDot{
+  position:relative;z-index:1;
   width:6px;height:6px;border-radius:50%;background:#FF5014;
   animation:splashPulse 1.2s 0.5s ease-in-out infinite;
 }
@@ -1042,6 +1049,32 @@
 <body>
 
 <div id="appSplash">
+  <div id="appSplashCompassWrap">
+    <svg viewBox="-260 -260 520 520" xmlns="http://www.w3.org/2000/svg" style="width:520px;height:520px">
+      <g stroke="rgba(255,255,255,0.07)" stroke-width="0.6" fill="none">
+        <line x1="0" y1="-260" x2="0" y2="260"/>
+        <line x1="-260" y1="0" x2="260" y2="0"/>
+        <line x1="-184" y1="-184" x2="184" y2="184"/>
+        <line x1="184" y1="-184" x2="-184" y2="184"/>
+      </g>
+      <g stroke="rgba(255,255,255,0.04)" stroke-width="0.5" fill="none">
+        <line x1="0" y1="-260" x2="0" y2="260" transform="rotate(22.5)"/>
+        <line x1="0" y1="-260" x2="0" y2="260" transform="rotate(67.5)"/>
+        <line x1="0" y1="-260" x2="0" y2="260" transform="rotate(112.5)"/>
+        <line x1="0" y1="-260" x2="0" y2="260" transform="rotate(157.5)"/>
+      </g>
+      <g stroke="rgba(255,255,255,0.05)" stroke-width="0.6" fill="none">
+        <circle cx="0" cy="0" r="80"/>
+        <circle cx="0" cy="0" r="155"/>
+        <circle cx="0" cy="0" r="230"/>
+      </g>
+      <g stroke="rgba(255,255,255,0.035)" stroke-width="0.5" fill="none">
+        <path d="M -260,0 Q 0,-70 260,0"/>
+        <path d="M -260,0 Q 0,70 260,0"/>
+        <path d="M 0,-260 Q 70,0 0,260"/>
+      </g>
+    </svg>
+  </div>
   <img id="appSplashLogo" src="/public/bysloth.png" alt="" style="height:48px;width:auto">
   <div id="appSplashWord">bysloth</div>
   <div id="appSplashDot"></div>
