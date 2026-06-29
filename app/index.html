@@ -1100,7 +1100,7 @@
           <div class="psc-slot-lbl">From</div>
           <div class="psc-slot-row">
             <i class="ph ph-map-pin psc-slot-icon"></i>
-            <input class="psc-inp" id="pFrom" placeholder="e.g. Istanbul"/>
+            <input class="psc-inp" id="pFrom" placeholder="e.g. Istanbul, Turkey"/>
           </div>
         </div>
         <div class="psc-arrow">
@@ -1112,7 +1112,7 @@
           <div class="psc-slot-lbl">To</div>
           <div class="psc-slot-row">
             <i class="ph ph-flag psc-slot-icon"></i>
-            <input class="psc-inp" id="pTo" placeholder="e.g. Kathmandu"/>
+            <input class="psc-inp" id="pTo" placeholder="e.g. Kathmandu, Nepal"/>
           </div>
         </div>
       </div>
@@ -3654,9 +3654,10 @@ function renderPlanSuggestion(d, fromCache = false) {
     allPts.push(wpts[wpts.length - 1]);
     const _epLine = 'M ' + allPts.map(([x, y]) => `${x},${y}`).join(' L ');
     const _epFill = _epLine + ` L ${_epW},${_epSeaY} L 0,${_epSeaY} Z`;
-    const _epLbls = wpts.map(([x], i) =>
-      `<span style="position:absolute;left:${x}px;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap">${_epStops[i].name||''}</span>`
-    ).join('');
+    const _epLbls = wpts.map(([x], i) => {
+      const _xf = i === 0 ? 'none' : i === _epN-1 ? 'translateX(-100%)' : 'translateX(-50%)';
+      return `<span style="position:absolute;left:${x}px;transform:${_xf};font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap">${_epStops[i].name||''}</span>`;
+    }).join('');
     const _eid = 'elev_' + Math.random().toString(36).slice(2,8);
     const _btnBase = 'position:absolute;top:0;bottom:18px;width:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:18px;color:var(--text3);z-index:2';
     h += `<div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border)">
@@ -4847,13 +4848,16 @@ function jdElevationHTML(epStops) {
   pts.push(wpts[wpts.length - 1]);
   const line = 'M ' + pts.map(([x, y]) => `${x},${y}`).join(' L ');
   const fill = line + ` L ${W},${seaY} L 0,${seaY} Z`;
-  const lbls = wpts.map(([x], i) => `<span style="position:absolute;left:${x}px;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap">${epStops[i].name||''}</span>`).join('');
+  const lbls = wpts.map(([x], i) => {
+    const xf = i === 0 ? 'none' : i === n-1 ? 'translateX(-100%)' : 'translateX(-50%)';
+    return `<span style="position:absolute;left:${x}px;transform:${xf};font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap">${epStops[i].name||''}</span>`;
+  }).join('');
   const eid = 'elev_' + Math.random().toString(36).slice(2,8);
   const btnBase = 'position:absolute;top:0;bottom:18px;width:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:18px;color:var(--text3);z-index:2';
-  return `<div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border)">
+  return `<div style="margin-top:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px 10px">
     <div style="position:relative">
-      <button style="${btnBase};left:0;background:linear-gradient(to right,var(--bg) 55%,transparent)" onclick="document.getElementById('${eid}').scrollBy({left:-220,behavior:'smooth'})">‹</button>
-      <div id="${eid}" style="overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 36px">
+      <button style="${btnBase};left:-4px;background:linear-gradient(to right,var(--bg) 55%,transparent)" onclick="document.getElementById('${eid}').scrollBy({left:-220,behavior:'smooth'})">‹</button>
+      <div id="${eid}" style="overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 32px">
         <div style="width:${W}px">
           <svg viewBox="0 0 ${W} ${H}" width="${W}" height="60" style="display:block">
             <path d="${fill}" fill="rgba(255,80,20,0.06)"/>
@@ -4862,9 +4866,9 @@ function jdElevationHTML(epStops) {
           <div style="position:relative;height:18px;margin-top:4px">${lbls}</div>
         </div>
       </div>
-      <button style="${btnBase};right:0;background:linear-gradient(to left,var(--bg) 55%,transparent)" onclick="document.getElementById('${eid}').scrollBy({left:220,behavior:'smooth'})">›</button>
+      <button style="${btnBase};right:-4px;background:linear-gradient(to left,var(--bg) 55%,transparent)" onclick="document.getElementById('${eid}').scrollBy({left:220,behavior:'smooth'})">›</button>
     </div>
-    <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:0.2px">
+    <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:6px;letter-spacing:0.2px">
       <span>Elevation profile · illustrative</span>
       <span>${epStops[0]?.name||''}&thinsp;→&thinsp;${epStops[n-1]?.name||''}</span>
     </div>
@@ -4895,7 +4899,6 @@ function renderJourneyDetail() {
   </div>
   <div class="jd-header">
     <div style="flex:1">
-      <div class="jd-kicker">Journey · ${recStarted ? (visited < total ? 'in progress' : 'complete') : 'ready to record'}</div>
       <div class="jd-title">${t.title || (first + ' → ' + last)}</div>
       <div class="jd-sub">${first.toLowerCase()} → ${last.toLowerCase()}${dateRange ? ' · ' + dateRange : ''}</div>
     </div>
@@ -5016,7 +5019,8 @@ function jdJourneyTabHTML(t, stops, legs, m) {
     h += `</div>`;
   });
 
-  // Honesty note + elevation at bottom of legs
+  // Separator + honesty note + elevation at bottom of legs
+  h += `<div style="margin-top:28px;border-top:1px solid var(--border)"></div>`;
   if (uncertainLegs.length) {
     const note = `<span style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600">Honesty note</span> — ${uncertainLegs.length} leg${uncertainLegs.length>1?'s':''} on this route marked <strong>check</strong> or <strong>uncertain</strong> — verify schedules before booking.`;
     h += `<div class="advisory-grid" style="margin-top:16px"><div class="advisory-strip">${note}</div></div>`;
