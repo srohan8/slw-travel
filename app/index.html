@@ -856,6 +856,26 @@
     padding:14px 20px;border-radius:var(--radius);text-decoration:none;
   }
 
+/* ── App loading splash ───────────────────── */
+#appSplash{
+  position:fixed;inset:0;z-index:99999;
+  background:#091022;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  transition:opacity 0.4s ease, visibility 0.4s ease;
+}
+#appSplash.hide{opacity:0;visibility:hidden;}
+@keyframes splashIn{from{opacity:0;transform:scale(0.88)}to{opacity:1;transform:scale(1)}}
+@keyframes splashPulse{0%,100%{opacity:1}50%{opacity:0.6}}
+#appSplashLogo{animation:splashIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+#appSplashWord{
+  font-family:'Albert Sans',sans-serif;font-size:22px;font-weight:500;
+  color:#fff;letter-spacing:-0.5px;
+  animation:splashIn 0.45s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+#appSplashDot{
+  width:6px;height:6px;border-radius:50%;background:#FF5014;
+  animation:splashPulse 1.2s 0.5s ease-in-out infinite;
+}
 </style>
 <style id="mobile">
 /* ── 700px — nav collapse ─────────────────── */
@@ -1020,6 +1040,12 @@
 </style>
 </head>
 <body>
+
+<div id="appSplash">
+  <img id="appSplashLogo" src="/public/bysloth.png" alt="" style="height:48px;width:auto">
+  <div id="appSplashWord">bysloth</div>
+  <div id="appSplashDot"></div>
+</div>
 
 <div class="mobile-header" id="mobileHeader">
   <button class="mobile-header-back" id="mobileHeaderBack"><i class="ph ph-arrow-left" style="font-size:20px"></i></button>
@@ -1674,6 +1700,10 @@ async function init() {
     // Slight delay so the DOM is fully ready before firing the AI call
     setTimeout(planRoute, 80);
   }
+
+  // Dismiss loading splash
+  const splash = document.getElementById('appSplash');
+  if (splash) { splash.classList.add('hide'); setTimeout(() => splash.remove(), 450); }
 }
 
 // ── Cloud sync helpers ────────────────────────────────────────────
