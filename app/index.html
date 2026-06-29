@@ -860,34 +860,9 @@
 #appSplash{
   position:fixed;inset:0;z-index:99999;overflow:hidden;
   background:#091022;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
-  transition:opacity 0.4s ease, visibility 0.4s ease;
-  animation:splashBgBreath 5s ease-in-out infinite;
+  transition:opacity 0.45s ease;
 }
-#appSplash.hide{opacity:0;visibility:hidden;}
-#appSplashCompassWrap{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  pointer-events:none;animation:splashCompassSpin 80s linear infinite;
-}
-@keyframes splashBgBreath{
-  0%,100%{background:radial-gradient(ellipse at center,#0a1628 0%,#091022 65%)}
-  50%{background:radial-gradient(ellipse at center,#0e1e33 0%,#091022 65%)}
-}
-@keyframes splashCompassSpin{to{transform:rotate(360deg)}}
-@keyframes splashIn{from{opacity:0;transform:scale(0.88)}to{opacity:1;transform:scale(1)}}
-@keyframes splashPulse{0%,100%{opacity:1}50%{opacity:0.5}}
-#appSplashLogo{position:relative;z-index:1;animation:splashIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards;}
-#appSplashWord{
-  position:relative;z-index:1;
-  font-family:'Albert Sans',sans-serif;font-size:32px;font-weight:500;
-  color:#fff;letter-spacing:-0.8px;
-  animation:splashIn 0.45s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
-}
-#appSplashDot{
-  position:relative;z-index:1;
-  width:6px;height:6px;border-radius:50%;background:#FF5014;
-  animation:splashPulse 1.2s 0.5s ease-in-out infinite;
-}
+#appSplash.hide{opacity:0;pointer-events:none;}
 </style>
 <style id="mobile">
 /* ── 700px — nav collapse ─────────────────── */
@@ -1053,37 +1028,7 @@
 </head>
 <body>
 
-<div id="appSplash">
-  <div id="appSplashCompassWrap">
-    <svg viewBox="-260 -260 520 520" xmlns="http://www.w3.org/2000/svg" style="width:520px;height:520px">
-      <g stroke="rgba(255,255,255,0.07)" stroke-width="0.6" fill="none">
-        <line x1="0" y1="-260" x2="0" y2="260"/>
-        <line x1="-260" y1="0" x2="260" y2="0"/>
-        <line x1="-184" y1="-184" x2="184" y2="184"/>
-        <line x1="184" y1="-184" x2="-184" y2="184"/>
-      </g>
-      <g stroke="rgba(255,255,255,0.04)" stroke-width="0.5" fill="none">
-        <line x1="0" y1="-260" x2="0" y2="260" transform="rotate(22.5)"/>
-        <line x1="0" y1="-260" x2="0" y2="260" transform="rotate(67.5)"/>
-        <line x1="0" y1="-260" x2="0" y2="260" transform="rotate(112.5)"/>
-        <line x1="0" y1="-260" x2="0" y2="260" transform="rotate(157.5)"/>
-      </g>
-      <g stroke="rgba(255,255,255,0.05)" stroke-width="0.6" fill="none">
-        <circle cx="0" cy="0" r="80"/>
-        <circle cx="0" cy="0" r="155"/>
-        <circle cx="0" cy="0" r="230"/>
-      </g>
-      <g stroke="rgba(255,255,255,0.035)" stroke-width="0.5" fill="none">
-        <path d="M -260,0 Q 0,-70 260,0"/>
-        <path d="M -260,0 Q 0,70 260,0"/>
-        <path d="M 0,-260 Q 70,0 0,260"/>
-      </g>
-    </svg>
-  </div>
-  <img id="appSplashLogo" src="/public/bysloth.png" alt="" style="height:48px;width:auto">
-  <div id="appSplashWord">bysloth</div>
-  <div id="appSplashDot"></div>
-</div>
+<div id="appSplash"></div>
 
 <div class="mobile-header" id="mobileHeader">
   <button class="mobile-header-back" id="mobileHeaderBack"><i class="ph ph-arrow-left" style="font-size:20px"></i></button>
@@ -1739,9 +1684,7 @@ async function init() {
     setTimeout(planRoute, 80);
   }
 
-  // Dismiss loading splash
-  const splash = document.getElementById('appSplash');
-  if (splash) { splash.classList.add('hide'); setTimeout(() => splash.remove(), 450); }
+  // Splash runs its own 5.2s sequence independently
 }
 
 // ── Cloud sync helpers ────────────────────────────────────────────
@@ -6459,6 +6402,116 @@ function mobileHeaderSync(id) {
 }
 
 // ── Start ─────────────────────────────────────────────────────────
+// ── Splash screen animation ───────────────────────────────────────
+(function runSplash() {
+  const el = document.getElementById('appSplash');
+  if (!el) return;
+
+  const ROUTE = "M -10,680 C 60,620 90,560 130,510 C 175,455 160,400 200,360 C 245,315 270,270 310,220 C 340,185 360,145 403,90";
+  const RLEN  = 820;
+  const STOPS = [{x:128,y:512,label:"Istanbul"},{x:202,y:358,label:"Tbilisi"},{x:310,y:220,label:"Baku"}];
+
+  el.innerHTML = `
+    <svg id="spGrid" style="position:absolute;inset:0;width:100%;height:100%;opacity:0" viewBox="0 0 393 790" preserveAspectRatio="xMidYMid slice">
+      <defs><pattern id="spGPat" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0L0 0 0 32" fill="none" stroke="#fff" stroke-width="0.5"/></pattern></defs>
+      <rect width="393" height="790" fill="url(#spGPat)"/>
+    </svg>
+    <svg id="spRoute" style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 393 790" preserveAspectRatio="xMidYMid slice">
+      <defs><filter id="spGF"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <path id="spTG" d="${ROUTE}" fill="none" stroke="rgba(255,80,20,0.25)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${RLEN}" stroke-dashoffset="${RLEN}" filter="url(#spGF)"/>
+      <path id="spT"  d="${ROUTE}" fill="none" stroke="#FF5014" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="${RLEN}" stroke-dashoffset="${RLEN}"/>
+      ${STOPS.map((s,i)=>`
+        <g id="spPin${i}" opacity="0" transform="translate(${s.x},${s.y})">
+          <circle id="spPulse${i}" r="8" fill="none" stroke="#FF5014" stroke-width="1" opacity="0.6"/>
+          <circle id="spPO${i}" r="0" fill="#091022" stroke="#FF5014" stroke-width="1.5"/>
+          <circle id="spPI${i}" r="0" fill="#FF5014"/>
+          <text x="${i===1?-10:10}" y="-10" text-anchor="${i===1?'end':'start'}" font-size="9" font-weight="600" fill="#FF5014" font-family="JetBrains Mono,monospace" opacity="0" paint-order="stroke" stroke="#091022" stroke-width="3">${s.label}</text>
+        </g>`).join('')}
+    </svg>
+    <svg id="spCorner" style="position:absolute;bottom:0;right:0;opacity:0" width="160" height="160">
+      <path d="M 160,160 C 130,110 100,80 60,50 C 30,25 10,0 0,0" fill="none" stroke="#FF5014" stroke-width="1.5" stroke-dasharray="4 8"/>
+      <circle cx="60" cy="50" r="5" fill="none" stroke="#FF5014" stroke-width="1"/>
+      <circle cx="60" cy="50" r="2" fill="#FF5014"/>
+    </svg>
+    <div id="spGlow" style="position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,80,20,0.12) 0%,transparent 70%);opacity:0"></div>
+    <img id="spLogo" src="/public/bysloth.png" alt="" style="position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(0.55);opacity:0;width:72px;height:72px;filter:drop-shadow(0 0 20px rgba(255,80,20,0.5))">
+    <div id="spWord" style="position:absolute;left:50%;top:calc(42% + 64px);transform:translate(-50%,14px);opacity:0;font-family:'Sora',sans-serif;font-size:32px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;white-space:nowrap">bysloth</div>
+    <div id="spTag"  style="position:absolute;left:50%;top:calc(42% + 110px);transform:translateX(-50%);opacity:0;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:2px;text-transform:uppercase;white-space:nowrap">overland · no flights, ever</div>
+    <div id="spPill" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);width:120px;height:4px;border-radius:2px;background:rgba(255,255,255,0.2);opacity:0"></div>`;
+
+  const eo3 = t => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
+  const spng = t => { if(t<=0)return 0; if(t>=1)return 1; return Math.pow(2,-8*t)*Math.sin((t*8-0.75)*(2*Math.PI/3))+1; };
+  const prg  = (t,s,e) => Math.max(0, Math.min(1, (t-s)/(e-s)));
+  const lerp = (a,b,t) => a + (b-a)*t;
+
+  const grid   = document.getElementById('spGrid');
+  const tg     = document.getElementById('spTG');
+  const trail  = document.getElementById('spT');
+  const glow   = document.getElementById('spGlow');
+  const logo   = document.getElementById('spLogo');
+  const word   = document.getElementById('spWord');
+  const tag    = document.getElementById('spTag');
+  const pill   = document.getElementById('spPill');
+  const corner = document.getElementById('spCorner');
+
+  const t0 = performance.now();
+  function frame() {
+    if (!document.getElementById('appSplash')) return;
+    const t = (performance.now() - t0) / 1000;
+
+    const rP  = prg(t, 0.3, 2.0);
+    const rF  = prg(t, 2.0, 2.6);
+    const mP  = prg(t, 2.0, 2.7);
+    const wP  = prg(t, 2.4, 3.1);
+    const tgP = prg(t, 2.9, 3.6);
+    const fP  = prg(t, 4.8, 5.2);
+
+    const rOp   = lerp(1, 0.06, eo3(rF));
+    const rDash = RLEN * (1 - eo3(rP));
+    const mOp   = eo3(mP);
+    const mSc   = lerp(0.55, 1, spng(mP));
+
+    grid.style.opacity = Math.min(t / 0.3, 1) * 0.04;
+
+    [tg, trail].forEach(p => {
+      p.setAttribute('stroke-dashoffset', rDash);
+      p.style.opacity = rOp;
+    });
+
+    STOPS.forEach((s, i) => {
+      const p  = prg(t, 1.0 + i*0.18, 1.5 + i*0.18);
+      const sc = spng(p);
+      const pin   = document.getElementById(`spPin${i}`);
+      const pulse = document.getElementById(`spPulse${i}`);
+      const po    = document.getElementById(`spPO${i}`);
+      const pi    = document.getElementById(`spPI${i}`);
+      const txt   = pin && pin.querySelector('text');
+      if (!pin) return;
+      pin.style.opacity = eo3(p) * rOp;
+      pulse.setAttribute('r', lerp(8, 14, eo3(p)));
+      pulse.setAttribute('opacity', lerp(0.6, 0, p));
+      po.setAttribute('r', 5 * sc);
+      pi.setAttribute('r', 2 * sc);
+      if (txt) txt.setAttribute('opacity', p);
+    });
+
+    corner.style.opacity = lerp(0, 0.06, eo3(mP));
+    glow.style.opacity   = mOp;
+    logo.style.opacity   = mOp;
+    logo.style.transform = `translate(-50%,-50%) scale(${mSc})`;
+    word.style.opacity   = eo3(wP);
+    word.style.transform = `translate(-50%,${lerp(14, 0, eo3(wP))}px)`;
+    const tOp = eo3(tgP);
+    tag.style.opacity    = tOp;
+    pill.style.opacity   = tOp * 0.5;
+    el.style.opacity     = lerp(1, 0, eo3(fP));
+
+    if (t < 5.3) { requestAnimationFrame(frame); }
+    else { el.classList.add('hide'); setTimeout(() => el.remove(), 500); }
+  }
+  requestAnimationFrame(frame);
+})();
+
 init();
 </script>
 
