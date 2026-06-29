@@ -513,6 +513,7 @@
   .jd-metric-val span{font-size:13px;color:var(--text3);font-weight:400;}
   .jd-prog{height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:7px;}
   .jd-prog-fill{height:100%;background:var(--fern);border-radius:99px;}
+  .jd-mini-map{display:none;}
   .jd-leg{margin-bottom:16px;position:relative;}
   .jd-leg-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
   .jd-leg-gutter{display:flex;align-items:center;flex-shrink:0;}
@@ -986,11 +987,19 @@
   .mytrips-tab{font-size:15px !important;padding:10px 2px !important;font-weight:400 !important;border-bottom-width:2px !important;}
   .mytrips-tab.on{font-weight:600 !important;border-bottom-color:var(--dusk) !important;color:var(--dusk) !important;}
   .mytrips-jgrid{grid-template-columns:1fr !important;}
-  .jd-header{flex-direction:column;align-items:flex-start;gap:8px;}
+  .jd-back{display:none !important;}
+  .jd-kicker{display:none !important;}
+  .jd-header{flex-direction:column !important;align-items:flex-start !important;gap:4px !important;margin-bottom:12px !important;}
+  .jd-header-actions{flex-wrap:wrap !important;gap:8px !important;margin-top:6px !important;}
+  .jd-collab-wrap{display:none !important;}
+  .jd-rec-cta{font-size:12px !important;padding:5px 10px !important;}
   .jd-title{font-size:20px !important;}
   .jd-summary{grid-template-columns:repeat(2,1fr) !important;}
   .jd-leg-cards{grid-template-columns:1fr !important;}
   .jd-tabs{flex-wrap:wrap;}
+  .res-overview-card{display:none !important;}
+  .jd-tab.rec{display:none !important;}
+  .jd-mini-map{display:block !important;height:160px !important;border-radius:10px;overflow:hidden;margin-bottom:14px;}
   .rj-header{flex-wrap:wrap;gap:8px;}
   .rj-card-grid{grid-template-columns:1fr !important;}
   .rj-sticky{bottom:64px !important;}
@@ -4880,6 +4889,15 @@ function renderJourneyDetail() {
   el.innerHTML = h;
 
   if (_jdTab === 'map') jdInitMap(stops, legs);
+  if (_jdTab === 'journey' && window.innerWidth <= 640) jdInitMiniMap(stops, legs);
+
+  // Update mobile header: title = trip name, FAB hidden in journey detail
+  if (window.innerWidth <= 640) {
+    const titleEl = document.getElementById('mobileHeaderTitle');
+    if (titleEl) titleEl.textContent = t.title || (stops[0]?.name?.split(',')[0] + ' → ' + stops[stops.length-1]?.name?.split(',')[0]) || 'Journey';
+    const fab = document.getElementById('mobileHeaderFab');
+    if (fab) fab.style.setProperty('display', 'none', 'important');
+  }
 }
 
 function jdJourneyTabHTML(t, stops, legs, m) {
@@ -4890,8 +4908,11 @@ function jdJourneyTabHTML(t, stops, legs, m) {
   const ds = stops.map(s => s.date ? new Date(s.date + 'T00:00') : null).filter(Boolean);
   const duration = ds.length >= 2 ? Math.round((ds[ds.length-1] - ds[0]) / 864e5) : stops.reduce((a,s)=>a+(+s.days||0),0);
 
+  // Mini-map (mobile only — shown via CSS, hidden on desktop)
+  let h = `<div class="jd-mini-map" id="jdMiniMap"></div>`;
+
   // Summary strip
-  let h = `<div class="jd-summary">
+  h += `<div class="jd-summary">
     <div class="jd-metric"><div class="jd-metric-lbl">Progress</div><div class="jd-metric-val">${m.visited}<span> / ${m.total} visited</span></div><div class="jd-prog"><div class="jd-prog-fill" style="width:${pct}%"></div></div></div>
     <div class="jd-metric"><div class="jd-metric-lbl">Spent</div><div class="jd-metric-val">${spent}<span> / ${budget||'—'} ${cur}</span></div></div>
     <div class="jd-metric"><div class="jd-metric-lbl">Stops</div><div class="jd-metric-val">${m.total}<span> cities</span></div></div>
@@ -5275,6 +5296,29 @@ async function jdInitMap(stops, legs) {
   </div>`;
   const listEl = document.getElementById('jdStopList');
   if (listEl) listEl.innerHTML = rows + legend;
+}
+
+let _jdMiniMap = null;
+async function jdInitMiniMap(stops, legs) {
+  const el = document.getElementById('jdMiniMap');
+  if (!el) return;
+  el.innerHTML = '<div id="jdMiniMapEl" style="width:100%;height:100%"></div>';
+  const coords = [];
+  for (const s of stops) {
+    if (!s.name) continue;
+    const g = await geocodeStop(s.name);
+    if (g) coords.push([g.lat, g.lon]);
+    if (!document.getElementById('jdMiniMap')) return; // navigated away
+  }
+  const mapEl = document.getElementById('jdMiniMapEl');
+  if (!mapEl || coords.length < 2) return;
+  if (_jdMiniMap) { try { _jdMiniMap.remove(); } catch(e){} _jdMiniMap = null; }
+  _jdMiniMap = L.map('jdMiniMapEl', { zoomControl:false, attributionControl:false, scrollWheelZoom:false, dragging:false, touchZoom:false });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_jdMiniMap);
+  L.polyline(coords, { color:'#FF5014', weight:2.5, opacity:0.8, dashArray:'5 7' }).addTo(_jdMiniMap);
+  L.circleMarker(coords[0], { radius:5, color:'#fff', weight:2, fillColor:'#091022', fillOpacity:1 }).addTo(_jdMiniMap);
+  L.circleMarker(coords[coords.length-1], { radius:5, color:'#fff', weight:2, fillColor:'#FF5014', fillOpacity:1 }).addTo(_jdMiniMap);
+  _jdMiniMap.fitBounds(L.latLngBounds(coords).pad(0.2));
 }
 
 // ── [07] Record Journal screen ─────────────────────────────────────
@@ -6343,7 +6387,7 @@ function mobileHeaderSync(id) {
     backBtn.onclick = isDetail ? () => switchTab('mytrips', document.getElementById('navbtn_mytrips')) : null;
   }
   const fab = document.getElementById('mobileHeaderFab');
-  if (fab) fab.style.display = id === 'mytrips' ? 'flex' : 'none';
+  if (fab) fab.style.setProperty('display', id === 'mytrips' ? 'flex' : 'none', 'important');
 }
 
 // ── Start ─────────────────────────────────────────────────────────
