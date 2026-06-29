@@ -1,7 +1,7 @@
 // By Sloth — Service Worker
 // Cache-first for app shell; network-only for Supabase, Reddit, geocoding APIs.
 
-const CACHE_NAME = 'slw-v3';
+const CACHE_NAME = 'slw-v4';
 const SHELL_URLS = [
   '/app/',
   '/auth.html',

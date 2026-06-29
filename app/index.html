@@ -53,7 +53,6 @@
   .nav-avatar-menu button{display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;font-size:13px;font-family:var(--body);color:var(--text);cursor:pointer;transition:background .15s;}
   .nav-avatar-menu button:hover{background:var(--bg2);}
   .nav-avatar-menu .nav-menu-signout{color:#C4622D;border-top:0.5px solid var(--border);}
-  @media(max-width:640px){.nav-avatar-wrap{display:none !important;}}
   .btn{font-size:13px;padding:7px 16px;border:0.5px solid var(--border2);border-radius:var(--radius-pill);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--body);transition:all 0.2s ease;font-weight:500;}
   .btn:hover{background:var(--bg2);color:var(--text);border-color:var(--text2);}
   .btn:disabled{opacity:0.4;cursor:default;}
@@ -67,8 +66,6 @@
   .trip-title:focus{color:var(--fern);}
   .trip-title::placeholder{color:var(--text3);font-weight:300;}
   .panel{display:none;animation: fadeIn 0.3s ease;}.panel.active{display:block;}
-  @media(max-width:700px){.nav-links{display:none;}}
-  @media(max-width:500px){.nav-utils .btn:not(.btn-primary){display:none;}}
   @keyframes fadeIn { from {opacity:0; transform: translateY(5px);} to {opacity:1; transform: translateY(0);} }
   .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.2rem;box-shadow: var(--shadow);}
   #planSearchForm.editing .card{margin-bottom:2px;}
@@ -292,7 +289,6 @@
   .leg-col-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
   .leg-col .search-links{margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border);}
   .leg-col .stay-toggle{margin-top:2px;}
-  @media(max-width:640px){.leg-grid{grid-template-columns:1fr;}}
   .stop-diary{width:100%;border:none;background:transparent;resize:none;font-size:12px;color:var(--text2);font-family:var(--body);line-height:1.5;outline:none;padding:4px 0 0;margin-top:6px;min-height:36px;}
   .stop-diary::placeholder{color:var(--text3);}
   .stop-diary:focus{color:var(--text);}
@@ -315,7 +311,6 @@
   .trip-card:hover{border-color:var(--border2);}
   .trip-card-title{font-size:14px;font-weight:500;margin-bottom:4px;}
   .trip-card-meta{font-size:12px;color:var(--text2);}
-  @media(max-width:600px){.sumbar{grid-template-columns:repeat(2,minmax(0,1fr));}}
 
   /* ── My Trip redesign ─────────────────────────────────────────── */
   /* Trip header row */
@@ -357,11 +352,6 @@
   .leg-expand-chevron.open{transform:rotate(180deg);}
   .leg-detail{padding:10px 12px 12px;border-top:0.5px solid var(--border);animation:fadeIn .15s ease;}
 
-  @media(max-width:600px){
-    .booking-progress{flex-direction:column;align-items:flex-start;gap:8px;}
-    .leg-summary-row{flex-wrap:wrap;gap:6px;}
-  }
-
   /* ── Leg col variant: white bg for trip detail cols ── */
   .leg-col-b{background:var(--bg);}
 
@@ -374,7 +364,6 @@
   .plan-hero-sub{color:var(--text2);font-size:14px;line-height:1.6;max-width:480px;margin:12px auto 0;}
   .plan-hero-photo-wrap{flex-shrink:0;width:44%;max-width:320px;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:4/3;box-shadow:var(--shadow-float);}
   .plan-hero-photo{width:100%;height:100%;object-fit:cover;display:block;}
-  @media(max-width:640px){.plan-hero-new{flex-direction:column;padding:1.5rem 0 1rem;}.plan-hero-photo-wrap{width:100%;max-width:none;aspect-ratio:16/7;}}
   /* ── Plan search card — new design ──────────────────── */
   .psc-card{padding:0 !important;margin-bottom:0 !important;overflow:hidden;}
   .psc-from-to{display:grid;grid-template-columns:1fr 40px 1fr;}
@@ -383,7 +372,10 @@
   .psc-inp{width:100%;font-size:20px;font-weight:600;color:var(--text);border:none;background:transparent;outline:none;font-family:var(--body);letter-spacing:-0.3px;}
   .psc-inp::placeholder{color:var(--text3);font-weight:400;}
   .psc-arrow{display:flex;align-items:center;justify-content:center;}
-  .psc-arrow-circle{width:30px;height:30px;border-radius:50%;background:var(--bg2);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:14px;line-height:1;}
+  .psc-arrow-circle{width:30px;height:30px;border-radius:50%;background:var(--bg2);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:14px;line-height:1;cursor:pointer;transition:background .15s;}
+  .psc-arrow-circle:hover{background:var(--border);}
+  .psc-slot-icon{display:none;color:var(--text3);font-size:20px;flex-shrink:0;}
+  .psc-slot-row{display:flex;align-items:center;gap:10px;}
   .psc-footer{border-top:0.5px solid var(--border);display:flex;flex-direction:column;}
   .psc-footer-opts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;}
   .psc-footer-cta{display:flex;align-items:center;justify-content:flex-end;padding:12px 16px;border-top:0.5px solid var(--border);}
@@ -398,7 +390,6 @@
 
   /* ── Plan landing grid ──────────────────────────────── */
   .plan-landing-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:1.2rem;}
-  @media(max-width:640px){.plan-landing-grid{grid-template-columns:1fr;}}
   .plan-landing-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;box-shadow:var(--shadow);}
   .plan-landing-card-hdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
   .corridor-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:9px 0;border-top:0.5px dashed var(--border);cursor:pointer;}
@@ -448,8 +439,6 @@
   #plannerMapWrap.pmw-pill .pmw-title{font-size:12px;}
   #plannerMapWrap.pmw-pill .pmw-btn-expand,#plannerMapWrap.pmw-pill .pmw-btn-min{display:none;}
   #plannerMapWrap.pmw-pill #plannerMap{display:none;}
-  @media(max-width:600px){#plannerMapWrap{width:calc(100vw - 28px);right:14px;bottom:14px;}#plannerMap{height:42vh;max-height:300px;}.pmw-resize{display:none !important;}}
-
   /* ── Screen 04 · Route Results redesign ─────────────── */
   #planResult{padding:0;background:transparent;border:none;box-shadow:none;}
   .res-overview-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:16px;overflow:hidden;}
@@ -475,12 +464,6 @@
   .res-leg-contrib{margin-top:8px;margin-left:24px;}
   .res-card .search-links{margin-top:0;padding-top:0;border-top:none;gap:5px;}
   .res-card .search-links-label{display:none;}
-  @media(max-width:640px){
-    .res-leg-cards{grid-template-columns:1fr;margin-left:0;}
-    .res-leg-contrib{margin-left:0;}
-    .advisory-grid{grid-template-columns:1fr;}
-  }
-
   /* ── [06] Journey Detail screen ── */
   .jd-back{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--text3);cursor:pointer;margin-bottom:12px;}
   .jd-back:hover{color:var(--text);}
@@ -589,8 +572,6 @@
   .jd-sname{font-size:14px;font-weight:600;color:var(--text);}
   .jd-smeta{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;}
   .jd-legend-meta{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text3);}
-  @media(max-width:640px){.jd-summary{grid-template-columns:1fr 1fr;}.jd-leg-cards{grid-template-columns:1fr;margin-left:0;}.jd-diary-wrap{margin-left:0;}}
-
   /* ── Save-to-My-Trips modal ── */
   .sr-overlay{position:fixed;inset:0;background:rgba(9,16,34,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
   .sr-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);width:400px;max-width:100%;box-shadow:0 24px 60px rgba(9,16,34,0.28);overflow:hidden;}
@@ -760,8 +741,6 @@
   .rj-more-menu button:hover{background:var(--bg2);}
   .rj-more-menu button.danger{color:var(--danger-text);}
   .rj-more-menu button.danger:hover{background:var(--danger-bg);}
-  @media(max-width:640px){.rj-card-grid{grid-template-columns:1fr;}}
-
   /* ── Plan summary strip ─────────────────────────────── */
   .plan-summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
   .plan-sum-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
@@ -821,6 +800,9 @@
   .mytrips-table-row:hover{background:var(--bg2);}
   .mytrips-row-title{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
   .mytrips-row-sub{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono);}
+  .mtr-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .mtr-title{font-size:15px;font-weight:600;color:var(--text);}
+  .mytrips-new-btn{} /* base — desktop keeps btn-primary style */
   .mytrips-status-pill{font-size:9px;padding:2px 8px;border-radius:var(--radius-pill);border-width:0.5px;border-style:solid;white-space:nowrap;font-family:var(--mono);}
   .mytrips-row-actions{display:flex;gap:5px;align-items:center;justify-content:flex-end;}
   .mytrips-act-btn{font-size:11px;padding:4px 11px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--body);transition:all .15s;white-space:nowrap;}
@@ -843,14 +825,6 @@
   .mytrips-yearly{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-top:1.25rem;}
   .status-pill{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:99px;text-align:center;white-space:nowrap;display:inline-block;}
   .mytrips-yearly{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:1.5rem;}
-  @media(max-width:640px){
-    .mytrips-table-hdr{grid-template-columns:1fr 90px;}
-    .mytrips-table-hdr span:not(:first-child):not(:last-child){display:none;}
-    .mytrips-table-row{grid-template-columns:1fr 90px;}
-    .mytrips-table-row > *:nth-child(n+2):not(:last-child){display:none;}
-    .mytrips-yearly{grid-template-columns:repeat(2,1fr);}
-  }
-
   /* ── Budget progress bar ────────────────────────────── */
   .budget-bar-wrap{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-top:8px;}
   .budget-bar-kicker{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--fern);font-weight:400;white-space:nowrap;}
@@ -881,115 +855,159 @@
     padding:14px 20px;border-radius:var(--radius);text-decoration:none;
   }
 
-  @media(max-width:640px){
-    body{padding-bottom:64px;}
-    .container{padding:1rem 0.875rem 0;}
-    nav:not(#bottomNav){display:none !important;}
-    .mobile-header{
-      display:flex;align-items:center;height:56px;padding:0 6px;
-      background:var(--bg);border-bottom:0.5px solid var(--border);
-      position:sticky;top:0;z-index:100;
-    }
-    .mobile-header-title{
-      flex:1;padding:0 10px;
-      font-family:var(--serif);font-size:17px;font-weight:600;
-      color:var(--text);line-height:1.2;
-    }
-    .mobile-header-back{
-      display:none;background:none;border:none;cursor:pointer;
-      color:var(--text);padding:8px;-webkit-tap-highlight-color:transparent;
-    }
-    .mobile-header-back.visible{display:flex;align-items:center;justify-content:center;}
-    .bottom-nav{
-      display:flex;
-      position:fixed;top:auto;bottom:0;left:0;right:0;
-      height:56px;
-      background:var(--bg);
-      border-top:0.5px solid var(--border);
-      z-index:200;
-      padding-bottom:env(safe-area-inset-bottom,0px);
-    }
-    .bn-item{
-      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-      gap:2px;border:none;background:none;cursor:pointer;
-      color:var(--text3);
-      font-family:var(--body);padding:6px 0;
-      -webkit-tap-highlight-color:transparent;
-    }
-    .bn-item i{font-size:22px;line-height:1;}
-    .bn-item span{font-family:var(--mono);font-size:8px;letter-spacing:0.5px;text-transform:uppercase;line-height:1.2;font-weight:400;}
-    .bn-item.bn-active{color:var(--sage);}
-    .bn-item.bn-active span{font-weight:600;}
-    #guestBanner{display:none !important;}
-    .plan-hero-new{padding:20px 16px 16px !important;text-align:left !important;}
-    .plan-hero-kicker{font-size:9.5px;}
-    .plan-hero-title{font-size:30px !important;font-weight:300 !important;letter-spacing:-0.5px !important;}
-    .plan-hero-sub{display:none;}
-    .psc-from-to{grid-template-columns:1fr !important;}
-    .psc-slot{padding:14px 16px !important;border-bottom:0.5px solid var(--border);border-left:none !important;}
-    .psc-slot:last-child{border-bottom:none;padding-top:4px !important;}
-    .psc-arrow{display:flex !important;justify-content:flex-start !important;padding:0 14px;height:32px;gap:8px;align-items:center;}
-    .psc-arrow::after{content:'';flex:1;height:0.5px;background:var(--border);align-self:center;}
-    .psc-inp{font-size:21px !important;}
-    .psc-slot-icon{display:block;}
-    .psc-footer{gap:0;}
-    .psc-opts-toggle{display:none !important;}
-    #planOptions{display:flex !important;}
-    .psc-transport-lbl{display:block;}
-    #pacePills{display:none !important;}
-    .psc-inputs-row{display:none !important;}
-    .psc-chips-row .psc-sep{display:none !important;}
-    .psc-footer-opts{padding:10px 16px !important;border-top:0.5px solid var(--border);gap:0;}
-    .psc-footer-cta{flex-direction:column;align-items:stretch;padding:8px 12px 14px !important;gap:8px;border-top:none !important;}
-    .psc-footer-cta .btn-primary{width:100%;padding:13px;justify-content:center;font-size:15px;}
-    #planFormHint{display:none;}
-    .import-route-btn{width:100%;justify-content:center;}
-    .plan-landing-grid{grid-template-columns:1fr !important;}
-    .plan-edit-bar{flex-wrap:wrap;gap:8px;}
-    .sumbar{display:flex !important;overflow-x:auto;gap:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:1.25rem;}
-    .sumbar::-webkit-scrollbar{display:none;}
-    .sumbar .met{flex:0 0 auto;min-width:88px;}
-    .advisory-grid{grid-template-columns:1fr !important;}
-    .leg-grid{grid-template-columns:1fr !important;}
-    #plannerMapWrap{bottom:64px !important;}
-    .mytrips-hdr{flex-direction:column;align-items:flex-start;gap:10px;}
-    .mytrips-serif-title{font-size:22px !important;}
-    .mytrips-table-hdr{display:none !important;}
-    .mytrips-table{border:none !important;background:transparent !important;}
-    .mytrips-table-row{
-      display:flex !important;flex-direction:column;
-      grid-template-columns:unset !important;
-      padding:14px !important;
-      background:var(--bg);border:0.5px solid var(--border);
-      border-radius:var(--radius-lg);margin-bottom:10px;
-      gap:6px;
-    }
-    .mytrips-table-row > *{display:flex !important;align-items:center;}
-    .mytrips-yearly{grid-template-columns:repeat(2,1fr) !important;}
-    .mytrips-tabs{flex-wrap:wrap;gap:6px;}
-    .mytrips-jgrid{grid-template-columns:1fr !important;}
-    .jd-header{flex-direction:column;align-items:flex-start;gap:8px;}
-    .jd-title{font-size:20px !important;}
-    .jd-summary{grid-template-columns:repeat(2,1fr) !important;}
-    .jd-leg-cards{grid-template-columns:1fr !important;}
-    .jd-tabs{flex-wrap:wrap;}
-    .rj-header{flex-wrap:wrap;gap:8px;}
-    .rj-card-grid{grid-template-columns:1fr !important;}
-    .rj-sticky{bottom:64px !important;}
-    .rj-gutter{display:none;}
-    .jrnl-header-top{flex-direction:column;gap:10px;}
-    .jrnl-search{width:100% !important;}
-    .jrnl-search input{width:100% !important;}
-    .jrnl-featured{grid-template-columns:1fr !important;}
-    .jrnl-feat-img{height:180px;}
-    .jrnl-body{padding:16px !important;}
-    .profile-hero-grid{grid-template-columns:56px 1fr !important;gap:12px !important;}
-    .profile-hero-grid > *:nth-child(3){grid-column:1 / -1;text-align:left;}
-    .profile-meta-grid{grid-template-columns:1fr !important;}
-    .profile-badges-grid{display:flex !important;overflow-x:auto;gap:10px;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;}
-    .profile-badges-grid::-webkit-scrollbar{display:none;}
-    .profile-badges-grid > div{flex:0 0 82px;}
+</style>
+<style id="mobile">
+/* ── 700px — nav collapse ─────────────────── */
+@media(max-width:700px){
+  .nav-links{display:none;}
+}
+/* ── 500px — narrow phones ────────────────── */
+@media(max-width:500px){
+  .nav-utils .btn:not(.btn-primary){display:none;}
+}
+/* ── 600px ────────────────────────────────── */
+@media(max-width:600px){
+  .booking-progress{flex-direction:column;align-items:flex-start;gap:8px;}
+  .leg-summary-row{flex-wrap:wrap;gap:6px;}
+  #plannerMapWrap{width:calc(100vw - 28px);right:14px;bottom:14px;}
+  #plannerMap{height:42vh;max-height:300px;}
+  .pmw-resize{display:none !important;}
+}
+/* ── 640px — mobile ───────────────────────── */
+@media(max-width:640px){
+  .nav-avatar-wrap{display:none !important;}
+  .jrnl-grid{grid-template-columns:1fr !important;}
+  .elev-footer span:last-child{display:none;}
+  .plan-hero-new{flex-direction:column;padding:1.5rem 0 1rem;}
+  .plan-hero-photo-wrap{width:100%;max-width:none;aspect-ratio:16/7;}
+  .res-leg-cards{grid-template-columns:1fr;margin-left:0;}
+  .res-leg-contrib{margin-left:0;}
+  .advisory-grid{grid-template-columns:1fr;}
+  .jd-summary{grid-template-columns:1fr 1fr;}
+  .jd-leg-cards{grid-template-columns:1fr;margin-left:0;}
+  .jd-diary-wrap{margin-left:0;}
+  .rj-card-grid{grid-template-columns:1fr;}
+  body{overflow:hidden;height:100dvh;}
+  .container{padding:1rem 0.875rem 0;height:calc(100dvh - 112px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  nav:not(#bottomNav){display:none !important;}
+  .mobile-header{
+    display:flex;align-items:center;height:56px;padding:0 6px;
+    background:var(--bg);border-bottom:0.5px solid var(--border);
+    position:sticky;top:0;z-index:100;
   }
+  .mobile-header-title{
+    flex:1;padding:0 10px;
+    font-family:var(--serif);font-size:17px;font-weight:600;
+    color:var(--text);line-height:1.2;
+  }
+  .mobile-header-back{
+    display:none;background:none;border:none;cursor:pointer;
+    color:var(--text);padding:8px;-webkit-tap-highlight-color:transparent;
+  }
+  .mobile-header-back.visible{display:flex;align-items:center;justify-content:center;}
+  .bottom-nav{
+    display:flex;
+    position:fixed;top:auto;bottom:0;left:0;right:0;
+    height:56px;
+    background:var(--bg);
+    border-top:0.5px solid var(--border);
+    z-index:200;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .bn-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:2px;border:none;background:none;cursor:pointer;
+    color:var(--text3);
+    font-family:var(--body);padding:6px 0;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .bn-item i{font-size:22px;line-height:1;}
+  .bn-item span{font-family:var(--mono);font-size:8px;letter-spacing:0.5px;text-transform:uppercase;line-height:1.2;font-weight:400;}
+  .bn-item.bn-active{color:var(--sage);}
+  .bn-item.bn-active span{font-weight:600;}
+  #guestBanner{display:none !important;}
+  .plan-hero-new{padding:20px 16px 16px !important;text-align:left !important;}
+  .plan-hero-kicker{font-size:9.5px;}
+  .plan-hero-title{font-size:30px !important;font-weight:300 !important;letter-spacing:-0.5px !important;}
+  .plan-hero-sub{display:none;}
+  .psc-from-to{grid-template-columns:1fr !important;}
+  .psc-slot{padding:14px 16px !important;border-bottom:none !important;border-left:none !important;}
+  .psc-slot:last-child{padding-top:4px !important;}
+  .psc-arrow{display:flex !important;justify-content:flex-start !important;padding:0 14px;height:28px;gap:8px;align-items:center;}
+  .psc-arrow::after{content:'';flex:1;height:0.5px;background:var(--border);align-self:center;}
+  .psc-inp{font-size:21px !important;}
+  .psc-slot-icon{display:block;}
+  .psc-slot-row{gap:12px;}
+  .psc-inp{flex:1;}
+  .psc-footer{gap:0;}
+  .psc-opts-toggle{display:none !important;}
+  #planOptions{display:flex !important;}
+  .psc-transport-lbl{display:block;}
+  #pacePills{display:none !important;}
+  .psc-inputs-row{display:none !important;}
+  .psc-chips-row .psc-sep{display:none !important;}
+  .psc-footer-opts{padding:10px 16px !important;border-top:0.5px solid var(--border);gap:0;}
+  .psc-footer-cta{flex-direction:column;align-items:stretch;padding:8px 12px 14px !important;gap:8px;border-top:none !important;}
+  .psc-footer-cta .btn-primary{width:100%;padding:13px;justify-content:center;font-size:15px;}
+  #planFormHint{display:none;}
+  .import-route-btn{width:100%;justify-content:center;}
+  .plan-landing-grid{grid-template-columns:1fr !important;}
+  .plan-edit-bar{flex-wrap:wrap;gap:8px;}
+  .sumbar{display:flex !important;overflow-x:auto;gap:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:1.25rem;}
+  .sumbar::-webkit-scrollbar{display:none;}
+  .sumbar .met{flex:0 0 auto;min-width:88px;}
+  .advisory-grid{grid-template-columns:1fr !important;}
+  .leg-grid{grid-template-columns:1fr !important;}
+  #plannerMapWrap{bottom:64px !important;}
+  .mytrips-hdr{display:none !important;}
+  .mytrips-serif-title{font-size:22px !important;}
+  .mytrips-table-hdr{display:none !important;}
+  .mtr-head{justify-content:space-between !important;flex-wrap:nowrap !important;align-items:flex-start !important;}
+  .mtr-title{font-size:15px;font-weight:600;}
+  .mytrips-status-pill{font-size:9px;white-space:nowrap;flex-shrink:0;}
+  .mytrips-table-row > .mtr-dist{display:none !important;}
+  .mytrips-new-btn{width:40px !important;height:40px !important;border-radius:50% !important;padding:0 !important;font-size:0 !important;display:flex !important;align-items:center;justify-content:center;background:var(--sage) !important;border:none !important;box-shadow:0 2px 8px color-mix(in srgb,var(--sage) 40%,transparent);}
+  .mytrips-new-btn::before{content:'+';font-size:24px;font-weight:300;line-height:1;color:#fff;}
+  .mytrips-table{border:none !important;background:transparent !important;}
+  .mytrips-table-row{
+    display:flex !important;flex-direction:column;align-items:stretch !important;
+    grid-template-columns:unset !important;
+    padding:14px !important;
+    background:var(--bg);border:0.5px solid var(--border);
+    border-radius:var(--radius-lg);margin-bottom:10px;
+    gap:6px;
+  }
+  .mytrips-table-row > *{display:flex !important;align-items:center;width:100%;}
+  .mytrips-table-row > *:first-child{flex-direction:column !important;align-items:flex-start !important;gap:4px;}
+  .mtr-head{width:100% !important;}
+  .mytrips-row-actions{justify-content:flex-start !important;width:100%;}
+  .mytrips-yearly{grid-template-columns:repeat(2,1fr) !important;}
+  .mytrips-tabs{gap:48px !important;margin-bottom:1rem !important;}
+  .mytrips-tab{font-size:15px !important;padding:10px 2px !important;font-weight:400 !important;border-bottom-width:2px !important;}
+  .mytrips-tab.on{font-weight:600 !important;border-bottom-color:var(--dusk) !important;color:var(--dusk) !important;}
+  .mytrips-jgrid{grid-template-columns:1fr !important;}
+  .jd-header{flex-direction:column;align-items:flex-start;gap:8px;}
+  .jd-title{font-size:20px !important;}
+  .jd-summary{grid-template-columns:repeat(2,1fr) !important;}
+  .jd-leg-cards{grid-template-columns:1fr !important;}
+  .jd-tabs{flex-wrap:wrap;}
+  .rj-header{flex-wrap:wrap;gap:8px;}
+  .rj-card-grid{grid-template-columns:1fr !important;}
+  .rj-sticky{bottom:64px !important;}
+  .rj-gutter{display:none;}
+  .jrnl-header-top{flex-direction:column;gap:10px;}
+  .jrnl-search{width:100% !important;}
+  .jrnl-search input{width:100% !important;}
+  .jrnl-featured{grid-template-columns:1fr !important;}
+  .jrnl-feat-img{height:180px;}
+  .jrnl-body{padding:16px !important;}
+  .profile-hero-grid{grid-template-columns:56px 1fr !important;gap:12px !important;}
+  .profile-hero-grid > *:nth-child(3){grid-column:1 / -1;text-align:left;}
+  .profile-meta-grid{grid-template-columns:1fr !important;}
+  .profile-badges-grid{display:flex !important;overflow-x:auto;gap:10px;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;}
+  .profile-badges-grid::-webkit-scrollbar{display:none;}
+  .profile-badges-grid > div{flex:0 0 82px;}
+}
 </style>
 </head>
 <body>
@@ -997,6 +1015,7 @@
 <div class="mobile-header" id="mobileHeader">
   <button class="mobile-header-back" id="mobileHeaderBack"><i class="ph ph-arrow-left" style="font-size:20px"></i></button>
   <div class="mobile-header-title" id="mobileHeaderTitle">Planner</div>
+  <button class="mytrips-new-btn" id="mobileHeaderFab" style="display:none;margin-right:8px" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New trip</button>
 </div>
 
 <nav>
@@ -1005,7 +1024,7 @@
     <button class="nav-link active" id="navbtn_plan"      onclick="switchTab('plan',this)">Plan</button>
     <button class="nav-link"        id="navbtn_mytrips"  onclick="switchTab('mytrips',this)">My Trips</button>
     <button class="nav-link"        id="navbtn_journals" onclick="switchTab('journals',this)">Journals</button>
-    <button class="nav-link"        id="navbtn_profile"  onclick="switchTab('profile',this)" style="display:none">Profile</button>
+    <button class="nav-link"        id="navbtn_profile"  onclick="switchTab('profile',this)">Profile</button>
     <button class="nav-link"        id="navbtn_admin"    onclick="switchTab('admin',this)">Admin</button>
     <div class="nav-vsep"></div>
     <div class="nav-avatar-wrap" id="navAvatarWrap">
@@ -1060,12 +1079,22 @@
       <div class="psc-from-to">
         <div class="psc-slot">
           <div class="psc-slot-lbl">From</div>
-          <input class="psc-inp" id="pFrom" placeholder="e.g. Istanbul"/>
+          <div class="psc-slot-row">
+            <i class="ph ph-map-pin psc-slot-icon"></i>
+            <input class="psc-inp" id="pFrom" placeholder="e.g. Istanbul"/>
+          </div>
         </div>
-        <div class="psc-arrow"><div class="psc-arrow-circle">→</div></div>
+        <div class="psc-arrow">
+          <div class="psc-arrow-circle" onclick="swapFromTo()" title="Swap">
+            <i class="ph ph-arrows-down-up" style="font-size:14px"></i>
+          </div>
+        </div>
         <div class="psc-slot" style="border-left:0.5px solid var(--border)">
           <div class="psc-slot-lbl">To</div>
-          <input class="psc-inp" id="pTo" placeholder="e.g. Kathmandu"/>
+          <div class="psc-slot-row">
+            <i class="ph ph-flag psc-slot-icon"></i>
+            <input class="psc-inp" id="pTo" placeholder="e.g. Kathmandu"/>
+          </div>
         </div>
       </div>
       <!-- Options + CTA footer -->
@@ -1757,7 +1786,7 @@ function updateNavAuth() {
   const avatarWrap = document.getElementById('navAvatarWrap');
   const avatar     = document.getElementById('navAvatar');
   const signIn     = document.getElementById('signInBtn');
-  const gatedTabs  = ['navbtn_mytrips','navbtn_journals','navbtn_admin'];
+  const gatedTabs  = ['navbtn_mytrips','navbtn_journals','navbtn_profile','navbtn_admin'];
   if (currentUser) {
     const handle = currentUser.user_metadata?.display_name || currentUser.email?.split('@')[0] || 'U';
     if (avatar) { avatar.textContent = handle.slice(0,1).toUpperCase(); avatar.title = handle; }
@@ -1777,16 +1806,19 @@ function toggleAvatarMenu(e) {
   const menu = document.getElementById('navAvatarMenu');
   if (!menu) return;
   const open = menu.style.display === 'block';
-  menu.style.display = open ? 'none' : 'block';
-  if (!open) {
-    setTimeout(() => document.addEventListener('click', closeAvatarMenuOutside, { once: true }), 0);
+  if (open) {
+    menu.style.display = 'none';
+    document.removeEventListener('click', closeAvatarMenu);
+  } else {
+    menu.style.display = 'block';
+    setTimeout(() => document.addEventListener('click', closeAvatarMenu, { once: true }), 0);
   }
 }
 function closeAvatarMenu() {
   const menu = document.getElementById('navAvatarMenu');
   if (menu) menu.style.display = 'none';
+  document.removeEventListener('click', closeAvatarMenu);
 }
-function closeAvatarMenuOutside() { closeAvatarMenu(); }
 
 function updateMobileSplash() {
   const splash = document.getElementById('mobileSplash');
@@ -2774,6 +2806,14 @@ function switchTab(id, el) {
 }
 
 // ── Plan tab ──────────────────────────────────────────────────────
+function swapFromTo() {
+  const from = document.getElementById('pFrom');
+  const to   = document.getElementById('pTo');
+  const tmp  = from.value;
+  from.value = to.value;
+  to.value   = tmp;
+}
+
 function togglePlanOptions(btn) {
   const panel = document.getElementById('planOptions');
   const arrow = document.getElementById('planOptsArrow');
@@ -3599,7 +3639,7 @@ function renderPlanSuggestion(d, fromCache = false) {
         <path d="${_epLine}" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linejoin="round"/>
       </svg>
       <div style="position:relative;height:18px;margin-top:4px">${_epLbls}</div>
-      <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:0.2px">
+      <div class="elev-footer" style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:0.2px">
         <span>Elevation profile · illustrative</span>
         <span>${_epStops[0]?.name||''}&thinsp;→&thinsp;${_epStops[_epN-1]?.name||''}</span>
       </div>
@@ -4564,15 +4604,15 @@ function renderMyTripsPanel() {
   const trips = (storage.get('trips') || []).slice().reverse();
 
   const stateOf = (t) => {
-    if (t.status === 'maybe') return { label:'Maybe someday', cls:'maybe', color:'var(--bark)' };
+    if (t.status === 'maybe') return { label:'MAYBE', cls:'maybe', color:'var(--bark)' };
     const ls = t.legs || [];
     const allBooked = ls.length && ls.every(l => l.booked);
     const anyBooked = ls.some(l => l.booked);
-    if (allBooked)  return { label:'Confirmed',   cls:'confirmed', color:'var(--moss)' };
-    if (anyBooked)  return { label:'In progress', cls:'progress',  color:'var(--gold)' };
+    if (allBooked)  return { label:'CONFIRMED',   cls:'confirmed', color:'var(--moss)' };
+    if (anyBooked)  return { label:'IN PROGRESS', cls:'progress',  color:'var(--gold)' };
     const hasStops = (t.stops||[]).some(s => s.name);
-    if (hasStops)   return { label:'Planned',     cls:'planned',   color:'var(--fern)' };
-    return             { label:'Draft',        cls:'draft',     color:'var(--text3)' };
+    if (hasStops)   return { label:'PLANNED',     cls:'planned',   color:'var(--fern)' };
+    return             { label:'DRAFT',        cls:'draft',     color:'var(--text3)' };
   };
 
   const header = `<div class="mytrips-hdr">
@@ -4580,7 +4620,7 @@ function renderMyTripsPanel() {
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern)">Your journeys</div>
       <div class="mytrips-serif-title">My <em>trips</em></div>
     </div>
-    <button class="btn btn-primary" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New trip</button>
+    <button class="mytrips-new-btn btn btn-primary" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New trip</button>
   </div>
   <div class="mytrips-tabs">
     <button class="mytrips-tab${_myTripsTab==='trips'?' on':''}" onclick="_myTripsTab='trips';renderMyTripsPanel()">Trips</button>
@@ -4608,15 +4648,22 @@ function renderMyTripsPanel() {
   if (_myTripsTab === 'trips') {
     const tagged = trips.map(t => ({ t, st: stateOf(t) }));
     const rowsHtml = tagged.length ? tagged.map(({ t, st }) => {
-      const sc    = t.stops?.length || 0;
-      const route = sc >= 2 ? `${t.stops[0].name||'?'} → ${t.stops[sc-1].name||'?'}` : '';
-      const name  = (t.title||'').trim();
-      // Primary = user-given name; fall back to route when unnamed.
-      const primary = name || route || 'Untitled';
-      // Subtext = route (only when a name is the primary) + leg count.
-      const sub = [ (name && route) ? route : '', t.legs?.length ? t.legs.length + ' legs' : '' ].filter(Boolean).join(' · ');
-      const dates = t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',year:'numeric'}) : '—';
-      const dist  = t.legs ? Math.round(t.legs.reduce((a,l)=>a+(+l.km||0),0)) : 0;
+      const sc       = t.stops?.length || 0;
+      const legs     = t.legs || [];
+      const route    = sc >= 2 ? `${t.stops[0].name?.split(',')[0]||'?'} → ${t.stops[sc-1].name?.split(',')[0]||'?'}` : '';
+      const name     = (t.title||'').trim();
+      const primary  = name || route || 'Untitled';
+      // Duration from stop dates
+      const stopDates = (t.stops||[]).map(s => s.date ? new Date(s.date+'T12:00') : null).filter(Boolean);
+      const totalDays = stopDates.length >= 2 ? Math.round((stopDates[stopDates.length-1]-stopDates[0])/864e5) : 0;
+      // Sub: route · Xd (or leg count fallback)
+      const sub = [name ? route : '', totalDays ? totalDays+'d' : (legs.length ? legs.length+' legs' : '')].filter(Boolean).join(' · ');
+      // Date range for meta row
+      const fmtD = d => d.toLocaleDateString('en',{month:'short',day:'numeric'});
+      const dateRange = stopDates.length >= 2
+        ? `${fmtD(stopDates[0])} — ${fmtD(stopDates[stopDates.length-1])}`
+        : (t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',year:'numeric'}) : '—');
+      const dist = Math.round(legs.reduce((a,l)=>a+(+l.km||0),0));
       const safeT = JSON.stringify(t).replace(/"/g,'&quot;');
       const isMaybe = st.cls === 'maybe';
       // Trip lifecycle: recording in progress vs. published journal.
@@ -4625,19 +4672,19 @@ function renderMyTripsPanel() {
       const isRecording = hasActivity && !isPublished;
       return `<div class="mytrips-table-row" style="cursor:pointer;${isMaybe?'opacity:0.65':''}" onclick="openJourneyDetail(${safeT})" title="View journey">
         <div>
-          <div class="mytrips-row-title">
-            ${primary}
+          <div class="mtr-head">
+            <span class="mtr-title">${primary}</span>
             <span class="mytrips-status-pill" style="border-color:${st.color};color:${st.color};background:color-mix(in srgb,${st.color} 10%,transparent)">${st.label}</span>
           </div>
           ${sub ? `<div class="mytrips-row-sub">${sub}</div>` : ''}
         </div>
-        <div style="font-size:12px;color:var(--text2);font-family:var(--mono)">${dates}</div>
-        <div style="font-size:13px;color:var(--text2)">${sc} <span style="color:var(--text3);font-size:11px">· ${dist?dist+'km':''}</span></div>
+        <div class="mtr-date" style="font-size:12px;color:var(--text2);font-family:var(--mono)">${dateRange}${sc ? ' · '+sc+' stops' : ''}</div>
+        <div class="mtr-dist" style="font-size:13px;color:var(--text2)">${sc} <span style="color:var(--text3);font-size:11px">· ${dist?dist+'km':''}</span></div>
         <div class="mytrips-row-actions">
           <button class="mytrips-act-btn" onclick="event.stopPropagation();openJourneyDetail(${safeT})">View</button>
           <button class="mytrips-act-btn" onclick="event.stopPropagation();loadTrip(${safeT},'edit')">Edit</button>
           ${isRecording ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openRecordJournal(${safeT})"><span class="mytrips-rec-dot"></span> Recording</button>` : ''}
-          ${isPublished ? `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();openRecordJournal(${safeT})"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>` : ''}
+          ${(isRecording||isPublished) ? `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();openRecordJournal(${safeT})"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>` : ''}
         </div>
       </div>`;
     }).join('') : `<div style="padding:2.5rem;text-align:center;font-size:13px;color:var(--text3)">No trips yet.</div>`;
@@ -6295,6 +6342,8 @@ function mobileHeaderSync(id) {
     backBtn.classList.toggle('visible', isDetail);
     backBtn.onclick = isDetail ? () => switchTab('mytrips', document.getElementById('navbtn_mytrips')) : null;
   }
+  const fab = document.getElementById('mobileHeaderFab');
+  if (fab) fab.style.display = id === 'mytrips' ? 'flex' : 'none';
 }
 
 // ── Start ─────────────────────────────────────────────────────────
@@ -6353,7 +6402,10 @@ init();
   </div>
 </div>
 <script>
-  if (window.innerWidth <= 640) document.getElementById('mobileSplash').classList.add('show');
+  // Only show splash if on mobile AND no Supabase session in localStorage (avoids flash for logged-in users)
+  if (window.innerWidth <= 640 && !localStorage.getItem('sb-xhbgplwahgdmqomgyjuo-auth-token')) {
+    document.getElementById('mobileSplash').classList.add('show');
+  }
 </script>
 </body>
 </html>
