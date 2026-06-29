@@ -1642,7 +1642,7 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   const isGuest = params.get('guest') === '1';
   if (appSettings.login_required && !currentUser && !isGuest) {
-    window.location.href = 'index.html'; return;
+    if (!window.Capacitor) { window.location.href = 'index.html'; return; }
   }
 
   // Demo data: ?seed=1 loads sample trips/route/notes; ?seed=clear wipes them.
@@ -1851,7 +1851,7 @@ function updateMobileSplash() {
 
 async function signOut() {
     await sb.auth.signOut();
-    window.location.href = 'index.html';
+    if (!window.Capacitor) window.location.href = 'index.html';
 }
 
 // ── Usage bars ────────────────────────────────────────────────────
