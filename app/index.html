@@ -862,11 +862,16 @@
   background:#091022;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
   transition:opacity 0.4s ease, visibility 0.4s ease;
+  animation:splashBgBreath 5s ease-in-out infinite;
 }
 #appSplash.hide{opacity:0;visibility:hidden;}
 #appSplashCompassWrap{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   pointer-events:none;animation:splashCompassSpin 80s linear infinite;
+}
+@keyframes splashBgBreath{
+  0%,100%{background:radial-gradient(ellipse at center,#0a1628 0%,#091022 65%)}
+  50%{background:radial-gradient(ellipse at center,#0e1e33 0%,#091022 65%)}
 }
 @keyframes splashCompassSpin{to{transform:rotate(360deg)}}
 @keyframes splashIn{from{opacity:0;transform:scale(0.88)}to{opacity:1;transform:scale(1)}}
