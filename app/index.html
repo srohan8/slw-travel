@@ -5863,7 +5863,14 @@ function recSetCoverImage(input) {
   reader.readAsDataURL(file);
 }
 function recStopRecording() { _recPub = { open:true, audience:'friends', done:false, coverImage: _recTrip?.cover_image || null }; recRenderPublish(); }
-function recOpenPublish() { _recPub.open = true; _recPub.done = false; if (!_recPub.coverImage) _recPub.coverImage = _recTrip?.cover_image || null; recRenderPublish(); }
+function recOpenPublish() {
+  const t = _recTrip;
+  _recPub.open = true;
+  _recPub.done = false;
+  if (!_recPub.coverImage) _recPub.coverImage = t?.cover_image || null;
+  if (t?.visibility) _recPub.audience = t.visibility;
+  recRenderPublish();
+}
 function recSetAudience(v) { _recPub.audience = v; recRenderPublish(); }
 function recPublishSlug() {
   const t = _recTrip; const first=(t.stops[0]?.name||'trip').toLowerCase(); const last=(t.stops[t.stops.length-1]?.name||'').toLowerCase();
@@ -5875,7 +5882,7 @@ function recRenderPublish() {
   if (!_recPub.open) { el.style.display='none'; el.innerHTML=''; return; }
   el.style.display = 'block';
   const t = _recTrip;
-  const defName = `${t.stops[0]?.name||''} → ${t.stops[t.stops.length-1]?.name||''}${t.title?` · ${t.title}`:''}`;
+  const defName = t.journal_title || `${t.stops[0]?.name||''} → ${t.stops[t.stops.length-1]?.name||''}${t.title?` · ${t.title}`:''}`;
   const link = `bysloth.co/journey/${recPublishSlug()}`;
   el.innerHTML = `<div class="sr-overlay" onclick="if(event.target===this)recClosePublish()">
     <div class="sr-card" style="width:440px">
