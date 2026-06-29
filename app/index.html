@@ -5975,6 +5975,43 @@ function setMyTripsFilter(f) {
 let _jrnlFilter = 'all';
 let _jrnlSearch = '';
 
+function generateRouteThumbnail(trip) {
+  const stops = (trip.stops || []).filter(s => s.name);
+  const n = stops.length;
+  if (n < 2) return null;
+  const W = 400, H = 180;
+  const pts = stops.map((s, i) => {
+    const t = i / (n - 1);
+    const x = 24 + t * (W - 48);
+    const y = H / 2 + Math.sin(i * 1.4 + 0.5) * 30 + Math.cos(i * 0.7) * 12;
+    return [Math.round(x), Math.round(y)];
+  });
+  let d = `M ${pts[0][0]},${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [px, py] = pts[i-1], [cx, cy] = pts[i];
+    d += ` Q ${Math.round((px+cx)/2)},${py} ${cx},${cy}`;
+  }
+  const dots = pts.map(([x, y], i) => {
+    const end = i === 0 || i === n - 1;
+    return `<circle cx="${x}" cy="${y}" r="${end?5:3}" fill="${end?'#FF5014':'#1E3A5C'}" stroke="white" stroke-width="1.5" opacity="0.9"/>`;
+  }).join('');
+  const fl = stops[0].name.split(',')[0], ll = stops[n-1].name.split(',')[0];
+  const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${W}" height="${H}" fill="#F5F2EE"/>
+    <line x1="0" y1="${H/3}" x2="${W}" y2="${H/3}" stroke="#E5E0DA" stroke-width="0.5"/>
+    <line x1="0" y1="${2*H/3}" x2="${W}" y2="${2*H/3}" stroke="#E5E0DA" stroke-width="0.5"/>
+    <line x1="${W/4}" y1="0" x2="${W/4}" y2="${H}" stroke="#E5E0DA" stroke-width="0.5"/>
+    <line x1="${W/2}" y1="0" x2="${W/2}" y2="${H}" stroke="#E5E0DA" stroke-width="0.5"/>
+    <line x1="${3*W/4}" y1="0" x2="${3*W/4}" y2="${H}" stroke="#E5E0DA" stroke-width="0.5"/>
+    <path d="${d} L ${W-24},${H+10} L 24,${H+10} Z" fill="rgba(30,58,92,0.05)"/>
+    <path d="${d}" fill="none" stroke="#1E3A5C" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+    ${dots}
+    <text x="${pts[0][0]+8}" y="${pts[0][1]-9}" font-family="sans-serif" font-size="9" fill="#091022" font-weight="600" opacity="0.65">${fl}</text>
+    <text x="${pts[n-1][0]-8}" y="${pts[n-1][1]-9}" font-family="sans-serif" font-size="9" fill="#FF5014" font-weight="600" text-anchor="end">${ll}</text>
+  </svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
 function renderJournalsPanel() {
   const el = document.getElementById('journalsPanel');
   if (!el) return;
@@ -5993,7 +6030,7 @@ function renderJournalsPanel() {
       sub: `${days||'—'} days · ${stops.length} cities · overland`,
       excerpt: (firstDiary?.diary || t.notes || 'A slow overland journey — trains, buses and ferries.').slice(0,140),
       traveler: uname, avatar: (uname[0]||'Y').toUpperCase(),
-      cover_image: t.cover_image || null,
+      cover_image: t.cover_image || generateRouteThumbnail(t) || null,
       days, cities: stops.length, km, tags: ['My journey'], region: 'all',
       date: t.published_at ? new Date(t.published_at).toLocaleDateString('en',{month:'short',year:'numeric'}) : 'Just now',
     };
