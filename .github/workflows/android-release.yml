@@ -116,7 +116,7 @@ jobs:
           packageName: com.bysloth.app
           releaseFiles: android/app/build/outputs/bundle/release/*.aab
           track: ${{ steps.track.outputs.track }}
-          status: draft
+          status: completed
 
       - name: Clean up secrets
         if: always()
