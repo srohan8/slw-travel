@@ -1,5 +1,5 @@
-[phases.install]
-cmds = ["cd proxy && npm install"]
+[phases.build]
+cmds = ["cd proxy && npm install --production"]
 
 [start]
 cmd = "node proxy/server.js"
