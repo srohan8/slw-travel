@@ -5842,8 +5842,28 @@ async function recInitStickyMap() {
 }
 
 // Stop recording → Publish
-function recStopRecording() { _recPub = { open:true, audience:'friends', done:false }; recRenderPublish(); }
-function recOpenPublish() { _recPub.open = true; _recPub.done = false; recRenderPublish(); }
+function recSetCoverImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 900;
+      const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      _recPub.coverImage = canvas.toDataURL('image/jpeg', 0.82);
+      recRenderPublish();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function recStopRecording() { _recPub = { open:true, audience:'friends', done:false, coverImage: _recTrip?.cover_image || null }; recRenderPublish(); }
+function recOpenPublish() { _recPub.open = true; _recPub.done = false; if (!_recPub.coverImage) _recPub.coverImage = _recTrip?.cover_image || null; recRenderPublish(); }
 function recSetAudience(v) { _recPub.audience = v; recRenderPublish(); }
 function recPublishSlug() {
   const t = _recTrip; const first=(t.stops[0]?.name||'trip').toLowerCase(); const last=(t.stops[t.stops.length-1]?.name||'').toLowerCase();
@@ -5882,6 +5902,15 @@ function recRenderPublish() {
               <button class="btn btn-primary" onclick="recClosePublish();window.open('/journey/'+encodeURIComponent(_recTrip.id),'_blank')">View journal →</button>
             </div>
           </div>`) : `
+          <div class="sr-lbl">Cover photo</div>
+          <div style="position:relative;height:130px;border-radius:8px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;border:0.5px dashed var(--border2);margin-bottom:12px;background:var(--mist)" onclick="document.getElementById('rjCoverInput').click()">
+            ${_recPub.coverImage
+              ? `<img src="${_recPub.coverImage}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
+                 <button onclick="event.stopPropagation();_recPub.coverImage=null;recRenderPublish()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.55);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:1;padding:0">×</button>`
+              : `<div style="text-align:center;color:var(--text3);pointer-events:none"><i class="ph ph-image-square" style="font-size:26px;display:block;margin-bottom:5px"></i><span style="font-size:12px">Click to add cover photo</span></div>`
+            }
+          </div>
+          <input type="file" id="rjCoverInput" accept="image/*" style="display:none" onchange="recSetCoverImage(this)">
           <div class="sr-lbl">Journal name</div>
           <input id="rjPubName" class="sr-input" style="font-size:14px" value="${defName.replace(/"/g,'&quot;')}"/>
           <div class="sr-lbl" style="margin-top:6px">Who can see it?</div>
@@ -5917,6 +5946,7 @@ function recDoPublish() {
     _recTrip.published_at = new Date().toISOString();
     const nameInput = document.getElementById('rjPubName');
     if (nameInput && nameInput.value.trim()) _recTrip.journal_title = nameInput.value.trim();
+    if (_recPub.coverImage) _recTrip.cover_image = _recPub.coverImage;
     recPersist();
   }
   _recPub.done = true; recRenderPublish();
@@ -5963,6 +5993,7 @@ function renderJournalsPanel() {
       sub: `${days||'—'} days · ${stops.length} cities · overland`,
       excerpt: (firstDiary?.diary || t.notes || 'A slow overland journey — trains, buses and ferries.').slice(0,140),
       traveler: uname, avatar: (uname[0]||'Y').toUpperCase(),
+      cover_image: t.cover_image || null,
       days, cities: stops.length, km, tags: ['My journey'], region: 'all',
       date: t.published_at ? new Date(t.published_at).toLocaleDateString('en',{month:'short',year:'numeric'}) : 'Just now',
     };
@@ -5992,7 +6023,9 @@ function renderJournalsPanel() {
 
   const featHtml = featured ? `
     <div class="jrnl-featured">
-      <div class="jrnl-feat-img"><i class="ph ph-image" style="font-size:32px"></i></div>
+      <div class="jrnl-feat-img" style="${featured.cover_image?`background-image:url('${featured.cover_image}');background-size:cover;background-position:center`:''}">
+        ${featured.cover_image?'':'<i class="ph ph-image" style="font-size:32px"></i>'}
+      </div>
       <div class="jrnl-feat-content">
         <div>
           <div class="jrnl-feat-tags">${featured.tags.map(t=>`<span class="jrnl-tag">${t}</span>`).join('')}</div>
@@ -6023,7 +6056,9 @@ function renderJournalsPanel() {
 
   const gridHtml = rest.length ? `<div class="jrnl-grid">${rest.map(j => `
     <div class="jrnl-card" onclick="window.open('${j._tripId?('/journey/'+encodeURIComponent(j._tripId)):'/journey'}','_blank')">
-      <div class="jrnl-card-img"><i class="ph ph-image" style="font-size:24px"></i></div>
+      <div class="jrnl-card-img" style="${j.cover_image?`background-image:url('${j.cover_image}');background-size:cover;background-position:center`:''}">
+        ${j.cover_image?'':'<i class="ph ph-image" style="font-size:24px"></i>'}
+      </div>
       <div class="jrnl-card-body">
         <div class="jrnl-feat-tags">${j.tags.slice(0,2).map(t=>`<span class="jrnl-tag">${t}</span>`).join('')}</div>
         <div class="jrnl-card-title">${j.title}</div>
