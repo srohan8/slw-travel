@@ -4560,7 +4560,7 @@ function renderPlanLanding() {
         const route = sc >= 2 ? `${t.stops[0].name||'?'} → ${t.stops[sc-1].name||'?'}` : t.title||'Trip';
         const meta  = [t.title||'', t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',day:'numeric'}) : ''].filter(Boolean).join(' · ');
         const safeT = JSON.stringify(t).replace(/"/g,'&quot;');
-        return `<div class="recent-trip-row" onclick="loadTrip(${safeT})">
+        return `<div class="recent-trip-row" onclick="openJourneyDetail(${safeT})">
           <div class="recent-trip-title">${route}</div>
           <div class="recent-trip-sub">${meta}</div>
         </div>`;
