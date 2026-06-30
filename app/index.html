@@ -6628,7 +6628,13 @@ function mobileHeaderSync(id) {
   requestAnimationFrame(frame);
 })();
 
-init();
+window.onerror = (msg, src, line, col, err) => {
+  document.body.innerHTML = `<div style="padding:32px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap">JS Error:\n${msg}\n${src}:${line}:${col}</div>`;
+};
+init().catch(e => {
+  document.body.innerHTML = `<div style="padding:32px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap">Init failed:\n${e?.message || e}\n${e?.stack || ''}</div>`;
+  console.error('init()', e);
+});
 </script>
 
 <!-- ── Mobile bottom nav ──────────────────────────────────────── -->
