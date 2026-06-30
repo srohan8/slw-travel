@@ -6,10 +6,28 @@
 <title>bysloth — App</title>
 <link rel="icon" type="image/png" href="../public/bysloth.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Albert+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// Registered before any CDN script below so a load failure or top-level
+// throw anywhere downstream still surfaces a visible error instead of
+// leaving a blank screen (see app/index.html crash post-mortem, v1.1.1).
+// Uses document.write as a fallback because document.body doesn't exist
+// yet if one of the <head> CDN scripts is what fails.
+function showFatalError(text) {
+  const html = `<div style="padding:32px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap">${text}</div>`;
+  if (document.body) document.body.innerHTML = html;
+  else document.write(html);
+}
+window.onerror = (msg, src, line, col, err) => {
+  showFatalError(`JS Error:\n${msg}\n${src}:${line}:${col}\n${err?.stack || ''}`);
+};
+window.addEventListener('unhandledrejection', (e) => {
+  showFatalError(`Unhandled rejection:\n${e.reason?.message || e.reason}\n${e.reason?.stack || ''}`);
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="showFatalError('CDN load failed: supabase-js (cdn.jsdelivr.net unreachable)')"></script>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" onerror="showFatalError('CDN load failed: leaflet.js (unpkg.com unreachable)')"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -6628,9 +6646,8 @@ function mobileHeaderSync(id) {
   requestAnimationFrame(frame);
 })();
 
-window.onerror = (msg, src, line, col, err) => {
-  document.body.innerHTML = `<div style="padding:32px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap">JS Error:\n${msg}\n${src}:${line}:${col}</div>`;
-};
+// window.onerror is registered earlier, in <head>, so it's active before
+// any of the CDN scripts or this block can throw.
 init().catch(e => {
   document.body.innerHTML = `<div style="padding:32px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap">Init failed:\n${e?.message || e}\n${e?.stack || ''}</div>`;
   console.error('init()', e);
