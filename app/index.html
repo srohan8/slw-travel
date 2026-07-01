@@ -1416,7 +1416,10 @@ window.addEventListener('unhandledrejection', (e) => {
     <!-- AI usage panel -->
     <div id="adminContent_usage" style="display:none">
       <div class="card" style="margin-bottom:1rem">
-        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 1rem">AI token usage</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0">AI token usage</h3>
+          <input type="month" id="adminUsageMonth" onchange="renderAdminUsage()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit"/>
+        </div>
         <div id="adminUsageSummary"></div>
       </div>
       <div class="card" style="margin-bottom:1rem">
@@ -1919,7 +1922,11 @@ function closeAvatarMenu() {
 function updateMobileSplash() {
   const splash = document.getElementById('mobileSplash');
   if (!splash) return;
-  splash.classList.toggle('show', window.innerWidth <= 640 && !currentUser);
+  // Never re-show the splash while the auth modal is open — an auth event
+  // (e.g. a routine token refresh) firing mid-sign-in would otherwise
+  // re-cover the still-open modal (splash z-index:500 vs modal z-index:100).
+  const authModalOpen = document.getElementById('authModal')?.style.display === 'block';
+  splash.classList.toggle('show', !authModalOpen && window.innerWidth <= 640 && !currentUser);
 }
 
 async function signOut() {
@@ -2441,7 +2448,12 @@ async function renderAdminUsage() {
   const sumEl    = document.getElementById('adminUsageSummary');
   const modelEl  = document.getElementById('adminUsageByModel');
   const recentEl = document.getElementById('adminUsageRecent');
+  const monthInp = document.getElementById('adminUsageMonth');
   if (!sumEl) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (monthInp && !monthInp.value) monthInp.value = todayStr.slice(0, 7);
+  const selectedMonth = (monthInp && monthInp.value) || todayStr.slice(0, 7);
+
   sumEl.innerHTML = '<div class="aff-empty">Loading…</div>';
 
   const { data, error } = await sb.from('api_usage_log')
@@ -2457,22 +2469,28 @@ async function renderAdminUsage() {
     calls: a.calls + 1, tokens: a.tokens + tokTotal(r), cost: a.cost + (r.cost_usd || 0),
   }), { calls: 0, tokens: 0, cost: 0 });
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const monthStr = new Date().toISOString().slice(0, 7);
-  const today = bucket(r => r.created_at.slice(0, 10) === todayStr);
-  const month = bucket(r => r.created_at.slice(0, 7) === monthStr);
-  const all   = bucket(() => true);
+  const monthLabel = new Date(selectedMonth + '-02').toLocaleString('default', { month: 'long', year: 'numeric' });
+  const monthData = data.filter(r => r.created_at.slice(0, 7) === selectedMonth);
+  const today  = bucket(r => r.created_at.slice(0, 10) === todayStr);
+  const month  = bucket(r => r.created_at.slice(0, 7) === selectedMonth);
+  const all    = bucket(() => true);
 
   sumEl.innerHTML = `<div class="plan-summary-strip">
-    ${[['Today', today], ['This month', month], [`Last ${data.length} calls`, all]].map(([label, b]) => `
+    ${[['Today', today], [monthLabel, month], [`All-time (last ${data.length} calls)`, all]].map(([label, b]) => `
       <div class="plan-sum-card">
         <div class="plan-sum-lbl">${label}</div>
         <div class="plan-sum-val">$${b.cost.toFixed(2)} <span class="plan-sum-sub">${b.calls} calls · ${b.tokens.toLocaleString()} tok</span></div>
       </div>`).join('')}
   </div>`;
 
+  if (!monthData.length) {
+    modelEl.innerHTML  = `<div class="aff-empty">No AI calls logged in ${monthLabel}.</div>`;
+    recentEl.innerHTML = '';
+    return;
+  }
+
   const byModel = {};
-  data.forEach(r => {
+  monthData.forEach(r => {
     const m = r.model || 'unknown';
     const b = byModel[m] = byModel[m] || { calls: 0, tokens: 0, cost: 0 };
     b.calls++; b.tokens += tokTotal(r); b.cost += r.cost_usd || 0;
@@ -2481,7 +2499,7 @@ async function renderAdminUsage() {
     <tbody>${Object.entries(byModel).map(([m, b]) => `<tr><td>${m}</td><td>${b.calls}</td><td>${b.tokens.toLocaleString()}</td><td>$${b.cost.toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
 
   recentEl.innerHTML = `<table class="aff-table"><thead><tr><th>Time</th><th>Model</th><th>In</th><th>Out</th><th>Cost</th></tr></thead>
-    <tbody>${data.slice(0, 50).map(r => `<tr>
+    <tbody>${monthData.slice(0, 50).map(r => `<tr>
       <td>${new Date(r.created_at).toLocaleString()}</td>
       <td>${r.model || '—'}</td>
       <td>${(r.input_tokens || 0).toLocaleString()}</td>
@@ -3603,7 +3621,10 @@ async function geocodeStop(name) {
   if (!name?.trim()) return null;
   const key = name.trim().toLowerCase();
   const cached = _geoCache[key];
-  if (cached && (Date.now() - cached.ts) < 30 * 24 * 60 * 60 * 1000) return cached;
+  if (cached) {
+    const ttl = cached.failed ? 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+    if (Date.now() - cached.ts < ttl) return cached.failed ? null : cached;
+  }
   try {
     // Routed through the proxy — Photon doesn't send Access-Control-Allow-Origin,
     // so a direct browser fetch() to it is blocked by CORS from any real origin.
@@ -3619,6 +3640,12 @@ async function geocodeStop(name) {
       try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch(e) {}
       return result;
     }
+    // Zero results (not a network failure) — cache briefly so a name that
+    // genuinely doesn't resolve isn't re-queried on every render. Network
+    // errors (caught below) aren't cached here since they're transient and
+    // unrelated to whether this specific name is valid.
+    _geoCache[key] = { failed: true, ts: Date.now() };
+    try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch(e) {}
   } catch(e) { console.warn('Geocode failed:', name, e.message); }
   return null;
 }
@@ -4027,16 +4054,19 @@ function renderPlanSuggestion(d, fromCache = false) {
   d.legs.forEach((leg, i) => {
     const ps         = d.stops[i];
     const ns         = d.stops[i + 1];
-    // Fallback to the adjacent stop's name if the AI response got truncated
-    // and _repairJson() had to strip an in-progress "from"/"to" field —
-    // otherwise this silently becomes the literal string "undefined" in
-    // leg keys used for community-note lookups (seen in production).
-    const startCity  = leg.from || ps?.name;
+    // Fallback chain if the AI response got truncated and _repairJson() had
+    // to strip an in-progress field — otherwise this silently becomes the
+    // literal string "undefined" in leg keys, booking links, and the
+    // affiliate tracking key (seen in production). Final 'Unknown' fallback
+    // covers the case where ps/ns itself is missing (d.stops shorter than
+    // d.legs implies), not just missing a .name — leg.from/leg.to alone
+    // isn't enough to guarantee a real value either.
+    const startCity  = leg.from || ps?.name || 'Unknown';
     const iconCls    = MODE_ICONS[leg.mode] || 'ph-path';
     const modeColor  = MODE_COLORS[leg.mode] || 'var(--fern)';
     const modeTint   = MODE_TINTS[leg.mode]  || '#E0EAF2';
-    const transportCol = showAff ? renderTransportLinks(leg.mode, startCity, leg.to, leg.booking_sites, leg.leg_region, leg.info_sites) : '';
-    const stayCity   = ns?.name || leg.to;
+    const stayCity   = ns?.name || leg.to || 'Unknown';
+    const transportCol = showAff ? renderTransportLinks(leg.mode, startCity, stayCity, leg.booking_sites, leg.leg_region, leg.info_sites) : '';
     const stayCol    = showAff
       ? renderAccommodationLinks(stayCity, ns?.accom_sites, ns?.accom_note)
       : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
@@ -4085,7 +4115,11 @@ function suggestionToStopsLegs(d) {
   if (d.stops?.length) {
     d.stops.forEach(s => stops.push({ name: s.name, date: '', days: s.days || 0, accomSites: s.accom_sites || [], accomNote: s.accom_note || '' }));
   } else {
-    [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ name: c, date: '', days: 0 }));
+    // .filter(Boolean) drops any stop a truncated AI response left without a
+    // name (_repairJson() can strip an in-progress "from"/"to" field) — a
+    // shorter but valid stop list beats one with a literal "undefined" name
+    // that then gets saved into the trip.
+    [d.legs[0]?.from, ...d.legs.map(l => l.to)].filter(Boolean).forEach(c => stops.push({ name: c, date: '', days: 0 }));
   }
   const legs = (d.legs || []).map(l => ({
     mode: l.mode, cost: convertCost(l.cost_usd || 0), km: l.km || 0,
