@@ -1292,6 +1292,7 @@ window.addEventListener('unhandledrejection', (e) => {
       <button class="admin-stab on" id="adminStab_sites" onclick="switchAdminSubTab('sites')">Booking sites</button>
       <button class="admin-stab" id="adminStab_review" onclick="switchAdminSubTab('review')">Review queue <span id="adminReviewBadge" style="display:none;background:var(--gold);color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px;font-family:var(--mono);font-weight:600"></span></button>
       <button class="admin-stab" id="adminStab_usage" onclick="switchAdminSubTab('usage')">AI usage</button>
+      <button class="admin-stab" id="adminStab_aiprovider" onclick="switchAdminSubTab('aiprovider')">AI provider</button>
     </div>
 
     <div id="adminContent_sites">
@@ -1425,6 +1426,30 @@ window.addEventListener('unhandledrejection', (e) => {
       <div class="card">
         <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 1rem">Recent calls</h3>
         <div id="adminUsageRecent"></div>
+      </div>
+    </div>
+
+    <!-- AI provider panel -->
+    <div id="adminContent_aiprovider" style="display:none">
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 0.75rem">AI provider</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.55;margin:0 0 1.25rem">Claude is the default for route generation. DeepSeek can be enabled as a failsafe if Claude's call fails, or forced on directly to test it. The DeepSeek API key itself is set as a Railway environment variable (<code>DEEPSEEK_API_KEY</code>) — not stored here.</p>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+          <input type="checkbox" id="aiFailsafeToggle" style="cursor:pointer" onchange="saveAiProviderSettings()"/>
+          <label for="aiFailsafeToggle" style="font-size:13px;color:var(--text);cursor:pointer">Enable DeepSeek failsafe (auto-fallback if Claude's call fails)</label>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div class="lbl" style="margin-bottom:4px">Force provider — for testing</div>
+          <select class="inp" id="aiForceProviderSelect" onchange="saveAiProviderSettings()">
+            <option value="">Auto (Claude, failsafe if enabled above)</option>
+            <option value="claude">Force Claude (ignore failsafe)</option>
+            <option value="deepseek">Force DeepSeek</option>
+          </select>
+        </div>
+
+        <span id="aiProviderSaveStatus" style="font-size:12px;color:var(--fern)"></span>
       </div>
     </div>
 
@@ -2372,14 +2397,42 @@ const REVIEW_QUEUE = [
 
 function switchAdminSubTab(tab) {
   _adminSubTab = tab;
-  document.getElementById('adminContent_sites').style.display  = tab === 'sites'  ? '' : 'none';
-  document.getElementById('adminContent_review').style.display = tab === 'review' ? '' : 'none';
-  document.getElementById('adminContent_usage').style.display  = tab === 'usage'  ? '' : 'none';
+  document.getElementById('adminContent_sites').style.display      = tab === 'sites'      ? '' : 'none';
+  document.getElementById('adminContent_review').style.display     = tab === 'review'     ? '' : 'none';
+  document.getElementById('adminContent_usage').style.display      = tab === 'usage'      ? '' : 'none';
+  document.getElementById('adminContent_aiprovider').style.display = tab === 'aiprovider' ? '' : 'none';
   document.querySelectorAll('.admin-stab').forEach(b => b.classList.remove('on'));
   const btn = document.getElementById('adminStab_' + tab);
   if (btn) btn.classList.add('on');
-  if (tab === 'review') renderReviewQueue();
-  if (tab === 'usage')  renderAdminUsage();
+  if (tab === 'review')     renderReviewQueue();
+  if (tab === 'usage')      renderAdminUsage();
+  if (tab === 'aiprovider') renderAdminAiProvider();
+}
+
+// ── Admin > AI provider — reads/writes admin_settings (ai_failsafe_enabled,
+// ai_force_provider), which proxy/server.js reads on every /api/ai call.
+async function renderAdminAiProvider() {
+  const { data } = await sb.from('admin_settings').select('key, value').in('key', ['ai_failsafe_enabled', 'ai_force_provider']);
+  const get = k => data?.find(row => row.key === k)?.value;
+  document.getElementById('aiFailsafeToggle').checked = get('ai_failsafe_enabled') === true;
+  document.getElementById('aiForceProviderSelect').value = get('ai_force_provider') || '';
+}
+async function saveAiProviderSettings() {
+  const failsafe = document.getElementById('aiFailsafeToggle').checked;
+  const force = document.getElementById('aiForceProviderSelect').value || null;
+  const statusEl = document.getElementById('aiProviderSaveStatus');
+  statusEl.textContent = 'Saving…';
+  try {
+    const { error } = await sb.from('admin_settings').upsert([
+      { key: 'ai_failsafe_enabled', value: failsafe },
+      { key: 'ai_force_provider',   value: force },
+    ], { onConflict: 'key' });
+    if (error) throw error;
+    statusEl.textContent = 'Saved ✓';
+  } catch(e) {
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+  setTimeout(() => statusEl.textContent = '', 3000);
 }
 
 async function renderAdminUsage() {

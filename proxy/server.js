@@ -35,14 +35,32 @@ app.use(express.json({ limit: '1mb' }));
 app.get('/', (_req, res) => res.json({ ok: true, service: 'slw-travel-proxy' }));
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
-// ── POST /api/ai — forward to Anthropic ──────────────────────────────────────
-app.post('/api/ai', async (req, res) => {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.error('ANTHROPIC_API_KEY not set');
-    return res.status(500).json({ error: { message: 'Server misconfiguration: API key missing' } });
+// ── AI provider settings (admin-configurable via admin_settings table) ───────
+// ai_failsafe_enabled: auto-retry with DeepSeek if Claude's call fails.
+// ai_force_provider:   'claude' | 'deepseek' | null(auto) — manual override,
+//                      set from Admin > AI provider in app/index.html.
+// Reads fail safe (defaults to Claude-only, no failsafe) rather than blocking
+// the request if Supabase is briefly unreachable.
+async function getAiProviderSettings() {
+  const sbUrl = process.env.SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_KEY;
+  if (!sbUrl || !sbKey) return { failsafeEnabled: false, forceProvider: null };
+  try {
+    const r = await fetch(
+      `${sbUrl}/rest/v1/admin_settings?key=in.(ai_failsafe_enabled,ai_force_provider)&select=key,value`,
+      { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
+    );
+    const rows = await r.json();
+    const get = k => rows.find?.(row => row.key === k)?.value;
+    return { failsafeEnabled: get('ai_failsafe_enabled') === true, forceProvider: get('ai_force_provider') || null };
+  } catch (e) {
+    console.warn('getAiProviderSettings failed, defaulting to Claude-only:', e.message);
+    return { failsafeEnabled: false, forceProvider: null };
   }
+}
 
+// ── POST /api/ai — forward to Anthropic, with optional DeepSeek failsafe ─────
+app.post('/api/ai', async (req, res) => {
   const { max_tokens, messages, system } = req.body || {};
   if (!messages?.length) {
     return res.status(400).json({ error: { message: 'messages array is required' } });
@@ -52,8 +70,11 @@ app.post('/api/ai', async (req, res) => {
   // To change without a deploy: set ANTHROPIC_MODEL in Railway env vars
   const PRIMARY_MODEL  = process.env.ANTHROPIC_MODEL  || 'claude-sonnet-4-6';
   const FALLBACK_MODEL = process.env.ANTHROPIC_MODEL_FALLBACK || 'claude-haiku-4-5-20251001';
+  const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
 
   const callAnthropic = async (model) => {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return { r: { ok: false, status: 500 }, data: { error: { message: 'Server misconfiguration: ANTHROPIC_API_KEY missing' } } };
     const body = { model, max_tokens: max_tokens || 8000, messages };
     if (system) body.system = system;
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -68,23 +89,69 @@ app.post('/api/ai', async (req, res) => {
     return { r, data: await r.json() };
   };
 
-  try {
-    let { r, data } = await callAnthropic(PRIMARY_MODEL);
+  // DeepSeek's API is OpenAI-compatible — different request/response shape
+  // than Anthropic's Messages API. Normalized here so the rest of this
+  // handler (status handling, usage logging) and the frontend's callAI()
+  // (app/index.html, expects d.content[].text) need no provider-specific code.
+  const callDeepSeek = async (model) => {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) return { r: { ok: false, status: 500 }, data: { error: { message: 'Server misconfiguration: DEEPSEEK_API_KEY missing' } } };
+    const chatMessages = system ? [{ role: 'system', content: system }, ...messages] : messages;
+    const r = await fetch('https://api.deepseek.com/chat/completions', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages: chatMessages, max_tokens: max_tokens || 8000 }),
+    });
+    const raw = await r.json();
+    if (!r.ok) return { r, data: raw };
+    return {
+      r,
+      data: {
+        content: [{ type: 'text', text: raw.choices?.[0]?.message?.content || '' }],
+        model:   raw.model || model,
+        usage: {
+          input_tokens:  raw.usage?.prompt_tokens     || 0,
+          output_tokens: raw.usage?.completion_tokens || 0,
+        },
+      },
+    };
+  };
 
-    // If primary model is retired/not-found, retry with fallback
-    if (!r.ok && data.error?.type === 'not_found_error') {
-      console.warn(`Primary model ${PRIMARY_MODEL} not found, falling back to ${FALLBACK_MODEL}`);
-      ({ r, data } = await callAnthropic(FALLBACK_MODEL));
+  const { failsafeEnabled, forceProvider } = await getAiProviderSettings();
+
+  try {
+    let r, data, usedProvider = 'claude';
+
+    if (forceProvider === 'deepseek') {
+      ({ r, data } = await callDeepSeek(DEEPSEEK_MODEL));
+      usedProvider = 'deepseek';
+    } else {
+      ({ r, data } = await callAnthropic(PRIMARY_MODEL));
+
+      // If primary model is retired/not-found, retry with fallback
+      if (!r.ok && data.error?.type === 'not_found_error') {
+        console.warn(`Primary model ${PRIMARY_MODEL} not found, falling back to ${FALLBACK_MODEL}`);
+        ({ r, data } = await callAnthropic(FALLBACK_MODEL));
+      }
+
+      // Claude failed for some other reason — failsafe to DeepSeek if enabled
+      // (and not explicitly forced to stay on Claude for a test).
+      if (!r.ok && failsafeEnabled && forceProvider !== 'claude') {
+        console.warn(`Claude failed (${data.error?.message || r.status}) — failing over to DeepSeek`);
+        ({ r, data } = await callDeepSeek(DEEPSEEK_MODEL));
+        usedProvider = 'deepseek-failsafe';
+      }
     }
 
     res.status(r.status).json(data);
 
     // Log usage to Supabase (fire-and-forget — don't block the response)
     if (r.ok && data.usage) {
-      logUsageToSupabase(data.model, data.usage).catch(e => console.warn('Usage log failed:', e.message));
+      logUsageToSupabase(data.model, data.usage, usedProvider.startsWith('deepseek') ? 'deepseek' : 'claude')
+        .catch(e => console.warn('Usage log failed:', e.message));
     }
   } catch (err) {
-    console.error('Anthropic upstream error:', err);
+    console.error('AI upstream error:', err);
     res.status(502).json({ error: { message: 'Upstream request failed: ' + err.message } });
   }
 });
@@ -109,18 +176,25 @@ app.get('/api/elevation', async (req, res) => {
 });
 
 // ── Supabase usage logger ────────────────────────────────────────────────────
-const PRICES_PER_MTOK = { input: 3, output: 15, cache_read: 0.3, cache_write: 3.75 };
+// NOTE: DeepSeek figures are an approximation as of this writing (deepseek-chat,
+// standard non-cached rate) — verify against https://api-docs.deepseek.com/quick_start/pricing
+// and update if this is going to be relied on for real cost tracking.
+const PRICES_PER_MTOK = {
+  claude:   { input: 3,    output: 15,   cache_read: 0.3, cache_write: 3.75 },
+  deepseek: { input: 0.28, output: 0.42, cache_read: 0,   cache_write: 0    },
+};
 
-async function logUsageToSupabase(model, usage) {
+async function logUsageToSupabase(model, usage, provider = 'claude') {
   const sbUrl = process.env.SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_KEY;
   if (!sbUrl || !sbKey) return; // env vars not set — skip silently
 
+  const prices = PRICES_PER_MTOK[provider] || PRICES_PER_MTOK.claude;
   const cost = (
-    (usage.input_tokens                || 0) * PRICES_PER_MTOK.input       +
-    (usage.output_tokens               || 0) * PRICES_PER_MTOK.output      +
-    (usage.cache_read_input_tokens     || 0) * PRICES_PER_MTOK.cache_read  +
-    (usage.cache_creation_input_tokens || 0) * PRICES_PER_MTOK.cache_write
+    (usage.input_tokens                || 0) * prices.input       +
+    (usage.output_tokens               || 0) * prices.output      +
+    (usage.cache_read_input_tokens     || 0) * prices.cache_read  +
+    (usage.cache_creation_input_tokens || 0) * prices.cache_write
   ) / 1_000_000;
 
   await fetch(`${sbUrl}/rest/v1/api_usage_log`, {
