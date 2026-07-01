@@ -531,6 +531,11 @@ body {
   const urlTab = new URLSearchParams(window.location.search).get('tab');
   if (urlTab === 'signup') switchTab('signup');
 
+  // Where to send the user after a successful sign-in — set by goToAuth()
+  // in app/index.html so gated tabs (e.g. My Trips) return where they left off.
+  const _returnParam = new URLSearchParams(window.location.search).get('return');
+  const returnPath = _returnParam ? ('/' + _returnParam.replace(/^\/+/, '')) : '/app';
+
   const BRAND_COPY = {
     signin:  ['Welcome back.',      'Sign in to save trips and contribute notes.'],
     signup:  ['Join the slow road.','Free account, no card needed.'],
@@ -567,7 +572,7 @@ body {
     const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     btn.disabled = false;
     if (error) return setMsg('si-msg', error.message, true);
-    window.location.href = '/app';
+    window.location.href = returnPath;
   }
 
   async function signUp() {
@@ -598,6 +603,9 @@ body {
   }
 
   async function oauthGoogle() {
+    // redirectTo intentionally stays '/app', not returnPath: Supabase only
+    // honors OAuth redirect URLs that are allow-listed in its Auth settings,
+    // and only '/app' is confirmed allow-listed there.
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin + '/app' }

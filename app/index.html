@@ -2825,6 +2825,7 @@ function setScreenUrl(arg, push = false) {
 }
 
 function switchTab(id, el) {
+  if (id === 'mytrips' && !currentUser) { goToAuth('/trips'); return; }
   document.querySelectorAll('.nav-link').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const btn = el || document.getElementById('navbtn_' + id);
@@ -3054,7 +3055,7 @@ async function planRoute() {
         <div style="font-size:36px;margin-bottom:12px">🦥</div>
         <h3>That's your ${GUEST_FREE_ROUTES} free routes this month</h3>
         <p>Create a free account to keep planning, save trips, and share community notes.</p>
-        <a href="auth.html?return=planner" class="btn btn-primary" style="text-decoration:none;display:inline-block">Create free account →</a>
+        <a href="/auth.html?return=planner" class="btn btn-primary" style="text-decoration:none;display:inline-block">Create free account →</a>
       </div>`;
       return;
     }
@@ -3180,7 +3181,7 @@ function goToAuth(returnPath) {
     const to   = document.getElementById('pTo')?.value?.trim() || '';
     localStorage.setItem('slw_pending_route', JSON.stringify({ from, to, suggestion: lastSuggestion }));
   }
-  window.location.href = 'auth.html' + (returnPath ? '?return=' + returnPath : '');
+  window.location.href = '/auth.html' + (returnPath ? '?return=' + returnPath : '');
 }
 function _restorePendingRoute() {
   try {
@@ -4405,8 +4406,8 @@ function showGuestContributeGate(legIdx, legKey) {
         </div>
         <p style="font-size:13px;color:var(--text2);line-height:1.6;margin:4px 0 18px">Create a free account to contribute. Your note helps the next traveller — and goes to a quick admin review before it appears on the leg.</p>
         <div style="display:flex;gap:8px;margin-bottom:10px">
-          <button class="oauth-btn-sm" onclick="window.location.href='auth.html?return=planner'"><i class="ph ph-google-logo" style="font-size:14px"></i> Google</button>
-          <button class="oauth-btn-sm" onclick="window.location.href='auth.html?return=planner'"><i class="ph ph-apple-logo" style="font-size:14px"></i> Apple</button>
+          <button class="oauth-btn-sm" onclick="window.location.href='/auth.html?return=planner'"><i class="ph ph-google-logo" style="font-size:14px"></i> Google</button>
+          <button class="oauth-btn-sm" onclick="window.location.href='/auth.html?return=planner'"><i class="ph ph-apple-logo" style="font-size:14px"></i> Apple</button>
         </div>
         <input id="gateEmail" placeholder="you@email.com" style="width:100%;font-size:13.5px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);outline:none;font-family:var(--body);color:var(--text);margin-bottom:10px"/>
         <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="goToAuth('planner')">Create account &amp; continue →</button>
@@ -6248,7 +6249,7 @@ async function renderProfilePanel() {
     el.innerHTML = `<div style="text-align:center;padding:3rem 1rem">
       <div style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:10px">Welcome to bysloth</div>
       <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Sign in to save trips, track karma, and contribute notes to the community.</p>
-      <a class="btn btn-primary" href="auth.html">Sign in / Create account</a>
+      <a class="btn btn-primary" href="/auth.html">Sign in / Create account</a>
     </div>`;
     return;
   }
@@ -6695,7 +6696,7 @@ init().catch(e => {
     <div style="font-size:14px;line-height:1.65;color:rgba(245,240,232,0.62);margin-bottom:40px;max-width:290px">Trains, buses, ferries, shared taxis, the occasional hitch. We map a realistic route and flag the legs we can't verify.</div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <button onclick="document.getElementById('mobileSplash').classList.remove('show')" class="mobile-splash-cta-primary">Plan your first route <i class="ph ph-arrow-right" style="font-size:16px"></i></button>
-      <a href="auth.html" class="mobile-splash-cta-ghost">Sign in</a>
+      <a href="/auth.html" class="mobile-splash-cta-ghost">Sign in</a>
     </div>
     <div style="margin-top:24px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:rgba(245,240,232,0.3);text-align:center;text-transform:uppercase">Free · 3 routes a month · no card required</div>
   </div>
