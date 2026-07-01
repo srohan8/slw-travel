@@ -553,6 +553,8 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-visit-btn.on{border-color:var(--fern);background:var(--fern);color:#fff;}
   .jd-diary-wrap{margin-left:24px;margin-bottom:12px;}
   .jd-diary{width:100%;font-size:13px;padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg);resize:vertical;min-height:70px;font-family:var(--body);line-height:1.65;color:var(--text);outline:none;box-sizing:border-box;}
+  .jd-photos{margin-left:24px;margin-bottom:12px;}
+  .jd-photos .rj-slide{max-width:320px;height:160px;}
   .jd-diary:focus{border-color:var(--fern);}
   .jd-leg-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-left:24px;}
   .jd-booked-row{margin-bottom:8px;}
@@ -937,6 +939,8 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-summary{grid-template-columns:1fr 1fr;}
   .jd-leg-cards{grid-template-columns:1fr;margin-left:0;}
   .jd-diary-wrap{margin-left:0;}
+  .jd-photos{margin-left:0;}
+  .jd-photos .rj-slide{max-width:100%;}
   .rj-card-grid{grid-template-columns:1fr;}
   body{overflow:hidden;height:100dvh;}
   .container{padding:1rem 0.875rem 0;height:calc(100dvh - 112px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
@@ -5506,6 +5510,7 @@ let _journeyTrip = null;
 let _jdTab = 'journey';
 let _jdMap = null;
 let _jdDiaryTimer = null;
+let _jdPhotoIdx = {}; // stop index -> currently-shown photo index (Journey tab, read-only)
 
 // Look up by id at click-time instead of embedding the full trip (photos
 // included) into every list row's onclick attribute — see openJourneyDetailById.
@@ -5518,6 +5523,7 @@ function openJourneyDetail(trip) {
   _journeyTrip = trip;
   _jdCollabs = trip.collaborators || [];
   _jdTab = 'journey';
+  _jdPhotoIdx = {};
   if (_jdMap) { try { _jdMap.remove(); } catch(e){} _jdMap = null; }
   switchTab('journey', null);
   document.getElementById('navbtn_mytrips')?.classList.add('active');
@@ -5625,6 +5631,33 @@ function renderJourneyDetail() {
   }
 }
 
+// Read-only photo display for the Journey tab — adding/removing photos is
+// still exclusive to the Record Journal, this just makes them visible while
+// reading through the timeline (previously this tab showed diary text only,
+// no photos at all, regardless of whether they came from manual entries or
+// an import). Same single-photo slideshow treatment as the Record Journal
+// for stops with 2+ photos, minus the edit affordances.
+function jdPhotoNav(i, dir) {
+  const n = _journeyTrip?.stops[i]?.photos?.length || 0;
+  if (!n) return;
+  _jdPhotoIdx[i] = ((_jdPhotoIdx[i] || 0) + dir + n) % n;
+  renderJourneyDetail();
+}
+function jdPhotosHTML(s, i) {
+  const n = s.photos?.length || 0;
+  if (!n) return '';
+  if (n === 1) return `<div class="jd-photos"><div class="rj-slide"><img src="${s.photos[0]}" alt=""/></div></div>`;
+  const cur = ((_jdPhotoIdx[i] || 0) % n + n) % n;
+  return `<div class="jd-photos">
+    <div class="rj-slide">
+      <img src="${s.photos[cur]}" alt=""/>
+      <button class="rj-slide-nav rj-slide-prev" onclick="event.stopPropagation();jdPhotoNav(${i},-1)" title="Previous photo"><i class="ph ph-caret-left"></i></button>
+      <button class="rj-slide-nav rj-slide-next" onclick="event.stopPropagation();jdPhotoNav(${i},1)" title="Next photo"><i class="ph ph-caret-right"></i></button>
+      <span class="rj-slide-count">${cur+1}/${n}</span>
+    </div>
+  </div>`;
+}
+
 function jdJourneyTabHTML(t, stops, legs, m) {
   const cur = t.currency || 'USD';
   const pct = m.total ? Math.round(m.visited / m.total * 100) : 0;
@@ -5671,6 +5704,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
       </div>`;
     if (s.visited) {
       h += `<div class="jd-diary-wrap"><textarea class="jd-diary" placeholder="What happened in ${s.name||'this stop'}?" oninput="jdSaveDiary(${i}, this.value)">${s.diary||''}</textarea></div>`;
+      h += jdPhotosHTML(s, i);
     }
     if (leg && !isLast) {
       const stayCity   = stops[i+1]?.name || '';
