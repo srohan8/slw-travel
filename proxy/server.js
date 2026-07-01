@@ -75,7 +75,7 @@ app.post('/api/ai', async (req, res) => {
   const callAnthropic = async (model) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return { r: { ok: false, status: 500 }, data: { error: { message: 'Server misconfiguration: ANTHROPIC_API_KEY missing' } } };
-    const body = { model, max_tokens: max_tokens || 8000, messages };
+    const body = { model, max_tokens: max_tokens || 16000, messages };
     if (system) body.system = system;
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method:  'POST',
@@ -100,7 +100,7 @@ app.post('/api/ai', async (req, res) => {
     const r = await fetch('https://api.deepseek.com/chat/completions', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({ model, messages: chatMessages, max_tokens: max_tokens || 8000 }),
+      body: JSON.stringify({ model, messages: chatMessages, max_tokens: max_tokens || 16000 }),
     });
     const raw = await r.json();
     if (!r.ok) return { r, data: raw };

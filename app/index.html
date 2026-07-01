@@ -2153,7 +2153,7 @@ function loadTrip(trip, mode='edit') {
 }
 
 // ── AI calls (via proxy) ──────────────────────────────────────────
-async function callAI(prompt, maxTokens = 8000) {
+async function callAI(prompt, maxTokens = 16000) {
   const url = PROXY_URL ? `${PROXY_URL}/api/ai` : 'https://api.anthropic.com/v1/messages';
   const headers = { 'Content-Type': 'application/json' };
   if (!PROXY_URL) {
@@ -3341,6 +3341,9 @@ function publicOrigin() {
 
 function openAuthModal(returnPath) {
   _authModalReturnPath = returnPath || null;
+  // The mobile splash sits at z-index:500, above this modal's z-index:100 —
+  // without this it opens invisibly behind the still-showing splash.
+  document.getElementById('mobileSplash')?.classList.remove('show');
   document.getElementById('authModal').style.display = 'block';
   renderAuthModal('signin');
 }
@@ -4022,21 +4025,27 @@ function renderPlanSuggestion(d, fromCache = false) {
 
   // ── Leg sections ──────────────────────────────────────────────────
   d.legs.forEach((leg, i) => {
+    const ps         = d.stops[i];
     const ns         = d.stops[i + 1];
+    // Fallback to the adjacent stop's name if the AI response got truncated
+    // and _repairJson() had to strip an in-progress "from"/"to" field —
+    // otherwise this silently becomes the literal string "undefined" in
+    // leg keys used for community-note lookups (seen in production).
+    const startCity  = leg.from || ps?.name;
     const iconCls    = MODE_ICONS[leg.mode] || 'ph-path';
     const modeColor  = MODE_COLORS[leg.mode] || 'var(--fern)';
     const modeTint   = MODE_TINTS[leg.mode]  || '#E0EAF2';
-    const transportCol = showAff ? renderTransportLinks(leg.mode, leg.from, leg.to, leg.booking_sites, leg.leg_region, leg.info_sites) : '';
+    const transportCol = showAff ? renderTransportLinks(leg.mode, startCity, leg.to, leg.booking_sites, leg.leg_region, leg.info_sites) : '';
     const stayCity   = ns?.name || leg.to;
     const stayCol    = showAff
       ? renderAccommodationLinks(stayCity, ns?.accom_sites, ns?.accom_note)
       : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
-    const legKey = `${leg.from}→${stayCity}`;
+    const legKey = `${startCity}→${stayCity}`;
     const isLastLeg = i === d.legs.length - 1;
     h += `<div class="res-leg">
       <div class="res-leg-hdr">
         <div class="res-leg-gutter"><div class="res-leg-dot" style="background:${modeColor};box-shadow:0 0 0 3px var(--bg),0 0 0 4px ${modeColor}"></div>${!isLastLeg?`<div class="res-leg-connector" style="background:${modeColor}"></div>`:''}</div>
-        <span class="res-leg-name">${leg.from} — ${leg.to}</span>
+        <span class="res-leg-name">${startCity} — ${stayCity}</span>
       </div>
       <div class="res-leg-cards">
         <div class="res-card journey">
