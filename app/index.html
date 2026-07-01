@@ -7403,23 +7403,137 @@ function applyGpsFullscreen(id) {
   document.body.classList.toggle('gps-fullscreen', GPS_FULLSCREEN.has(id));
 }
 
-// ── Real Capacitor GPS engine (Phase 5 — device-verification-pending) ──
-// Wrapped so the whole feature stays inert off-device (doc §14 Rules 2 & 3).
+// ── Real Capacitor GPS engine (device-verification-pending) ────────
+// @capacitor-community/background-geolocation watcher → dwell detection →
+// Nominatim reverse geocode → local-notification on arrival (doc §4, §8, §13.2).
+// Everything is wrapped so a missing plugin (e.g. desktop / not-yet-synced)
+// is a silent no-op and never breaks the UI flow (doc §14 Rules 2 & 3).
 let _bgGeo = null;
-function startGpsEngine() {
+let _bgWatcherId = null;
+let _dwell = null;              // { lat, lng, since, logged } — current stationary candidate
+
+async function startGpsEngine() {
   if (!isNativePlatform()) return;
-  // TODO(device): @capacitor-community/background-geolocation watcher +
-  // dwell detection + Nominatim reverse geocode + local-notification on stop.
-  // Registered lazily so a missing plugin never breaks the UI flow.
   try {
     if (!_bgGeo && window.Capacitor.registerPlugin) {
       _bgGeo = window.Capacitor.registerPlugin('BackgroundGeolocation');
     }
-  } catch (e) { _bgGeo = null; }
+    if (!_bgGeo || _bgWatcherId) return;
+    _bgWatcherId = await _bgGeo.addWatcher({
+      backgroundMessage: 'Recording your journey — tap to open bysloth.',
+      backgroundTitle: 'bysloth is tracking your route',
+      requestPermissions: true,
+      stale: false,
+      distanceFilter: 20            // metres between callbacks (battery, doc §8)
+    }, (location, error) => {
+      if (error) { console.warn('BackgroundGeolocation', error); return; }
+      if (location) onGpsSample(location);
+    });
+  } catch (e) { console.warn('startGpsEngine (plugin missing?)', e); }
 }
-function stopGpsEngine() {
-  if (!isNativePlatform() || !_bgGeo) return;
-  try { /* TODO(device): _bgGeo.removeWatcher({ id }) */ } catch (e) {}
+async function stopGpsEngine() {
+  _dwell = null;
+  if (!_bgGeo || !_bgWatcherId) return;
+  try { await _bgGeo.removeWatcher({ id: _bgWatcherId }); } catch (e) {}
+  _bgWatcherId = null;
+}
+
+function haversineKm(a, b) {
+  const R = 6371, toRad = d => d * Math.PI / 180;
+  const dLat = toRad(b[0] - a[0]), dLon = toRad(b[1] - a[1]);
+  const s = Math.sin(dLat/2)**2 + Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+// One GPS fix: append to track, accumulate distance, run dwell detection.
+function onGpsSample(loc) {
+  const s = loadRecordingSession();
+  if (!s || s.status !== 'recording') return;
+  const pt = [loc.latitude, loc.longitude, Date.now()];
+  s.track = s.track || [];
+  if (s.track.length) s.distance_km = (s.distance_km || 0) + haversineKm(s.track[s.track.length - 1], pt);
+  s.track.push(pt);
+  detectDwell(s, pt);
+  saveRecordingSession(s);
+  if (currentScreenId() === 'liverecord') drawLiveRecord();
+}
+
+// Dwell = stayed within 500m for ≥20 min → declare a stop (doc §4).
+function detectDwell(s, pt) {
+  const [lat, lng, ts] = pt;
+  if (!_dwell) { _dwell = { lat, lng, since: ts, logged: false }; return; }
+  const distM = haversineKm([_dwell.lat, _dwell.lng], pt) * 1000;
+  if (distM > 500) { _dwell = { lat, lng, since: ts, logged: false }; return; }
+  if (!_dwell.logged && (ts - _dwell.since) / 60000 >= 20) {
+    _dwell.logged = true;
+    createDetectedStop(s, _dwell.lat, _dwell.lng, _dwell.since);
+  }
+}
+
+async function createDetectedStop(s, lat, lng, arrivedTs) {
+  s.stops = s.stops || [];
+  const prev = s.stops[s.stops.length - 1];
+  const stop = { name: lat.toFixed(3) + ', ' + lng.toFixed(3), country: '', lat, lng,
+    arrived_at: new Date(arrivedTs).toISOString(), when: 'now', _recorded: true, diary: '', photos: [] };
+  s.stops.push(stop);
+  // Infer the leg from the previous stop by median speed over the GPS segment.
+  if (prev && prev.lat != null) {
+    const leg = inferLeg(s, prev, stop);
+    if (leg) { s.legs = s.legs || []; s.legs.push(leg); }
+  }
+  saveRecordingSession(s);
+  if (currentScreenId() === 'liverecord') drawLiveRecord();
+  const place = await reverseGeocode(lat, lng);
+  if (place) {
+    stop.name = place.name; stop.country = place.country;
+    saveRecordingSession(s);
+    if (currentScreenId() === 'liverecord') drawLiveRecord();
+  }
+  fireStopNotification(stop.name, stop.country);
+}
+
+// Median-speed → transport mode (doc §4 leg detection table).
+function inferLeg(s, prev, stop) {
+  const t0 = new Date(prev.arrived_at || 0).getTime(), t1 = new Date(stop.arrived_at || 0).getTime();
+  const seg = (s.track || []).filter(p => p[2] >= t0 && p[2] <= t1);
+  let km = 0; const speeds = [];
+  for (let i = 1; i < seg.length; i++) {
+    const d = haversineKm(seg[i - 1], seg[i]);
+    const hrs = (seg[i][2] - seg[i - 1][2]) / 3600000;
+    km += d;
+    if (hrs > 0) speeds.push(d / hrs);
+  }
+  speeds.sort((a, b) => a - b);
+  const median = speeds.length ? speeds[Math.floor(speeds.length / 2)] : 0;
+  const mode = median < 7 ? 'walk' : median < 25 ? 'bus' : median < 100 ? 'bus'
+    : median < 250 ? 'train' : 'flight';
+  const hours = (t1 - t0) / 3600000;
+  return { from: prev.name, to: stop.name, mode, km: Math.round(km), hours: Math.round(hours),
+    cost: null, notes: '', confidence: 'verified', _recorded: true };
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&lat=${lat}&lon=${lng}`,
+      { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) return null;
+    const d = await r.json(), a = d.address || {};
+    return { name: a.city || a.town || a.village || a.county || d.name || 'Unknown place',
+      country: a.country || '' };
+  } catch (e) { return null; }   // offline → keep the lat,lng placeholder (doc §9)
+}
+
+async function fireStopNotification(name, country) {
+  if (!isNativePlatform()) return;
+  try {
+    const LN = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+    if (!LN) return;
+    await LN.schedule({ notifications: [{
+      id: Date.now() % 100000,
+      title: '📍 Arrived in ' + name,
+      body: (country ? name + ', ' + country : name) + ' — tap to add a note.'
+    }] });
+  } catch (e) {}
 }
 
 // ══ GPS SCREEN RENDERERS (ported from m-screens-5.jsx) ══════════════
