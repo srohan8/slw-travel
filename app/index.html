@@ -632,6 +632,10 @@ window.addEventListener('unhandledrejection', (e) => {
   .rj-back{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--text3);cursor:pointer;margin-bottom:12px;}
   .rj-back:hover{color:var(--text);}
   .rj-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+  .rj-cover{position:relative;width:56px;height:56px;border-radius:var(--radius);overflow:hidden;flex-shrink:0;cursor:pointer;border:0.5px dashed var(--border2);background:var(--mist);display:flex;align-items:center;justify-content:center;color:var(--text3);}
+  .rj-cover:hover{border-color:var(--fern);color:var(--fern);}
+  .rj-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+  .rj-cover-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.55);border:none;color:#fff;border-radius:50%;width:16px;height:16px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;}
   .rj-kicker{font-family:var(--mono);font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
   .rj-title{font-size:26px;font-weight:700;letter-spacing:-0.4px;color:var(--text);line-height:1.1;}
   .rj-sub{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:4px;}
@@ -3843,6 +3847,8 @@ function setMapState(next) {
 }
 
 let _pmwResize = null;
+const PMW_MOVE_EVENTS = ['mousemove', 'touchmove'];
+const PMW_END_EVENTS  = ['mouseup', 'touchend'];
 function pmwStartResize(ev) {
   if (_mapState !== 'docked') return;
   const wrap  = document.getElementById('plannerMapWrap');
@@ -3854,10 +3860,8 @@ function pmwStartResize(ev) {
   _pmwResize = { startX: t.clientX, startY: t.clientY, startW: r.width, startH: r.height,
     headH: wrap.querySelector('.pmw-head')?.offsetHeight || 36 };
   document.body.classList.add('pmw-resizing');
-  window.addEventListener('mousemove', pmwOnResize, { passive: false });
-  window.addEventListener('mouseup',   pmwEndResize);
-  window.addEventListener('touchmove', pmwOnResize, { passive: false });
-  window.addEventListener('touchend',  pmwEndResize);
+  PMW_MOVE_EVENTS.forEach(e => window.addEventListener(e, pmwOnResize, { passive: false }));
+  PMW_END_EVENTS.forEach(e => window.addEventListener(e, pmwEndResize));
 }
 function pmwOnResize(ev) {
   if (!_pmwResize) return;
@@ -3876,10 +3880,8 @@ function pmwEndResize() {
   if (!_pmwResize) return;
   _pmwResize = null;
   document.body.classList.remove('pmw-resizing');
-  window.removeEventListener('mousemove', pmwOnResize);
-  window.removeEventListener('mouseup',   pmwEndResize);
-  window.removeEventListener('touchmove', pmwOnResize);
-  window.removeEventListener('touchend',  pmwEndResize);
+  PMW_MOVE_EVENTS.forEach(e => window.removeEventListener(e, pmwOnResize));
+  PMW_END_EVENTS.forEach(e => window.removeEventListener(e, pmwEndResize));
   const wrap  = document.getElementById('plannerMapWrap');
   const mapEl = document.getElementById('plannerMap');
   try { localStorage.setItem('slw_map_size', JSON.stringify({ w: wrap?.style.width || '', h: mapEl?.style.height || '' })); } catch(e) {}
@@ -5820,6 +5822,12 @@ function renderRecordJournal() {
   let h = `<div class="rj-wrap">
     <div class="rj-back" onclick="openJourneyDetail(_recTrip)"><i class="ph ph-arrow-left"></i> Journey detail</div>
     <div class="rj-header">
+      <div class="rj-cover" onclick="document.getElementById('rjHeaderCoverInput').click()" title="${t.cover_image?'Change cover photo':'Add cover photo'}">
+        ${t.cover_image
+          ? `<img src="${t.cover_image}" alt=""/><button class="rj-cover-del" onclick="event.stopPropagation();recRemoveTripCoverImage()" title="Remove cover photo"><i class="ph ph-x"></i></button>`
+          : `<i class="ph ph-image" style="font-size:20px"></i>`}
+      </div>
+      <input type="file" id="rjHeaderCoverInput" accept="image/*" style="display:none" onchange="recSetTripCoverImage(this)">
       <div style="flex:1;min-width:200px">
         <div class="rj-kicker">Journey log</div>
         <div class="rj-title">${first} → ${last}</div>
@@ -6307,6 +6315,24 @@ async function recInitStickyMap() {
   }
   _recMap.fitBounds(L.latLngBounds(ll).pad(0.3));
   setTimeout(() => _recMap && _recMap.invalidateSize(), 50);
+}
+
+// Cover photo — set directly from the main editing screen (independent of
+// the publish flow below, which only ever commits cover_image on publish).
+function recSetTripCoverImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  _compressImageFile(file, 900, 0.82).then(dataUrl => {
+    _recTrip.cover_image = dataUrl;
+    recPersist();
+    renderRecordJournal();
+  });
+}
+function recRemoveTripCoverImage() {
+  if (!_recTrip) return;
+  _recTrip.cover_image = null;
+  recPersist();
+  renderRecordJournal();
 }
 
 // Stop recording → Publish
