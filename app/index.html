@@ -1237,6 +1237,9 @@ window.addEventListener('unhandledrejection', (e) => {
 /* My Trips — recorded-trip badge (doc §10) */
 .mtr-rec-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#C84010;background:rgba(255,80,20,0.1);border:0.5px solid rgba(255,80,20,0.2);border-radius:999px;padding:2px 8px;flex-shrink:0;}
 .mtr-rec-dot{width:5px;height:5px;border-radius:50%;background:var(--sage);display:inline-block;}
+/* Journey Detail — bottom recording CTA bar (design: JourneyMobile §229-246) */
+.jd-rec-bar{position:sticky;bottom:0;display:flex;gap:10px;align-items:center;background:var(--bg);border-top:0.5px solid var(--border);margin:12px -0.875rem 0;padding:11px 0.875rem calc(12px + env(safe-area-inset-bottom,0px));z-index:50;}
+.jd-rec-edit{padding:12px 16px;border-radius:999px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);display:flex;align-items:center;gap:6px;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -5555,6 +5558,15 @@ function renderJourneyDetail() {
   else if (_jdTab === 'map')       h += `<div id="jdMapMount"></div>`;
 
   h += `</div>`;
+
+  // Bottom CTA bar (design: JourneyMobile §229-246) — native-mobile only.
+  // Recording against THIS trip = Mode A (planned vs actual, doc §2).
+  const _jdRecActive = isRecordingActive() && (loadRecordingSession() || {}).tripId === t.id;
+  h += `<div class="jd-rec-bar record-entry">${_jdRecActive
+    ? `<button class="gps-cta" style="margin:0" onclick="switchTab('liverecord')"><i class="ph ph-record-fill"></i> Continue Recording</button>`
+    : `<button class="jd-rec-edit" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
+       <button class="gps-cta" style="margin:0;flex:1" onclick="startGpsRecording({mode:'A',tripId:'${t.id}'})"><i class="ph ph-record-fill"></i> Start Recording</button>`}</div>`;
+
   el.innerHTML = h;
 
   if (_jdTab === 'map') jdInitMap(stops, legs);
