@@ -108,14 +108,24 @@ window.addEventListener('unhandledrejection', (e) => {
   .thinking{color:var(--text3);font-style:italic;display: flex;align-items: center;gap: 8px;}
   .thinking::before{content: ''; width: 12px; height: 12px; border: 2px solid var(--text3); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;}
   @keyframes spin { to { transform: rotate(360deg); } }
-  /* ── Vehicle progress loader ───────────────────────────────────────── */
+  /* ── Vehicle progress loader ─────────────────────────────────────────
+     Hand-drawn SVG vehicles (wheels rotate, trains/ferries puff exhaust,
+     the hiker's limbs swing) instead of plain emoji — from ux-handoff/
+     SLW Route Loader.html, ported in place (same .route-loader/.rl-*
+     class names the JS below already used). */
   .route-loader{display:flex;flex-direction:column;align-items:center;padding:28px 16px;gap:14px;}
-  .rl-track{position:relative;width:100%;max-width:300px;height:40px;}
-  .rl-road{position:absolute;bottom:0;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,var(--border) 0,var(--border) 10px,transparent 10px,transparent 18px);animation:rl-scroll 0.5s linear infinite;}
-  .rl-vehicle{position:absolute;bottom:4px;font-size:22px;line-height:1;animation:rl-drive 2.2s ease-in-out infinite;will-change:transform,left;}
-  .rl-label{font-size:12px;color:var(--text3);font-style:italic;min-height:18px;text-align:center;}
-  @keyframes rl-scroll{to{background-position:-28px 0;}}
-  @keyframes rl-drive{0%{left:-36px;opacity:0;}8%{opacity:1;}85%{opacity:1;}100%{left:calc(100% + 36px);opacity:0;}}
+  .rl-track{position:relative;width:100%;max-width:340px;height:64px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 28px,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 28px,#000 calc(100% - 28px),transparent 100%);}
+  .rl-ground{position:absolute;bottom:8px;left:0;right:0;height:1.5px;background:var(--border2);}
+  .rl-dashes{position:absolute;bottom:2px;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,var(--sage) 0,var(--sage) 10px,transparent 10px,transparent 22px);opacity:0.22;animation:rl-scroll 0.38s linear infinite;}
+  .rl-vehicle{position:absolute;bottom:9px;left:0;line-height:0;animation:rl-drive 2.6s cubic-bezier(.45,.05,.55,.95) infinite;will-change:transform,opacity;}
+  .rl-bob{animation:rl-bob .42s ease-in-out infinite alternate;line-height:0;}
+  .rl-bob.float{animation:rl-float 1.4s ease-in-out infinite;}
+  .rl-label{font-size:11px;color:var(--text3);min-height:18px;text-align:center;letter-spacing:.3px;transition:opacity .25s ease,transform .25s ease;}
+  .rl-label.out{opacity:0;transform:translateY(3px);}
+  @keyframes rl-scroll{to{background-position:-22px 0;}}
+  @keyframes rl-drive{0%{transform:translateX(-90px);opacity:0;}10%{opacity:1;}88%{opacity:1;}100%{transform:translateX(360px);opacity:0;}}
+  @keyframes rl-bob{from{transform:translateY(0);}to{transform:translateY(-1.2px);}}
+  @keyframes rl-float{0%,100%{transform:translateY(0) rotate(-1.4deg);}50%{transform:translateY(-2.2px) rotate(1.4deg);}}
   .sec-lbl{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem;}
   .sumbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
   .met{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;box-shadow: var(--shadow);transition: transform 0.2s;}
@@ -3788,7 +3798,7 @@ async function planRoute() {
   btn.disabled = true; btn.textContent = 'Planning...';
   const res = document.getElementById('planResult');
   res.style.display = 'block';
-  res.innerHTML = `<div class="route-loader"><div class="rl-track"><div class="rl-road"></div><span class="rl-vehicle">🚌</span></div><div class="rl-label">Finding the best overland route...</div></div>`;
+  res.innerHTML = `<div class="route-loader"><div class="rl-track"><div class="rl-ground"></div><div class="rl-dashes"></div><div class="rl-vehicle"><div class="rl-bob" id="rlBob"></div></div></div><div class="rl-label" id="rlLabel">Finding the best overland route...</div></div>`;
   _startRouteLoader(res);
 
   try {
@@ -4015,25 +4025,129 @@ function _restorePendingRoute() {
 }
 
 // ── Vehicle route loader ──────────────────────────────────────────────
-const _rlVehicles = [
-  { icon:'🚌', label:'Scanning bus routes...' },
-  { icon:'🚂', label:'Checking train schedules...' },
-  { icon:'⛴️', label:'Routing across waterways...' },
-  { icon:'🚲', label:'Mapping cycle paths...' },
-  { icon:'🚗', label:'Finding road connections...' },
-];
+// Hand-drawn SVG vehicles (wheels rotate, trains/ferries puff exhaust, the
+// hiker's limbs swing) — ported from ux-handoff/SLW Route Loader.html.
+// Replaces the old plain-emoji version (🚌🚂⛴️🚲🚗 as textContent).
+function _rlWheel(cx, cy, r) {
+  const s = +(r * 0.62).toFixed(1);
+  return `<g>
+    <animateTransform attributeName="transform" type="rotate" from="0 ${cx} ${cy}" to="360 ${cx} ${cy}" dur="0.7s" repeatCount="indefinite"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}"/>
+    <line x1="${cx - s}" y1="${cy}" x2="${cx + s}" y2="${cy}" stroke-width="1.6"/>
+    <line x1="${cx}" y1="${cy - s}" x2="${cx}" y2="${cy + s}" stroke-width="1.6"/>
+  </g>`;
+}
+function _rlPuff(cx, cy, delay) {
+  return `<circle cx="${cx}" cy="${cy}" r="1.4" stroke-width="1.4" opacity="0">
+    <animate attributeName="opacity" values="0;0.5;0" keyTimes="0;0.25;1" dur="1.2s" begin="${delay}s" repeatCount="indefinite"/>
+    <animate attributeName="cx" values="${cx};${cx - 6}" dur="1.2s" begin="${delay}s" repeatCount="indefinite"/>
+    <animate attributeName="cy" values="${cy};${cy - 7}" dur="1.2s" begin="${delay}s" repeatCount="indefinite"/>
+    <animate attributeName="r" values="1.4;3.4" dur="1.2s" begin="${delay}s" repeatCount="indefinite"/>
+  </circle>`;
+}
+function _rlLimbSwing(jx, jy, rev) {
+  const a = rev ? '14' : '-14', b = rev ? '-14' : '14';
+  return `<animateTransform attributeName="transform" type="rotate" values="${a} ${jx} ${jy}; ${b} ${jx} ${jy}; ${a} ${jx} ${jy}" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" dur="1.1s" repeatCount="indefinite"/>`;
+}
+const _rlVehicles = (() => {
+  const O = 'var(--sage)';
+  return [
+    { id:'bus', label:'Scanning bus routes...', float:false, svg:`<svg viewBox="0 0 72 42" width="72" height="42" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="5" width="66" height="26" rx="5"/>
+      <rect x="8"  y="11" width="10" height="9" rx="2"/>
+      <rect x="23" y="11" width="10" height="9" rx="2"/>
+      <rect x="38" y="11" width="10" height="9" rx="2"/>
+      <path d="M53 11 h8 a3 3 0 0 1 3 3 v6 h-11 z"/>
+      <line x1="4" y1="26" x2="66" y2="26" stroke-width="1.5" opacity="0.55"/>
+      ${_rlWheel(16, 35, 5.5)}
+      ${_rlWheel(54, 35, 5.5)}
+    </svg>` },
+    { id:'train', label:'Checking train schedules...', float:false, svg:`<svg viewBox="0 0 80 44" width="80" height="44" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      ${_rlPuff(44, 6, 0)}
+      ${_rlPuff(47, 7, 0.6)}
+      <rect x="2" y="20" width="22" height="13" rx="2.5"/>
+      <rect x="24" y="11" width="34" height="22" rx="3.5"/>
+      <path d="M36 11 v-4 h6 v4"/>
+      <line x1="33" y1="7" x2="45" y2="7"/>
+      <rect x="46" y="16" width="8" height="8" rx="1.5"/>
+      <path d="M58 25 l7 8 h-7"/>
+      ${_rlWheel(37, 37, 6)}
+      ${_rlWheel(51, 37, 6)}
+      ${_rlWheel(9,  36, 4.5)}
+      ${_rlWheel(19, 36, 4.5)}
+    </svg>` },
+    { id:'ferry', label:'Routing across waterways...', float:true, svg:`<svg viewBox="0 0 80 42" width="80" height="42" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      ${_rlPuff(38, 4, 0)}
+      ${_rlPuff(41, 5, 0.6)}
+      <path d="M34 12 v-6 h7 v6"/>
+      <rect x="24" y="12" width="27" height="9" rx="2.5"/>
+      <rect x="16" y="21" width="44" height="8" rx="2"/>
+      <circle cx="26" cy="25" r="2.2" stroke-width="1.6"/>
+      <circle cx="36" cy="25" r="2.2" stroke-width="1.6"/>
+      <circle cx="46" cy="25" r="2.2" stroke-width="1.6"/>
+      <path d="M6 29 L10 37 L66 37 L74 29 Z"/>
+      <line x1="60" y1="21" x2="66" y2="29" stroke-width="1.6" opacity="0.6"/>
+    </svg>` },
+    { id:'bicycle', label:'Mapping cycle paths...', float:false, svg:`<svg viewBox="0 0 62 42" width="62" height="42" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      ${_rlWheel(13, 30, 10)}
+      ${_rlWheel(49, 30, 10)}
+      <path d="M13 30 L28 22 L25 12 M25 12 L41 12 L28 22 M41 12 L49 30"/>
+      <path d="M41 12 L43 6 M39 6 h8"/>
+      <path d="M25 12 L24 6 M20 5 h8"/>
+      <circle cx="28" cy="22" r="2.6" fill="${O}" stroke="none"/>
+    </svg>` },
+    { id:'car', label:'Finding road connections...', float:false, svg:`<svg viewBox="0 0 70 42" width="70" height="42" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 32 v-7 a4 4 0 0 1 4 -4 h8 l6 -10 a3 3 0 0 1 2.6 -1.5 h20 a3 3 0 0 1 2.5 1.4 l6.5 10.1 h7 a4 4 0 0 1 4 4 v7"/>
+      <line x1="4" y1="32" x2="12" y2="32" stroke-width="1.8"/>
+      <line x1="24" y1="32" x2="46" y2="32" stroke-width="1.8"/>
+      <line x1="58" y1="32" x2="65" y2="32" stroke-width="1.8"/>
+      <path d="M23 21 l5 -8.5 h7 v8.5 z" stroke-width="1.6"/>
+      <path d="M39 12.5 h5.5 a2 2 0 0 1 1.7 1 l4.6 7.5 h-11.8 z" stroke-width="1.6"/>
+      ${_rlWheel(18, 33, 5.5)}
+      ${_rlWheel(52, 33, 5.5)}
+    </svg>` },
+    { id:'hiker', label:'Checking walking trails...', float:false, svg:`<svg viewBox="0 0 40 44" width="40" height="44" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="21" cy="6" r="3.6"/>
+      <line x1="20" y1="10" x2="18" y2="25"/>
+      <rect x="11" y="12" width="7" height="11" rx="2.5"/>
+      <line x1="14" y1="15" x2="14" y2="20" stroke-width="1.4" opacity="0.6"/>
+      <g>
+        ${_rlLimbSwing(20, 13, false)}
+        <line x1="20" y1="13" x2="27" y2="20"/>
+        <line x1="27" y1="20" x2="30" y2="38" stroke-width="1.6"/>
+      </g>
+      <g>
+        ${_rlLimbSwing(20, 13, true)}
+        <line x1="20" y1="13" x2="13" y2="20"/>
+      </g>
+      <g>
+        ${_rlLimbSwing(18, 25, false)}
+        <path d="M18 25 L24 32 L26 40"/>
+      </g>
+      <g>
+        ${_rlLimbSwing(18, 25, true)}
+        <path d="M18 25 L14 33 L10 39"/>
+      </g>
+    </svg>` },
+  ];
+})();
 let _rlIdx = 0, _rlTimer = null;
 function _startRouteLoader(container) {
   _rlIdx = 0;
   clearTimeout(_rlTimer);
   const tick = () => {
     const v = _rlVehicles[_rlIdx % _rlVehicles.length];
-    const vEl = container.querySelector('.rl-vehicle');
+    const carrier = container.querySelector('.rl-vehicle');
+    const bob = container.querySelector('.rl-bob');
     const lEl = container.querySelector('.rl-label');
-    if (vEl) { vEl.style.animation = 'none'; vEl.textContent = v.icon; void vEl.offsetWidth; vEl.style.animation = ''; }
-    if (lEl) lEl.textContent = v.label;
+    if (carrier) { carrier.style.animation = 'none'; void carrier.offsetWidth; carrier.style.animation = ''; }
+    if (bob) { bob.className = 'rl-bob' + (v.float ? ' float' : ''); bob.innerHTML = v.svg; }
+    if (lEl) {
+      lEl.classList.add('out');
+      setTimeout(() => { lEl.textContent = v.label; lEl.classList.remove('out'); }, 250);
+    }
     _rlIdx++;
-    _rlTimer = setTimeout(tick, 2200);
+    _rlTimer = setTimeout(tick, 2600);
   };
   tick();
 }
