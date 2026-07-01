@@ -3358,7 +3358,10 @@ async function importPolarstepsBuild(index, candidatesOverride) {
           .filter(p => p.startsWith(`${candidate.folder}/${folder}/photos/`) && !zip.files[p].dir)
           .slice(0, 3); // cap photos per stop — same rationale as the Record Journal's own photo cap
         for (const pp of photoPaths) {
-          try { photos.push(await _compressImageFile(await zip.files[pp].async('blob'), 1200, 0.75)); }
+          // Smaller/lower-quality than the Record Journal's single-photo-at-a-time default
+          // (1200/0.75) — an import can pull in dozens of photos in one localStorage write,
+          // where the journal's manual add flow naturally self-limits by user patience.
+          try { photos.push(await _compressImageFile(await zip.files[pp].async('blob'), 900, 0.6)); }
           catch (e) { /* one bad photo shouldn't fail the whole stop */ }
         }
       }
@@ -3388,13 +3391,25 @@ async function importPolarstepsBuild(index, candidatesOverride) {
 
     // Persist right away — picking the trip from the list IS the confirm step;
     // the Record Journal view we land in next doesn't itself save on open.
+    // A real export can carry far more photos than fit in one localStorage
+    // write, so don't fail the whole import over it — drop the photos and
+    // keep the stops/dates/diary text, which is most of the value anyway.
     const trips = storage.get('trips') || [];
     trips.push(trip);
-    if (!storage.set('trips', trips)) throw new Error('Couldn’t save — you’re out of local storage space. Try removing a few older trips or photos first.');
+    let savedWithoutPhotos = false;
+    if (!storage.set('trips', trips)) {
+      trip.stops.forEach(s => { s.photos = []; });
+      trips[trips.length - 1] = trip;
+      if (!storage.set('trips', trips)) throw new Error('Couldn’t save — you’re out of local storage space even without photos. Try removing a few older trips first.');
+      savedWithoutPhotos = true;
+    }
     persistTripCloud(trip);
 
     closeImportModal();
     openRecordJournal(trip);
+    if (savedWithoutPhotos) {
+      setTimeout(() => alert("Imported \"" + trip.title + "\" — stops and diary text are all there, but there wasn't enough local storage space to keep the photos. Free up space (My Trips → remove old photos or trips) and re-import if you want them."), 300);
+    }
   } catch (err) {
     console.warn('Polarsteps import failed:', err);
     _importState = 'error'; _importError = err.message || 'Unknown error.'; renderImportModal();
