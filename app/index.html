@@ -4982,10 +4982,11 @@ function renderPlanLanding() {
   const lg = document.getElementById('planLandingGrid');
   if (!lg) return;
 
-  // "Your recent" from localStorage
+  // "Your recent" from localStorage — sorted by updated_at, same reasoning as
+  // the My Trips table (array order doesn't track recency once trips are edited).
   const trips = storage.get('trips') || [];
   const recentHtml = trips.length
-    ? trips.slice(-3).reverse().map(t => {
+    ? trips.slice().sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0)).slice(0, 3).map(t => {
         const sc = t.stops?.length || 0;
         const route = sc >= 2 ? `${t.stops[0].name||'?'} → ${t.stops[sc-1].name||'?'}` : t.title||'Trip';
         const meta  = [t.title||'', t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',day:'numeric'}) : ''].filter(Boolean).join(' · ');
@@ -5072,7 +5073,11 @@ function renderMyTripsPanel() {
     </div>`;
     return;
   }
-  const trips = (storage.get('trips') || []).slice().reverse();
+  // Sort by updated_at (not array order) — editing an existing trip refreshes
+  // its timestamp in place without moving it in the array, so a plain
+  // .reverse() drifted out of "latest first" as soon as any old trip got edited.
+  const trips = (storage.get('trips') || []).slice()
+    .sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
 
   const stateOf = (t) => {
     if (t.status === 'maybe') return { label:'MAYBE', cls:'maybe', color:'var(--bark)' };
