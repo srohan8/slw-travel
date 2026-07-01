@@ -4,7 +4,7 @@ import express from 'express';
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── CORS — allow GitHub Pages and local dev ──────────────────────────────────
+// ── CORS — allow GitHub Pages, local dev, and the native Android app ────────
 const ALLOWED_ORIGINS = [
   'https://bysloth.com',
   'https://www.bysloth.com',
@@ -16,6 +16,10 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'http://127.0.0.1:4000',
   'http://127.0.0.1:3333',
+  // Capacitor's Android WebView serves the app from this origin by default
+  // (capacitor.config.ts has no server.hostname/androidScheme override) —
+  // without it every /api/ai call from the native app fails CORS, every time.
+  'https://localhost',
 ];
 
 app.use((req, res, next) => {
