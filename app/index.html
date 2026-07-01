@@ -4974,8 +4974,7 @@ function renderPlanLanding() {
         const sc = t.stops?.length || 0;
         const route = sc >= 2 ? `${t.stops[0].name||'?'} → ${t.stops[sc-1].name||'?'}` : t.title||'Trip';
         const meta  = [t.title||'', t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',day:'numeric'}) : ''].filter(Boolean).join(' · ');
-        const safeT = JSON.stringify(t).replace(/"/g,'&quot;');
-        return `<div class="recent-trip-row" onclick="openJourneyDetail(${safeT})">
+        return `<div class="recent-trip-row" onclick="openJourneyDetailById('${t.id}')">
           <div class="recent-trip-title">${route}</div>
           <div class="recent-trip-sub">${meta}</div>
         </div>`;
@@ -5121,13 +5120,12 @@ function renderMyTripsPanel() {
         ? `${fmtD(stopDates[0])} — ${fmtD(stopDates[stopDates.length-1])}`
         : (t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',year:'numeric'}) : '—');
       const dist = Math.round(legs.reduce((a,l)=>a+(+l.km||0),0));
-      const safeT = JSON.stringify(t).replace(/"/g,'&quot;');
       const isMaybe = st.cls === 'maybe';
       // Trip lifecycle: recording in progress vs. published journal.
       const hasActivity = !t.recordingStopped && (!!t.recordingStarted || (t.stops||[]).some(s => s.visited || (s.diary && s.diary.trim())));
       const isPublished = !!t.published;
       const isRecording = hasActivity && !isPublished;
-      return `<div class="mytrips-table-row" style="cursor:pointer;${isMaybe?'opacity:0.65':''}" onclick="openJourneyDetail(${safeT})" title="View journey">
+      return `<div class="mytrips-table-row" style="cursor:pointer;${isMaybe?'opacity:0.65':''}" onclick="openJourneyDetailById('${t.id}')" title="View journey">
         <div>
           <div class="mtr-head">
             <span class="mtr-title">${primary}</span>
@@ -5138,10 +5136,10 @@ function renderMyTripsPanel() {
         <div class="mtr-date" style="font-size:12px;color:var(--text2);font-family:var(--mono)">${dateRange}${sc ? ' · '+sc+' stops' : ''}</div>
         <div class="mtr-dist" style="font-size:13px;color:var(--text2)">${sc} <span style="color:var(--text3);font-size:11px">· ${dist?dist+'km':''}</span></div>
         <div class="mytrips-row-actions">
-          <button class="mytrips-act-btn" onclick="event.stopPropagation();openJourneyDetail(${safeT})">View</button>
-          <button class="mytrips-act-btn" onclick="event.stopPropagation();loadTrip(${safeT},'edit')">Edit</button>
-          ${isRecording ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openRecordJournal(${safeT})"><span class="mytrips-rec-dot"></span> Recording</button>` : ''}
-          ${(isRecording||isPublished) ? `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();openRecordJournal(${safeT})"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>` : ''}
+          <button class="mytrips-act-btn" onclick="event.stopPropagation();openJourneyDetailById('${t.id}')">View</button>
+          <button class="mytrips-act-btn" onclick="event.stopPropagation();loadTripById('${t.id}','edit')">Edit</button>
+          ${isRecording ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><span class="mytrips-rec-dot"></span> Recording</button>` : ''}
+          ${(isRecording||isPublished) ? `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>` : ''}
         </div>
       </div>`;
     }).join('') : `<div style="padding:2.5rem;text-align:center;font-size:13px;color:var(--text3)">No trips yet.</div>`;
@@ -5179,9 +5177,8 @@ function renderMyTripsPanel() {
     const dates = t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',year:'numeric'}) : '—';
     const tst   = st(t);
     const isProgress = tst.cls === 'progress';
-    const safeT = JSON.stringify(t).replace(/"/g,'&quot;');
     return `<div class="mytrips-jcard">
-      <div class="mytrips-jcard-img" style="cursor:pointer" onclick="openJourneyDetail(${safeT})"><i class="ph ph-image" style="font-size:28px"></i></div>
+      <div class="mytrips-jcard-img" style="cursor:pointer" onclick="openJourneyDetailById('${t.id}')"><i class="ph ph-image" style="font-size:28px"></i></div>
       <div class="mytrips-jcard-body">
         <div class="mytrips-jcard-title">${route}</div>
         <div class="mytrips-jcard-sub">${t.title||''} · ${dates}</div>
@@ -5190,8 +5187,8 @@ function renderMyTripsPanel() {
           ${isProgress ? `<span class="mytrips-jcard-badge" style="background:rgba(201,168,76,0.15);color:var(--gold)">In progress</span>` : ''}
         </div>
         <div class="mytrips-jcard-actions">
-          <button class="mytrips-jcard-edit" onclick="openRecordJournal(${safeT})">Edit journal</button>
-          <button class="mytrips-jcard-pub" onclick="openRecordJournal(${safeT})">Publish →</button>
+          <button class="mytrips-jcard-edit" onclick="openRecordJournalById('${t.id}')">Edit journal</button>
+          <button class="mytrips-jcard-pub" onclick="openRecordJournalById('${t.id}')">Publish →</button>
         </div>
       </div>
     </div>`;
@@ -5206,6 +5203,13 @@ let _journeyTrip = null;
 let _jdTab = 'journey';
 let _jdMap = null;
 let _jdDiaryTimer = null;
+
+// Look up by id at click-time instead of embedding the full trip (photos
+// included) into every list row's onclick attribute — see openJourneyDetailById.
+function _tripById(id) { return (storage.get('trips')||[]).find(t => t.id === id); }
+function openJourneyDetailById(id) { const t = _tripById(id); if (t) openJourneyDetail(t); }
+function loadTripById(id, mode) { const t = _tripById(id); if (t) loadTrip(t, mode); }
+function openRecordJournalById(id) { const t = _tripById(id); if (t) openRecordJournal(t); }
 
 function openJourneyDetail(trip) {
   _journeyTrip = trip;
