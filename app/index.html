@@ -704,6 +704,18 @@ window.addEventListener('unhandledrejection', (e) => {
   .rj-photo img{width:100%;height:100%;object-fit:cover;display:block;}
   .rj-photo-add{width:72px;height:54px;border-radius:var(--radius);border:1.5px dashed var(--border2);background:transparent;color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:20px;font-weight:300;flex-shrink:0;}
   .rj-photo-add:hover{border-color:var(--fern);color:var(--fern);}
+  /* Multiple photos on one stop (e.g. a Polarsteps import) — one photo at a
+     time instead of tiles wrapping into extra rows per stop. */
+  .rj-photos-slideshow{justify-content:flex-start;}
+  .rj-slide{position:relative;width:100%;max-width:220px;height:64px;border-radius:var(--radius);overflow:hidden;flex-shrink:1;border:0.5px solid var(--border);background:var(--bg2);}
+  .rj-slide img{width:100%;height:100%;object-fit:cover;display:block;}
+  .rj-slide-nav{position:absolute;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;border:none;background:rgba(9,16,34,0.55);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;opacity:0;transition:opacity .15s;}
+  .rj-slide:hover .rj-slide-nav{opacity:1;}
+  .rj-slide-prev{left:4px;}
+  .rj-slide-next{right:4px;}
+  .rj-slide .rj-slide-del{opacity:0;}
+  .rj-slide:hover .rj-slide-del{opacity:1;}
+  .rj-slide-count{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:9px;font-family:var(--mono);color:#fff;background:rgba(9,16,34,0.55);padding:1px 6px;border-radius:99px;pointer-events:none;}
   .rj-card-actions{display:flex;justify-content:space-between;margin-top:auto;flex-wrap:wrap;gap:6px;}
   .rj-act-btn{font-size:11px;padding:4px 11px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:5px;}
   .rj-tip-btn{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text);}
@@ -5984,6 +5996,7 @@ async function jdInitMiniMap(stops, legs) {
 
 // ── [07] Record Journal screen ─────────────────────────────────────
 let _recTrip = null;
+let _rjPhotoIdx = {}; // stop index -> currently-shown photo index, for stops with 2+ photos
 let _recMap = null;
 let _recMapOpen = false;
 let _recVoiceIdx = -1;
@@ -5996,6 +6009,7 @@ let _recPub = { open:false, audience:'friends', done:false };
 
 function openRecordJournal(trip) {
   _recTrip = trip;
+  _rjPhotoIdx = {};
   _recMapOpen = false;
   if (_recMap) { try { _recMap.remove(); } catch(e){} _recMap = null; }
   switchTab('recordjournal', null);
@@ -6106,10 +6120,6 @@ function renderRecordJournal() {
         <input class="rj-leg-edit rj-leg-num" value="${leg.cost||0}" title="Cost" onchange="recSetLegField(${i},'cost',this.value)"/><span class="rj-leg-u">${cur}</span>
         <button class="rj-book-toggle${leg.booked?' on':''}" onclick="recToggleBooked(${i})" title="${leg.booked?'Booked — click to unmark':'Mark as booked'}">${leg.booked?'<i class="ph ph-check-circle"></i> Booked':'<i class="ph ph-circle-dashed"></i> Book'}</button>
       </div>` : '';
-      // Existing photos (each removable), then pad to 2 placeholder slots, then the + button.
-      const existingPhotos = (s.photos||[]).map((src,pi) => `<div class="rj-photo"><img src="${src}" alt=""/><button class="rj-photo-del" onclick="event.stopPropagation();recRemovePhoto(${i},${pi})" title="Remove photo"><i class="ph ph-x"></i></button></div>`);
-      while (existingPhotos.length < 2) existingPhotos.push(`<div class="rj-photo rj-photo-empty" onclick="recAddPhoto(${i})" title="Add a photo"><i class="ph ph-image"></i></div>`);
-      const photos = existingPhotos.join('');
       // Visit control toggles state but no longer gates journaling — every stop is journalable.
       const visitControl = s.visited
         ? `<button class="rj-visit-pill" onclick="recToggleVisited(${i})"><i class="ph ph-check-circle"></i> ${recFmtDate(s.date) ? 'Visited · '+recFmtDate(s.date) : 'Visited'}</button>`
@@ -6133,10 +6143,7 @@ function renderRecordJournal() {
             <!-- Scan text (OCR) hidden for now — revisit with cloud OCR. recStartScan() retained. -->
             <button class="rj-ta-btn rj-ta-voice" onclick="recStartVoice(${i})" title="Voice to text"><i class="ph ph-microphone"></i> Voice</button>
           </div>
-          <div class="rj-photos">
-            ${photos}
-            <button class="rj-photo-add" onclick="recAddPhoto(${i})" title="Add photo">+</button>
-          </div>
+          ${rjPhotosHTML(s, i)}
         </div>
       </div>`;
     }
@@ -6229,7 +6236,36 @@ function recRemoveStop(i) {
 function recRemovePhoto(i, pi) {
   if (!_recTrip.stops[i]?.photos) return;
   _recTrip.stops[i].photos.splice(pi, 1);
+  delete _rjPhotoIdx[i]; // index may now be out of range — back to the first photo
   recPersist(); renderRecordJournal();
+}
+function recPhotoNav(i, dir) {
+  const n = _recTrip.stops[i]?.photos?.length || 0;
+  if (!n) return;
+  _rjPhotoIdx[i] = ((_rjPhotoIdx[i] || 0) + dir + n) % n;
+  renderRecordJournal();
+}
+// 0-1 photos: the original small-tile layout (padded to 2 slots) + add button.
+// 2+ photos (e.g. a Polarsteps import bringing in several per stop): one photo
+// at a time with prev/next, instead of tiles wrapping into extra rows per stop.
+function rjPhotosHTML(s, i) {
+  const n = s.photos?.length || 0;
+  if (n <= 1) {
+    const tiles = (s.photos||[]).map((src,pi) => `<div class="rj-photo"><img src="${src}" alt=""/><button class="rj-photo-del" onclick="event.stopPropagation();recRemovePhoto(${i},${pi})" title="Remove photo"><i class="ph ph-x"></i></button></div>`);
+    while (tiles.length < 2) tiles.push(`<div class="rj-photo rj-photo-empty" onclick="recAddPhoto(${i})" title="Add a photo"><i class="ph ph-image"></i></div>`);
+    return `<div class="rj-photos">${tiles.join('')}<button class="rj-photo-add" onclick="recAddPhoto(${i})" title="Add photo">+</button></div>`;
+  }
+  const cur = ((_rjPhotoIdx[i] || 0) % n + n) % n;
+  return `<div class="rj-photos rj-photos-slideshow">
+    <div class="rj-slide">
+      <img src="${s.photos[cur]}" alt=""/>
+      <button class="rj-slide-nav rj-slide-prev" onclick="event.stopPropagation();recPhotoNav(${i},-1)" title="Previous photo"><i class="ph ph-caret-left"></i></button>
+      <button class="rj-slide-nav rj-slide-next" onclick="event.stopPropagation();recPhotoNav(${i},1)" title="Next photo"><i class="ph ph-caret-right"></i></button>
+      <button class="rj-photo-del rj-slide-del" onclick="event.stopPropagation();recRemovePhoto(${i},${cur})" title="Remove this photo"><i class="ph ph-x"></i></button>
+      <span class="rj-slide-count">${cur+1}/${n}</span>
+    </div>
+    <button class="rj-photo-add" onclick="recAddPhoto(${i})" title="Add photo">+</button>
+  </div>`;
 }
 function recToggleBooked(i) {
   if (!_recTrip.legs || !_recTrip.legs[i]) return;
