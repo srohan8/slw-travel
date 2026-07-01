@@ -1830,7 +1830,7 @@ function updateNavAuth() {
   const avatarWrap = document.getElementById('navAvatarWrap');
   const avatar     = document.getElementById('navAvatar');
   const signIn     = document.getElementById('signInBtn');
-  const gatedTabs  = ['navbtn_mytrips','navbtn_journals','navbtn_profile','navbtn_admin','bn_mytrips'];
+  const gatedTabs  = ['navbtn_mytrips','navbtn_journals','navbtn_profile','navbtn_admin'];
   if (currentUser) {
     const handle = currentUser.user_metadata?.display_name || currentUser.email?.split('@')[0] || 'U';
     if (avatar) { avatar.textContent = handle.slice(0,1).toUpperCase(); avatar.title = handle; }
