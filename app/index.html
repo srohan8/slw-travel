@@ -1870,6 +1870,15 @@ function newTripId() {
     const r = Math.floor(Math.random()*16); const v = c === 'x' ? r : (r & 0x3 | 0x8); return v.toString(16);
   });
 }
+// Whether a trip has any actual journal content — visited stops or diary
+// text (or an explicit recordingStarted flag). Deliberately independent of
+// recordingStopped/published: those affect how the journal is presented
+// (live "Recording" dot vs a neutral "Journal" label), not whether there's
+// a journal to open at all. A trip with real content should always route
+// to "open the journal", never back to "start recording from scratch".
+function _journalHasContent(t) {
+  return !!t.recordingStarted || (t.stops||[]).some(s => s.visited || (s.diary && s.diary.trim()));
+}
 
 // Shared cloud-persist for a single trip object (used by Journey Detail, Record Journal, Save-to-Trips).
 // Writes the full trip blob to the Supabase `trips` table for signed-in users. Returns true on success.
@@ -3444,7 +3453,11 @@ async function importPolarstepsBuild(index, candidatesOverride) {
       notes: (tripData.summary || '').trim() || 'Imported from Polarsteps — dates and diary entries are pre-filled from your export.',
       stops, legs,
       updated_at: new Date().toISOString(),
-      imported: true, imported_from: 'polarsteps',
+      // recordingStopped: true — this trip has full journal content on arrival
+      // (every step already visited/diarized), but nothing about it is live;
+      // without this the journal header and My Trips row would show a
+      // pulsing "● Recording" as if GPS tracking were actively in progress.
+      imported: true, imported_from: 'polarsteps', recordingStopped: true,
     };
 
     // Persist right away — picking the trip from the list IS the confirm step;
@@ -5404,10 +5417,18 @@ function renderMyTripsPanel() {
         : (t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',year:'numeric'}) : '—');
       const dist = Math.round(legs.reduce((a,l)=>a+(+l.km||0),0));
       const isMaybe = st.cls === 'maybe';
-      // Trip lifecycle: recording in progress vs. published journal.
-      const hasActivity = !t.recordingStopped && (!!t.recordingStarted || (t.stops||[]).some(s => s.visited || (s.diary && s.diary.trim())));
+      // Trip lifecycle: one button, three states — "Start journal" (no content
+      // yet), a live "Recording" (has content, not stopped/published), or a
+      // neutral "Journal" (content exists but recording's stopped, or it's
+      // published — e.g. a Polarsteps import, where nothing is actually live).
       const isPublished = !!t.published;
-      const isRecording = hasActivity && !isPublished;
+      const hasContent  = _journalHasContent(t);
+      const isRecording = hasContent && !t.recordingStopped && !isPublished;
+      const journalBtn = !hasContent
+        ? `<button class="mytrips-act-btn" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Start journal</button>`
+        : isRecording
+          ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><span class="mytrips-rec-dot"></span> Recording</button>`
+          : `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>`;
       return `<div class="mytrips-table-row" style="cursor:pointer;${isMaybe?'opacity:0.65':''}" onclick="openJourneyDetailById('${t.id}')" title="View journey">
         <div>
           <div class="mtr-head">
@@ -5421,8 +5442,7 @@ function renderMyTripsPanel() {
         <div class="mytrips-row-actions">
           <button class="mytrips-act-btn" onclick="event.stopPropagation();openJourneyDetailById('${t.id}')">View</button>
           <button class="mytrips-act-btn" onclick="event.stopPropagation();loadTripById('${t.id}','edit')">Edit</button>
-          ${isRecording ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><span class="mytrips-rec-dot"></span> Recording</button>` : ''}
-          ${(isRecording||isPublished) ? `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>` : ''}
+          ${journalBtn}
         </div>
       </div>`;
     }).join('') : `<div style="padding:2.5rem;text-align:center;font-size:13px;color:var(--text3)">No trips yet.</div>`;
@@ -5552,7 +5572,13 @@ function renderJourneyDetail() {
     : '';
 
   // §9 Session-2: "State 0" — trip saved but recording not started yet.
-  const recStarted = !t.recordingStopped && (!!t.recordingStarted || stops.some(s => s.visited || (s.diary && s.diary.trim())));
+  // A trip with real content (visited stops / diary text) always routes to
+  // "open the journal" — recordingStopped/published only change whether
+  // that button reads as live "Recording" or a neutral "Edit journal" (e.g.
+  // a Polarsteps import has full content on arrival but nothing is
+  // actually live-recording, so it shouldn't show the pulsing rec dot).
+  const hasContent = _journalHasContent(t);
+  const isLive = hasContent && !t.recordingStopped && !t.published;
   let h = `<div class="jd-back" style="display:flex;align-items:center;justify-content:space-between">
     <span onclick="goToMyTrips()" style="cursor:pointer"><i class="ph ph-arrow-left"></i> My Trips</span>
     <button class="btn" style="font-size:12px;padding:5px 13px" onclick="jdShareTrip('${t.id}')"><i class="ph ph-export"></i> Share</button>
@@ -5567,15 +5593,15 @@ function renderJourneyDetail() {
         ${(t.collaborators||[]).map((c,i)=>`<div class="jd-collab-av ${c.role}" title="${c.email} · can ${c.role}" style="z-index:${10-i}">${c.avatar||c.email[0].toUpperCase()}</div>`).join('')}
         <button class="jd-collab-add" onclick="jdOpenInvite()" title="Invite collaborators"><i class="ph ph-user-plus" style="font-size:12px;color:var(--text3)"></i></button>
       </div>
-      ${recStarted
-        ? `<button class="jd-rec-cta" onclick="openRecordJournal(_journeyTrip)"><span class="jd-rec-dot"></span> Recording · Edit journal</button>`
+      ${hasContent
+        ? `<button class="jd-rec-cta" onclick="openRecordJournal(_journeyTrip)">${isLive ? '<span class="jd-rec-dot"></span> Recording · Edit journal' : '<i class="ph ph-book-open" style="font-size:11px"></i> Edit journal'}</button>`
         : `<button class="btn" style="font-size:12px;padding:6px 14px" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
            <button class="jd-rec-cta" onclick="jdStartRecording()"><i class="ph ph-record-fill" style="font-size:11px"></i> Start recording</button>`}
     </div>
   </div>
   <div class="jd-tabs">
     <button class="jd-tab${_jdTab==='journey'?' on':''}" onclick="switchJourneyTab('journey')">Journey</button>
-    <button class="jd-tab rec${_jdTab==='recording'?' on':''}" onclick="switchJourneyTab('recording')">${recStarted?'<span class="jd-tab-dot"></span>':''}Recording</button>
+    <button class="jd-tab rec${_jdTab==='recording'?' on':''}" onclick="switchJourneyTab('recording')">${isLive?'<span class="jd-tab-dot"></span>':''}Recording</button>
     <button class="jd-tab${_jdTab==='map'?' on':''}" onclick="switchJourneyTab('map')">Map</button>
   </div>
   <div class="jd-body">`;
