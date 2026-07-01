@@ -3437,6 +3437,10 @@ async function importPolarstepsBuild(index, candidatesOverride) {
         }
       }
 
+      // Real GPS-tracked coordinates, when Polarsteps provides them — lets the
+      // map skip geocoding this stop's name entirely (see stopCoords()), so
+      // an ambiguous/generic place name can't put the pin in the wrong spot.
+      const hasCoords = Number.isFinite(step.location?.lat) && Number.isFinite(step.location?.lon);
       stops.push({
         name: placeName,
         date: step.start_time ? new Date(step.start_time * 1000).toISOString().slice(0,10) : '',
@@ -3445,6 +3449,7 @@ async function importPolarstepsBuild(index, candidatesOverride) {
         visited: true,
         diary: (step.description || '').trim(),
         photos,
+        ...(hasCoords ? { lat: step.location.lat, lon: step.location.lon } : {}),
       });
     }
 
@@ -3952,6 +3957,15 @@ async function geocodeStop(name) {
   } catch(e) { console.warn('Geocode failed:', name, e.message); }
   return null;
 }
+// Prefer a stop's own stored coordinates — e.g. a Polarsteps import carries
+// the real GPS-tracked lat/lon for every step — over geocoding its name,
+// which is only ever a best guess and can land in the wrong place for a
+// generic or ambiguous name. Every other stop (no stored coords) falls
+// through to the existing name-based geocodeStop() unchanged.
+async function stopCoords(stop) {
+  if (stop?.lat != null && stop?.lon != null) return { lat: stop.lat, lon: stop.lon };
+  return geocodeStop(stop?.name);
+}
 
 // ── Real elevation profile (SRTM90m via Open-Topo-Data, proxied) ──────────
 // Straight-line interpolation between geocoded stops, not OSRM road-following
@@ -3985,13 +3999,14 @@ async function _fetchElevations(latlons) {
 // Returns [{frac, elevation}] sample points spanning the whole route (frac 0..1),
 // or null if it can't build a real profile (a stop didn't geocode, or the
 // elevation API didn't return usable data — no synthetic fallback).
-async function getElevationProfile(stopNames) {
-  if (stopNames.length < 2) return null;
+async function getElevationProfile(stops) {
+  if (stops.length < 2) return null;
+  const stopNames = stops.map(s => s.name);
   const key = stopNames.join('|').toLowerCase();
   const hit = _elevCache[key];
   if (hit && (Date.now() - hit.ts) < _ELEV_TTL) return hit.samples;
 
-  const geos = await Promise.all(stopNames.map(geocodeStop));
+  const geos = await Promise.all(stops.map(stopCoords));
   if (geos.some(g => !g)) return null;
 
   const totalLegs = stopNames.length - 1;
@@ -4065,10 +4080,11 @@ function _elevationChartHTML(stopNames, samples, wrapOpen, wrapClose) {
 // synthetic fallback — if real data isn't available, nothing renders rather
 // than a decorative chart standing in for it.
 function renderElevationProfile(stops, wrapOpen, wrapClose) {
-  const stopNames = (stops || []).map(s => s.name).filter(Boolean);
+  const namedStops = (stops || []).filter(s => s.name);
+  const stopNames = namedStops.map(s => s.name);
   if (stopNames.length < 2) return '';
   const pid = 'elevph_' + Math.random().toString(36).slice(2, 8);
-  getElevationProfile(stopNames).then(samples => {
+  getElevationProfile(namedStops).then(samples => {
     const ph = document.getElementById(pid);
     if (!ph) return; // view moved on before this resolved
     if (!samples) { ph.remove(); return; }
@@ -4197,7 +4213,7 @@ async function updatePlannerMap() {
   _mapUpdating    = true;
   _mapNeedsUpdate = false;
   let geoResults;
-  try { geoResults = await Promise.all(_plannerStops.map(s => geocodeStop(s.name))); }
+  try { geoResults = await Promise.all(_plannerStops.map(stopCoords)); }
   catch(e) { geoResults = _plannerStops.map(() => null); }
   _mapUpdating = false;
   const coords = geoResults.map(geo => geo ? [geo.lat, geo.lon] : null);
@@ -6007,7 +6023,7 @@ async function jdInitMap(stops, legs) {
   const coords = [];
   for (const s of stops) {
     if (!s.name) continue;
-    const g = await geocodeStop(s.name);
+    const g = await stopCoords(s);
     if (g) coords.push({ ...s, lat: g.lat, lon: g.lon });
   }
   const mapEl = document.getElementById('jdMapEl');
@@ -6075,7 +6091,7 @@ async function jdInitMiniMap(stops, legs) {
   const coords = [];
   for (const s of stops) {
     if (!s.name) continue;
-    const g = await geocodeStop(s.name);
+    const g = await stopCoords(s);
     if (g) coords.push([g.lat, g.lon]);
     if (!document.getElementById('jdMiniMap')) return; // navigated away
   }
@@ -6711,7 +6727,7 @@ async function recInitStickyMap() {
   if (!mapEl || _recMap) { if (_recMap) _recMap.invalidateSize(); return; }
   const stops = _recTrip.stops || [];
   const coords = [];
-  for (const s of stops) { if (!s.name) continue; const g = await geocodeStop(s.name); if (g) coords.push({ ...s, lat:g.lat, lon:g.lon }); }
+  for (const s of stops) { if (!s.name) continue; const g = await stopCoords(s); if (g) coords.push({ ...s, lat:g.lat, lon:g.lon }); }
   if (!coords.length || !document.getElementById('rjStickyMap')) return;
   _recMap = L.map('rjStickyMap', { zoomControl:false, attributionControl:false, scrollWheelZoom:false });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_recMap);
