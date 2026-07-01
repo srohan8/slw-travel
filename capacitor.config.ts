@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'By Sloth',
   webDir: '_site',
   server: {
-    startPath: '/app/'
+    appStartPath: '/app/index.html'
   }
 };
 
