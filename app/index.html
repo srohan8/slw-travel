@@ -2828,7 +2828,6 @@ function setScreenUrl(arg, push = false) {
 }
 
 function switchTab(id, el) {
-  if (id === 'mytrips' && !currentUser) { goToAuth('/trips'); return; }
   document.querySelectorAll('.nav-link').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const btn = el || document.getElementById('navbtn_' + id);
@@ -4769,6 +4768,14 @@ let _myTripsTab = 'trips'; // 'trips' | 'journals'
 function renderMyTripsPanel() {
   const el = document.getElementById('mytripsPanel');
   if (!el) return;
+  if (!currentUser) {
+    el.innerHTML = `<div style="text-align:center;padding:3rem 1rem">
+      <div style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:10px">Your trips, saved</div>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:20px;max-width:360px;margin-left:auto;margin-right:auto">Sign in to save routes, track your journey as you go, and pick up right where you left off — free, no card needed.</p>
+      <a class="btn btn-primary" href="/auth.html?return=/trips" onclick="goToAuth('/trips');return false;">Sign in / Create account</a>
+    </div>`;
+    return;
+  }
   const trips = (storage.get('trips') || []).slice().reverse();
 
   const stateOf = (t) => {
