@@ -1952,13 +1952,15 @@ function bumpGuestRoutes() {
   storage.set('guestRoutes', g);
   return g;
 }
+function guestRoutesLeft() {
+  return Math.max(0, GUEST_FREE_ROUTES - guestRoutesUsed().count);
+}
 // Guest banner strip: "X of 3 free routes left · sign up to save"
 function renderGuestBanner() {
   const el = document.getElementById('guestBanner');
   if (!el) return;
   if (currentUser) { el.style.display = 'none'; return; }
-  const g = guestRoutesUsed();
-  const left = Math.max(0, GUEST_FREE_ROUTES - g.count);
+  const left = guestRoutesLeft();
   el.style.display = 'flex';
   el.innerHTML = `
     <i class="ph ph-user-circle-dashed" style="font-size:15px;color:var(--moss);flex-shrink:0"></i>
@@ -3579,6 +3581,9 @@ const CONFLICT_LEVELS = {
 // ── Floating route map (Leaflet + OSM + OSRM road-match) ─────────────────
 const GEO_CACHE_KEY = 'slw_geo_cache';
 let _geoCache = {};
+const ELEV_CACHE_KEY = 'slw_elev_cache';
+let _elevCache = {};
+try { _elevCache = JSON.parse(localStorage.getItem(ELEV_CACHE_KEY) || '{}'); } catch(e) {}
 try { _geoCache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY) || '{}'); } catch(e) {}
 
 let _mapInstance    = null;
@@ -3613,6 +3618,125 @@ async function geocodeStop(name) {
     }
   } catch(e) { console.warn('Geocode failed:', name, e.message); }
   return null;
+}
+
+// ── Real elevation profile (SRTM90m via Open-Topo-Data, proxied) ──────────
+// Straight-line interpolation between geocoded stops, not OSRM road-following
+// geometry — SRTM's ~90m resolution wouldn't show the difference, and this
+// avoids a second heavy per-leg API dependency just for a chart.
+const _ELEV_PTS_PER_LEG = 8;
+const _ELEV_BATCH_SIZE  = 100; // stay well under public opentopodata.org limits
+const _ELEV_TTL = 180 * 24 * 60 * 60 * 1000; // elevation is effectively permanent
+
+async function _fetchElevations(latlons) {
+  const out = [];
+  for (let i = 0; i < latlons.length; i += _ELEV_BATCH_SIZE) {
+    const batch = latlons.slice(i, i + _ELEV_BATCH_SIZE);
+    const locStr = batch.map(([lat, lon]) => `${lat.toFixed(5)},${lon.toFixed(5)}`).join('|');
+    try {
+      const url = PROXY_URL ? `${PROXY_URL}/api/elevation?locations=${encodeURIComponent(locStr)}`
+                             : `https://api.opentopodata.org/v1/srtm90m?locations=${encodeURIComponent(locStr)}`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      if (data?.results?.length === batch.length) out.push(...data.results.map(r => r.elevation));
+      else out.push(...batch.map(() => null));
+    } catch(e) {
+      console.warn('Elevation batch failed:', e.message);
+      out.push(...batch.map(() => null));
+    }
+    if (i + _ELEV_BATCH_SIZE < latlons.length) await new Promise(r => setTimeout(r, 300));
+  }
+  return out;
+}
+
+// Returns [{frac, elevation}] sample points spanning the whole route (frac 0..1),
+// or null if it can't build a real profile (a stop didn't geocode, or the
+// elevation API didn't return usable data — no synthetic fallback).
+async function getElevationProfile(stopNames) {
+  if (stopNames.length < 2) return null;
+  const key = stopNames.join('|').toLowerCase();
+  const hit = _elevCache[key];
+  if (hit && (Date.now() - hit.ts) < _ELEV_TTL) return hit.samples;
+
+  const geos = await Promise.all(stopNames.map(geocodeStop));
+  if (geos.some(g => !g)) return null;
+
+  const totalLegs = stopNames.length - 1;
+  const points = []; // { frac, latlon }
+  for (let i = 0; i < totalLegs; i++) {
+    const a = [geos[i].lat, geos[i].lon], b = [geos[i + 1].lat, geos[i + 1].lon];
+    for (let s = (i === 0 ? 0 : 1); s <= _ELEV_PTS_PER_LEG; s++) {
+      const t = s / _ELEV_PTS_PER_LEG;
+      points.push({
+        frac: (i + t) / totalLegs,
+        latlon: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t],
+      });
+    }
+  }
+
+  const elevations = await _fetchElevations(points.map(p => p.latlon));
+  const samples = points.map((p, i) => ({ frac: p.frac, elevation: elevations[i] })).filter(s => s.elevation != null);
+  if (samples.length < 2) return null;
+
+  _elevCache[key] = { ts: Date.now(), samples };
+  try { localStorage.setItem(ELEV_CACHE_KEY, JSON.stringify(_elevCache)); } catch(e) {}
+  return samples;
+}
+
+function _elevationChartHTML(stopNames, samples, wrapOpen, wrapClose) {
+  const n = stopNames.length;
+  const perStop = Math.max(60, Math.max(...stopNames.map(s => (s || '').length * 5.8 + 24)));
+  const W = Math.max(820, n * perStop), H = 76, seaY = H - 2, topY = 10;
+  const elevs = samples.map(s => s.elevation);
+  const minE = Math.min(...elevs), maxE = Math.max(...elevs);
+  const range = Math.max(1, maxE - minE);
+  const toY = e => Math.round(seaY - ((e - minE) / range) * (seaY - topY));
+  const pts  = samples.map(s => [Math.round(s.frac * W), toY(s.elevation)]);
+  const line = 'M ' + pts.map(([x, y]) => `${x},${y}`).join(' L ');
+  const fill = line + ` L ${W},${seaY} L 0,${seaY} Z`;
+  const lbls = stopNames.map((name, i) => {
+    const x  = Math.round((i / (n - 1)) * W);
+    const xf = i === 0 ? 'none' : i === n - 1 ? 'translateX(-100%)' : 'translateX(-50%)';
+    return `<span style="position:absolute;left:${x}px;transform:${xf};font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap">${name || ''}</span>`;
+  }).join('');
+  const eid = 'elev_' + Math.random().toString(36).slice(2, 8);
+  const btnBase = 'position:absolute;top:0;bottom:18px;width:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:18px;color:var(--text3);z-index:2';
+  return `${wrapOpen}
+    <div style="position:relative">
+      <button style="${btnBase};left:0;background:linear-gradient(to right,var(--bg) 55%,transparent)" onclick="document.getElementById('${eid}').scrollBy({left:-220,behavior:'smooth'})">‹</button>
+      <div id="${eid}" style="overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 36px">
+        <div style="width:${W}px">
+          <svg viewBox="0 0 ${W} ${H}" width="${W}" height="60" style="display:block">
+            <path d="${fill}" fill="rgba(255,80,20,0.06)"/>
+            <path d="${line}" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          <div style="position:relative;height:18px;margin-top:4px">${lbls}</div>
+        </div>
+      </div>
+      <button style="${btnBase};right:0;background:linear-gradient(to left,var(--bg) 55%,transparent)" onclick="document.getElementById('${eid}').scrollBy({left:220,behavior:'smooth'})">›</button>
+    </div>
+    <div class="elev-footer" style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:0.2px">
+      <span>Elevation profile · ${Math.round(minE)}–${Math.round(maxE)}m</span>
+      <span>${stopNames[0] || ''}&thinsp;→&thinsp;${stopNames[n - 1] || ''}</span>
+    </div>
+  ${wrapClose}`;
+}
+
+// Renders a loading placeholder synchronously, then swaps in the real chart
+// (or removes the placeholder entirely) once elevation data resolves. No
+// synthetic fallback — if real data isn't available, nothing renders rather
+// than a decorative chart standing in for it.
+function renderElevationProfile(stops, wrapOpen, wrapClose) {
+  const stopNames = (stops || []).map(s => s.name).filter(Boolean);
+  if (stopNames.length < 2) return '';
+  const pid = 'elevph_' + Math.random().toString(36).slice(2, 8);
+  getElevationProfile(stopNames).then(samples => {
+    const ph = document.getElementById(pid);
+    if (!ph) return; // view moved on before this resolved
+    if (!samples) { ph.remove(); return; }
+    ph.outerHTML = _elevationChartHTML(stopNames, samples, wrapOpen, wrapClose);
+  });
+  return `<div id="${pid}" style="margin-top:16px;padding:10px 0;font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center">Loading elevation…</div>`;
 }
 
 function setMapState(next) {
@@ -3889,60 +4013,10 @@ function renderPlanSuggestion(d, fromCache = false) {
     h += `<div class="advisory-grid">${advisories.map(a => `<div class="advisory-strip">${a}</div>`).join('')}</div>`;
   }
 
-  // ── Elevation profile ─────────────────────────────────────────────
-  const _epStops = d.stops || [];
-  const _epN = _epStops.length;
-  if (_epN >= 2) {
-    const _epPerStop = Math.max(60, Math.max(..._epStops.map(s => (s.name||'').length * 5.8 + 24)));
-    const _epW = Math.max(820, _epN * _epPerStop), _epH = 76, _epSeaY = _epH - 2;
-    const wpts = _epStops.map((s, i) => {
-      const t = i / (_epN - 1);
-      const midBias = Math.sin(Math.PI * t) * 48;
-      const na = Math.sin(i * 2.7 + 0.4) * 8;
-      const nb = Math.cos(i * 1.1) * 5;
-      return [Math.round(t * _epW), Math.max(10, Math.min(_epSeaY - 3, Math.round(_epSeaY - midBias - na - nb - 8)))];
-    });
-    const allPts = [];
-    for (let wi = 0; wi < wpts.length - 1; wi++) {
-      const [x1, y1] = wpts[wi], [x2, y2] = wpts[wi + 1];
-      const steps = Math.max(6, Math.round((x2 - x1) / 18));
-      for (let s = 0; s <= steps; s++) {
-        const t2 = s / steps;
-        const x = Math.round(x1 + (x2 - x1) * t2);
-        const noise = Math.sin(x * 0.23) * 5 + Math.cos(x * 0.07) * 3;
-        const y = Math.round(y1 + (y2 - y1) * t2 + noise * Math.sin(Math.PI * t2) * 0.5);
-        allPts.push([x, Math.max(10, Math.min(_epSeaY - 3, y))]);
-      }
-    }
-    allPts.push(wpts[wpts.length - 1]);
-    const _epLine = 'M ' + allPts.map(([x, y]) => `${x},${y}`).join(' L ');
-    const _epFill = _epLine + ` L ${_epW},${_epSeaY} L 0,${_epSeaY} Z`;
-    const _epLbls = wpts.map(([x], i) => {
-      const _xf = i === 0 ? 'none' : i === _epN-1 ? 'translateX(-100%)' : 'translateX(-50%)';
-      return `<span style="position:absolute;left:${x}px;transform:${_xf};font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap">${_epStops[i].name||''}</span>`;
-    }).join('');
-    const _eid = 'elev_' + Math.random().toString(36).slice(2,8);
-    const _btnBase = 'position:absolute;top:0;bottom:18px;width:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:18px;color:var(--text3);z-index:2';
-    h += `<div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border)">
-      <div style="position:relative">
-        <button style="${_btnBase};left:0;background:linear-gradient(to right,var(--bg) 55%,transparent)" onclick="document.getElementById('${_eid}').scrollBy({left:-220,behavior:'smooth'})">‹</button>
-        <div id="${_eid}" style="overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 36px">
-          <div style="width:${_epW}px">
-            <svg viewBox="0 0 ${_epW} ${_epH}" width="${_epW}" height="60" style="display:block">
-              <path d="${_epFill}" fill="rgba(255,80,20,0.06)"/>
-              <path d="${_epLine}" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linejoin="round"/>
-            </svg>
-            <div style="position:relative;height:18px;margin-top:4px">${_epLbls}</div>
-          </div>
-        </div>
-        <button style="${_btnBase};right:0;background:linear-gradient(to left,var(--bg) 55%,transparent)" onclick="document.getElementById('${_eid}').scrollBy({left:220,behavior:'smooth'})">›</button>
-      </div>
-      <div class="elev-footer" style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:0.2px">
-        <span>Elevation profile · illustrative</span>
-        <span>${_epStops[0]?.name||''}&thinsp;→&thinsp;${_epStops[_epN-1]?.name||''}</span>
-      </div>
-    </div>`;
-  }
+  // ── Elevation profile (real SRTM data — see renderElevationProfile) ─
+  h += renderElevationProfile(d.stops,
+    `<div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border)">`,
+    `</div>`);
 
   h += `</div></div>`; // close .res-overview-body + .res-overview-card
 
@@ -3996,18 +4070,15 @@ function renderPlanSuggestion(d, fromCache = false) {
   showRouteMap(d);
 }
 
-function adoptRoute() {
-  if (!lastSuggestion) return;
-  if (!currentUser) { goToAuth('planner'); return; }
-  const d = lastSuggestion; stops = []; legs = []; editingLegModes.clear();
-  currentTripId = null;   // always creates a new trip on next save
-  expandedLegs.clear();
+// Shared stops/legs extraction — used by adoptRoute() and buildTripFromSuggestion()
+function suggestionToStopsLegs(d) {
+  const stops = [];
   if (d.stops?.length) {
     d.stops.forEach(s => stops.push({ name: s.name, date: '', days: s.days || 0, accomSites: s.accom_sites || [], accomNote: s.accom_note || '' }));
   } else {
     [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ name: c, date: '', days: 0 }));
   }
-  d.legs.forEach(l => legs.push({
+  const legs = (d.legs || []).map(l => ({
     mode: l.mode, cost: convertCost(l.cost_usd || 0), km: l.km || 0,
     hours: l.hours || 0, notes: l.notes || '',
     booked: false, bookingRef: '', bookingUrl: '',
@@ -4017,6 +4088,16 @@ function adoptRoute() {
     confidence:   l.confidence    || 'uncertain',
     conflict:     l.conflict      || null
   }));
+  return { stops, legs };
+}
+
+function adoptRoute() {
+  if (!lastSuggestion) return;
+  if (!currentUser) { goToAuth('planner'); return; }
+  const d = lastSuggestion; editingLegModes.clear();
+  currentTripId = null;   // always creates a new trip on next save
+  expandedLegs.clear();
+  ({ stops, legs } = suggestionToStopsLegs(d));
   switchTab('record', document.getElementById('navbtn_record'));
   render();
 }
@@ -4029,18 +4110,7 @@ function suggestionRouteName(d) {
   return f && t ? `${f} → ${t}` : (f || t || 'My overland route');
 }
 function buildTripFromSuggestion(d, name) {
-  const stops = [];
-  if (d.stops?.length) {
-    d.stops.forEach(s => stops.push({ name: s.name, date: '', days: s.days || 0, accomSites: s.accom_sites || [], accomNote: s.accom_note || '' }));
-  } else {
-    [d.legs[0].from, ...d.legs.map(l => l.to)].forEach(c => stops.push({ name: c, date: '', days: 0 }));
-  }
-  const legs = (d.legs || []).map(l => ({
-    mode: l.mode, cost: convertCost(l.cost_usd || 0), km: l.km || 0,
-    hours: l.hours || 0, notes: l.notes || '', booked: false, bookingRef: '', bookingUrl: '',
-    bookingSites: l.booking_sites || [], infoSites: l.info_sites || [], legRegion: l.leg_region || '',
-    confidence: l.confidence || 'uncertain', conflict: l.conflict || null,
-  }));
+  const { stops, legs } = suggestionToStopsLegs(d);
   return { id: newTripId(), title: name, currency: document.getElementById('currSel').value,
     budget: '', notes: d.summary || '', stops, legs, updated_at: new Date().toISOString() };
 }
@@ -4858,7 +4928,7 @@ function renderPlanLanding() {
       </div>
       ${recentHtml}
       <div style="margin-top:8px;padding-top:10px;border-top:0.5px dashed var(--border)">
-        ${!currentUser ? (() => { const g = guestRoutesUsed(); const left = Math.max(0, GUEST_FREE_ROUTES - g.count); return `<div style="font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:0.5px;margin-bottom:8px">${left} of ${GUEST_FREE_ROUTES} free searches left this month</div>`; })() : ''}
+        ${!currentUser ? `<div style="font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:0.5px;margin-bottom:8px">${guestRoutesLeft()} of ${GUEST_FREE_ROUTES} free searches left this month</div>` : ''}
         <button class="btn" style="width:100%" onclick="goToMyTrips()">See my trips →</button>
       </div>
     </div>
@@ -5094,57 +5164,8 @@ function jdSaveDiary(i, val) {
   _jdDiaryTimer = setTimeout(jdPersist, 400);
 }
 
-// Decorative elevation profile (shape from stop count) — mirrors Route Results.
-function jdElevationHTML(epStops) {
-  const n = epStops.length;
-  if (n < 2) return '';
-  const perStop = Math.max(60, Math.max(...epStops.map(s => (s.name||'').length * 5.8 + 24)));
-  const W = Math.max(820, n * perStop), H = 76, seaY = H - 2;
-  const wpts = epStops.map((s, i) => {
-    const t = i / (n - 1);
-    const midBias = Math.sin(Math.PI * t) * 48;
-    const na = Math.sin(i * 2.7 + 0.4) * 8, nb = Math.cos(i * 1.1) * 5;
-    return [Math.round(t * W), Math.max(10, Math.min(seaY - 3, Math.round(seaY - midBias - na - nb - 8)))];
-  });
-  const pts = [];
-  for (let wi = 0; wi < wpts.length - 1; wi++) {
-    const [x1, y1] = wpts[wi], [x2, y2] = wpts[wi + 1];
-    const steps = Math.max(6, Math.round((x2 - x1) / 18));
-    for (let s = 0; s <= steps; s++) {
-      const t2 = s / steps, x = Math.round(x1 + (x2 - x1) * t2);
-      const noise = Math.sin(x * 0.23) * 5 + Math.cos(x * 0.07) * 3;
-      pts.push([x, Math.max(10, Math.min(seaY - 3, Math.round(y1 + (y2 - y1) * t2 + noise * Math.sin(Math.PI * t2) * 0.5)))]);
-    }
-  }
-  pts.push(wpts[wpts.length - 1]);
-  const line = 'M ' + pts.map(([x, y]) => `${x},${y}`).join(' L ');
-  const fill = line + ` L ${W},${seaY} L 0,${seaY} Z`;
-  const lbls = wpts.map(([x], i) => {
-    const xf = i === 0 ? 'none' : i === n-1 ? 'translateX(-100%)' : 'translateX(-50%)';
-    return `<span style="position:absolute;left:${x}px;transform:${xf};font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap">${epStops[i].name||''}</span>`;
-  }).join('');
-  const eid = 'elev_' + Math.random().toString(36).slice(2,8);
-  const btnBase = 'position:absolute;top:0;bottom:18px;width:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:18px;color:var(--text3);z-index:2';
-  return `<div style="margin-top:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px 10px">
-    <div style="position:relative">
-      <button style="${btnBase};left:-4px;background:linear-gradient(to right,var(--bg) 55%,transparent)" onclick="document.getElementById('${eid}').scrollBy({left:-220,behavior:'smooth'})">‹</button>
-      <div id="${eid}" style="overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 32px">
-        <div style="width:${W}px">
-          <svg viewBox="0 0 ${W} ${H}" width="${W}" height="60" style="display:block">
-            <path d="${fill}" fill="rgba(255,80,20,0.06)"/>
-            <path d="${line}" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linejoin="round"/>
-          </svg>
-          <div style="position:relative;height:18px;margin-top:4px">${lbls}</div>
-        </div>
-      </div>
-      <button style="${btnBase};right:-4px;background:linear-gradient(to left,var(--bg) 55%,transparent)" onclick="document.getElementById('${eid}').scrollBy({left:220,behavior:'smooth'})">›</button>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:6px;letter-spacing:0.2px">
-      <span>Elevation profile · illustrative</span>
-      <span>${epStops[0]?.name||''}&thinsp;→&thinsp;${epStops[n-1]?.name||''}</span>
-    </div>
-  </div>`;
-}
+// Real elevation profile now lives in renderElevationProfile() (shared with
+// Route Results) — see that function and getElevationProfile() above.
 
 function renderJourneyDetail() {
   const el = document.getElementById('journeyPanel');
@@ -5296,7 +5317,9 @@ function jdJourneyTabHTML(t, stops, legs, m) {
     const note = `<span style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600">Honesty note</span> — ${uncertainLegs.length} leg${uncertainLegs.length>1?'s':''} on this route marked <strong>check</strong> or <strong>uncertain</strong> — verify schedules before booking.`;
     h += `<div class="advisory-grid" style="margin-top:16px"><div class="advisory-strip">${note}</div></div>`;
   }
-  h += jdElevationHTML(stops);
+  h += renderElevationProfile(stops,
+    `<div style="margin-top:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px 10px">`,
+    `</div>`);
 
   return h;
 }
@@ -6458,6 +6481,7 @@ async function renderProfilePanel() {
   const totalNotes = legKeys.reduce((a,k)=>a+(contribs[k]||[]).length,0);
   const totalVotes = legKeys.reduce((a,k)=>a+(contribs[k]||[]).reduce((b,n)=>b+(n.votes||0),0),0);
   const totalConf  = legKeys.reduce((a,k)=>a+(contribs[k]||[]).filter(n=>n.confirmed).length,0);
+  const completedJournaledTrips = trips.filter(t => t.stops?.length && t.stops.every(s=>s.visited) && t.stops.some(s=>s.diary?.trim())).length;
 
   const CONTRIB_KINDS_LIST = Object.entries(CONTRIB_KINDS);
   const kindCounts = {};
@@ -6501,9 +6525,6 @@ async function renderProfilePanel() {
   // ── Badges ────────────────────────────────────────────────────────
   const BADGES = [
     { icon:'ph-train',          color:'#2E6FA8', tint:'#E3EEF7', label:'Rails',        sub:'Train notes ×10', earned: (kindCounts.schedule||0)>=10 },
-    { icon:'ph-boat',           color:'#2E8B8B', tint:'#D4EFEF', label:'Seafarer',     sub:'Ferry leg verified', earned: false },
-    { icon:'ph-mountains',      color:'#6B4F3A', tint:'#EDE3DC', label:'High passes',  sub:'3 legs >3500m',  earned: false },
-    { icon:'ph-compass',        color:'#C9A84C', tint:'#F6ECCE', label:'Frontier',     sub:'First to log',   earned: false },
     { icon:'ph-shield-check',   color:'#13213A', tint:'#FFE8E0', label:'Trusted',      sub:'20+ confirms',   earned: totalConf>=20 },
     { icon:'ph-tag',            color:'#1E3A5C', tint:'#FFE8E0', label:'Honest price', sub:'5 price updates', earned:(kindCounts.price||0)>=5 },
     { icon:'ph-lock-key-open',  color:'#94A0B0', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
@@ -6573,8 +6594,7 @@ async function renderProfilePanel() {
         ['Posting a verified note',            '+15','ea', kindCounts.confirmed||0,  (kindCounts.confirmed||0)*15],
         ['Upvote received on your note',       '+2', 'ea', totalVotes,              totalVotes*2],
         ['Your note confirmed by another',     '+25','ea', totalConf,               totalConf*25],
-        ['Completed trip + journal',           '+50','ea', 0,                        0],
-        ['First-to-document a leg',            '+100','ea',0,                        0],
+        ['Completed trip + journal',           '+50','ea', completedJournaledTrips,  completedJournaledTrips*50],
       ].map(([name,rate,unit,n,total],i)=>`
         <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:9px 0;${i?'border-top:0.5px dashed var(--border)':''}">
           <div style="font-size:13px;color:var(--text)">${name}</div>
