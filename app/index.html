@@ -1989,6 +1989,17 @@ async function init() {
     setTimeout(planRoute, 80);
   }
 
+  // ── GPS recording: crash recovery + pill restore on boot (doc §13.4) ──
+  // A persisted, non-ended session means the app was closed mid-recording.
+  if (isNativePlatform()) {
+    const _rec = loadRecordingSession();
+    if (_rec && _rec.status && _rec.status !== 'ended') {
+      switchTab('crashrecover');
+      startRecordingFlush();   // keep flushing the recovered checkpoint
+    }
+  }
+  recordingPillSync(currentScreenId());
+
   // Splash runs its own 5.2s sequence independently
 }
 
