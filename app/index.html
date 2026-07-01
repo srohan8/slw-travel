@@ -1721,8 +1721,12 @@ async function init() {
   // Keep auth in sync across tabs / token refresh.
   // Skip INITIAL_SESSION — getSession() above is authoritative for first load.
   sb.auth.onAuthStateChange((event, session) => {
-    if (event === 'INITIAL_SESSION') return;
     currentUser = session?.user || null;
+    // TOKEN_REFRESHED fires roughly hourly for any open tab — re-running a
+    // full trips sync (and re-downloading every trip's photos) on each one
+    // was pure waste with nothing having actually changed. Only real auth
+    // events (sign in/out, user update) warrant a re-sync.
+    if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;
     updateNavAuth();
     if (currentUser) syncTripsFromCloud();
   });
@@ -1782,34 +1786,54 @@ async function init() {
 async function syncTripsFromCloud() {
   if (!currentUser) return;
   try {
-    const { data, error } = await sb
+    // Cheap pass first: just id + updated_at, not the full photo-laden blob.
+    // Only trips that are actually new or newer than what's cached locally
+    // are worth a second, full fetch — this is what stops a routine sync
+    // from re-downloading every trip's photos even when nothing changed.
+    const { data: meta, error: metaError } = await sb
       .from('trips')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('updated_at', { ascending: false });
-    if (error) throw error;
-    if (data && data.length) {
+      .select('id, updated_at')
+      .eq('user_id', currentUser.id);
+    if (metaError) throw metaError;
+    if (!meta || !meta.length) return;
+
+    const local = storage.get('trips') || [];
+    const localById = new Map(local.map(t => [t.id, t]));
+    const staleIds = meta
+      .filter(m => {
+        const cached = localById.get(m.id);
+        return !cached || new Date(cached.updated_at || 0) < new Date(m.updated_at);
+      })
+      .map(m => m.id);
+
+    let freshTrips = [];
+    if (staleIds.length) {
+      const { data, error } = await sb.from('trips').select('*').in('id', staleIds);
+      if (error) throw error;
       // Repair any oversized (pre-compression-fix) embedded photos before
       // caching locally — see repairOversizedTripPhotos() for why: a
       // handful of full-res photos alone can exceed localStorage's quota
       // and silently block the entire sync, even though the fetch above
       // already succeeded.
-      const cloudTrips = await Promise.all(data.map(async row => {
+      freshTrips = await Promise.all((data || []).map(async row => {
         const trip = { ...row.data, id: row.id, updated_at: row.updated_at };
         const { trip: repaired, changed } = await repairOversizedTripPhotos(trip);
         if (changed) persistTripCloud(repaired).catch(e => console.warn('Photo repair re-save failed:', e.message));
         return repaired;
       }));
-      // Merge: cloud wins for same-id trips
-      const local = storage.get('trips');
-      const cloudIds = new Set(data.map(t => t.id));
-      const merged = [
-        ...cloudTrips,
-        ...local.filter(t => !cloudIds.has(t.id))
-      ];
-      if (!storage.set('trips', merged)) {
-        console.error('syncTripsFromCloud: local storage full — cloud trips fetched but not persisted locally this session');
-      }
+    }
+
+    // Merge: freshly-fetched trips, then unchanged cloud trips (kept as
+    // already-cached, no re-fetch needed), then local-only trips.
+    const cloudIds = new Set(meta.map(m => m.id));
+    const freshIds = new Set(freshTrips.map(t => t.id));
+    const merged = [
+      ...freshTrips,
+      ...local.filter(t => cloudIds.has(t.id) && !freshIds.has(t.id)),
+      ...local.filter(t => !cloudIds.has(t.id)),
+    ];
+    if (!storage.set('trips', merged)) {
+      console.error('syncTripsFromCloud: local storage full — cloud trips fetched but not persisted locally this session');
     }
   } catch(e) { console.warn('syncTripsFromCloud:', e.message); }
 }
@@ -6289,6 +6313,29 @@ function _compressImageFile(file, maxDim, quality) {
   });
 }
 
+// Uploads a compressed photo to the trip-photos Storage bucket and returns
+// its public URL — used instead of keeping the base64 data URL inline in
+// trip.data. Embedding photos directly in the trips row meant every sync
+// re-transferred every photo in full, even ones that hadn't changed since
+// the last sync; a Storage URL is a ~100-byte string in the row instead, and
+// the actual image bytes are fetched (and cached by the browser) only when
+// actually displayed. Falls back to keeping the data URL inline on failure —
+// bigger sync payload, but the photo still saves rather than being lost.
+async function _uploadPhotoToStorage(dataUrl, tripId) {
+  if (!currentUser) return dataUrl; // guests have no cloud storage — stays local-only
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    const ext  = (blob.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+    const path = `${currentUser.id}/${tripId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await sb.storage.from('trip-photos').upload(path, blob, { contentType: blob.type });
+    if (error) throw error;
+    return sb.storage.from('trip-photos').getPublicUrl(path).data.publicUrl;
+  } catch(e) {
+    console.warn('Photo upload to Storage failed, keeping inline:', e.message);
+    return dataUrl;
+  }
+}
+
 // Retroactively compresses photos saved before the photo-compression fix
 // existed. Detection is by base64 string length rather than decoding every
 // image to check pixel dimensions — already-compressed photos (1200px/0.75
@@ -6339,16 +6386,18 @@ function recOnPhotoSelected(e) {
   const file = e.target.files?.[0];
   if (!file || _recPhotoIdx < 0) return;
   const idx = _recPhotoIdx;
-  _compressImageFile(file, 1200, 0.75).then(dataUrl => {
-    const s = _recTrip.stops[idx];
-    s.photos = s.photos || [];
-    s.photos.push(dataUrl);
-    if (!recPersist()) {
-      s.photos.pop();
-      alert("Couldn't save that photo — you're out of local storage space. Try removing a few older photos or trips first.");
-    }
-    renderRecordJournal();
-  });
+  _compressImageFile(file, 1200, 0.75)
+    .then(dataUrl => _uploadPhotoToStorage(dataUrl, _recTrip.id))
+    .then(url => {
+      const s = _recTrip.stops[idx];
+      s.photos = s.photos || [];
+      s.photos.push(url);
+      if (!recPersist()) {
+        s.photos.pop();
+        alert("Couldn't save that photo — you're out of local storage space. Try removing a few older photos or trips first.");
+      }
+      renderRecordJournal();
+    });
   e.target.value = '';
 }
 
@@ -6508,11 +6557,13 @@ async function recInitStickyMap() {
 function recSetTripCoverImage(input) {
   const file = input.files[0];
   if (!file) return;
-  _compressImageFile(file, 900, 0.82).then(dataUrl => {
-    _recTrip.cover_image = dataUrl;
-    recPersist();
-    renderRecordJournal();
-  });
+  _compressImageFile(file, 900, 0.82)
+    .then(dataUrl => _uploadPhotoToStorage(dataUrl, _recTrip.id))
+    .then(url => {
+      _recTrip.cover_image = url;
+      recPersist();
+      renderRecordJournal();
+    });
 }
 function recRemoveTripCoverImage() {
   if (!_recTrip) return;
@@ -6525,10 +6576,12 @@ function recRemoveTripCoverImage() {
 function recSetCoverImage(input) {
   const file = input.files[0];
   if (!file) return;
-  _compressImageFile(file, 900, 0.82).then(dataUrl => {
-    _recPub.coverImage = dataUrl;
-    recRenderPublish();
-  });
+  _compressImageFile(file, 900, 0.82)
+    .then(dataUrl => _uploadPhotoToStorage(dataUrl, _recTrip.id))
+    .then(url => {
+      _recPub.coverImage = url;
+      recRenderPublish();
+    });
 }
 function recStopRecording() { _recPub = { open:true, audience:'friends', done:false, coverImage: _recTrip?.cover_image || null }; recRenderPublish(); }
 function recOpenPublish() {
