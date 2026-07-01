@@ -3368,6 +3368,12 @@ async function importPolarstepsBuild(index, candidatesOverride) {
     )].sort();
     const usedFolders = new Set();
 
+    // Generated up front (not at trip-construction time below) so imported
+    // photos can upload straight to Storage under their real trip id, same
+    // as the Record Journal's manual photo-add flow — an import can bring
+    // in far more photos in one go than fit embedded as base64.
+    const tripId = newTripId();
+
     const stops = [];
     for (const step of steps) {
       const placeName = step.location?.name || step.display_name || 'Stop';
@@ -3383,10 +3389,14 @@ async function importPolarstepsBuild(index, candidatesOverride) {
           .slice(0, 3); // cap photos per stop — same rationale as the Record Journal's own photo cap
         for (const pp of photoPaths) {
           // Smaller/lower-quality than the Record Journal's single-photo-at-a-time default
-          // (1200/0.75) — an import can pull in dozens of photos in one localStorage write,
-          // where the journal's manual add flow naturally self-limits by user patience.
-          try { photos.push(await _compressImageFile(await zip.files[pp].async('blob'), 900, 0.6)); }
-          catch (e) { /* one bad photo shouldn't fail the whole stop */ }
+          // (1200/0.75) — an import can pull in dozens of photos in one go, where the
+          // journal's manual add flow naturally self-limits by user patience. Uploaded to
+          // Storage same as a manually-added photo; _uploadPhotoToStorage() itself falls
+          // back to the inline data URL on failure (guest user, offline, bucket missing).
+          try {
+            const dataUrl = await _compressImageFile(await zip.files[pp].async('blob'), 900, 0.6);
+            photos.push(await _uploadPhotoToStorage(dataUrl, tripId));
+          } catch (e) { /* one bad photo shouldn't fail the whole stop */ }
         }
       }
 
@@ -3403,7 +3413,7 @@ async function importPolarstepsBuild(index, candidatesOverride) {
 
     const legs = stops.slice(1).map(() => ({ mode:'', cost:0, km:0, hours:0, notes:'', booked:false, bookingRef:'', bookingSites:[], infoSites:[], legRegion:'', confidence:'uncertain', conflict:null }));
     const trip = {
-      id: newTripId(),
+      id: tripId,
       title: tripData.name || `${stops[0].name} → ${stops[stops.length-1].name}`,
       currency: document.getElementById('currSel')?.value || 'USD',
       budget: '',
