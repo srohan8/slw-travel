@@ -3597,7 +3597,11 @@ async function geocodeStop(name) {
   const cached = _geoCache[key];
   if (cached && (Date.now() - cached.ts) < 30 * 24 * 60 * 60 * 1000) return cached;
   try {
-    const res  = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(name)}&limit=1&lang=en`);
+    // Routed through the proxy — Photon doesn't send Access-Control-Allow-Origin,
+    // so a direct browser fetch() to it is blocked by CORS from any real origin.
+    const url = PROXY_URL ? `${PROXY_URL}/api/geocode?q=${encodeURIComponent(name)}`
+                           : `https://photon.komoot.io/api/?q=${encodeURIComponent(name)}&limit=1&lang=en`;
+    const res  = await fetch(url);
     const data = await res.json();
     const feat = data?.features?.[0];
     if (feat) {
@@ -6538,7 +6542,7 @@ async function renderProfilePanel() {
       <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;font-family:var(--mono)">${totalVotes} upvotes received</div>
     </div>
     <div style="position:absolute;right:-40px;top:-20px;opacity:0.08;pointer-events:none">
-      <img src="public/sloth-logo.svg" width="200" style="filter:brightness(0) invert(1)"/>
+      <img src="/public/sloth-logo.svg" width="200" style="filter:brightness(0) invert(1)"/>
     </div>
   </div>
 
@@ -6951,7 +6955,7 @@ init().catch(e => {
   </div>
   <div style="flex:1;padding:40px 28px 32px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:44px">
-      <img src="public/bysloth.png" alt="" style="height:38px;width:auto;flex-shrink:0">
+      <img src="/public/bysloth.png" alt="" style="height:38px;width:auto;flex-shrink:0">
       <div style="font-family:var(--body);font-size:22px;font-weight:700;color:var(--cream);letter-spacing:-0.5px;line-height:1">bysloth</div>
     </div>
     <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);font-weight:600;margin-bottom:10px">Overland planner · no flights, ever</div>

@@ -175,6 +175,28 @@ app.get('/api/elevation', async (req, res) => {
   }
 });
 
+// ── GET /api/geocode — proxy to Komoot Photon (CORS bypass) ─────────────────
+// Photon doesn't send Access-Control-Allow-Origin, so browser-side fetch()
+// calls to it are blocked from any real origin (bysloth.com, etc.) — every
+// geocodeStop() call in app/index.html was failing silently for this reason,
+// which is why route maps showed disconnected gaps between stops.
+app.get('/api/geocode', async (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.status(400).json({ error: 'q query param required' });
+  try {
+    const upstream = await fetch(
+      `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1&lang=en`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+    const data = await upstream.json();
+    // Place names don't move — cache aggressively
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.status(upstream.status).json(data);
+  } catch (err) {
+    res.status(502).json({ error: { message: 'Geocode upstream error: ' + err.message } });
+  }
+});
+
 // ── Supabase usage logger ────────────────────────────────────────────────────
 // NOTE: DeepSeek figures are an approximation as of this writing (deepseek-chat,
 // standard non-cached rate) — verify against https://api-docs.deepseek.com/quick_start/pricing
