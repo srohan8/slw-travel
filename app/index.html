@@ -1273,6 +1273,9 @@ window.addEventListener('unhandledrejection', (e) => {
   <!-- CONTRIB MODAL (global overlay) -->
   <div id="contribModal" style="display:none"></div>
 
+  <!-- AUTH MODAL — native (Capacitor) only; web still uses auth.html -->
+  <div id="authModal" style="display:none"></div>
+
   <!-- SAVE ROUTE MODAL — "Add to planner" → Save to My Trips -->
   <div id="saveRouteModal" style="display:none"></div>
 
@@ -3055,7 +3058,7 @@ async function planRoute() {
         <div style="font-size:36px;margin-bottom:12px">🦥</div>
         <h3>That's your ${GUEST_FREE_ROUTES} free routes this month</h3>
         <p>Create a free account to keep planning, save trips, and share community notes.</p>
-        <a href="/auth.html?return=planner" class="btn btn-primary" style="text-decoration:none;display:inline-block">Create free account →</a>
+        <a href="/auth.html?return=planner" onclick="goToAuth('planner');return false;" class="btn btn-primary" style="text-decoration:none;display:inline-block">Create free account →</a>
       </div>`;
       return;
     }
@@ -3181,7 +3184,118 @@ function goToAuth(returnPath) {
     const to   = document.getElementById('pTo')?.value?.trim() || '';
     localStorage.setItem('slw_pending_route', JSON.stringify({ from, to, suggestion: lastSuggestion }));
   }
+  // Native: auth.html bounces straight back to /app (see its own Capacitor
+  // guard), so there's nothing to navigate to — show the in-app modal instead.
+  if (window.Capacitor) { openAuthModal(returnPath); return; }
   window.location.href = '/auth.html' + (returnPath ? '?return=' + returnPath : '');
+}
+
+// ── Native auth modal ─────────────────────────────────────────────────
+// Mirrors auth.html's sign-in/sign-up/forgot-password logic for use inside
+// the Capacitor WebView, where navigating to the standalone auth.html page
+// isn't viable (see goToAuth() above). Reuses the existing sb client and
+// the .contrib-modal CSS shell already defined for the contribute modal.
+let _authModalReturnPath = null;
+const _AM_INPUT_STYLE = 'width:100%;font-size:13.5px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);outline:none;font-family:var(--body);color:var(--text);margin-bottom:10px';
+
+function publicOrigin() {
+  // window.location.origin is https://localhost inside Capacitor — meaningless
+  // to a link opened later from an email client, so hardcode the real domain.
+  return window.Capacitor ? 'https://bysloth.com' : window.location.origin;
+}
+
+function openAuthModal(returnPath) {
+  _authModalReturnPath = returnPath || null;
+  document.getElementById('authModal').style.display = 'block';
+  renderAuthModal('signin');
+}
+function closeAuthModal() {
+  document.getElementById('authModal').style.display = 'none';
+  document.getElementById('authModal').innerHTML = '';
+}
+function _amMsg(text, isErr) {
+  const el = document.getElementById('amMsg');
+  if (el) { el.textContent = text; el.style.color = isErr ? '#c00' : 'var(--fern)'; }
+}
+function renderAuthModal(view) {
+  const copy = {
+    signin: ['Welcome back',      'Sign in to save trips and contribute notes.'],
+    signup: ['Join the slow road','Free account, no card needed.'],
+    forgot: ['Reset password',    "Enter your email and we'll send a link."]
+  }[view];
+  document.getElementById('authModal').innerHTML = `<div class="contrib-modal-overlay" onclick="if(event.target===this)closeAuthModal()">
+    <div class="contrib-modal" style="width:380px" onclick="event.stopPropagation()">
+      <div class="contrib-modal-hdr">
+        <div style="flex:1">
+          <div style="font-family:var(--serif);font-size:19px;font-weight:400;color:var(--cream)">${copy[0]}</div>
+          <div style="font-size:12px;color:rgba(245,240,232,0.6);margin-top:2px">${copy[1]}</div>
+        </div>
+        <span onclick="closeAuthModal()" style="color:rgba(245,240,232,0.5);cursor:pointer;padding:6px;display:flex"><i class="ph ph-x" style="font-size:18px"></i></span>
+      </div>
+      <div class="contrib-modal-body" style="padding-bottom:22px">
+        <input id="amEmail" type="email" placeholder="you@email.com" style="${_AM_INPUT_STYLE}"/>
+        ${view !== 'forgot' ? `<input id="amPass" type="password" placeholder="${view === 'signup' ? 'Password (8+ characters)' : 'Password'}" style="${_AM_INPUT_STYLE}" onkeydown="if(event.key==='Enter'){${view === 'signup' ? 'authSignUp' : 'authSignIn'}()}"/>` : ''}
+        <div id="amMsg" style="font-size:12px;margin-bottom:10px;min-height:15px"></div>
+        ${view === 'signin' ? `
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="authSignIn()">Sign in</button>
+          <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:12.5px">
+            <span style="color:var(--fern);cursor:pointer" onclick="renderAuthModal('forgot')">Forgot password?</span>
+            <span style="color:var(--fern);cursor:pointer" onclick="renderAuthModal('signup')">Create account →</span>
+          </div>` : view === 'signup' ? `
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="authSignUp()">Create account</button>
+          <div style="text-align:center;margin-top:14px;font-size:12.5px">
+            <span style="color:var(--fern);cursor:pointer" onclick="renderAuthModal('signin')">Already have an account? Sign in</span>
+          </div>` : `
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="authForgotPassword()">Send reset link</button>
+          <div style="text-align:center;margin-top:14px;font-size:12.5px">
+            <span style="color:var(--fern);cursor:pointer" onclick="renderAuthModal('signin')">← Back to sign in</span>
+          </div>`}
+      </div>
+    </div>
+  </div>`;
+  setTimeout(() => document.getElementById('amEmail')?.focus(), 50);
+}
+async function authSignIn() {
+  const email = document.getElementById('amEmail').value.trim();
+  const pass  = document.getElementById('amPass').value;
+  if (!email || !pass) return _amMsg('Please fill in all fields', true);
+  _amMsg('Signing in…');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) return _amMsg(error.message, true);
+  // Set currentUser directly rather than waiting on the onAuthStateChange
+  // listener — its timing relative to this await isn't guaranteed, and
+  // routeFromPath() below needs currentUser already set (mytrips guard).
+  currentUser = data.user;
+  updateNavAuth();
+  await syncTripsFromCloud();
+  closeAuthModal();
+  if (_authModalReturnPath) { const p = _authModalReturnPath; _authModalReturnPath = null; routeFromPath(p); }
+}
+async function authSignUp() {
+  const email = document.getElementById('amEmail').value.trim();
+  const pass  = document.getElementById('amPass').value;
+  if (!email || !pass) return _amMsg('Please fill in all fields', true);
+  if (pass.length < 8) return _amMsg('Password must be 8+ characters', true);
+  _amMsg('Checking…');
+  try {
+    const { data } = await sb.from('admin_settings').select('key, value').eq('key', 'new_signups_enabled');
+    const raw = data?.[0]?.value;
+    const enabled = (typeof raw === 'string' ? JSON.parse(raw) : raw) !== false;
+    if (!enabled) return _amMsg('New sign-ups are temporarily paused.', true);
+  } catch(e) {}
+  _amMsg('Creating account…');
+  const { error } = await sb.auth.signUp({ email, password: pass });
+  if (error) return _amMsg(error.message, true);
+  _amMsg('✓ Check your email to confirm your account, then sign in.');
+  setTimeout(() => renderAuthModal('signin'), 3000);
+}
+async function authForgotPassword() {
+  const email = document.getElementById('amEmail').value.trim();
+  if (!email) return _amMsg('Enter your email', true);
+  _amMsg('Sending…');
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: publicOrigin() + '/auth.html' });
+  if (error) return _amMsg(error.message, true);
+  _amMsg('✓ Reset link sent — check your inbox.');
 }
 function _restorePendingRoute() {
   try {
@@ -4406,8 +4520,8 @@ function showGuestContributeGate(legIdx, legKey) {
         </div>
         <p style="font-size:13px;color:var(--text2);line-height:1.6;margin:4px 0 18px">Create a free account to contribute. Your note helps the next traveller — and goes to a quick admin review before it appears on the leg.</p>
         <div style="display:flex;gap:8px;margin-bottom:10px">
-          <button class="oauth-btn-sm" onclick="window.location.href='/auth.html?return=planner'"><i class="ph ph-google-logo" style="font-size:14px"></i> Google</button>
-          <button class="oauth-btn-sm" onclick="window.location.href='/auth.html?return=planner'"><i class="ph ph-apple-logo" style="font-size:14px"></i> Apple</button>
+          <button class="oauth-btn-sm" onclick="goToAuth('planner')"><i class="ph ph-google-logo" style="font-size:14px"></i> Google</button>
+          <button class="oauth-btn-sm" onclick="goToAuth('planner')"><i class="ph ph-apple-logo" style="font-size:14px"></i> Apple</button>
         </div>
         <input id="gateEmail" placeholder="you@email.com" style="width:100%;font-size:13.5px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);outline:none;font-family:var(--body);color:var(--text);margin-bottom:10px"/>
         <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="goToAuth('planner')">Create account &amp; continue →</button>
@@ -6249,7 +6363,7 @@ async function renderProfilePanel() {
     el.innerHTML = `<div style="text-align:center;padding:3rem 1rem">
       <div style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:10px">Welcome to bysloth</div>
       <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Sign in to save trips, track karma, and contribute notes to the community.</p>
-      <a class="btn btn-primary" href="/auth.html">Sign in / Create account</a>
+      <a class="btn btn-primary" href="/auth.html" onclick="goToAuth();return false;">Sign in / Create account</a>
     </div>`;
     return;
   }
@@ -6696,7 +6810,7 @@ init().catch(e => {
     <div style="font-size:14px;line-height:1.65;color:rgba(245,240,232,0.62);margin-bottom:40px;max-width:290px">Trains, buses, ferries, shared taxis, the occasional hitch. We map a realistic route and flag the legs we can't verify.</div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <button onclick="document.getElementById('mobileSplash').classList.remove('show')" class="mobile-splash-cta-primary">Plan your first route <i class="ph ph-arrow-right" style="font-size:16px"></i></button>
-      <a href="/auth.html" class="mobile-splash-cta-ghost">Sign in</a>
+      <a href="/auth.html" onclick="goToAuth();return false;" class="mobile-splash-cta-ghost">Sign in</a>
     </div>
     <div style="margin-top:24px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:rgba(245,240,232,0.3);text-align:center;text-transform:uppercase">Free · 3 routes a month · no card required</div>
   </div>
