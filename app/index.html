@@ -1688,6 +1688,19 @@ async function init() {
   if (_savedCurr) { const sel = document.getElementById('currSel'); if (sel) sel.value = _savedCurr; }
   // Capture the entry URL before renderPlanLanding() rewrites it to /planner.
   const _entryHash = location.hash.replace('#', '');
+
+  // GitHub Pages has no server-side rewrites, so 404.html's SPA fallback for
+  // clean paths (/trips, /journals, /profile, /admin, ...) lands here as
+  // /app/?p=<original path>&q=<original query>. Restore the real path/query
+  // into location now, before anything below reads location.*  — otherwise
+  // every refresh (or shared link) on any tab loses its path: routeFromPath()
+  // sees seg==='app' and silently falls back to the default planner view.
+  const _fallbackParams = new URLSearchParams(location.search);
+  if (_fallbackParams.has('p')) {
+    const realSearch = _fallbackParams.get('q') ? '?' + _fallbackParams.get('q') : '';
+    history.replaceState(null, '', _fallbackParams.get('p') + realSearch + location.hash);
+  }
+
   const _entryPath = location.pathname;
 
   // Real Supabase session
