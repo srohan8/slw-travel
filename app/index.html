@@ -1291,6 +1291,7 @@ window.addEventListener('unhandledrejection', (e) => {
     <div class="admin-stab-bar">
       <button class="admin-stab on" id="adminStab_sites" onclick="switchAdminSubTab('sites')">Booking sites</button>
       <button class="admin-stab" id="adminStab_review" onclick="switchAdminSubTab('review')">Review queue <span id="adminReviewBadge" style="display:none;background:var(--gold);color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px;font-family:var(--mono);font-weight:600"></span></button>
+      <button class="admin-stab" id="adminStab_usage" onclick="switchAdminSubTab('usage')">AI usage</button>
     </div>
 
     <div id="adminContent_sites">
@@ -1409,6 +1410,22 @@ window.addEventListener('unhandledrejection', (e) => {
         <button class="rev-ftab" id="revFtab_all" onclick="switchReviewFilter('all')">All</button>
       </div>
       <div id="revQueue"></div>
+    </div>
+
+    <!-- AI usage panel -->
+    <div id="adminContent_usage" style="display:none">
+      <div class="card" style="margin-bottom:1rem">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 1rem">AI token usage</h3>
+        <div id="adminUsageSummary"></div>
+      </div>
+      <div class="card" style="margin-bottom:1rem">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 1rem">By model</h3>
+        <div id="adminUsageByModel"></div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 1rem">Recent calls</h3>
+        <div id="adminUsageRecent"></div>
+      </div>
     </div>
 
   </div>
@@ -1626,7 +1643,6 @@ let prefModes = ['bus','train'];
 let lastSuggestion = null;
 let currentTripId  = null;
 let myTripsFilter  = 'all'; // kept for legacy references
-let _autoRefreshPending = false; // true while a stale-cache background re-fetch is in flight
 let appSettings    = {};
 let currentUser    = null;
 
@@ -2347,10 +2363,65 @@ function switchAdminSubTab(tab) {
   _adminSubTab = tab;
   document.getElementById('adminContent_sites').style.display  = tab === 'sites'  ? '' : 'none';
   document.getElementById('adminContent_review').style.display = tab === 'review' ? '' : 'none';
+  document.getElementById('adminContent_usage').style.display  = tab === 'usage'  ? '' : 'none';
   document.querySelectorAll('.admin-stab').forEach(b => b.classList.remove('on'));
   const btn = document.getElementById('adminStab_' + tab);
   if (btn) btn.classList.add('on');
   if (tab === 'review') renderReviewQueue();
+  if (tab === 'usage')  renderAdminUsage();
+}
+
+async function renderAdminUsage() {
+  const sumEl    = document.getElementById('adminUsageSummary');
+  const modelEl  = document.getElementById('adminUsageByModel');
+  const recentEl = document.getElementById('adminUsageRecent');
+  if (!sumEl) return;
+  sumEl.innerHTML = '<div class="aff-empty">Loading…</div>';
+
+  const { data, error } = await sb.from('api_usage_log')
+    .select('created_at, model, input_tokens, output_tokens, cache_read_input_tokens, cache_creation_input_tokens, cost_usd')
+    .order('created_at', { ascending: false })
+    .limit(1000);
+
+  if (error)          { sumEl.innerHTML = `<div class="aff-empty">Could not load usage — ${error.message}</div>`; modelEl.innerHTML = ''; recentEl.innerHTML = ''; return; }
+  if (!data?.length)  { sumEl.innerHTML = '<div class="aff-empty">No AI calls logged yet.</div>'; modelEl.innerHTML = ''; recentEl.innerHTML = ''; return; }
+
+  const tokTotal = r => (r.input_tokens||0) + (r.output_tokens||0) + (r.cache_read_input_tokens||0) + (r.cache_creation_input_tokens||0);
+  const bucket = pred => data.filter(pred).reduce((a, r) => ({
+    calls: a.calls + 1, tokens: a.tokens + tokTotal(r), cost: a.cost + (r.cost_usd || 0),
+  }), { calls: 0, tokens: 0, cost: 0 });
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const monthStr = new Date().toISOString().slice(0, 7);
+  const today = bucket(r => r.created_at.slice(0, 10) === todayStr);
+  const month = bucket(r => r.created_at.slice(0, 7) === monthStr);
+  const all   = bucket(() => true);
+
+  sumEl.innerHTML = `<div class="plan-summary-strip">
+    ${[['Today', today], ['This month', month], [`Last ${data.length} calls`, all]].map(([label, b]) => `
+      <div class="plan-sum-card">
+        <div class="plan-sum-lbl">${label}</div>
+        <div class="plan-sum-val">$${b.cost.toFixed(2)} <span class="plan-sum-sub">${b.calls} calls · ${b.tokens.toLocaleString()} tok</span></div>
+      </div>`).join('')}
+  </div>`;
+
+  const byModel = {};
+  data.forEach(r => {
+    const m = r.model || 'unknown';
+    const b = byModel[m] = byModel[m] || { calls: 0, tokens: 0, cost: 0 };
+    b.calls++; b.tokens += tokTotal(r); b.cost += r.cost_usd || 0;
+  });
+  modelEl.innerHTML = `<table class="aff-table"><thead><tr><th>Model</th><th>Calls</th><th>Tokens</th><th>Cost</th></tr></thead>
+    <tbody>${Object.entries(byModel).map(([m, b]) => `<tr><td>${m}</td><td>${b.calls}</td><td>${b.tokens.toLocaleString()}</td><td>$${b.cost.toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
+
+  recentEl.innerHTML = `<table class="aff-table"><thead><tr><th>Time</th><th>Model</th><th>In</th><th>Out</th><th>Cost</th></tr></thead>
+    <tbody>${data.slice(0, 50).map(r => `<tr>
+      <td>${new Date(r.created_at).toLocaleString()}</td>
+      <td>${r.model || '—'}</td>
+      <td>${(r.input_tokens || 0).toLocaleString()}</td>
+      <td>${(r.output_tokens || 0).toLocaleString()}</td>
+      <td>$${(r.cost_usd || 0).toFixed(4)}</td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
 function switchReviewFilter(f) {
@@ -3039,7 +3110,6 @@ function downloadImportTemplate() {
 }
 
 async function planRoute() {
-  _autoRefreshPending = false;
   const from = document.getElementById('pFrom').value.trim();
   const to   = document.getElementById('pTo').value.trim();
   if (!from || !to) { alert('Please enter start and end.'); return; }
@@ -3736,14 +3806,7 @@ function renderPlanSuggestion(d, fromCache = false) {
 
   if (fromCache) {
     const sub = d._subset_of ? ` <span style="opacity:0.7;font-weight:400">— sliced from ${d._subset_of}</span>` : '';
-    const noRegion = d.legs?.some(l => !l.leg_region);
-    if (noRegion && !_autoRefreshPending) {
-      _autoRefreshPending = true;
-      h += `<span class="cache-badge" style="color:var(--text3)">⟳ Updating route data…</span> `;
-      setTimeout(() => { clearRouteCache(); planRoute(); }, 0);
-    } else {
-      h += `<span class="cache-badge">⚡ From cache${sub}</span> `;
-    }
+    h += `<span class="cache-badge">⚡ From cache${sub}</span> `;
     updateCacheClearBtn();
   }
 
