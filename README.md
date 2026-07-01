@@ -4,23 +4,16 @@
 
 ```
 slwtravel/
-  index.html          ← Landing page + login (Supabase auth)
-  app.html            ← Main app (plan, record, flights)
-  admin.html          ← Admin control panel (password protected)
-  config/
-    affiliates.js     ← All affiliate link config (reference only)
-    constants.js      ← Plans, limits, mode labels (reference only)
-  js/
-    auth.js           ← Supabase auth module (reference only)
-    storage.js        ← Supabase storage module (reference only)
+  index.html          ← Landing page
+  auth.html           ← Sign in / sign up (Supabase auth)
+  app/index.html      ← Main app (plan, record, flights, admin)
   proxy/
     server.js         ← Node.js proxy for Railway
     package.json
 ```
 
-> Note: `config/` and `js/` files are reference modules.
-> The live app embeds their logic directly in `app.html` for Phase 1.
-> Phase 2 will split these into proper ES modules.
+> Auth, storage, and affiliate-link logic all live inline in `app/index.html` and
+> `auth.html` — there are no separate JS modules for them.
 
 ---
 
@@ -96,3 +89,11 @@ All changes are instant — no redeployment needed.
 - [ ] Trip sharing (public links)
 - [ ] Mobile app (PWA)
 - [ ] Community trip feed
+
+---
+
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE) — source visible for personal/educational/
+noncommercial use; commercial use requires a separate agreement with the copyright
+holder.
