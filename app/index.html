@@ -3089,10 +3089,12 @@ function toggleMode(el, m) {
   else prefModes = prefModes.filter(x => x !== m);
 }
 
-// ── Import a route (GPX / Excel / CSV) ────────────────────────────
-let _importState = 'choose';   // choose | busy | error
+// ── Import a route (GPX / Excel / CSV / Polarsteps) ────────────────
+let _importState = 'choose';   // choose | busy | error | polarsteps-pick
 let _importBusyLabel = '';
 let _importError = '';
+let _importPsZip = null;         // loaded JSZip instance, kept between the trip-picker step and the build step
+let _importPsCandidates = [];    // [{path, folder, name, start, end, stepCount}] — one per trip in the export
 function openImportModal() { _importState='choose'; renderImportModal(); }
 function closeImportModal() { const m=document.getElementById('importModal'); if(m){m.style.display='none';m.innerHTML='';} }
 function renderImportModal() {
@@ -3104,6 +3106,18 @@ function renderImportModal() {
     body = `<div class="imp-busy"><div class="imp-spinner"></div><div style="font-size:14px;font-weight:600;color:var(--text)">${_importBusyLabel||'Reading your file…'}</div><div style="font-size:12px;color:var(--text3);margin-top:6px">Parsing locally — your file isn’t uploaded anywhere.</div></div>`;
   } else if (_importState === 'error') {
     body = `<div class="imp-busy"><i class="ph ph-warning-circle" style="font-size:34px;color:var(--danger-text);margin-bottom:12px"></i><div style="font-size:14px;font-weight:600;color:var(--text)">Couldn’t import that file</div><div style="font-size:12px;color:var(--text3);margin-top:6px;line-height:1.5;max-width:320px">${_importError||'Please check the format and try again.'}</div><button class="btn" style="margin-top:14px" onclick="_importState='choose';renderImportModal()">Try again</button></div>`;
+  } else if (_importState === 'polarsteps-pick') {
+    const rows = _importPsCandidates.map((c, i) => {
+      const dr = c.start ? c.start.toLocaleDateString('en',{month:'short',year:'numeric'}) : '';
+      const sub = [dr, c.stepCount ? c.stepCount + ' steps' : ''].filter(Boolean).join(' · ');
+      return `<div class="imp-opt" style="--imp-accent:#6B4F3A" onclick="importPolarstepsBuild(${i})">
+        <div class="imp-opt-icon" style="background:rgba(107,79,58,0.15)"><i class="ph ph-map-trifold" style="font-size:22px;color:#6B4F3A"></i></div>
+        <div><div class="imp-opt-title">${c.name}</div><div class="imp-opt-sub">${sub||'&nbsp;'}</div></div>
+        <i class="ph ph-arrow-right imp-opt-arrow" style="font-size:14px"></i>
+      </div>`;
+    }).join('');
+    body = `<div class="imp-desc">This export has ${_importPsCandidates.length} trips — which one do you want to import?</div>${rows}
+      <button class="btn" style="margin-top:10px" onclick="_importState='choose';renderImportModal()">← Back</button>`;
   } else {
     body = `<div class="imp-desc">Import an existing planned route. We’ll parse your file and pre-fill the stops so you can review before saving.</div>
       <div class="imp-opt" style="--imp-accent:#2E6FA8" onclick="importPick('gpx')">
@@ -3114,6 +3128,11 @@ function renderImportModal() {
       <div class="imp-opt" style="--imp-accent:#2D7D46" onclick="importPick('sheet')">
         <div class="imp-opt-icon" style="background:rgba(45,125,70,0.15)"><i class="ph ph-microsoft-excel-logo" style="font-size:22px;color:#2D7D46"></i></div>
         <div><div class="imp-opt-title">Excel or CSV</div><div class="imp-opt-sub">Use our template — From, To, Date, Mode, Cost columns</div></div>
+        <i class="ph ph-arrow-right imp-opt-arrow" style="font-size:14px"></i>
+      </div>
+      <div class="imp-opt" style="--imp-accent:#6B4F3A" onclick="importPick('polarsteps')">
+        <div class="imp-opt-icon" style="background:rgba(107,79,58,0.15)"><i class="ph ph-footprints" style="font-size:22px;color:#6B4F3A"></i></div>
+        <div><div class="imp-opt-title">Polarsteps</div><div class="imp-opt-sub">Your full data export (.zip) — brings in dates, diary text and photos</div></div>
         <i class="ph ph-arrow-right imp-opt-arrow" style="font-size:14px"></i>
       </div>
       <button class="imp-template" onclick="downloadImportTemplate()"><i class="ph ph-download-simple" style="font-size:11px"></i> Download Excel template →</button>`;
@@ -3130,7 +3149,7 @@ function renderImportModal() {
 }
 function importPick(kind) {
   const inp = document.getElementById('importFileInput');
-  inp.accept = kind === 'gpx' ? '.gpx,application/gpx+xml' : '.xlsx,.csv,text/csv';
+  inp.accept = kind === 'gpx' ? '.gpx,application/gpx+xml' : kind === 'polarsteps' ? '.zip,application/zip' : '.xlsx,.csv,text/csv';
   inp.onchange = (e) => importHandleFile(e, kind);
   inp.value = '';
   inp.click();
@@ -3139,6 +3158,7 @@ async function importHandleFile(e, kind) {
   const file = e.target.files?.[0];
   if (!file) return;
   e.target.value = '';
+  if (kind === 'polarsteps') { await importHandlePolarstepsFile(file); return; }
   _importState = 'busy'; _importBusyLabel = 'Reading ' + file.name + '…'; renderImportModal();
   try {
     let trip;
@@ -3169,6 +3189,14 @@ function loadXLSX() {
   if (_xlsxPromise) return _xlsxPromise;
   _xlsxPromise = new Promise((res, rej) => { const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; s.onload=()=>res(); s.onerror=()=>rej(new Error('Could not load the spreadsheet reader.')); document.head.appendChild(s); });
   return _xlsxPromise;
+}
+// ZIP reading (Polarsteps export), via JSZip loaded on demand
+let _jszipPromise = null;
+function loadJSZip() {
+  if (window.JSZip) return Promise.resolve();
+  if (_jszipPromise) return _jszipPromise;
+  _jszipPromise = new Promise((res, rej) => { const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'; s.onload=()=>res(); s.onerror=()=>rej(new Error('Could not load the zip reader.')); document.head.appendChild(s); });
+  return _jszipPromise;
 }
 async function parseXLSX(file) {
   await loadXLSX();
@@ -3251,6 +3279,126 @@ function downloadImportTemplate() {
   a.href = URL.createObjectURL(blob); a.download = 'bysloth-route-template.csv';
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ── Polarsteps import ───────────────────────────────────────────────
+// A "download my data" export from Polarsteps is a zip with one folder
+// per trip: trip/<slug>_<id>/trip.json (+ locations.json, + a photos/
+// subfolder per step). Schema confirmed against a real example export
+// from the open-source polarsteps-to-gpx converter project — Polarsteps
+// itself has no public docs or API for this format.
+async function importHandlePolarstepsFile(file) {
+  _importState = 'busy'; _importBusyLabel = 'Reading ' + file.name + '…'; renderImportModal();
+  try {
+    await loadJSZip();
+    const zip = await JSZip.loadAsync(file);
+    const tripPaths = Object.keys(zip.files).filter(p => /^trip\/[^/]+\/trip\.json$/.test(p));
+    if (!tripPaths.length) throw new Error('No trips found in this file. Make sure you uploaded your full data export from Polarsteps (Settings → Export data), not a single-trip file.');
+
+    const candidates = [];
+    for (const path of tripPaths) {
+      try {
+        const json = JSON.parse(await zip.files[path].async('string'));
+        candidates.push({
+          path,
+          folder: path.slice(0, path.lastIndexOf('/')),
+          name: json.name || 'Untitled trip',
+          start: json.start_date ? new Date(json.start_date * 1000) : null,
+          stepCount: json.all_steps?.length || json.step_count || 0,
+        });
+      } catch (e) { /* one unreadable trip.json shouldn't sink the whole import — skip it */ }
+    }
+    if (!candidates.length) throw new Error('Couldn’t read any trips from this file.');
+    candidates.sort((a, b) => (b.start||0) - (a.start||0));
+
+    _importPsZip = zip;
+    if (candidates.length === 1) { await importPolarstepsBuild(0, candidates); return; }
+    _importPsCandidates = candidates;
+    _importState = 'polarsteps-pick'; renderImportModal();
+  } catch (err) {
+    console.warn('Polarsteps import failed:', err);
+    _importState = 'error'; _importError = err.message || 'Unknown error.'; renderImportModal();
+  }
+}
+// index into _importPsCandidates (or the explicit list passed for the single-trip shortcut)
+async function importPolarstepsBuild(index, candidatesOverride) {
+  const candidates = candidatesOverride || _importPsCandidates;
+  const candidate = candidates[index];
+  const zip = _importPsZip;
+  _importState = 'busy'; _importBusyLabel = 'Importing ' + candidate.name + '…'; renderImportModal();
+  try {
+    const tripData = JSON.parse(await zip.files[candidate.path].async('string'));
+    const steps = (tripData.all_steps || [])
+      .filter(s => !s.is_deleted && (s.location?.name || s.display_name))
+      .sort((a, b) => (a.start_time||0) - (b.start_time||0));
+    if (!steps.length) throw new Error('This trip has no steps to import.');
+
+    const slugify = s => (s||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    // Step folders sibling to trip.json, e.g. "london_104653631/photos/…" — matched
+    // by slug prefix and consumed in order so two steps in the same city (two
+    // separate "paris_…" folders) each claim their own folder, not both of them.
+    const stepFolders = [...new Set(
+      Object.keys(zip.files)
+        .filter(p => p.startsWith(candidate.folder + '/') && p.includes('/photos/'))
+        .map(p => p.slice(candidate.folder.length + 1).split('/')[0])
+    )].sort();
+    const usedFolders = new Set();
+
+    const stops = [];
+    for (const step of steps) {
+      const placeName = step.location?.name || step.display_name || 'Stop';
+      const slug = slugify(placeName);
+      const folder = stepFolders.find(f => f.startsWith(slug + '-') && !usedFolders.has(f))
+                  || stepFolders.find(f => f.startsWith(slug + '_') && !usedFolders.has(f));
+      if (folder) usedFolders.add(folder);
+
+      const photos = [];
+      if (folder) {
+        const photoPaths = Object.keys(zip.files)
+          .filter(p => p.startsWith(`${candidate.folder}/${folder}/photos/`) && !zip.files[p].dir)
+          .slice(0, 3); // cap photos per stop — same rationale as the Record Journal's own photo cap
+        for (const pp of photoPaths) {
+          try { photos.push(await _compressImageFile(await zip.files[pp].async('blob'), 1200, 0.75)); }
+          catch (e) { /* one bad photo shouldn't fail the whole stop */ }
+        }
+      }
+
+      stops.push({
+        name: placeName,
+        date: step.start_time ? new Date(step.start_time * 1000).toISOString().slice(0,10) : '',
+        days: 1,
+        accomSites: [], accomNote: '',
+        visited: true,
+        diary: (step.description || '').trim(),
+        photos,
+      });
+    }
+
+    const legs = stops.slice(1).map(() => ({ mode:'', cost:0, km:0, hours:0, notes:'', booked:false, bookingRef:'', bookingSites:[], infoSites:[], legRegion:'', confidence:'uncertain', conflict:null }));
+    const trip = {
+      id: newTripId(),
+      title: tripData.name || `${stops[0].name} → ${stops[stops.length-1].name}`,
+      currency: document.getElementById('currSel')?.value || 'USD',
+      budget: '',
+      notes: (tripData.summary || '').trim() || 'Imported from Polarsteps — dates and diary entries are pre-filled from your export.',
+      stops, legs,
+      updated_at: new Date().toISOString(),
+      imported: true, imported_from: 'polarsteps',
+    };
+
+    // Persist right away — picking the trip from the list IS the confirm step;
+    // the Record Journal view we land in next doesn't itself save on open.
+    const trips = storage.get('trips') || [];
+    trips.push(trip);
+    if (!storage.set('trips', trips)) throw new Error('Couldn’t save — you’re out of local storage space. Try removing a few older trips or photos first.');
+    persistTripCloud(trip);
+
+    closeImportModal();
+    openRecordJournal(trip);
+  } catch (err) {
+    console.warn('Polarsteps import failed:', err);
+    _importState = 'error'; _importError = err.message || 'Unknown error.'; renderImportModal();
+  }
 }
 
 async function planRoute() {
@@ -5101,6 +5249,10 @@ function renderMyTripsPanel() {
     if (allBooked)  return { label:'CONFIRMED',   cls:'confirmed', color:'var(--moss)' };
     if (anyBooked)  return { label:'IN PROGRESS', cls:'progress',  color:'var(--gold)' };
     const hasStops = (t.stops||[]).some(s => s.name);
+    // All stops already logged as visited (e.g. a Polarsteps/journal import, or a
+    // trip journaled after the fact) — that's a completed journey, not a plan.
+    const allVisited = hasStops && t.stops.every(s => s.visited);
+    if (allVisited) return { label:'JOURNALED',   cls:'journaled', color:'var(--rust)' };
     if (hasStops)   return { label:'PLANNED',     cls:'planned',   color:'var(--fern)' };
     return             { label:'DRAFT',        cls:'draft',     color:'var(--text3)' };
   };
