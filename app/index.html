@@ -3720,7 +3720,12 @@ function _elevationChartHTML(stopNames, samples, wrapOpen, wrapClose) {
   const elevs = samples.map(s => s.elevation);
   const minE = Math.min(...elevs), maxE = Math.max(...elevs);
   const range = Math.max(1, maxE - minE);
-  const toY = e => Math.round(seaY - ((e - minE) / range) * (seaY - topY));
+  // floorY leaves a small gap above the true bottom edge so the lowest point
+  // in the route is never drawn flush with the baseline — without it, a
+  // low-but-real stretch (e.g. Paris at ~35m when the route's floor is 19m)
+  // sits within 1-2px of seaY and reads as a missing/flat line, not low data.
+  const floorY = seaY - 6;
+  const toY = e => Math.round(floorY - ((e - minE) / range) * (floorY - topY));
   const pts  = samples.map(s => [Math.round(s.frac * W), toY(s.elevation)]);
   const line = 'M ' + pts.map(([x, y]) => `${x},${y}`).join(' L ');
   const fill = line + ` L ${W},${seaY} L 0,${seaY} Z`;
