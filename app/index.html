@@ -140,6 +140,14 @@ window.addEventListener('unhandledrejection', (e) => {
   .mp{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--border2);color:var(--text2);cursor:pointer;background:transparent;font-family:inherit;transition: all 0.2s;}
   .mp:hover{border-color: var(--fern); color: var(--text);}
   .mp.on{background:var(--info-bg);color:var(--info-text);border-color:var(--info-border);font-weight: 500;}
+  /* Trip mode bar — bulk "set every leg to this mode" control (Planner + Record Journal) */
+  .trip-mode-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0 12px;}
+  .tmb-lbl{font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:0.5px;text-transform:uppercase;flex-shrink:0;}
+  .tmb-pills{display:flex;gap:4px;flex-wrap:wrap;}
+  .tmb-pill{width:26px;height:26px;border-radius:50%;border:0.5px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;}
+  .tmb-pill:hover{border-color:var(--fern);color:var(--fern);}
+  .tmb-pill.on{background:var(--info-bg);color:var(--info-text);border-color:var(--info-border);}
+  .tmb-state{font-size:11px;color:var(--text2);margin-left:auto;}
   .linp{font-size:12px;border: 0.5px solid var(--border);border-radius: 4px;background:var(--bg2);padding: 2px 4px;outline:none;color:var(--text2);width:60px;text-align:right;font-family:inherit;}
   .lsep{font-size:12px;color:var(--text3);}
   .rm{font-size:16px;color:var(--text3);cursor:pointer;border:none;background:transparent;line-height:1;padding:0 2px;transition: color 0.2s;}
@@ -1242,6 +1250,7 @@ window.addEventListener('unhandledrejection', (e) => {
       <div class="met"><div class="met-lbl">Distance</div><div class="met-val" id="sumDist">0 <span class="met-u">km</span></div></div>
     </div>
     <div class="sec-lbl">Route</div>
+    <div class="trip-mode-bar" id="tripModeBar"></div>
     <div class="segs" id="segs"></div>
     <div class="add-row"><button class="add-b" onclick="addStop()">+ Add stop</button></div>
     <div style="margin-top:1.25rem" id="tlSection"><div class="sec-lbl">Timeline</div><div class="tl-track" id="tl"></div></div>
@@ -1511,7 +1520,7 @@ const AFF = {
 };
 
 // ── App state ─────────────────────────────────────────────────────
-const MODES = ['bus','train','hitchhike','ferry','walk','cycle','taxi','flight','shared taxi'];
+const MODES = ['bus','train','hitchhike','ferry','walk','cycle','motorbike','taxi','flight','shared taxi'];
 const MODE_ICONS = {
   bus:          'ph-bus',
   train:        'ph-train',
@@ -1520,11 +1529,12 @@ const MODE_ICONS = {
   walk:         'ph-person-simple-walk',
   walking:      'ph-person-simple-walk',
   cycle:        'ph-bicycle',
+  motorbike:    'ph-motorcycle',
   taxi:         'ph-taxi',
   flight:       'ph-airplane',
   'shared taxi':'ph-van',
 };
-const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',walking:'Walk',cycle:'Cycle',taxi:'Taxi',flight:'Flight','shared taxi':'Carpool'};
+const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',walking:'Walk',cycle:'Cycle',motorbike:'Motorbike',taxi:'Taxi',flight:'Flight','shared taxi':'Carpool'};
 // Signal · transport mode accent colors (left border + icon chips)
 // Signal · transport mode accent colors (Session-2 §8 values)
 const MODE_COLORS = {
@@ -1535,6 +1545,7 @@ const MODE_COLORS = {
   walk:         '#94A0B0', // text3 grey
   walking:      '#94A0B0',
   cycle:        '#2E6FA8',
+  motorbike:    '#7C4A9E', // purple — distinct from cycle/taxi's warm/blue tones
   taxi:         '#B45309', // amber-brown
   flight:       '#5B7FA6', // slate
   'shared taxi':'#B45309', // same as taxi
@@ -1543,7 +1554,7 @@ const MODE_COLORS = {
 // Mode → tint (light bg for icon chip)
 const MODE_TINTS = {
   bus:'#F4EADE', train:'rgba(30,58,92,0.08)', ferry:'#EBF4FC', hitchhike:'#FBE3D4',
-  walk:'#F2F4F6', walking:'#F2F4F6', cycle:'#EBF4FC',
+  walk:'#F2F4F6', walking:'#F2F4F6', cycle:'#EBF4FC', motorbike:'#F1E9F6',
   taxi:'#FEF3C7', flight:'#E8EFF5', 'shared taxi':'#FEF3C7',
 };
 
@@ -2143,6 +2154,7 @@ async function deleteTrip(id) {
   if (currentUser) {
     try { await sb.from('trips').delete().eq('id', id).eq('user_id', currentUser.id); }
     catch(e) { console.warn('Cloud delete failed:', e.message); }
+    _deleteTripPhotosFromStorage(id);
   }
   renderSavedTrips();
 }
@@ -3243,7 +3255,7 @@ async function parseXLSX(file) {
   return rows.map(r => { const o={}; Object.keys(r).forEach(k=>o[k.toLowerCase().trim()]=r[k]); return o; });
 }
 // Rows (one leg each: From,To,Date,Mode,Cost) → trip {stops,legs}
-const IMPORT_MODE_MAP = { train:'train', rail:'train', bus:'bus', coach:'bus', ferry:'ferry', boat:'ferry', taxi:'taxi', 'shared taxi':'shared taxi', car:'taxi', walk:'walking', walking:'walking', hike:'walking', cycle:'cycle', bike:'cycle', hitch:'hitchhike', hitchhike:'hitchhike', flight:'flight', plane:'flight' };
+const IMPORT_MODE_MAP = { train:'train', rail:'train', bus:'bus', coach:'bus', ferry:'ferry', boat:'ferry', taxi:'taxi', 'shared taxi':'shared taxi', car:'taxi', walk:'walking', walking:'walking', hike:'walking', cycle:'cycle', bike:'cycle', motorbike:'motorbike', motorcycle:'motorbike', scooter:'motorbike', moped:'motorbike', hitch:'hitchhike', hitchhike:'hitchhike', flight:'flight', plane:'flight' };
 function importParseRows(rows) {
   if (!rows || !rows.length) throw new Error('No rows found in the file.');
   const stops = [], legs = [];
@@ -4600,8 +4612,32 @@ function autoFillDates(fromIdx) {
 
 function render() {
   renderSegs(); renderTl(); updateSum(); renderBookingProgress(); renderBudgetBar(); renderVisitedProgress();
+  renderTripModeBar();
   updateEditorMeta();
   if (lastSuggestion) renderPlanSuggestion(lastSuggestion, lastSuggestion._from_cache || false);
+}
+
+// "Trip mode" bulk control — picking one mode sets every leg to it in one go
+// (e.g. "just make the whole thing motorbike"); shows "Mixed" when legs
+// currently differ, which isn't itself a pickable option — it's the state
+// you're in until you either bulk-apply one mode or edit legs individually.
+function renderTripModeBar() {
+  const el = document.getElementById('tripModeBar');
+  if (!el) return;
+  if (!legs.length) { el.innerHTML = ''; return; }
+  const usedModes = new Set(legs.filter(Boolean).map(l => l.mode).filter(Boolean));
+  const uniform = usedModes.size === 1 ? [...usedModes][0] : null;
+  el.innerHTML = `
+    <span class="tmb-lbl">Trip mode</span>
+    <div class="tmb-pills">
+      ${MODES.map(m => `<button class="tmb-pill${uniform===m?' on':''}" onclick="setAllLegModes('${m}')" title="Set all legs to ${MI[m]}"><i class="ph ${MODE_ICONS[m]}"></i></button>`).join('')}
+    </div>
+    <span class="tmb-state">${uniform ? MI[uniform] : 'Mixed'}</span>`;
+}
+function setAllLegModes(m) {
+  legs.forEach(l => { if (l) l.mode = m; });
+  editingLegModes.clear();
+  render();
 }
 
 // Show the stats strip + booking/visited bars + timeline only once a trip is saved or imported.
@@ -6092,7 +6128,8 @@ function renderRecordJournal() {
     <div class="rj-progress-row">
       <div class="rj-prog-head"><span class="rj-prog-lbl">Progress</span><span class="rj-prog-val">${visited}/${total} stops visited</span></div>
       <div class="rj-prog-track"><div class="rj-prog-fill" style="width:${pct}%"></div></div>
-    </div>`;
+    </div>
+    ${rjTripModeBarHTML(legs)}`;
 
   // Stop cards with timeline gutter
   stops.forEach((s, i) => {
@@ -6199,9 +6236,30 @@ function recToggleVisited(i) {
   recPersist(); renderRecordJournal();
 }
 // Inline editing of stop + leg fields
-const REC_MODE_LIST = ['bus','train','ferry','shared taxi','hitchhike','walking','cycle','taxi','flight'];
+const REC_MODE_LIST = ['bus','train','ferry','shared taxi','hitchhike','walking','cycle','motorbike','taxi','flight'];
 function recModeOptions(sel) {
   return REC_MODE_LIST.map(m => `<option value="${m}"${m===sel?' selected':''}>${MI[m]||m}</option>`).join('');
+}
+// Same bulk "set every leg to this mode" control as the Planner's trip-mode
+// bar — picking a mode is a one-time apply, not a locked trip-wide setting,
+// so legs stay individually editable afterward either way.
+function rjTripModeBarHTML(legs) {
+  if (!legs.length) return '';
+  const usedModes = new Set(legs.filter(Boolean).map(l => l.mode).filter(Boolean));
+  const uniform = usedModes.size === 1 ? [...usedModes][0] : null;
+  return `<div class="trip-mode-bar">
+    <span class="tmb-lbl">Trip mode</span>
+    <div class="tmb-pills">
+      ${REC_MODE_LIST.map(m => `<button class="tmb-pill${uniform===m?' on':''}" onclick="recSetAllLegModes('${m}')" title="Set all legs to ${MI[m]}"><i class="ph ${MODE_ICONS[m]}"></i></button>`).join('')}
+    </div>
+    <span class="tmb-state">${uniform ? MI[uniform] : 'Mixed'}</span>
+  </div>`;
+}
+function recSetAllLegModes(m) {
+  if (!_recTrip.legs) return;
+  _recTrip.legs.forEach(l => { if (l) l.mode = m; });
+  recPersist();
+  renderRecordJournal();
 }
 function recSetStopField(i, field, val) {
   if (!_recTrip.stops[i]) return;
@@ -6292,7 +6350,10 @@ function recDeleteTrip() {
   if (!confirm(`Delete “${_recTrip.title || 'this trip'}”? This can’t be undone.`)) return;
   const id = _recTrip.id;
   storage.set('trips', (storage.get('trips')||[]).filter(t => t.id !== id));
-  if (currentUser && _UUID_RE.test(id)) { try { sb.from('trips').delete().eq('id', id).eq('user_id', currentUser.id); } catch(e){} }
+  if (currentUser && _UUID_RE.test(id)) {
+    try { sb.from('trips').delete().eq('id', id).eq('user_id', currentUser.id); } catch(e){}
+    _deleteTripPhotosFromStorage(id);
+  }
   goToMyTrips();
 }
 // Sticky map drag-to-resize
@@ -6380,6 +6441,19 @@ async function _uploadPhotoToStorage(dataUrl, tripId) {
     console.warn('Photo upload to Storage failed, keeping inline:', e.message);
     return dataUrl;
   }
+}
+// Deleting a trip only ever removed the trips row — photos uploaded via
+// _uploadPhotoToStorage() live as separate Storage objects under
+// {userId}/{tripId}/*, so without this they'd be silently orphaned forever
+// every time a trip with cloud-stored photos got deleted.
+async function _deleteTripPhotosFromStorage(tripId) {
+  if (!currentUser) return; // guests never upload to Storage — nothing to clean up
+  try {
+    const prefix = `${currentUser.id}/${tripId}`;
+    const { data, error } = await sb.storage.from('trip-photos').list(prefix);
+    if (error || !data?.length) return;
+    await sb.storage.from('trip-photos').remove(data.map(f => `${prefix}/${f.name}`));
+  } catch(e) { console.warn('Failed to clean up trip photos from Storage:', e.message); }
 }
 
 // Retroactively compresses photos saved before the photo-compression fix
