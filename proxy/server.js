@@ -219,7 +219,7 @@ async function logUsageToSupabase(model, usage, provider = 'claude') {
     (usage.cache_creation_input_tokens || 0) * prices.cache_write
   ) / 1_000_000;
 
-  await fetch(`${sbUrl}/rest/v1/api_usage_log`, {
+  const res = await fetch(`${sbUrl}/rest/v1/api_usage_log`, {
     method: 'POST',
     headers: {
       'Content-Type':  'application/json',
@@ -236,6 +236,15 @@ async function logUsageToSupabase(model, usage, provider = 'claude') {
       cost_usd: cost,
     }),
   });
+
+  // fetch() only rejects on network failure — a bad key/schema mismatch/RLS
+  // issue comes back as a non-2xx response and would otherwise be silently
+  // dropped, since the caller only .catch()es rejections. Throw so it
+  // actually surfaces in the Railway logs.
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Supabase insert failed (${res.status}): ${body.slice(0, 300)}`);
+  }
 }
 
 app.listen(PORT, () => console.log(`slw-travel-proxy listening on :${PORT}`));
