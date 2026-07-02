@@ -39,17 +39,4 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- GPS live recording (feature doc §3, §8, §11). The background-geolocation
-         plugin's own manifest supplies the foreground <service>; we add the
-         permissions here, including ACCESS_BACKGROUND_LOCATION for screen-off
-         tracking, which the plugin manifest does not declare. -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 </manifest>
