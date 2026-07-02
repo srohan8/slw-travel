@@ -3696,7 +3696,19 @@ async function importPolarstepsBuild(index, candidatesOverride) {
       });
     }
 
-    const legs = stops.slice(1).map(() => ({ mode:'', cost:0, km:0, hours:0, notes:'', booked:false, bookingRef:'', bookingSites:[], infoSites:[], legRegion:'', confidence:'uncertain', conflict:null }));
+    // Straight-line distance between consecutive stops, when both have real
+    // coordinates from Polarsteps (see hasCoords above) — same haversineKm()
+    // the GPS-recording feature uses. Not the actual road/rail distance
+    // travelled, but a real number beats the hardcoded 0 this used to ship,
+    // and it's free: no geocoding or extra API calls needed for stops that
+    // already carry their own lat/lon.
+    const legs = stops.slice(1).map((s, i) => {
+      const prev = stops[i];
+      const km = (prev.lat != null && prev.lon != null && s.lat != null && s.lon != null)
+        ? Math.round(haversineKm([prev.lat, prev.lon], [s.lat, s.lon]))
+        : 0;
+      return { mode:'', cost:0, km, hours:0, notes:'', booked:false, bookingRef:'', bookingSites:[], infoSites:[], legRegion:'', confidence:'uncertain', conflict:null };
+    });
     const trip = {
       id: tripId,
       title: tripData.name || `${stops[0].name} → ${stops[stops.length-1].name}`,
