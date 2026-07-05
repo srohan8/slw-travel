@@ -562,11 +562,11 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-rec-dot{width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block;}
   /* ── Journey Detail: GPS/manual tracking toggle ── */
   .jd-toggle-on,.jd-toggle-off{font-size:13px;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;font-family:var(--body);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;}
-  .jd-toggle-on{background:color-mix(in srgb,var(--sage) 12%,transparent);border:0.5px solid color-mix(in srgb,var(--sage) 55%,transparent);color:var(--sage);}
-  .jd-toggle-on .jd-rec-dot{background:var(--sage);animation:recBlink 1.6s ease-in-out infinite;}
+  .jd-toggle-on{background:color-mix(in srgb,var(--signal) 12%,transparent);border:0.5px solid color-mix(in srgb,var(--signal) 55%,transparent);color:var(--signal);}
+  .jd-toggle-on .jd-rec-dot{background:var(--signal);animation:recBlink 1.6s ease-in-out infinite;}
   .jd-toggle-off{background:var(--bg);border:0.5px solid var(--border2);color:var(--text);}
   .jd-toggle-switch{width:28px;height:16px;border-radius:8px;position:relative;display:inline-block;flex-shrink:0;}
-  .jd-toggle-switch.on{background:var(--sage);}
+  .jd-toggle-switch.on{background:var(--signal);}
   .jd-toggle-switch.off{background:var(--border);}
   .jd-toggle-knob{position:absolute;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.2);}
   .jd-toggle-switch.on .jd-toggle-knob{right:2px;}
@@ -576,9 +576,9 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 16px;font-family:var(--body);font-size:13px;color:var(--text3);cursor:pointer;margin-bottom:-0.5px;display:inline-flex;align-items:center;gap:5px;}
   .jd-tab:hover{color:var(--text2);}
   .jd-tab.on{color:var(--text);font-weight:600;border-bottom-color:var(--fern);}
-  .jd-tab.rec.on{color:var(--sage);border-bottom-color:var(--sage);}
+  .jd-tab.rec.on{color:var(--signal);border-bottom-color:var(--signal);}
   .jd-tab-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block;}
-  .jd-tab.rec.on .jd-tab-dot{background:var(--sage);}
+  .jd-tab.rec.on .jd-tab-dot{background:var(--signal);}
   .jd-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
   .jd-metric{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
   .jd-metric-lbl{font-family:var(--mono);font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
@@ -602,17 +602,17 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-leg-cc{font-family:var(--mono);font-size:10px;color:var(--text3);}
   .jd-leg-days{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin:2px 0 0 24px;}
   .jd-leg-date{font-family:var(--mono);font-size:11px;color:var(--text3);}
-  .jd-visited-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-family:var(--mono);color:var(--sage);background:color-mix(in srgb,var(--sage) 14%,transparent);border-radius:var(--radius-pill);padding:1px 6px;}
+  .jd-visited-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-family:var(--mono);color:var(--success);background:color-mix(in srgb,var(--success) 14%,transparent);border-radius:var(--radius-pill);padding:1px 6px;}
   /* ── Live/manual tracking mode — Journey tab (06.1/06.2) ── */
   .jd-live-banner{display:flex;align-items:center;gap:8px;background:var(--dusk);border-radius:var(--radius);padding:9px 12px;margin-bottom:12px;}
-  .jd-live-dot2{width:8px;height:8px;border-radius:50%;background:var(--sage);flex-shrink:0;animation:recBlink 1.6s ease-in-out infinite;}
+  .jd-live-dot2{width:8px;height:8px;border-radius:50%;background:var(--signal);flex-shrink:0;animation:recBlink 1.6s ease-in-out infinite;}
   .jd-live-dot2.manual{background:var(--gold);animation:none;}
   .jd-live-label{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;color:#fff;font-weight:700;}
   .jd-live-meta{font-size:12px;color:rgba(255,255,255,0.6);}
   .jd-cur-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-family:var(--mono);border-radius:var(--radius-pill);padding:1px 7px;font-weight:700;}
-  .jd-cur-badge.gps{color:var(--sage);background:color-mix(in srgb,var(--sage) 9%,transparent);}
+  .jd-cur-badge.gps{color:var(--signal);background:color-mix(in srgb,var(--signal) 9%,transparent);}
   .jd-cur-badge.manual{color:#7A5C10;background:color-mix(in srgb,var(--gold) 18%,transparent);}
-  .jd-cur-dot{width:5px;height:5px;border-radius:50%;background:var(--sage);display:inline-block;animation:recBlink 1.6s ease-in-out infinite;}
+  .jd-cur-dot{width:5px;height:5px;border-radius:50%;background:var(--signal);display:inline-block;animation:recBlink 1.6s ease-in-out infinite;}
   .jd-reorder-wrap{display:flex;gap:2px;flex-shrink:0;}
   .jd-reorder-btn{width:18px;height:18px;border-radius:5px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-size:9px;}
   .jd-reorder-btn:disabled{color:var(--border2);cursor:default;}
@@ -622,15 +622,15 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-days-badge.edited{background:color-mix(in srgb,var(--gold) 14%,transparent);color:#7A5C10;border-color:color-mix(in srgb,var(--gold) 40%,transparent);}
   .jd-diary-wrap{margin-left:24px;margin-bottom:12px;position:relative;}
   .jd-voice-btn{position:absolute;bottom:8px;right:8px;width:24px;height:24px;border-radius:12px;background:transparent;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
-  .jd-voice-btn.listening{border-color:var(--sage);color:var(--sage);animation:recBlink 1s ease-in-out infinite;}
-  .jd-detect-card{margin:0 0 8px 24px;background:color-mix(in srgb,var(--sage) 5%,transparent);border:1px dashed color-mix(in srgb,var(--sage) 45%,transparent);border-radius:var(--radius);padding:9px 11px;}
+  .jd-voice-btn.listening{border-color:var(--signal);color:var(--signal);animation:recBlink 1s ease-in-out infinite;}
+  .jd-detect-card{margin:0 0 8px 24px;background:color-mix(in srgb,var(--signal) 5%,transparent);border:1px dashed color-mix(in srgb,var(--signal) 45%,transparent);border-radius:var(--radius);padding:9px 11px;}
   .jd-detect-hdr{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
-  .jd-detect-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);flex-shrink:0;animation:recBlink 1.6s ease-in-out infinite;}
-  .jd-detect-lbl{font-family:var(--mono);font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--sage);font-weight:700;}
+  .jd-detect-dot{width:7px;height:7px;border-radius:50%;background:var(--signal);flex-shrink:0;animation:recBlink 1.6s ease-in-out infinite;}
+  .jd-detect-lbl{font-family:var(--mono);font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--signal);font-weight:700;}
   .jd-detect-time{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--text3);}
   .jd-detect-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;}
   .jd-detect-actions{display:flex;gap:6px;}
-  .jd-detect-confirm{flex:1;padding:7px 0;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--body);}
+  .jd-detect-confirm{flex:1;padding:7px 0;border-radius:var(--radius-pill);border:none;background:var(--signal);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--body);}
   .jd-detect-dismiss{padding:7px 14px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--body);}
   .jd-mark-current-btn{margin:0 0 8px 24px;display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 24px);border:1px dashed color-mix(in srgb,var(--gold) 40%,transparent);background:transparent;border-radius:var(--radius-pill);padding:6px 0;cursor:pointer;color:#7A5C10;font-size:11px;font-family:var(--body);}
   .jd-leg-edit{margin:8px 0 12px 24px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
@@ -652,7 +652,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-add-stop-form input{font-size:13px;padding:6px 9px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:var(--body);outline:none;box-sizing:border-box;}
   .jd-add-stop-form > input{width:100%;margin-bottom:8px;}
   .jd-add-stop-cancel{font-size:12px;padding:6px 14px;border-radius:var(--radius-pill);background:none;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;font-family:var(--body);}
-  .jd-add-stop-confirm{font-size:12px;padding:6px 16px;border-radius:var(--radius-pill);background:var(--sage);color:#fff;border:none;cursor:pointer;font-family:var(--body);font-weight:600;}
+  .jd-add-stop-confirm{font-size:12px;padding:6px 16px;border-radius:var(--radius-pill);background:var(--sage);color:var(--ink-900);border:none;cursor:pointer;font-family:var(--body);font-weight:600;}
   .jd-diary{width:100%;font-size:13px;padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg);resize:vertical;min-height:70px;font-family:var(--body);line-height:1.65;color:var(--text);outline:none;box-sizing:border-box;}
   .jd-photos{margin-left:24px;margin-bottom:12px;}
   .jd-photos .rj-slide{max-width:320px;height:160px;}
@@ -787,8 +787,8 @@ window.addEventListener('unhandledrejection', (e) => {
   .rj-title{font-size:26px;font-weight:700;letter-spacing:-0.4px;color:var(--text);line-height:1.1;}
   .rj-sub{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:4px;}
   .rj-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
-  .rj-rec-ind{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--sage);font-family:var(--mono);background:rgba(255,80,20,0.08);border:0.5px solid var(--sage);border-radius:var(--radius-pill);padding:4px 10px;letter-spacing:0.3px;}
-  .rj-rec-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);display:inline-block;flex-shrink:0;animation:rjPulse 1.4s ease-in-out infinite;}
+  .rj-rec-ind{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--signal);font-family:var(--mono);background:rgba(255,80,20,0.08);border:0.5px solid var(--signal);border-radius:var(--radius-pill);padding:4px 10px;letter-spacing:0.3px;}
+  .rj-rec-dot{width:7px;height:7px;border-radius:50%;background:var(--signal);display:inline-block;flex-shrink:0;animation:rjPulse 1.4s ease-in-out infinite;}
   @keyframes rjPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,80,20,0.5);}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(255,80,20,0);}}
   .rj-btn{font-size:11px;padding:6px 12px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:5px;}
   .rj-btn:hover{background:var(--bg2);}
@@ -987,14 +987,14 @@ window.addEventListener('unhandledrejection', (e) => {
   .mtr-title{font-size:15px;font-weight:600;color:var(--text);}
   .mytrips-new-btn{} /* base — desktop keeps btn-primary style */
   .mytrips-status-pill{font-size:9px;padding:2px 8px;border-radius:var(--radius-pill);border-width:0.5px;border-style:solid;white-space:nowrap;font-family:var(--mono);}
-  .mytrips-recorded-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 8px;border-radius:var(--radius-pill);font-family:var(--mono);letter-spacing:0.3px;text-transform:uppercase;color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);border:0.5px solid color-mix(in srgb,var(--sage) 30%,transparent);white-space:nowrap;}
-  .mytrips-recorded-dot{width:5px;height:5px;border-radius:50%;background:var(--sage);flex-shrink:0;}
+  .mytrips-recorded-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 8px;border-radius:var(--radius-pill);font-family:var(--mono);letter-spacing:0.3px;text-transform:uppercase;color:var(--signal);background:color-mix(in srgb,var(--signal) 10%,transparent);border:0.5px solid color-mix(in srgb,var(--signal) 30%,transparent);white-space:nowrap;}
+  .mytrips-recorded-dot{width:5px;height:5px;border-radius:50%;background:var(--signal);flex-shrink:0;}
   .mytrips-row-actions{display:flex;gap:5px;align-items:center;justify-content:flex-end;}
   .mytrips-act-btn{font-size:11px;padding:4px 11px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--body);transition:all .15s;white-space:nowrap;}
   .mytrips-act-btn:hover{background:var(--bg2);}
   .mytrips-act-btn.journal{border-color:var(--fern);background:rgba(30,58,92,0.08);color:var(--fern);}
-  .mytrips-act-btn.recording{border-color:var(--sage);background:rgba(255,80,20,0.08);color:var(--sage);font-weight:600;}
-  .mytrips-rec-dot{width:6px;height:6px;border-radius:50%;background:var(--sage);display:inline-block;animation:rjGps 1.4s ease-in-out infinite;}
+  .mytrips-act-btn.recording{border-color:var(--signal);background:rgba(255,80,20,0.08);color:var(--signal);font-weight:600;}
+  .mytrips-rec-dot{width:6px;height:6px;border-radius:50%;background:var(--signal);display:inline-block;animation:rjGps 1.4s ease-in-out infinite;}
   .mytrips-act-btn.journal:hover{background:rgba(30,58,92,0.16);}
   .mt-cards{display:none;}
   .mt-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:13px 14px;cursor:pointer;}
@@ -1133,7 +1133,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .bn-item.bn-active{color:var(--sage);}
   .bn-item.bn-active span{font-weight:600;}
   /* ── v2 BottomNav: recording is a small dot on the Trips tab, not a 5th item (m-shared.jsx BottomNav) ── */
-  .bn-rec-dot{position:absolute;top:7px;right:calc(50% - 18px);width:6px;height:6px;border-radius:3px;background:var(--sage);border:1.5px solid var(--bg);}
+  .bn-rec-dot{position:absolute;top:7px;right:calc(50% - 18px);width:6px;height:6px;border-radius:3px;background:var(--signal);border:1.5px solid var(--bg);}
   @keyframes recBlink{0%,100%{opacity:1;}50%{opacity:0.25;}}
   body.recording-active.gps-fullscreen .container{height:100dvh;}
   /* ── GPS full-screen mode — permission/live/crash panels render their own dark chrome ── */
@@ -1167,21 +1167,22 @@ window.addEventListener('unhandledrejection', (e) => {
   .gps-explain-row:last-child{margin-bottom:0;}
   .gps-explain-row i{font-size:15px;color:var(--sage);margin-top:1px;flex-shrink:0;}
   .gps-explain-fine{font-size:11px;color:rgba(245,240,232,0.26);line-height:1.65;}
+  .gps-learn-link{display:block;width:100%;margin-top:14px;background:none;border:none;font-family:var(--mono);font-size:11px;letter-spacing:0.3px;color:rgba(245,240,232,0.45);cursor:pointer;text-align:left;padding:0;}
   .gps-explain-cta{flex-shrink:0;padding:14px 22px 20px;background:linear-gradient(rgba(9,16,46,0),var(--dusk) 40%);}
   /* ── Live Recording screen ── */
   .gps-map-back{position:absolute;top:10px;left:10px;width:36px;height:36px;border-radius:10px;background:rgba(9,16,34,0.76);border:1px solid rgba(255,255,255,0.12);color:var(--cream);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
   .gps-map-pause{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:10px;background:rgba(9,16,34,0.76);border:1px solid rgba(255,255,255,0.12);color:var(--cream);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
   .gps-map-pill{position:absolute;top:10px;left:54px;display:flex;align-items:center;gap:6px;background:rgba(9,16,34,0.84);border-radius:var(--radius-pill);padding:5px 11px;border:1px solid rgba(255,80,20,0.42);backdrop-filter:blur(8px);height:36px;box-sizing:border-box;font-family:var(--mono);font-size:9px;color:#FF6030;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;}
   .gps-map-pill.paused{border-color:rgba(255,184,0,0.45);color:var(--gold);}
-  .gps-map-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);flex-shrink:0;animation:recBlink 1.2s ease-in-out infinite;}
+  .gps-map-dot{width:7px;height:7px;border-radius:50%;background:var(--signal);flex-shrink:0;animation:recBlink 1.2s ease-in-out infinite;}
   .gps-map-pill.paused .gps-map-dot{background:var(--gold);animation:none;}
   .gps-stats-bar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:10px 14px;flex-shrink:0;}
-  .gps-live-dot{width:8px;height:8px;border-radius:50%;background:var(--sage);flex-shrink:0;animation:recBlink 1.5s ease-in-out infinite;}
+  .gps-live-dot{width:8px;height:8px;border-radius:50%;background:var(--signal);flex-shrink:0;animation:recBlink 1.5s ease-in-out infinite;}
   .gps-section-lbl{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:600;}
   .gps-mark-btn{font-size:11px;padding:4px 10px;border-radius:var(--radius-pill);border:0.5px solid var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage);cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:4px;}
   .gps-stop-row{padding:9px 14px;border-top:0.5px solid var(--border);display:flex;align-items:center;gap:10px;}
   .gps-stop-dot{width:8px;height:8px;border-radius:50%;background:var(--fern);flex-shrink:0;}
-  .gps-stop-dot.cur{background:var(--sage);animation:recBlink 1.5s ease-in-out infinite;}
+  .gps-stop-dot.cur{background:var(--signal);animation:recBlink 1.5s ease-in-out infinite;}
   /* ── Route Map (mobile full-screen, v2 MapViewMobile) ── */
   .mapview-wrap{height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--dusk);}
   .mapview-title{font-family:var(--serif);font-size:17px;font-weight:600;color:var(--cream);line-height:1.2;}
@@ -1194,6 +1195,16 @@ window.addEventListener('unhandledrejection', (e) => {
   .mapview-chip{flex-shrink:0;padding:8px 12px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);cursor:pointer;text-align:center;min-width:72px;font-size:12px;color:var(--text2);}
   .mapview-chip.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--text);font-weight:700;}
   .mapview-chip-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);margin:0 auto 4px;animation:recBlink 1s ease-in-out infinite;}
+  /* ── "How the journal works" explainer (v2 RecNotesMobile) ── */
+  .recnotes-wrap{height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);}
+  .recnotes-body{flex:1;overflow-y:auto;padding:16px 16px 24px;}
+  .recnotes-lede{font-family:var(--serif);font-size:24px;font-weight:300;color:var(--text);letter-spacing:-0.4px;line-height:1.15;margin-bottom:20px;}
+  .recnotes-steps{display:flex;flex-direction:column;gap:12px;}
+  .recnotes-step{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;display:flex;gap:14px;}
+  .recnotes-step-icon{width:40px;height:40px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .recnotes-step-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;}
+  .recnotes-step-desc{font-size:12px;color:var(--text2);line-height:1.6;}
+  .recnotes-cta{width:100%;margin-top:20px;padding:13px 16px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body);display:flex;align-items:center;justify-content:center;gap:8px;}
   .gps-stop-btn{width:30px;height:30px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .gps-stop-btn.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage);}
   .gps-note-wrap{margin:0 14px 8px;padding:9px 10px;background:var(--bg2);border:0.5px solid var(--sage);border-radius:var(--radius);}
@@ -1207,7 +1218,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .rcv-stat-l{font-family:var(--mono);font-size:8.5px;color:var(--text3);margin-top:3px;}
   .rcv-removed-note{padding:7px 12px;background:color-mix(in srgb,var(--gold) 10%,transparent);border:0.5px solid color-mix(in srgb,var(--gold) 44%,transparent);border-radius:var(--radius);margin-bottom:10px;font-size:11px;color:#7A5C10;font-family:var(--mono);}
   .rcv-leg{margin:5px 0;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 12px;}
-  .rcv-auto-badge{margin-left:auto;font-size:9px;padding:2px 7px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage);border:0.5px solid color-mix(in srgb,var(--sage) 33%,transparent);font-family:var(--mono);}
+  .rcv-auto-badge{margin-left:auto;font-size:9px;padding:2px 7px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--signal) 10%,transparent);color:var(--signal);border:0.5px solid color-mix(in srgb,var(--signal) 33%,transparent);font-family:var(--mono);}
   .rcv-edit-btn{font-size:10px;padding:3px 8px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--body);margin-left:6px;}
   .rcv-mode-btn{font-size:11px;padding:4px 10px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--body);text-transform:capitalize;}
   .rcv-mode-btn.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 15%,transparent);color:var(--sage);}
@@ -1278,12 +1289,12 @@ window.addEventListener('unhandledrejection', (e) => {
      this bar replaces the tab bar's slot, matching Journey Detail's treatment. */
   .rec-mobile-save-bar{display:flex !important;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:20;padding:11px 14px calc(11px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
   .rec-mobile-cancel{padding:12px 16px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);flex-shrink:0;}
-  .rec-mobile-save{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
+  .rec-mobile-save{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:var(--ink-900);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
   .jd-mobile-cta-row{display:flex;gap:8px;align-items:center;}
   .jd-manual-link{display:block !important;width:100%;margin-top:8px;background:none;border:none;font-size:11.5px;color:var(--text3);cursor:pointer;font-family:var(--body);text-align:center;}
   .jd-mobile-cta-edit{padding:12px 16px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:6px;flex-shrink:0;}
   .jd-mobile-cta-edit.locked,.jd-desktop-edit.locked{background:var(--bg3);color:var(--text3);cursor:not-allowed;opacity:0.55;}
-  .jd-mobile-cta-primary{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
+  .jd-mobile-cta-primary{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:var(--ink-900);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
   .jd-mobile-cta-primary span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .jd-stop-ctrl{display:flex !important;align-items:center;justify-content:center;width:44px;height:44px;border-radius:var(--radius-pill);border:0.5px solid var(--danger-border);background:var(--danger-bg);color:var(--danger-text);flex-shrink:0;}
   .jd-rec-cta{font-size:12px !important;padding:5px 10px !important;}
@@ -1556,6 +1567,11 @@ window.addEventListener('unhandledrejection', (e) => {
   <!-- ROUTE MAP (mobile-only full-screen, v2 MapViewMobile) — opened from Journey Detail's Map tab / Full map pill -->
   <div id="mapview" class="panel">
     <div id="mapViewPanel"><!-- filled by renderMapView() --></div>
+  </div>
+
+  <!-- HOW THE JOURNAL WORKS (v2 RecNotesMobile) — opened from the Enable Tracking screen -->
+  <div id="recnotes" class="panel">
+    <div id="recNotesPanel"><!-- filled by renderRecNotes() --></div>
   </div>
 
   <!-- RECORD JOURNAL (07) — opened from Journey Detail -->
@@ -3509,13 +3525,15 @@ function switchTab(id, el) {
   if (id === 'recreview')    { const gri = document.getElementById('gpsReviewPhotoInput'); if (gri) gri.onchange = gpsReviewOnPhotoSelected; renderRecReview(); }
   if (id === 'crashrecover') { renderCrashRecover(); }
   if (id === 'mapview')  { renderMapView(); }
+  if (id === 'recnotes') { renderRecNotes(); }
   document.body.classList.toggle('gps-fullscreen', id === 'gpsperms' || id === 'liverecord' || id === 'crashrecover' || id === 'mapview');
   // None of these v2 screens render <BottomNav/> (verified against every
   // component in the handoff) — each replaces the tab bar with its own
   // fixed footer or centered content instead: JourneyMobile (Edit + Track
   // my route), TripEditMobile (Cancel + Save changes), RecReviewMobile
-  // (Save to My Trips), StopRecMobile (centered confirm/publish/done).
-  document.body.classList.toggle('no-tabbar', id === 'journey' || id === 'record' || id === 'recreview' || id === 'stoprec');
+  // (Save to My Trips), StopRecMobile (centered confirm/publish/done),
+  // RecNotesMobile (plain explainer, no footer at all).
+  document.body.classList.toggle('no-tabbar', id === 'journey' || id === 'record' || id === 'recreview' || id === 'stoprec' || id === 'recnotes');
   if (id === 'admin')    { renderAdminTab(); renderReviewQueue(); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
   if (id === 'journals') { renderJournalsPanel(); }
@@ -6626,6 +6644,7 @@ function renderGpsPerms() {
           <div class="gps-explain-row"><i class="ph ph-device-mobile"></i><span><strong>Background location</strong><br/>Keeps tracking when your screen is off — essential for overnight buses and ferries.</span></div>
         </div>
         <div class="gps-explain-fine">Location is only active while tracking is on. No location data is ever sold.</div>
+        <button class="gps-learn-link" onclick="openRecNotes(_gpsPermsTrip || _journeyTrip)">How the journal works →</button>
       </div>
       <div class="gps-explain-cta">
         <button class="strk-cta" onclick="gpsRequestAndStart()">Turn on tracking →</button>
@@ -6634,6 +6653,40 @@ function renderGpsPerms() {
     </div>`;
   }
   el.innerHTML = h;
+}
+
+// ── "How the journal works" explainer (v2 RecNotesMobile) ────────────
+let _recNotesTrip = null;
+const REC_NOTES_STEPS = [
+  { icon: 'map-pin', color: 'var(--sage)', title: 'Check in at each stop', desc: 'When you arrive at a city or crossing, open the app and tap your stop to write a quick note.' },
+  { icon: 'microphone', color: '#2E6FA8', title: 'Voice or text', desc: 'Dictate hands-free or type. Voice is transcribed directly into your journal entry.' },
+  { icon: 'camera', color: 'var(--bark)', title: 'Attach photos', desc: 'Add up to 6 photos per stop. They appear in your public journey diary.' },
+  { icon: 'share-network', color: 'var(--sage)', title: 'Turn a note into a community tip', desc: 'Hit "Share tip" on any leg entry to submit it as a community note — it goes to review first.' },
+  { icon: 'stop-circle', color: 'var(--rust)', title: "Stop when you're done", desc: 'Tap Stop to end the session. Your journal auto-saves. You can publish it as a public journey or keep it private.' },
+];
+function openRecNotes(trip) {
+  _recNotesTrip = trip || null;
+  switchTab('recnotes', null);
+}
+function renderRecNotes() {
+  const el = document.getElementById('recNotesPanel');
+  if (!el) return;
+  const backTarget = _recNotesTrip ? `openJourneyDetail(_recNotesTrip)` : `openGpsPerms(_recNotesTrip)`;
+  el.innerHTML = `<div class="recnotes-wrap">
+    <div class="gps-hdr"><button class="gps-back" onclick="${backTarget}"><i class="ph ph-arrow-left"></i></button><span>How the journal works</span></div>
+    <div class="recnotes-body">
+      <div class="recnotes-lede">Your journey, your words. We just keep the thread.</div>
+      <div class="recnotes-steps">${REC_NOTES_STEPS.map(s => `
+        <div class="recnotes-step">
+          <div class="recnotes-step-icon" style="background:color-mix(in srgb,${s.color} 15%,transparent)"><i class="ph ph-${s.icon}" style="font-size:20px;color:${s.color}"></i></div>
+          <div>
+            <div class="recnotes-step-title">${s.title}</div>
+            <div class="recnotes-step-desc">${s.desc}</div>
+          </div>
+        </div>`).join('')}</div>
+      <button class="recnotes-cta" onclick="openGpsPerms(_recNotesTrip || _journeyTrip)"><i class="ph ph-map-trifold" style="color:var(--sage)"></i> Turn on route tracking</button>
+    </div>
+  </div>`;
 }
 
 // ── [12] Live Recording screen ───────────────────────────────────────
