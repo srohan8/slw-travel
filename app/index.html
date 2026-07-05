@@ -590,8 +590,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-leg-cc{font-family:var(--mono);font-size:10px;color:var(--text3);}
   .jd-leg-days{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin:2px 0 0 24px;}
   .jd-leg-date{font-family:var(--mono);font-size:11px;color:var(--text3);}
-  .jd-visit-btn{font-size:11px;padding:5px 12px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
-  .jd-visit-btn.on{border-color:var(--fern);background:var(--fern);color:#fff;}
+  .jd-visited-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-family:var(--mono);color:var(--sage);background:color-mix(in srgb,var(--sage) 14%,transparent);border-radius:var(--radius-pill);padding:1px 6px;}
   /* ── Live/manual tracking mode — Journey tab (06.1/06.2) ── */
   .jd-live-banner{display:flex;align-items:center;gap:8px;background:var(--dusk);border-radius:var(--radius);padding:9px 12px;margin-bottom:12px;}
   .jd-live-dot2{width:8px;height:8px;border-radius:50%;background:var(--sage);flex-shrink:0;animation:recBlink 1.6s ease-in-out infinite;}
@@ -6084,11 +6083,6 @@ function jdPersist() {
   storage.set('trips', trips);
   persistTripCloud(_journeyTrip);   // sync to backend (no-op for guests)
 }
-function jdToggleVisited(i) {
-  _journeyTrip.stops[i].visited = !_journeyTrip.stops[i].visited;
-  jdPersist();
-  renderJourneyDetail();
-}
 function jdSaveDiary(i, val) {
   _journeyTrip.stops[i].diary = val;
   clearTimeout(_jdDiaryTimer);
@@ -7179,13 +7173,13 @@ function jdJourneyTabHTML(t, stops, legs, m) {
         ${ccName ? `<span class="jd-leg-cc">${ccName}</span>` : ''}
         ${gps && isCur ? `<span class="jd-cur-badge gps"><span class="jd-cur-dot"></span> you are here</span>` : ''}
         ${manual && isCur ? `<span class="jd-cur-badge manual">current stop</span>` : ''}
+        ${s.visited && !(live && isCur) ? `<span class="jd-visited-badge"><i class="ph ph-check-circle"></i> visited</span>` : ''}
         <span class="jd-leg-date">${dateLbl}</span>
         <span style="flex:1"></span>
         ${live ? `<span class="jd-reorder-wrap">
           <button class="jd-reorder-btn" onclick="jdMoveStop(${i},-1)" ${i===0?'disabled':''}><i class="ph ph-caret-up"></i></button>
           <button class="jd-reorder-btn" onclick="jdMoveStop(${i},1)" ${isLast?'disabled':''}><i class="ph ph-caret-down"></i></button>
         </span>` : ''}
-        <button class="jd-visit-btn${s.visited?' on':''}" onclick="jdToggleVisited(${i})">${s.visited?'<i class="ph ph-check-circle"></i> Visited':'<i class="ph ph-map-pin"></i> Mark visited'}</button>
       </div>`;
     if (s.days) {
       h += live && s.visited
