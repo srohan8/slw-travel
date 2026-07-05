@@ -1265,6 +1265,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-mobile-cta-row{display:flex;gap:8px;align-items:center;}
   .jd-manual-link{display:block !important;width:100%;margin-top:8px;background:none;border:none;font-size:11.5px;color:var(--text3);cursor:pointer;font-family:var(--body);text-align:center;}
   .jd-mobile-cta-edit{padding:12px 16px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:6px;flex-shrink:0;}
+  .jd-mobile-cta-edit.locked,.jd-desktop-edit.locked{background:var(--bg3);color:var(--text3);cursor:not-allowed;opacity:0.55;}
   .jd-mobile-cta-primary{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
   .jd-mobile-cta-primary span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .jd-stop-ctrl{display:flex !important;align-items:center;justify-content:center;width:44px;height:44px;border-radius:var(--radius-pill);border:0.5px solid var(--danger-border);background:var(--danger-bg);color:var(--danger-text);flex-shrink:0;}
@@ -7013,7 +7014,7 @@ function renderJourneyDetail() {
       <button class="jd-mobile-share" onclick="jdShareTrip('${t.id}')" title="Share journey"><i class="ph ph-share-network" style="font-size:16px"></i></button>
       <span class="jd-desktop-actions" style="display:flex;gap:8px;align-items:center">
       ${isTracking
-        ? `<button class="btn" style="font-size:12px;padding:6px 14px" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
+        ? `<button class="btn jd-desktop-edit locked" disabled title="Locked while active — edit legs inline below"><i class="ph ph-lock-simple"></i> Edit</button>
            <button class="jd-toggle-on" onclick="gpsStopTrackingTap()"><span class="jd-rec-dot"></span> <span>${_gps.mode==='gps'?'Track my route':'Current trip'}</span><span class="jd-toggle-switch on"><span class="jd-toggle-knob"></span></span></button>`
         : hasContent
         ? `<button class="jd-rec-cta" onclick="openRecordJournal(_journeyTrip)">${isLive ? '<span class="jd-rec-dot"></span> Recording · Edit journal' : '<i class="ph ph-book-open" style="font-size:11px"></i> Edit journal'}</button>
@@ -7038,7 +7039,7 @@ function renderJourneyDetail() {
 
   h += `<div class="jd-mobile-cta"><div class="jd-mobile-cta-row">`;
   if (isTracking) {
-    h += `<button class="jd-mobile-cta-edit" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
+    h += `<button class="jd-mobile-cta-edit locked" disabled title="Locked while active — edit legs inline below"><i class="ph ph-lock-simple"></i> Edit</button>
       <button class="jd-toggle-on" style="flex:1" onclick="gpsStopTrackingTap()"><span class="jd-rec-dot"></span> <span>${_gps.mode==='gps'?'Track my route':'Current trip'}</span><span class="jd-toggle-switch on"><span class="jd-toggle-knob"></span></span></button>`;
   } else if (hasContent) {
     h += `<button class="jd-mobile-cta-primary" onclick="openRecordJournal(_journeyTrip)">${isLive ? '<span class="jd-rec-dot"></span> <span>Recording · Edit journal</span>' : '<i class="ph ph-book-open" style="font-size:14px"></i> <span>Edit journal</span>'}</button>
