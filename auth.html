@@ -18,9 +18,23 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --moss:#13213A; --fern:#1E3A5C; --sage:#FF5014; --mist:#FFD9CC;
-  --cream:#FFFFFF; --sand:#F8F4F2; --dusk:#091022; --gold:#FFB800;
-  --bg:#FFFFFF; --bg2:#FAF6F4; --text:#0E1A2E; --text2:#2C4060; --text3:#94A0B0;
+  /* Mustard ramp — primary accent, CTAs, active states */
+  --mustard-100:#FCEFDC; --mustard-200:#F5DBAE; --mustard-300:#EFC57F;
+  --mustard-400:#E3A85A; --mustard-500:#D9973D; --mustard-600:#C07E2E;
+  --mustard-700:#9C6423; --mustard-800:#7A4A16;
+  /* Ink — black/gray scale (text + dark surfaces, no blue) */
+  --ink-900:#0A0A0A; --ink-800:#161616; --ink-700:#1E1E1E; --ink-600:#2E2E2E;
+  --ink-500:#3D3D3D; --ink-300:#787878; --ink-200:#9A9A9A; --ink-100:#E0E0E0;
+  /* Signal — live/recording indicators only, never a generic accent */
+  --signal:#FF5014; --signal-tint:#FFE8E0; --signal-dim:rgba(255,80,20,0.35);
+  /* Semantic */
+  --success:#3D7A3D; --success-tint:#E4F0E2;
+  --warning:#FFB800; --warning-tint:#FFF8E6;
+  --danger:#8B2020; --danger-tint:#FBE6E4;
+
+  --moss:var(--ink-800); --fern:var(--ink-600); --sage:var(--mustard-500); --mist:var(--signal-tint);
+  --cream:#FFFFFF; --sand:#F8F4F2; --dusk:var(--ink-900); --gold:var(--warning);
+  --bg:#FFFFFF; --bg2:#FAF6F4; --text:var(--ink-800); --text2:var(--ink-500); --text3:var(--ink-300);
   --border:rgba(14,26,46,0.15); --border2:rgba(14,26,46,0.3);
   --radius:10px; --radius-lg:16px;
   --serif:'Sora',system-ui,sans-serif;
@@ -287,7 +301,7 @@ body {
   border-radius: 10px;
   border: none;
   background: var(--sage);
-  color: #fff;
+  color: var(--ink-900);
   font-size: 15px;
   font-weight: 600;
   font-family: var(--body);
@@ -295,7 +309,7 @@ body {
   width: 100%;
   transition: background .15s;
 }
-.auth-submit:hover { background: #e04510; }
+.auth-submit:hover { background: var(--mustard-600); }
 .auth-submit:disabled { opacity: 0.5; cursor: default; }
 
 /* Message */
@@ -363,7 +377,7 @@ body {
   <span style="line-height:1.4;">We use analytics cookies to understand how you use this site. <a href="https://slw.travel/privacy" style="color:rgba(255,255,255,0.5);text-decoration:underline">Learn&nbsp;more</a></span>
   <div style="display:flex;gap:8px;flex-shrink:0;">
     <button onclick="slwConsent('declined')" style="background:transparent;border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.6);padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
-    <button onclick="slwConsent('accepted')" style="background:#FF5014;border:none;color:#fff;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
+    <button onclick="slwConsent('accepted')" style="background:#D9973D;border:none;color:#161616;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
   </div>
 </div>
 <script>function slwConsent(c){localStorage.setItem('slw_cookie_consent',c);var b=document.getElementById('slw-consent-banner');if(b)b.style.display='none';if(c==='accepted'&&typeof initPostHog==='function')initPostHog();}</script>

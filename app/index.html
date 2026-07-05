@@ -1281,8 +1281,9 @@ window.addEventListener('unhandledrejection', (e) => {
   .mt-cards{display:flex !important;flex-direction:column;gap:9px;}
   .mytrips-yearly{grid-template-columns:repeat(2,1fr) !important;}
   /* v2's TripsMobile tabs: full-width even split, sage underline, constant
-     weight -- not a left-aligned text row with a dark bold-on-active state. */
-  .mytrips-tabs{gap:0 !important;margin-bottom:1rem !important;}
+     weight, edge-to-edge -- not a left-aligned text row inset from the
+     screen edges with a dark bold-on-active state. */
+  .mytrips-tabs{gap:0 !important;margin:0 -0.875rem 1rem !important;}
   .mytrips-tab{flex:1 !important;font-size:13px !important;font-weight:500 !important;padding:11px 0 !important;text-align:center;border-bottom-width:2px !important;}
   .mytrips-tab.on{font-weight:500 !important;border-bottom-color:var(--sage) !important;color:var(--text) !important;}
   .mytrips-jgrid{grid-template-columns:1fr !important;}
@@ -1322,8 +1323,13 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-metric-km{order:4;}
   .jd-leg-cards{grid-template-columns:1fr !important;}
   /* Journey/Map act as a secondary nav under the global header while the
-     Journey tab's content scrolls -- keep it pinned, not scroll away. */
-  .jd-tabs{flex-wrap:wrap;position:sticky;top:0;z-index:15;background:var(--bg);}
+     Journey tab's content scrolls -- keep it pinned, not scroll away.
+     Same tab design as My Trips: full-width even split, sage underline,
+     constant weight, edge-to-edge -- not a left-aligned inline row with
+     a fern underline and bold-on-active. */
+  .jd-tabs{flex-wrap:nowrap;margin:0 -0.875rem 18px;position:sticky;top:0;z-index:15;background:var(--bg);}
+  .jd-tab{flex:1;font-size:13px !important;font-weight:500 !important;padding:11px 0 !important;text-align:center;}
+  .jd-tab.on{font-weight:500 !important;border-bottom-color:var(--sage) !important;}
   .res-overview-card{display:none !important;}
   .jd-tab.rec{display:none !important;}
   .jd-mini-map{display:block !important;height:160px !important;border-radius:10px;overflow:hidden;margin-bottom:4px;}
@@ -5942,7 +5948,7 @@ function renderMyTripsPanel() {
     // All stops already logged as visited (e.g. a Polarsteps/journal import, or a
     // trip journaled after the fact) — that's a completed journey, not a plan.
     const allVisited = hasStops && t.stops.every(s => s.visited);
-    if (allVisited) return { label:'JOURNALED',   cls:'journaled', color:'var(--rust)' };
+    if (allVisited) return { label:'JOURNALED',   cls:'journaled', color:'var(--dusk)' };
     if (hasStops)   return { label:'PLANNED',     cls:'planned',   color:'var(--fern)' };
     return             { label:'DRAFT',        cls:'draft',     color:'var(--text3)' };
   };
