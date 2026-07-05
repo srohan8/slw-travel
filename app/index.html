@@ -274,6 +274,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .jrnl-card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;}
   .jrnl-card-stats{font-family:var(--mono);font-size:9.5px;color:var(--text3);}
   .jrnl-empty{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:13px;}
+  .jrnl-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);font-weight:600;margin-bottom:8px;}
   /* ── Admin sub-tabs ── */
   .admin-stab-bar{display:flex;gap:2px;margin-bottom:1.25rem;border-bottom:1px solid var(--border);padding-bottom:0;}
   .admin-stab{font-size:13px;padding:8px 16px;border:none;background:none;cursor:pointer;font-family:var(--body);color:var(--text3);border-bottom:2.5px solid transparent;margin-bottom:-1px;transition:all .15s;font-weight:500;}
@@ -1291,6 +1292,10 @@ window.addEventListener('unhandledrejection', (e) => {
   .rj-sticky{bottom:64px !important;}
   .rj-gutter{display:none;}
   .jrnl-header-top{flex-direction:column;gap:10px;}
+  /* v2's JournalsMobile has one header row total (the global #mobileHeader) —
+     a second "Shared Journeys" title + subtitle here would duplicate it. */
+  .jrnl-sub{display:none !important;}
+  .jrnl-title{display:none !important;}
   .jrnl-search{width:100% !important;}
   .jrnl-search input{width:100% !important;}
   .jrnl-chips{flex-wrap:nowrap !important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -0.875rem;padding:0 0.875rem 12px;}
@@ -8536,6 +8541,7 @@ function renderJournalsPanel() {
   }).join('');
 
   const featHtml = featured ? `
+    <div class="jrnl-kicker">Featured journey</div>
     <div class="jrnl-featured">
       <div class="jrnl-feat-img" style="${featured.cover_image?`background-image:url('${featured.cover_image}');background-size:cover;background-position:center`:''}">
         ${featured.cover_image?'':'<i class="ph ph-image" style="font-size:32px"></i>'}
@@ -8568,7 +8574,8 @@ function renderJournalsPanel() {
       </div>
     </div>` : '';
 
-  const gridHtml = rest.length ? `<div class="jrnl-grid">${rest.map(j => `
+  const gridHtml = rest.length ? `<div class="jrnl-kicker" style="margin-top:16px">More journeys</div>
+    <div class="jrnl-grid">${rest.map(j => `
     <div class="jrnl-card" onclick="_openJourneyLink('${j._tripId?('/journey/'+encodeURIComponent(j._tripId)):'/journey'}')">
       <div class="jrnl-card-img" style="${j.cover_image?`background-image:url('${j.cover_image_thumb || j.cover_image}');background-size:cover;background-position:center`:''}">
         ${j.cover_image?'':'<i class="ph ph-image" style="font-size:24px"></i>'}
@@ -8607,7 +8614,7 @@ function renderJournalsPanel() {
     <div class="jrnl-header">
       <div class="jrnl-header-top">
         <div>
-          <div class="jrnl-title">Shared journeys</div>
+          <div class="jrnl-title">Shared Journeys</div>
           <div class="jrnl-sub">Real slow-travel diaries from the bysloth community</div>
         </div>
         <div class="jrnl-search">
@@ -9017,7 +9024,7 @@ function bnSync(id) {
 }
 
 const MOBILE_TITLES = {
-  plan:'Planner', mytrips:'My Trips', journals:'Journals',
+  plan:'Planner', mytrips:'My Trips', journals:'Shared Journeys',
   profile:'Profile', admin:'Admin',
   journey:'Journey', record:'New Journey', recordjournal:'New Entry',
   stoprec:'Stop Tracking', recreview:'Review your trip', upgrade:'Go Pro'
