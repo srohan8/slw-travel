@@ -1120,6 +1120,11 @@ window.addEventListener('unhandledrejection', (e) => {
   body.gps-fullscreen #mobileHeader,
   body.gps-fullscreen #bottomNav{display:none !important;}
   body.gps-fullscreen .container{height:100dvh;padding:0;overflow:hidden;}
+  /* ── Journey Detail replaces the tab bar with its own bottom CTA (v2 JourneyMobile never renders BottomNav) ── */
+  body.no-tabbar #bottomNav{display:none !important;}
+  body.no-tabbar .container{height:calc(100dvh - 56px);padding-bottom:110px;}
+  /* Review & Save (recreview) — RecReviewMobile also has no BottomNav; fix its footer too */
+  .rcv-footer{position:fixed !important;left:0;right:0;bottom:0;z-index:20;box-shadow:0 -4px 24px rgba(14,26,46,0.08);padding-bottom:calc(11px + env(safe-area-inset-bottom,0px)) !important;}
   .gps-panel{height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--dusk);}
   .gps-panel.gps-light{background:var(--bg);}
   /* ── GPS screens — shared header + centered confirm layout ── */
@@ -1248,9 +1253,13 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-collab-wrap{display:none !important;}
   .jd-desktop-actions{display:none !important;}
   .jd-mobile-share{display:inline-flex !important;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);flex-shrink:0;}
-  .jd-mobile-cta{display:flex !important;flex-direction:column;position:sticky;bottom:64px;z-index:20;margin:16px -0.875rem 0;padding:11px 14px;background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
+  /* Fixed at the true viewport bottom — this bar replaces the tab bar's slot
+     entirely (body.no-tabbar hides #bottomNav), not floats above it. */
+  .jd-mobile-cta{display:flex !important;flex-direction:column;position:fixed;left:0;right:0;bottom:0;z-index:20;padding:11px 14px calc(11px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
   /* ── Trip Editor — mobile fixed bottom save bar (the top save-trip-bar scrolls away on long trips) ── */
-  .rec-mobile-save-bar{display:flex !important;gap:8px;position:sticky;bottom:64px;z-index:20;margin:16px -0.875rem 0;padding:11px 14px;background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
+  /* Fixed at the true viewport bottom — TripEditMobile has no BottomNav either;
+     this bar replaces the tab bar's slot, matching Journey Detail's treatment. */
+  .rec-mobile-save-bar{display:flex !important;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:20;padding:11px 14px calc(11px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
   .rec-mobile-cancel{padding:12px 16px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);flex-shrink:0;}
   .rec-mobile-save{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
   .jd-mobile-cta-row{display:flex;gap:8px;align-items:center;}
@@ -3472,6 +3481,12 @@ function switchTab(id, el) {
   if (id === 'recreview')    { const gri = document.getElementById('gpsReviewPhotoInput'); if (gri) gri.onchange = gpsReviewOnPhotoSelected; renderRecReview(); }
   if (id === 'crashrecover') { renderCrashRecover(); }
   document.body.classList.toggle('gps-fullscreen', id === 'gpsperms' || id === 'liverecord' || id === 'crashrecover');
+  // None of these v2 screens render <BottomNav/> (verified against every
+  // component in the handoff) — each replaces the tab bar with its own
+  // fixed footer or centered content instead: JourneyMobile (Edit + Track
+  // my route), TripEditMobile (Cancel + Save changes), RecReviewMobile
+  // (Save to My Trips), StopRecMobile (centered confirm/publish/done).
+  document.body.classList.toggle('no-tabbar', id === 'journey' || id === 'record' || id === 'recreview' || id === 'stoprec');
   if (id === 'admin')    { renderAdminTab(); renderReviewQueue(); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
   if (id === 'journals') { renderJournalsPanel(); }
@@ -6801,7 +6816,7 @@ function renderRecReview() {
     </div>`;
   }).join('');
 
-  el.innerHTML = `<div style="padding:14px 14px 24px">
+  el.innerHTML = `<div class="rcv-scroll" style="padding:14px 14px 24px">
     <div style="margin-bottom:14px">
       <div class="gps-explain-lbl" style="color:var(--text3)">Trip name</div>
       <div style="background:var(--bg);border:0.5px solid color-mix(in srgb,var(--sage) 55%,transparent);border-radius:var(--radius);padding:9px 12px;display:flex;align-items:center;gap:8px">
