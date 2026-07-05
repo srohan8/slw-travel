@@ -31,20 +31,31 @@ window.addEventListener('unhandledrejection', (e) => {
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    /* Brand palette — bysloth · Signal theme (navy + electric orange) */
-    --fern:#1E3A5C;--sage:#FF5014;--moss:#13213A;
+    /* Brand palette — bysloth · Mustard theme (mustard + ink, no blue) */
+    --mustard-100:#FCEFDC;--mustard-200:#F5DBAE;--mustard-300:#EFC57F;
+    --mustard-400:#E3A85A;--mustard-500:#D9973D;--mustard-600:#C07E2E;
+    --mustard-700:#9C6423;--mustard-800:#7A4A16;
+    --ink-900:#0A0A0A;--ink-800:#161616;--ink-700:#1E1E1E;--ink-600:#2E2E2E;
+    --ink-500:#3D3D3D;--ink-300:#787878;--ink-200:#9A9A9A;--ink-100:#E0E0E0;
+    /* Signal — live/recording indicators ONLY, never a generic accent */
+    --signal:#FF5014;--signal-tint:#FFE8E0;--signal-dim:rgba(255,80,20,0.35);
+    --success:#3D7A3D;--success-tint:#E4F0E2;
+    --warning:#FFB800;--warning-tint:#FFF8E6;
+    --danger:#8B2020;--danger-tint:#FBE6E4;
+
+    --fern:var(--ink-600);--sage:var(--mustard-500);--moss:var(--ink-800);
     --cream:#FFFFFF;--sand:#F8F4F2;--sand2:#F0EAE7;
-    --bark:#3A2A24;--rust:#FF5014;--dusk:#091022;--mist:#FFD9CC;--gold:#FFB800;
+    --bark:#3A2A24;--rust:var(--signal);--dusk:var(--ink-900);--mist:var(--signal-tint);--gold:var(--warning);
     /* Semantic — surfaces all white, slightly warm inset */
     --bg:#FFFFFF;--bg2:#FAF6F4;--bg3:#FFFFFF;
-    --text:#0E1A2E;--text2:#2C4060;--text3:#94A0B0;
+    --text:var(--ink-800);--text2:var(--ink-500);--text3:var(--ink-300);
     --border:rgba(14,26,46,0.15);--border2:rgba(14,26,46,0.30);
-    --info-bg:rgba(30,58,92,0.08);--info-text:#1E3A5C;--info-border:rgba(30,58,92,0.25);
-    --success-bg:rgba(30,58,92,0.08);--success-text:#1E3A5C;--success-border:rgba(30,58,92,0.25);
-    --warn-bg:#FEF9ED;--warn-text:#5C4200;--warn-border:rgba(133,100,0,0.3);
-    --danger-bg:#FDF0EC;--danger-text:#8B2A00;--danger-border:rgba(196,98,45,0.3);
-    --blue:#2E6FA8;--amber:#FFB800;
-    --cta-text:#ffffff;
+    --info-bg:var(--ink-100);--info-text:var(--ink-600);--info-border:rgba(46,46,46,0.25);
+    --success-bg:var(--success-tint);--success-text:var(--success);--success-border:rgba(61,122,61,0.25);
+    --warn-bg:var(--warning-tint);--warn-text:#5C4200;--warn-border:rgba(133,100,0,0.3);
+    --danger-bg:var(--danger-tint);--danger-text:var(--danger);--danger-border:rgba(139,32,32,0.3);
+    --blue:var(--ink-600);--amber:var(--mustard-700);
+    --cta-text:var(--ink-900);
     --radius:10px;--radius-lg:16px;--radius-pill:9999px;
     --shadow:0 2px 8px rgba(0,0,0,0.06);
     --shadow-float:0 8px 28px rgba(0,0,0,0.12);
@@ -1171,6 +1182,18 @@ window.addEventListener('unhandledrejection', (e) => {
   .gps-stop-row{padding:9px 14px;border-top:0.5px solid var(--border);display:flex;align-items:center;gap:10px;}
   .gps-stop-dot{width:8px;height:8px;border-radius:50%;background:var(--fern);flex-shrink:0;}
   .gps-stop-dot.cur{background:var(--sage);animation:recBlink 1.5s ease-in-out infinite;}
+  /* ── Route Map (mobile full-screen, v2 MapViewMobile) ── */
+  .mapview-wrap{height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--dusk);}
+  .mapview-title{font-family:var(--serif);font-size:17px;font-weight:600;color:var(--cream);line-height:1.2;}
+  .mapview-sub{font-family:var(--mono);font-size:10px;color:rgba(245,240,232,0.55);letter-spacing:0.3px;margin-top:1px;}
+  .mapview-body{flex:1;position:relative;overflow:hidden;}
+  .mapview-map{position:absolute;inset:0;height:100%;}
+  .mapview-sheet{position:absolute;left:0;right:0;bottom:0;background:var(--bg);border-radius:14px 14px 0 0;padding:12px 14px 20px;}
+  .mapview-sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:0 auto 12px;}
+  .mapview-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+  .mapview-chip{flex-shrink:0;padding:8px 12px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);cursor:pointer;text-align:center;min-width:72px;font-size:12px;color:var(--text2);}
+  .mapview-chip.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--text);font-weight:700;}
+  .mapview-chip-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);margin:0 auto 4px;animation:recBlink 1s ease-in-out infinite;}
   .gps-stop-btn{width:30px;height:30px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .gps-stop-btn.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage);}
   .gps-note-wrap{margin:0 14px 8px;padding:9px 10px;background:var(--bg2);border:0.5px solid var(--sage);border-radius:var(--radius);}
@@ -1528,6 +1551,11 @@ window.addEventListener('unhandledrejection', (e) => {
   <!-- JOURNEY DETAIL (06) — opened from My Trips -->
   <div id="journey" class="panel">
     <div id="journeyPanel"><!-- filled by renderJourneyDetail() --></div>
+  </div>
+
+  <!-- ROUTE MAP (mobile-only full-screen, v2 MapViewMobile) — opened from Journey Detail's Map tab / Full map pill -->
+  <div id="mapview" class="panel">
+    <div id="mapViewPanel"><!-- filled by renderMapView() --></div>
   </div>
 
   <!-- RECORD JOURNAL (07) — opened from Journey Detail -->
@@ -3480,7 +3508,8 @@ function switchTab(id, el) {
   if (id === 'liverecord')   { const gi = document.getElementById('gpsPhotoInput'); if (gi) gi.onchange = gpsOnPhotoSelected; renderLiveRecord(); }
   if (id === 'recreview')    { const gri = document.getElementById('gpsReviewPhotoInput'); if (gri) gri.onchange = gpsReviewOnPhotoSelected; renderRecReview(); }
   if (id === 'crashrecover') { renderCrashRecover(); }
-  document.body.classList.toggle('gps-fullscreen', id === 'gpsperms' || id === 'liverecord' || id === 'crashrecover');
+  if (id === 'mapview')  { renderMapView(); }
+  document.body.classList.toggle('gps-fullscreen', id === 'gpsperms' || id === 'liverecord' || id === 'crashrecover' || id === 'mapview');
   // None of these v2 screens render <BottomNav/> (verified against every
   // component in the handoff) — each replaces the tab bar with its own
   // fixed footer or centered content instead: JourneyMobile (Edit + Track
@@ -7046,7 +7075,7 @@ function renderJourneyDetail() {
   <div class="jd-tabs">
     <button class="jd-tab${_jdTab==='journey'?' on':''}" onclick="switchJourneyTab('journey')">Journey</button>
     <button class="jd-tab rec${_jdTab==='recording'?' on':''}" onclick="switchJourneyTab('recording')">${isLive?'<span class="jd-tab-dot"></span>':''}Recording</button>
-    <button class="jd-tab${_jdTab==='map'?' on':''}" onclick="switchJourneyTab('map')">Map</button>
+    <button class="jd-tab${_jdTab==='map'?' on':''}" onclick="window.innerWidth<=640?openMapView(_journeyTrip):switchJourneyTab('map')">Map</button>
   </div>
   <div class="jd-body">`;
 
@@ -7302,7 +7331,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
     h += `<div class="advisory-grid" style="margin-top:16px"><div class="advisory-strip">${note}</div></div>`;
   }
   h += `<div class="jd-section-lbl" style="margin-top:16px">Route overview</div>
-  <div class="jd-mini-map-wrap" onclick="switchJourneyTab('map')">
+  <div class="jd-mini-map-wrap" onclick="window.innerWidth<=640?openMapView(_journeyTrip):switchJourneyTab('map')">
     <div class="jd-mini-map" id="jdMiniMap"></div>
     <div class="jd-mini-map-pill"><i class="ph ph-arrows-out"></i> Full map</div>
   </div>`;
@@ -7550,6 +7579,74 @@ function jdRecordingTabHTML() {
     <div class="jd-rec-cap">Journal entries, voice, photos & route tips all live in the Record Journal — this tab is a read-only summary.</div>
   </div>
   <div class="jd-rec-list">${rows}</div>`;
+}
+
+// ── Route Map (mobile full-screen, v2 MapViewMobile) ──────────────
+let _mapViewTrip = null;
+let _mapViewSel = 0;
+let _mapViewLeafletMap = null;
+function openMapView(trip) {
+  if (!trip) return;
+  _mapViewTrip = trip;
+  _mapViewSel = jdCurrentStopIdx(trip.stops || [], _gps.mode === 'manual');
+  switchTab('mapview', null);
+}
+async function renderMapView() {
+  const el = document.getElementById('mapViewPanel');
+  const t = _mapViewTrip;
+  if (!el || !t) return;
+  const stops = t.stops || [];
+  const isTracking = !!(_gps.mode && _gps.planned?.id === t.id);
+  const curIdx = isTracking ? jdCurrentStopIdx(stops, _gps.mode === 'manual') : -1;
+  const title = t.title || (_stopCityName(stops[0]?.name) + ' → ' + _stopCityName(stops[stops.length-1]?.name));
+
+  el.innerHTML = `<div class="mapview-wrap">
+    <div class="gps-hdr dark">
+      <button class="gps-back" onclick="openJourneyDetail(_mapViewTrip)"><i class="ph ph-arrow-left"></i></button>
+      <div style="flex:1;min-width:0">
+        <div class="mapview-title">Route Map</div>
+        <div class="mapview-sub">${title}</div>
+      </div>
+    </div>
+    <div class="mapview-body">
+      <div id="mapviewMapEl" class="mapview-map"><div style="padding:2rem;text-align:center;color:rgba(245,240,232,0.5);font-size:13px">Loading map…</div></div>
+      ${isTracking ? `<div class="gps-map-pill" style="top:16px;left:16px"><span class="gps-map-dot"></span> Live · ${_stopCityName(stops[curIdx]?.name)}</div>` : ''}
+      <div class="mapview-sheet">
+        <div class="mapview-sheet-handle"></div>
+        <div class="mapview-chips" id="mapviewChips">${stops.map((s,i) => `
+          <div class="mapview-chip${_mapViewSel===i?' on':''}" onclick="_mapViewSel=${i};renderMapView()">
+            ${isTracking && i===curIdx ? `<div class="mapview-chip-dot"></div>` : ''}
+            <div>${_stopCityName(s.name)||'—'}</div>
+          </div>`).join('')}</div>
+      </div>
+    </div>
+  </div>`;
+
+  // Geocode + draw (same approach as jdInitMap, minus the legend/stop list --
+  // v2's MapViewMobile is just the map + chip strip, no per-stop metadata here).
+  const coords = [];
+  for (const s of stops) {
+    if (!s.name) continue;
+    const g = await stopCoords(s);
+    if (g) coords.push({ ...s, lat: g.lat, lon: g.lon });
+  }
+  const mapEl = document.getElementById('mapviewMapEl');
+  if (!mapEl) return; // navigated away
+  if (!coords.length) { mapEl.innerHTML = '<div style="padding:2rem;text-align:center;color:rgba(245,240,232,0.5);font-size:13px">Couldn\'t map these stops.</div>'; return; }
+
+  mapEl.innerHTML = '';
+  if (_mapViewLeafletMap) { try { _mapViewLeafletMap.remove(); } catch(e){} _mapViewLeafletMap = null; }
+  _mapViewLeafletMap = L.map('mapviewMapEl', { zoomControl:false, attributionControl:false, scrollWheelZoom:false });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_mapViewLeafletMap);
+  const ll = coords.map(c => [c.lat, c.lon]);
+  L.polyline(ll, { color:'#FF5014', weight:2.5, opacity:0.8, dashArray:'5 7' }).addTo(_mapViewLeafletMap);
+  coords.forEach((c, i) => {
+    L.circleMarker([c.lat, c.lon], {
+      radius: i===_mapViewSel ? 7 : 5, color:'#fff', weight:2,
+      fillColor: isTracking && i===curIdx ? '#FF5014' : c.visited ? '#1E3A5C' : '#94A0B0', fillOpacity:1
+    }).addTo(_mapViewLeafletMap);
+  });
+  _mapViewLeafletMap.fitBounds(L.latLngBounds(ll).pad(0.25));
 }
 
 async function jdInitMap(stops, legs) {
