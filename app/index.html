@@ -1092,6 +1092,7 @@ window.addEventListener('unhandledrejection', (e) => {
     color:var(--text);padding:8px;-webkit-tap-highlight-color:transparent;
   }
   .mobile-header-back.visible{display:flex;align-items:center;justify-content:center;}
+  .mobile-header-action{width:32px;height:32px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;cursor:pointer;}
   .bottom-nav{
     display:flex;
     position:fixed;top:auto;bottom:0;left:0;right:0;
@@ -1248,11 +1249,9 @@ window.addEventListener('unhandledrejection', (e) => {
   .mytrips-jgrid{grid-template-columns:1fr !important;}
   .jd-back{display:none !important;}
   .jd-kicker{display:none !important;}
-  .jd-header{flex-direction:column !important;align-items:flex-start !important;gap:4px !important;margin-bottom:12px !important;}
-  .jd-header-actions{flex-wrap:wrap !important;gap:8px !important;margin-top:6px !important;}
-  .jd-collab-wrap{display:none !important;}
-  .jd-desktop-actions{display:none !important;}
-  .jd-mobile-share{display:inline-flex !important;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);flex-shrink:0;}
+  /* v2's JourneyMobile has one header row total (the global #mobileHeader) —
+     title/subtitle/share/collaborators here would duplicate it. */
+  .jd-header{display:none !important;}
   /* Fixed at the true viewport bottom — this bar replaces the tab bar's slot
      entirely (body.no-tabbar hides #bottomNav), not floats above it. */
   .jd-mobile-cta{display:flex !important;flex-direction:column;position:fixed;left:0;right:0;bottom:0;z-index:20;padding:11px 14px calc(11px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
@@ -1327,6 +1326,7 @@ window.addEventListener('unhandledrejection', (e) => {
 <div class="mobile-header" id="mobileHeader">
   <button class="mobile-header-back" id="mobileHeaderBack"><i class="ph ph-arrow-left" style="font-size:20px"></i></button>
   <div class="mobile-header-title" id="mobileHeaderTitle">Planner</div>
+  <button class="mobile-header-action" id="mobileHeaderAction" style="display:none"></button>
   <button class="mytrips-new-btn" id="mobileHeaderFab" style="display:none;margin-right:8px" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New trip</button>
 </div>
 
@@ -7065,6 +7065,12 @@ function renderJourneyDetail() {
     if (titleEl) titleEl.textContent = t.title || (_stopCityName(stops[0]?.name) + ' → ' + _stopCityName(stops[stops.length-1]?.name)) || 'Journey';
     const fab = document.getElementById('mobileHeaderFab');
     if (fab) fab.style.setProperty('display', 'none', 'important');
+    const actionBtn = document.getElementById('mobileHeaderAction');
+    if (actionBtn) {
+      actionBtn.style.display = 'inline-flex';
+      actionBtn.innerHTML = '<i class="ph ph-share-network" style="font-size:16px"></i>';
+      actionBtn.onclick = () => jdShareTrip(t.id);
+    }
   }
 }
 
@@ -9036,6 +9042,8 @@ function mobileHeaderSync(id) {
   }
   const fab = document.getElementById('mobileHeaderFab');
   if (fab) fab.style.setProperty('display', id === 'mytrips' ? 'flex' : 'none', 'important');
+  const actionBtn = document.getElementById('mobileHeaderAction');
+  if (actionBtn && id !== 'journey') actionBtn.style.display = 'none';
 }
 
 // ── Start ─────────────────────────────────────────────────────────
