@@ -2090,6 +2090,10 @@ async function init() {
     if (_clean.length < _trips.length) { storage.set('trips', _clean); localStorage.removeItem('slw_contribs'); }
   }
 
+  // Heal any trips whose stop names synced as objects — must run before the
+  // first render pass, which is exactly where that data used to crash init().
+  repairMalformedTrips();
+
   loadCustomSitesIntoAFF();
   render();
   renderPlanLanding();
@@ -2205,6 +2209,46 @@ function _journalHasContent(t) {
 // (some older/imported/hand-seeded trips have hit this) — never throw, just fall back.
 function _stopCityName(name) {
   return (typeof name === 'string' ? name.split(',')[0] : '') || '?';
+}
+
+// One-time data repair, run at every boot: some trips were saved with stop.name
+// as an object instead of a string (bad GPS test data that then synced to the
+// cloud). That shape crashed init() outright before the render guards existed,
+// and still shows as "[object Object]" anywhere it slips through. Coerce to a
+// sensible string and re-persist so the account heals itself.
+function repairMalformedTrips() {
+  const trips = storage.get('trips') || [];
+  const repaired = [];
+  trips.forEach(t => {
+    let touched = false;
+    (t.stops || []).forEach(s => {
+      if (!s || s.name == null || typeof s.name === 'string') return;
+      const n = s.name;
+      let fixed = (n && typeof n === 'object') ? (n.name || n.city || n.label || '') : n;
+      if (typeof fixed !== 'string') fixed = String(fixed);
+      if (!fixed || fixed === '[object Object]') {
+        fixed = (s.lat != null && s.lon != null) ? `${(+s.lat).toFixed(3)}, ${(+s.lon).toFixed(3)}` : 'Unknown stop';
+      }
+      s.name = fixed;
+      touched = true;
+    });
+    // Titles generated from object names before the guards existed were baked
+    // as the literal string "[object Object] → ..." — rebuild them from the
+    // (now clean) stop names.
+    ['title', 'journal_title'].forEach(k => {
+      if (typeof t[k] === 'string' && t[k].includes('[object Object]')) {
+        const st = t.stops || [];
+        t[k] = st.length >= 2 ? `${_stopCityName(st[0].name)} → ${_stopCityName(st[st.length-1].name)}` : 'Untitled trip';
+        touched = true;
+      }
+    });
+    if (touched) { t.updated_at = new Date().toISOString(); repaired.push(t); }
+  });
+  if (!repaired.length) return 0;
+  storage.set('trips', trips);
+  repaired.forEach(t => persistTripCloud(t)); // no-op for guests / non-uuid ids
+  console.warn(`repairMalformedTrips: fixed ${repaired.length} trip(s) with non-string stop names`);
+  return repaired.length;
 }
 
 // Shared cloud-persist for a single trip object (used by Journey Detail, Record Journal, Save-to-Trips).
