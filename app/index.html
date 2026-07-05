@@ -1112,46 +1112,13 @@ window.addEventListener('unhandledrejection', (e) => {
   .bn-item span{font-family:var(--mono);font-size:8px;letter-spacing:0.5px;text-transform:uppercase;line-height:1.2;font-weight:400;}
   .bn-item.bn-active{color:var(--sage);}
   .bn-item.bn-active span{font-weight:600;}
-  /* ── Recording FAB (5th bottom-nav item · feature doc §14) ── */
-  #bnRecord span:last-child{color:var(--sage);}
-  .bn-fab{
-    width:34px;height:34px;border-radius:17px;background:var(--sage);
-    display:flex;align-items:center;justify-content:center;margin-bottom:2px;
-    box-shadow:0 2px 10px rgba(255,80,20,0.38);
-  }
-  .bn-fab-sq{width:12px;height:12px;border-radius:6px;background:rgba(255,255,255,0.92);}
-  body.recording-active .bn-fab{animation:recPulse 1.6s ease-in-out infinite;}
-  @keyframes recPulse{0%,100%{box-shadow:0 2px 10px rgba(255,80,20,0.38);}50%{box-shadow:0 2px 10px rgba(255,80,20,0.38),0 0 0 6px rgba(255,80,20,0);}}
-  /* ── Persistent recording pill (feature doc §13.1) ── */
-  #recordingPill{
-    display:none;align-items:center;gap:8px;width:100%;height:34px;padding:0 14px;
-    background:#130808;border:none;border-bottom:1px solid rgba(255,80,20,0.3);
-    cursor:pointer;-webkit-tap-highlight-color:transparent;
-    position:sticky;top:0;z-index:101;
-  }
-  #recordingPill .rp-dot{
-    width:7px;height:7px;border-radius:50%;background:var(--sage);flex-shrink:0;
-    animation:recBlink 1.2s ease-in-out infinite;
-  }
-  #recordingPill .rp-label{
-    font-family:var(--mono);font-size:9px;letter-spacing:1.2px;text-transform:uppercase;
-    font-weight:700;color:#FF6030;flex-shrink:0;
-  }
-  #recordingPill .rp-meta{
-    font-family:var(--mono);font-size:9.5px;color:rgba(245,240,232,0.55);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left;
-  }
-  #recordingPill .rp-cta{
-    font-family:var(--mono);font-size:9px;color:rgba(245,240,232,0.4);flex-shrink:0;
-  }
+  /* ── v2 BottomNav: recording is a small dot on the Trips tab, not a 5th item (m-shared.jsx BottomNav) ── */
+  .bn-rec-dot{position:absolute;top:7px;right:calc(50% - 18px);width:6px;height:6px;border-radius:3px;background:var(--sage);border:1.5px solid var(--bg);}
   @keyframes recBlink{0%,100%{opacity:1;}50%{opacity:0.25;}}
-  /* Trim the scroll container when the pill occupies the top 34px */
-  body.recording-active .container{height:calc(100dvh - 112px - 34px);}
   body.recording-active.gps-fullscreen .container{height:100dvh;}
   /* ── GPS full-screen mode — permission/live/crash panels render their own dark chrome ── */
   body.gps-fullscreen #mobileHeader,
-  body.gps-fullscreen #bottomNav,
-  body.gps-fullscreen #recordingPill{display:none !important;}
+  body.gps-fullscreen #bottomNav{display:none !important;}
   body.gps-fullscreen .container{height:100dvh;padding:0;overflow:hidden;}
   .gps-panel{height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--dusk);}
   .gps-panel.gps-light{background:var(--bg);}
@@ -1339,7 +1306,7 @@ window.addEventListener('unhandledrejection', (e) => {
      .bottom-nav/.mobile-header are already display:none by default above 640px, but recording
      elements get their own guard on top so a future nav refactor can't silently re-expose them. ── */
 @media (min-width:641px){
-  #bnRecord, #recordingPill, .record-entry { display:none !important; }
+  .record-entry { display:none !important; }
 }
 </style>
 </head>
@@ -1378,14 +1345,6 @@ window.addEventListener('unhandledrejection', (e) => {
 </nav>
 
 <div class="container">
-
-  <!-- Persistent recording indicator (feature doc §13.1) — mobile only, live while a GPS/manual session is active -->
-  <button id="recordingPill" class="record-entry" style="display:none" onclick="onRecordingPillTap()">
-    <span class="rp-dot"></span>
-    <span class="rp-label">Recording</span>
-    <span class="rp-meta" id="recordingPillMeta"></span>
-    <span class="rp-cta">tap to return</span>
-  </button>
 
   <!-- PLAN TAB -->
   <div id="plan" class="panel active">
@@ -6515,35 +6474,13 @@ function gpsStartManualFromJourney() {
   renderJourneyDetail();
 }
 
+// v2's BottomNav shows recording as a small dot on the Trips tab (m-shared.jsx:
+// `showDot = id === 'trips' && recording`) — there is no persistent status pill
+// and no 5th nav item in the real design; both existed here only because an
+// earlier planning doc specified them before this handoff was checked against.
 function gpsSyncPill() {
-  const pill = document.getElementById('recordingPill');
-  if (!pill) return;
-  if (!_gps.mode) { pill.style.display = 'none'; return; }
-  pill.style.display = 'flex';
-  const elapsedS = Math.floor((Date.now() - _gps.startedAt) / 1000);
-  const h = Math.floor(elapsedS / 3600), m = Math.floor((elapsedS % 3600) / 60);
-  const label = pill.querySelector('.rp-label');
-  if (label) label.textContent = _gps.mode === 'gps' ? (_gps.paused ? 'Paused' : 'Recording') : 'Journaling';
-  const meta = document.getElementById('recordingPillMeta');
-  const place = _gps.stops[_gps.stops.length - 1]?.name || _gps.planned?.stops?.[0]?.name || '';
-  if (meta) meta.textContent = `${place}${place ? ' · ' : ''}${h}h ${String(m).padStart(2, '0')}m`;
-}
-setInterval(() => { if (_gps.mode) gpsSyncPill(); }, 1000);
-
-// ── FAB / pill tap routing (§2 FAB behaviour table) ─────────────────
-function onRecordFabTap() {
-  if (_gps.mode === 'gps') { switchTab('liverecord', null); return; }
-  if (_gps.mode === 'manual') { openJourneyDetail(_gps.planned || _journeyTrip); return; }
-  const activePanel = document.querySelector('.panel.active')?.id;
-  if (activePanel === 'journey' && _journeyTrip && !_journalHasContent(_journeyTrip)) {
-    openGpsPerms(_journeyTrip); // Mode A — planned vs actual
-  } else {
-    openGpsPerms(null); // Mode B — fresh recording
-  }
-}
-function onRecordingPillTap() {
-  if (_gps.mode === 'gps') switchTab('liverecord', null);
-  else if (_gps.mode === 'manual') openJourneyDetail(_gps.planned || _journeyTrip);
+  const dot = document.getElementById('bnMytripsRecDot');
+  if (dot) dot.style.display = _gps.mode ? 'block' : 'none';
 }
 
 // ── [10] Enable tracking — explain screen + real permission request ─
@@ -9211,12 +9148,10 @@ init().catch(e => {
     onclick="switchTab('plan',document.getElementById('navbtn_plan'))">
     <i class="ph-fill ph-compass"></i><span>Planner</span>
   </button>
-  <button class="bn-item" id="bn_mytrips" data-icon="suitcase-simple"
+  <button class="bn-item" id="bn_mytrips" data-icon="suitcase-simple" style="position:relative"
     onclick="switchTab('mytrips',document.getElementById('navbtn_mytrips'))">
+    <span id="bnMytripsRecDot" class="record-entry bn-rec-dot" style="display:none"></span>
     <i class="ph ph-suitcase-simple"></i><span>Trips</span>
-  </button>
-  <button class="bn-item record-entry" id="bnRecord" onclick="onRecordFabTap()">
-    <span class="bn-fab"><span class="bn-fab-sq"></span></span><span>Record</span>
   </button>
   <button class="bn-item" id="bn_journals" data-icon="book-open"
     onclick="switchTab('journals',document.getElementById('navbtn_journals'))">
