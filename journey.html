@@ -132,9 +132,9 @@
 <!-- Diary entries -->
 <div class="content diary-section" id="diarySection"></div>
 
-<!-- Footer CTA -->
+<!-- Footer CTA — adapts to viewer state (guest / signed-in / owner) in applyFooterCta() -->
 <div class="footer-cta">
-  <div class="footer-cta-card">
+  <div class="footer-cta-card" id="footerCtaCard">
     <div class="footer-cta-title">Travelled slowly with <em>bysloth</em></div>
     <div class="footer-cta-sub">Map your own overland route — trains, buses, ferries. No flights, ever.</div>
     <div class="footer-cta-btns">
@@ -299,20 +299,24 @@ async function geocodePub(name) {
 }
 const SUPA_URL = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
+let _pubTripId = null;
+let _pubOwnerId = null;
 async function buildJourneyFromTrip(id) {
   // Try localStorage first (fast), then fall back to Supabase (works on shared links)
   let t = null;
+  _pubTripId = id;
   try {
     const trips = JSON.parse(localStorage.getItem('slw_trips') || '[]');
     t = trips.find(x => x.id === id) || null;
+    if (t) _pubOwnerId = pubLoggedInUser()?.id || null; // found locally → it's this device's trip
   } catch(e) {}
   if (!t) {
     try {
-      const res = await fetch(`${SUPA_URL}/rest/v1/trips?id=eq.${encodeURIComponent(id)}&select=data`, {
+      const res = await fetch(`${SUPA_URL}/rest/v1/trips?id=eq.${encodeURIComponent(id)}&select=data,user_id`, {
         headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` }
       });
       const rows = await res.json();
-      if (rows?.[0]?.data) t = rows[0].data;
+      if (rows?.[0]?.data) { t = rows[0].data; _pubOwnerId = rows[0].user_id || null; }
     } catch(e) {}
   }
   if (!t) return null;
@@ -374,7 +378,34 @@ async function buildJourneyFromTrip(id) {
     if (built) JOURNEY = built;
   }
   renderJourney();
+  applyFooterCta();
 })();
+
+// ── Viewer-adaptive footer (v2 PublicJournalMobile): guest / signed-in / owner ──
+function applyFooterCta() {
+  const card = document.getElementById('footerCtaCard');
+  if (!card) return;
+  const user = pubLoggedInUser();
+  if (!user) return;   // guest → keep the default "Plan a route / Create account" card
+  const isOwner = _pubOwnerId && user.id === _pubOwnerId;
+  if (isOwner && _pubTripId) {
+    card.innerHTML = `
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);margin-bottom:8px;text-align:left">Your journal</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:14px;text-align:left">This is the public page readers see. Edit the diary any time — changes publish instantly.</div>
+      <div class="footer-cta-btns" style="justify-content:flex-start">
+        <a class="footer-btn-primary" href="/trips/${encodeURIComponent(_pubTripId)}/journal"><i class="ph ph-pencil-simple" style="font-size:13px"></i> Edit journal</a>
+        <a class="footer-btn-secondary" href="/trips/${encodeURIComponent(_pubTripId)}">Open in app</a>
+      </div>`;
+  } else {
+    card.innerHTML = `
+      <div class="footer-cta-title">Travelled slowly with <em>bysloth</em></div>
+      <div class="footer-cta-sub">Liked this route? Plan your own version — trains, buses, ferries. No flights, ever.</div>
+      <div class="footer-cta-btns">
+        <a class="footer-btn-primary" href="/planner">Plan similar route</a>
+        <a class="footer-btn-secondary" href="/journals">Browse journals</a>
+      </div>`;
+  }
+}
 </script>
 </body>
 </html>

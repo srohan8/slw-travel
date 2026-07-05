@@ -376,6 +376,10 @@ window.addEventListener('unhandledrejection', (e) => {
   .stop-date-lbl{font-size:11px;color:var(--text3);}
   .stop-depart-computed{font-size:11px;color:var(--text2);font-style:italic;}
   .stop-days-badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-family:var(--mono);font-weight:500;color:var(--text2);background:var(--bg2);border:0.5px solid var(--border);border-radius:99px;padding:2px 8px;}
+  .stop-days-stepper{display:inline-flex;align-items:center;gap:5px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:2px 6px;}
+  .stop-days-stepper button{width:18px;height:18px;border-radius:5px;border:none;background:var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0;}
+  .stop-days-stepper span{font-family:var(--mono);font-size:11px;color:var(--text);min-width:22px;text-align:center;}
+  .rec-mobile-save-bar{display:none;}
 
   /* Leg compact summary row */
   .leg-summary-row{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;user-select:none;border-radius:var(--radius);}
@@ -516,6 +520,14 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-collab-av.view{background:var(--sand2);color:var(--text2);}
   .jd-collab-add{width:26px;height:26px;border-radius:50%;background:var(--bg);border:0.5px dashed var(--border2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-left:-8px;}
   .jd-invite-modal{position:fixed;inset:0;z-index:900;background:rgba(9,16,34,0.45);display:flex;align-items:center;justify-content:center;}
+  /* ── Delete trip bottom sheet ── */
+  .del-sheet-overlay{position:fixed;inset:0;z-index:900;background:rgba(9,16,34,0.55);display:flex;align-items:flex-end;justify-content:center;}
+  .del-sheet{width:100%;max-width:480px;background:var(--bg);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:22px 20px 32px;box-sizing:border-box;}
+  .del-sheet-title{font-family:var(--serif);font-size:20px;font-weight:300;color:var(--text);margin-bottom:8px;}
+  .del-sheet-body{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;}
+  .del-sheet-actions{display:flex;gap:8px;}
+  .del-sheet-cancel{flex:1;padding:12px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;font-size:13px;color:var(--text2);cursor:pointer;font-family:var(--body);}
+  .del-sheet-confirm{flex:1;padding:12px;border-radius:var(--radius-pill);border:none;background:var(--danger-text);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--body);}
   .jd-invite-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:380px;max-width:calc(100vw - 32px);padding:22px 24px;}
   .jd-invite-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
   .jd-invite-sub{font-size:12px;color:var(--text3);margin-bottom:18px;}
@@ -536,6 +548,18 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-invite-item-remove:hover{color:var(--danger-text);}
   .jd-rec-cta{font-size:12px;padding:7px 14px;border-radius:var(--radius-pill);background:var(--sage);color:var(--cta-text);border:none;cursor:pointer;font-family:var(--body);font-weight:600;display:inline-flex;align-items:center;gap:6px;}
   .jd-rec-dot{width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block;}
+  /* ── Journey Detail: GPS/manual tracking toggle ── */
+  .jd-toggle-on,.jd-toggle-off{font-size:13px;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;font-family:var(--body);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;}
+  .jd-toggle-on{background:color-mix(in srgb,var(--sage) 12%,transparent);border:0.5px solid color-mix(in srgb,var(--sage) 55%,transparent);color:var(--sage);}
+  .jd-toggle-on .jd-rec-dot{background:var(--sage);animation:recBlink 1.6s ease-in-out infinite;}
+  .jd-toggle-off{background:var(--bg);border:0.5px solid var(--border2);color:var(--text);}
+  .jd-toggle-switch{width:28px;height:16px;border-radius:8px;position:relative;display:inline-block;flex-shrink:0;}
+  .jd-toggle-switch.on{background:var(--sage);}
+  .jd-toggle-switch.off{background:var(--border);}
+  .jd-toggle-knob{position:absolute;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.2);}
+  .jd-toggle-switch.on .jd-toggle-knob{right:2px;}
+  .jd-toggle-switch.off .jd-toggle-knob{left:2px;}
+  .jd-manual-link{display:none;}
   .jd-tabs{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:18px;}
   .jd-tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 16px;font-family:var(--body);font-size:13px;color:var(--text3);cursor:pointer;margin-bottom:-0.5px;display:inline-flex;align-items:center;gap:5px;}
   .jd-tab:hover{color:var(--text2);}
@@ -551,6 +575,11 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-prog{height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:7px;}
   .jd-prog-fill{height:100%;background:var(--fern);border-radius:99px;}
   .jd-mini-map{display:none;}
+  .jd-mini-map-wrap{position:relative;cursor:pointer;}
+  .jd-mini-map-pill{display:none;position:absolute;bottom:8px;right:8px;background:rgba(9,16,34,0.72);border-radius:var(--radius-pill);padding:4px 10px;align-items:center;gap:5px;backdrop-filter:blur(4px);font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.75);letter-spacing:0.5px;}
+  .jd-section-lbl{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:600;margin-bottom:10px;}
+  .jd-section-lbl.accent{color:var(--fern);}
+  .jd-metric-km{display:none;}
   .jd-leg{margin-bottom:16px;position:relative;}
   .jd-leg-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
   .jd-leg-gutter{display:flex;align-items:center;flex-shrink:0;}
@@ -558,10 +587,61 @@ window.addEventListener('unhandledrejection', (e) => {
   /* §8 mode-colored connector down to the next stop's dot */
   .jd-leg-connector{position:absolute;left:6.25px;top:18px;bottom:-18px;width:1.5px;opacity:0.28;border-radius:2px;}
   .jd-leg-name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.2px;}
+  .jd-leg-cc{font-family:var(--mono);font-size:10px;color:var(--text3);}
+  .jd-leg-days{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin:2px 0 0 24px;}
   .jd-leg-date{font-family:var(--mono);font-size:11px;color:var(--text3);}
   .jd-visit-btn{font-size:11px;padding:5px 12px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
   .jd-visit-btn.on{border-color:var(--fern);background:var(--fern);color:#fff;}
-  .jd-diary-wrap{margin-left:24px;margin-bottom:12px;}
+  /* ── Live/manual tracking mode — Journey tab (06.1/06.2) ── */
+  .jd-live-banner{display:flex;align-items:center;gap:8px;background:var(--dusk);border-radius:var(--radius);padding:9px 12px;margin-bottom:12px;}
+  .jd-live-dot2{width:8px;height:8px;border-radius:50%;background:var(--sage);flex-shrink:0;animation:recBlink 1.6s ease-in-out infinite;}
+  .jd-live-dot2.manual{background:var(--gold);animation:none;}
+  .jd-live-label{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;color:#fff;font-weight:700;}
+  .jd-live-meta{font-size:12px;color:rgba(255,255,255,0.6);}
+  .jd-cur-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-family:var(--mono);border-radius:var(--radius-pill);padding:1px 7px;font-weight:700;}
+  .jd-cur-badge.gps{color:var(--sage);background:color-mix(in srgb,var(--sage) 9%,transparent);}
+  .jd-cur-badge.manual{color:#7A5C10;background:color-mix(in srgb,var(--gold) 18%,transparent);}
+  .jd-cur-dot{width:5px;height:5px;border-radius:50%;background:var(--sage);display:inline-block;animation:recBlink 1.6s ease-in-out infinite;}
+  .jd-reorder-wrap{display:flex;gap:2px;flex-shrink:0;}
+  .jd-reorder-btn{width:18px;height:18px;border-radius:5px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-size:9px;}
+  .jd-reorder-btn:disabled{color:var(--border2);cursor:default;}
+  .jd-leg-days-edit{display:flex;align-items:center;gap:5px;margin:2px 0 0 24px;font-family:var(--mono);font-size:10.5px;color:var(--text2);}
+  .jd-leg-days-edit input{width:44px;font-family:var(--mono);font-size:10.5px;color:var(--text2);border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);padding:2px 6px;outline:none;}
+  .jd-days-badge{font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sage) 14%,transparent);color:var(--sage);border:0.5px solid color-mix(in srgb,var(--sage) 40%,transparent);}
+  .jd-days-badge.edited{background:color-mix(in srgb,var(--gold) 14%,transparent);color:#7A5C10;border-color:color-mix(in srgb,var(--gold) 40%,transparent);}
+  .jd-diary-wrap{margin-left:24px;margin-bottom:12px;position:relative;}
+  .jd-voice-btn{position:absolute;bottom:8px;right:8px;width:24px;height:24px;border-radius:12px;background:transparent;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .jd-voice-btn.listening{border-color:var(--sage);color:var(--sage);animation:recBlink 1s ease-in-out infinite;}
+  .jd-detect-card{margin:0 0 8px 24px;background:color-mix(in srgb,var(--sage) 5%,transparent);border:1px dashed color-mix(in srgb,var(--sage) 45%,transparent);border-radius:var(--radius);padding:9px 11px;}
+  .jd-detect-hdr{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+  .jd-detect-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);flex-shrink:0;animation:recBlink 1.6s ease-in-out infinite;}
+  .jd-detect-lbl{font-family:var(--mono);font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--sage);font-weight:700;}
+  .jd-detect-time{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--text3);}
+  .jd-detect-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;}
+  .jd-detect-actions{display:flex;gap:6px;}
+  .jd-detect-confirm{flex:1;padding:7px 0;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--body);}
+  .jd-detect-dismiss{padding:7px 14px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--body);}
+  .jd-mark-current-btn{margin:0 0 8px 24px;display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 24px);border:1px dashed color-mix(in srgb,var(--gold) 40%,transparent);background:transparent;border-radius:var(--radius-pill);padding:6px 0;cursor:pointer;color:#7A5C10;font-size:11px;font-family:var(--body);}
+  .jd-leg-edit{margin:8px 0 12px 24px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
+  .jd-leg-edit-lbl{font-family:var(--mono);font-size:8.5px;color:var(--text3);letter-spacing:1px;margin-bottom:6px;}
+  .jd-leg-edit-modes{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+  .jd-mode-pill{font-size:11px;padding:4px 10px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--body);text-transform:capitalize;}
+  .jd-mode-pill.on{border-color:var(--fern);background:color-mix(in srgb,var(--fern) 12%,transparent);color:var(--fern);}
+  .jd-leg-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;}
+  .jd-leg-edit-field{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:7px 8px;}
+  .jd-leg-edit-flbl{font-family:var(--mono);font-size:8px;color:var(--text3);margin-bottom:4px;}
+  .jd-leg-edit-field input{width:100%;font-size:13px;font-weight:600;color:var(--text);border:none;background:transparent;outline:none;font-family:var(--body);}
+  .jd-leg-edit-accom{width:100%;font-size:12px;padding:6px 9px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--body);outline:none;box-sizing:border-box;margin-bottom:10px;}
+  .jd-leg-edit-booked{font-size:11px;padding:4px 10px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:4px;}
+  .jd-leg-edit-booked.on{border-color:var(--fern);background:color-mix(in srgb,var(--fern) 12%,transparent);color:var(--fern);}
+  .jd-add-stop{margin-top:4px;}
+  .jd-add-stop-toggle{width:100%;padding:10px;border:0.5px dashed var(--border2);border-radius:var(--radius);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--body);display:flex;align-items:center;justify-content:center;gap:6px;}
+  .jd-add-stop-form{background:var(--bg);border:0.5px solid color-mix(in srgb,var(--sage) 35%,transparent);border-radius:var(--radius);padding:10px 12px;}
+  .jd-add-stop-lbl{font-family:var(--mono);font-size:8.5px;color:var(--text3);letter-spacing:1px;margin-bottom:8px;}
+  .jd-add-stop-form input{font-size:13px;padding:6px 9px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:var(--body);outline:none;box-sizing:border-box;}
+  .jd-add-stop-form > input{width:100%;margin-bottom:8px;}
+  .jd-add-stop-cancel{font-size:12px;padding:6px 14px;border-radius:var(--radius-pill);background:none;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;font-family:var(--body);}
+  .jd-add-stop-confirm{font-size:12px;padding:6px 16px;border-radius:var(--radius-pill);background:var(--sage);color:#fff;border:none;cursor:pointer;font-family:var(--body);font-weight:600;}
   .jd-diary{width:100%;font-size:13px;padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg);resize:vertical;min-height:70px;font-family:var(--body);line-height:1.65;color:var(--text);outline:none;box-sizing:border-box;}
   .jd-photos{margin-left:24px;margin-bottom:12px;}
   .jd-photos .rj-slide{max-width:320px;height:160px;}
@@ -570,6 +650,42 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-booked-row{margin-bottom:8px;}
   .jd-booked{font-size:11px;padding:3px 10px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;gap:4px;}
   .jd-booked.on{border-color:var(--fern);background:var(--fern);color:#fff;}
+  /* ── Bottom CTA bar (mobile) + separate stop-tracking control ── */
+  .jd-mobile-cta{display:none;}
+  .jd-stop-ctrl{display:none;}
+  .jd-mobile-share{display:none;}
+  /* ── [11] Stop tracking screen ── */
+  .strk-wrap{padding:28px 22px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;max-width:360px;margin:0 auto;}
+  .strk-icon{width:68px;height:68px;border-radius:34px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;flex-shrink:0;}
+  .strk-icon.stop{background:var(--danger-bg);border:1px solid var(--danger-border);}
+  .strk-icon.pub{background:color-mix(in srgb,var(--sage) 12%,transparent);border:1px solid color-mix(in srgb,var(--sage) 35%,transparent);}
+  .strk-title{font-family:var(--serif);font-size:24px;font-weight:300;color:var(--text);letter-spacing:-0.4px;margin-bottom:8px;}
+  .strk-copy{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:28px;max-width:280px;}
+  .strk-summary{width:100%;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:24px;}
+  .strk-summary-lbl{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+  .strk-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .strk-summary-val{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.3px;}
+  .strk-summary-lbl2{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px;}
+  .strk-cta{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
+  .strk-cta.danger{background:var(--danger-text);}
+  .strk-ghost{margin-top:10px;background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--body);}
+  .strk-ghost.outline{border:0.5px solid var(--border2);border-radius:var(--radius-pill);padding:10px 20px;width:100%;color:var(--text2);margin-top:2px;}
+  /* ── Upgrade / Go Pro (v2 UpgradeMobile) ── */
+  .upg-hero{background:var(--dusk);border-radius:var(--radius-lg);padding:22px 20px 24px;text-align:center;margin-bottom:16px;}
+  .upg-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:8px;}
+  .upg-title{font-family:var(--serif);font-size:30px;font-weight:300;color:var(--cream);letter-spacing:-0.5px;line-height:1.1;margin-bottom:14px;}
+  .upg-toggle{display:inline-flex;background:rgba(255,255,255,0.08);border-radius:var(--radius-pill);padding:3px;margin-bottom:16px;}
+  .upg-toggle button{padding:6px 14px;border-radius:var(--radius-pill);border:none;background:transparent;color:var(--cream);font-size:12px;cursor:pointer;font-family:var(--body);transition:all 0.15s;}
+  .upg-toggle button.on{background:var(--cream);color:var(--text);font-weight:600;}
+  .upg-price{font-family:var(--serif);font-size:44px;font-weight:700;color:var(--gold);letter-spacing:-1px;line-height:1;}
+  .upg-price span{font-size:16px;font-weight:400;color:rgba(255,255,255,0.5);}
+  .upg-price-note{font-family:var(--mono);font-size:10px;color:var(--gold);margin-top:4px;}
+  .upg-body{max-width:480px;margin:0 auto;}
+  .upg-feature{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+  .upg-feature-icon{width:36px;height:36px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;}
+  .upg-feature-lbl{font-size:13px;font-weight:600;color:var(--text);}
+  .upg-feature-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;}
+  .upg-fine{text-align:center;margin-top:10px;font-size:11px;color:var(--text3);line-height:1.5;padding-bottom:16px;}
   /* §13 Recording tab — navy session-summary card + per-stop status list */
   .jd-rec-card{background:var(--dusk);color:#fff;border-radius:var(--radius-lg);padding:20px 22px;margin-bottom:16px;}
   .jd-rec-card-lbl{font-family:var(--mono);font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:14px;}
@@ -860,6 +976,8 @@ window.addEventListener('unhandledrejection', (e) => {
   .mtr-title{font-size:15px;font-weight:600;color:var(--text);}
   .mytrips-new-btn{} /* base — desktop keeps btn-primary style */
   .mytrips-status-pill{font-size:9px;padding:2px 8px;border-radius:var(--radius-pill);border-width:0.5px;border-style:solid;white-space:nowrap;font-family:var(--mono);}
+  .mytrips-recorded-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 8px;border-radius:var(--radius-pill);font-family:var(--mono);letter-spacing:0.3px;text-transform:uppercase;color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);border:0.5px solid color-mix(in srgb,var(--sage) 30%,transparent);white-space:nowrap;}
+  .mytrips-recorded-dot{width:5px;height:5px;border-radius:50%;background:var(--sage);flex-shrink:0;}
   .mytrips-row-actions{display:flex;gap:5px;align-items:center;justify-content:flex-end;}
   .mytrips-act-btn{font-size:11px;padding:4px 11px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--body);transition:all .15s;white-space:nowrap;}
   .mytrips-act-btn:hover{background:var(--bg2);}
@@ -939,7 +1057,11 @@ window.addEventListener('unhandledrejection', (e) => {
 /* ── 640px — mobile ───────────────────────── */
 @media(max-width:640px){
   .nav-avatar-wrap{display:none !important;}
-  .jrnl-grid{grid-template-columns:1fr !important;}
+  /* v2 JournalsMobile — compact 2-col grid on mobile, not a 1-col stack */
+  .jrnl-grid{grid-template-columns:1fr 1fr !important;gap:10px !important;}
+  .jrnl-card-img{height:110px !important;}
+  .jrnl-card-excerpt{display:none !important;}
+  .jrnl-card-body{padding:10px !important;}
   .elev-footer span:last-child{display:none;}
   .plan-hero-new{flex-direction:column;padding:1.5rem 0 1rem;}
   .plan-hero-photo-wrap{width:100%;max-width:none;aspect-ratio:16/7;}
@@ -990,6 +1112,107 @@ window.addEventListener('unhandledrejection', (e) => {
   .bn-item span{font-family:var(--mono);font-size:8px;letter-spacing:0.5px;text-transform:uppercase;line-height:1.2;font-weight:400;}
   .bn-item.bn-active{color:var(--sage);}
   .bn-item.bn-active span{font-weight:600;}
+  /* ── Recording FAB (5th bottom-nav item · feature doc §14) ── */
+  #bnRecord span:last-child{color:var(--sage);}
+  .bn-fab{
+    width:34px;height:34px;border-radius:17px;background:var(--sage);
+    display:flex;align-items:center;justify-content:center;margin-bottom:2px;
+    box-shadow:0 2px 10px rgba(255,80,20,0.38);
+  }
+  .bn-fab-sq{width:12px;height:12px;border-radius:6px;background:rgba(255,255,255,0.92);}
+  body.recording-active .bn-fab{animation:recPulse 1.6s ease-in-out infinite;}
+  @keyframes recPulse{0%,100%{box-shadow:0 2px 10px rgba(255,80,20,0.38);}50%{box-shadow:0 2px 10px rgba(255,80,20,0.38),0 0 0 6px rgba(255,80,20,0);}}
+  /* ── Persistent recording pill (feature doc §13.1) ── */
+  #recordingPill{
+    display:none;align-items:center;gap:8px;width:100%;height:34px;padding:0 14px;
+    background:#130808;border:none;border-bottom:1px solid rgba(255,80,20,0.3);
+    cursor:pointer;-webkit-tap-highlight-color:transparent;
+    position:sticky;top:0;z-index:101;
+  }
+  #recordingPill .rp-dot{
+    width:7px;height:7px;border-radius:50%;background:var(--sage);flex-shrink:0;
+    animation:recBlink 1.2s ease-in-out infinite;
+  }
+  #recordingPill .rp-label{
+    font-family:var(--mono);font-size:9px;letter-spacing:1.2px;text-transform:uppercase;
+    font-weight:700;color:#FF6030;flex-shrink:0;
+  }
+  #recordingPill .rp-meta{
+    font-family:var(--mono);font-size:9.5px;color:rgba(245,240,232,0.55);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left;
+  }
+  #recordingPill .rp-cta{
+    font-family:var(--mono);font-size:9px;color:rgba(245,240,232,0.4);flex-shrink:0;
+  }
+  @keyframes recBlink{0%,100%{opacity:1;}50%{opacity:0.25;}}
+  /* Trim the scroll container when the pill occupies the top 34px */
+  body.recording-active .container{height:calc(100dvh - 112px - 34px);}
+  body.recording-active.gps-fullscreen .container{height:100dvh;}
+  /* ── GPS full-screen mode — permission/live/crash panels render their own dark chrome ── */
+  body.gps-fullscreen #mobileHeader,
+  body.gps-fullscreen #bottomNav,
+  body.gps-fullscreen #recordingPill{display:none !important;}
+  body.gps-fullscreen .container{height:100dvh;padding:0;overflow:hidden;}
+  .gps-panel{height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--dusk);}
+  .gps-panel.gps-light{background:var(--bg);}
+  /* ── GPS screens — shared header + centered confirm layout ── */
+  .gps-hdr{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;flex-shrink:0;color:var(--text);font-family:var(--serif);font-size:17px;font-weight:600;}
+  .gps-hdr.dark{color:var(--cream);border-bottom:0.5px solid rgba(255,255,255,0.08);}
+  .gps-back{width:36px;height:36px;border-radius:10px;border:none;background:none;color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .gps-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px;overflow-y:auto;}
+  .gps-center .strk-icon{margin-bottom:20px;}
+  .gps-center .strk-title{font-size:22px;}
+  /* ── GPS explain screen (step 0) ── */
+  .gps-explain{flex:1;overflow-y:auto;padding:24px 22px 28px;}
+  .gps-explain-icon{width:56px;height:56px;border-radius:18px;background:color-mix(in srgb,var(--sage) 35%,transparent);border:1px solid rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;margin-bottom:22px;}
+  .gps-explain-icon i{font-size:26px;color:var(--sage);}
+  .gps-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--sage);font-weight:600;}
+  .gps-explain-title{font-family:var(--serif);font-size:30px;font-weight:300;color:var(--cream);letter-spacing:-0.6px;line-height:1.05;margin-top:8px;margin-bottom:14px;}
+  .gps-explain-copy{font-size:13px;color:rgba(245,240,232,0.58);line-height:1.75;margin-bottom:26px;}
+  .gps-explain-card{background:rgba(255,255,255,0.055);border:0.5px solid rgba(255,255,255,0.08);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:22px;}
+  .gps-explain-lbl{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,240,232,0.32);margin-bottom:12px;}
+  .gps-explain-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:12px;color:rgba(245,240,232,0.6);line-height:1.55;}
+  .gps-explain-row:last-child{margin-bottom:0;}
+  .gps-explain-row i{font-size:15px;color:var(--sage);margin-top:1px;flex-shrink:0;}
+  .gps-explain-fine{font-size:11px;color:rgba(245,240,232,0.26);line-height:1.65;}
+  .gps-explain-cta{flex-shrink:0;padding:14px 22px 20px;background:linear-gradient(rgba(9,16,46,0),var(--dusk) 40%);}
+  /* ── Live Recording screen ── */
+  .gps-map-back{position:absolute;top:10px;left:10px;width:36px;height:36px;border-radius:10px;background:rgba(9,16,34,0.76);border:1px solid rgba(255,255,255,0.12);color:var(--cream);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+  .gps-map-pause{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:10px;background:rgba(9,16,34,0.76);border:1px solid rgba(255,255,255,0.12);color:var(--cream);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+  .gps-map-pill{position:absolute;top:10px;left:54px;display:flex;align-items:center;gap:6px;background:rgba(9,16,34,0.84);border-radius:var(--radius-pill);padding:5px 11px;border:1px solid rgba(255,80,20,0.42);backdrop-filter:blur(8px);height:36px;box-sizing:border-box;font-family:var(--mono);font-size:9px;color:#FF6030;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;}
+  .gps-map-pill.paused{border-color:rgba(255,184,0,0.45);color:var(--gold);}
+  .gps-map-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);flex-shrink:0;animation:recBlink 1.2s ease-in-out infinite;}
+  .gps-map-pill.paused .gps-map-dot{background:var(--gold);animation:none;}
+  .gps-stats-bar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:10px 14px;flex-shrink:0;}
+  .gps-live-dot{width:8px;height:8px;border-radius:50%;background:var(--sage);flex-shrink:0;animation:recBlink 1.5s ease-in-out infinite;}
+  .gps-section-lbl{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:600;}
+  .gps-mark-btn{font-size:11px;padding:4px 10px;border-radius:var(--radius-pill);border:0.5px solid var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage);cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:4px;}
+  .gps-stop-row{padding:9px 14px;border-top:0.5px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .gps-stop-dot{width:8px;height:8px;border-radius:50%;background:var(--fern);flex-shrink:0;}
+  .gps-stop-dot.cur{background:var(--sage);animation:recBlink 1.5s ease-in-out infinite;}
+  .gps-stop-btn{width:30px;height:30px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .gps-stop-btn.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage);}
+  .gps-note-wrap{margin:0 14px 8px;padding:9px 10px;background:var(--bg2);border:0.5px solid var(--sage);border-radius:var(--radius);}
+  .gps-note-wrap textarea{width:100%;font-size:12.5px;border:none;background:transparent;outline:none;font-family:var(--body);color:var(--text);resize:none;line-height:1.5;}
+  .gps-bottom-actions{background:var(--bg);border-top:0.5px solid var(--border);padding:10px 14px 12px;flex-shrink:0;}
+  .gps-quick-btn{flex:1;padding:9px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;cursor:pointer;font-family:var(--body);display:flex;align-items:center;justify-content:center;gap:5px;}
+  .gps-stop-cta{width:100%;padding:13px;border-radius:var(--radius-pill);border:none;background:var(--danger-text);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--body);display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:-0.2px;}
+  /* ── Review & Save screen ── */
+  .rcv-stat{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px 8px;text-align:center;}
+  .rcv-stat-v{font-size:13px;font-weight:700;color:var(--text);letter-spacing:-0.2px;}
+  .rcv-stat-l{font-family:var(--mono);font-size:8.5px;color:var(--text3);margin-top:3px;}
+  .rcv-removed-note{padding:7px 12px;background:color-mix(in srgb,var(--gold) 10%,transparent);border:0.5px solid color-mix(in srgb,var(--gold) 44%,transparent);border-radius:var(--radius);margin-bottom:10px;font-size:11px;color:#7A5C10;font-family:var(--mono);}
+  .rcv-leg{margin:5px 0;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 12px;}
+  .rcv-auto-badge{margin-left:auto;font-size:9px;padding:2px 7px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage);border:0.5px solid color-mix(in srgb,var(--sage) 33%,transparent);font-family:var(--mono);}
+  .rcv-edit-btn{font-size:10px;padding:3px 8px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--body);margin-left:6px;}
+  .rcv-mode-btn{font-size:11px;padding:4px 10px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--body);text-transform:capitalize;}
+  .rcv-mode-btn.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 15%,transparent);color:var(--sage);}
+  .rcv-stop-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 13px;margin-bottom:4px;}
+  .rcv-recorded-badge{margin-left:auto;font-size:9px;padding:1px 6px;border-radius:var(--radius-pill);background:rgba(255,80,20,0.1);color:#C84010;font-family:var(--mono);border:0.5px solid rgba(255,80,20,0.2);}
+  .rcv-note{width:100%;font-size:12px;padding:7px 9px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:var(--body);resize:none;outline:none;line-height:1.5;box-sizing:border-box;}
+  .rcv-add-photo{width:52px;height:48px;border-radius:var(--radius);border:0.5px dashed var(--sage);background:color-mix(in srgb,var(--sage) 8%,transparent);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sage);flex-shrink:0;}
+  .rcv-trash{width:28px;height:28px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .rcv-footer{padding:11px 14px;background:var(--bg);border-top:0.5px solid var(--border);flex-shrink:0;}
   #guestBanner{display:none !important;}
   .plan-hero-new{padding:20px 16px 16px !important;text-align:left !important;}
   .plan-hero-kicker{font-size:9.5px;}
@@ -1056,14 +1279,38 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-header{flex-direction:column !important;align-items:flex-start !important;gap:4px !important;margin-bottom:12px !important;}
   .jd-header-actions{flex-wrap:wrap !important;gap:8px !important;margin-top:6px !important;}
   .jd-collab-wrap{display:none !important;}
+  .jd-desktop-actions{display:none !important;}
+  .jd-mobile-share{display:inline-flex !important;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);flex-shrink:0;}
+  .jd-mobile-cta{display:flex !important;flex-direction:column;position:sticky;bottom:64px;z-index:20;margin:16px -0.875rem 0;padding:11px 14px;background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
+  /* ── Trip Editor — mobile fixed bottom save bar (the top save-trip-bar scrolls away on long trips) ── */
+  .rec-mobile-save-bar{display:flex !important;gap:8px;position:sticky;bottom:64px;z-index:20;margin:16px -0.875rem 0;padding:11px 14px;background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
+  .rec-mobile-cancel{padding:12px 16px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);flex-shrink:0;}
+  .rec-mobile-save{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
+  .jd-mobile-cta-row{display:flex;gap:8px;align-items:center;}
+  .jd-manual-link{display:block !important;width:100%;margin-top:8px;background:none;border:none;font-size:11.5px;color:var(--text3);cursor:pointer;font-family:var(--body);text-align:center;}
+  .jd-mobile-cta-edit{padding:12px 16px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:6px;flex-shrink:0;}
+  .jd-mobile-cta-primary{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
+  .jd-mobile-cta-primary span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .jd-stop-ctrl{display:flex !important;align-items:center;justify-content:center;width:44px;height:44px;border-radius:var(--radius-pill);border:0.5px solid var(--danger-border);background:var(--danger-bg);color:var(--danger-text);flex-shrink:0;}
   .jd-rec-cta{font-size:12px !important;padding:5px 10px !important;}
   .jd-title{font-size:20px !important;}
-  .jd-summary{grid-template-columns:repeat(2,1fr) !important;}
+  .jd-summary{grid-template-columns:repeat(4,1fr) !important;}
+  .jd-metric{padding:10px 8px !important;text-align:center;}
+  .jd-metric-lbl{font-size:8.5px !important;letter-spacing:0.5px !important;margin-bottom:3px !important;}
+  .jd-metric-val{font-size:16px !important;font-weight:700 !important;}
+  .jd-metric-val span{display:block;font-size:9px !important;margin-top:1px;}
+  .jd-metric-progress{display:none !important;}
+  .jd-metric-km{display:block !important;}
+  .jd-metric-stops{order:1;}
+  .jd-metric-duration{order:2;}
+  .jd-metric-spent{order:3;}
+  .jd-metric-km{order:4;}
   .jd-leg-cards{grid-template-columns:1fr !important;}
   .jd-tabs{flex-wrap:wrap;}
   .res-overview-card{display:none !important;}
   .jd-tab.rec{display:none !important;}
-  .jd-mini-map{display:block !important;height:160px !important;border-radius:10px;overflow:hidden;margin-bottom:14px;}
+  .jd-mini-map{display:block !important;height:160px !important;border-radius:10px;overflow:hidden;margin-bottom:4px;}
+  .jd-mini-map-pill{display:flex !important;}
   .rj-header{flex-wrap:wrap;gap:8px;}
   .rj-card-grid{grid-template-columns:1fr !important;}
   .rj-sticky{bottom:64px !important;}
@@ -1071,15 +1318,28 @@ window.addEventListener('unhandledrejection', (e) => {
   .jrnl-header-top{flex-direction:column;gap:10px;}
   .jrnl-search{width:100% !important;}
   .jrnl-search input{width:100% !important;}
+  .jrnl-chips{flex-wrap:nowrap !important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -0.875rem;padding:0 0.875rem 12px;}
+  .jrnl-chips::-webkit-scrollbar{display:none;}
+  .jrnl-chip{white-space:nowrap;flex-shrink:0;}
   .jrnl-featured{grid-template-columns:1fr !important;}
   .jrnl-feat-img{height:180px;}
   .jrnl-body{padding:16px !important;}
-  .profile-hero-grid{grid-template-columns:56px 1fr !important;gap:12px !important;}
-  .profile-hero-grid > *:nth-child(3){grid-column:1 / -1;text-align:left;}
-  .profile-meta-grid{grid-template-columns:1fr !important;}
+  /* v2 ProfileMobile — dark hero keeps avatar/name/karma in one row, stats go 2×2 */
+  .profile-hero-grid{grid-template-columns:48px 1fr auto !important;gap:12px !important;padding:18px 16px !important;}
+  .profile-avatar{width:48px !important;height:48px !important;font-size:22px !important;}
+  .profile-karma-val{font-size:30px !important;}
+  .profile-meta-grid{grid-template-columns:repeat(2,1fr) !important;gap:8px !important;}
+  .profile-2col{grid-template-columns:1fr !important;}
+  .profile-trips-grid{grid-template-columns:1fr !important;}
   .profile-badges-grid{display:flex !important;overflow-x:auto;gap:10px;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;}
   .profile-badges-grid::-webkit-scrollbar{display:none;}
   .profile-badges-grid > div{flex:0 0 82px;}
+}
+/* ── GPS recording is mobile-only — explicit redundant guard (docs/gps-recording-feature.md §14 Rule 1).
+     .bottom-nav/.mobile-header are already display:none by default above 640px, but recording
+     elements get their own guard on top so a future nav refactor can't silently re-expose them. ── */
+@media (min-width:641px){
+  #bnRecord, #recordingPill, .record-entry { display:none !important; }
 }
 </style>
 </head>
@@ -1118,6 +1378,14 @@ window.addEventListener('unhandledrejection', (e) => {
 </nav>
 
 <div class="container">
+
+  <!-- Persistent recording indicator (feature doc §13.1) — mobile only, live while a GPS/manual session is active -->
+  <button id="recordingPill" class="record-entry" style="display:none" onclick="onRecordingPillTap()">
+    <span class="rp-dot"></span>
+    <span class="rp-label">Recording</span>
+    <span class="rp-meta" id="recordingPillMeta"></span>
+    <span class="rp-cta">tap to return</span>
+  </button>
 
   <!-- PLAN TAB -->
   <div id="plan" class="panel active">
@@ -1278,6 +1546,10 @@ window.addEventListener('unhandledrejection', (e) => {
       <span id="budgStatus" style="font-size:12px;color:var(--text2);margin-left:4px"></span>
     </div>
     <div id="budgetBar"></div>
+    <div class="rec-mobile-save-bar">
+      <button class="rec-mobile-cancel" onclick="cancelEditTrip()">Cancel</button>
+      <button class="rec-mobile-save" onclick="saveCurrentTrip()"><i class="ph ph-floppy-disk"></i> Save changes</button>
+    </div>
   </div>
 
   <!-- MY TRIPS TAB -->
@@ -1299,6 +1571,33 @@ window.addEventListener('unhandledrejection', (e) => {
   <input id="rjPhotoInput" type="file" accept="image/*" style="display:none"/>
   <input id="rjScanInput" type="file" accept="image/*" capture="environment" style="display:none"/>
 
+  <!-- STOP TRACKING (11) — opened from Journey Detail's recording control -->
+  <div id="stoprec" class="panel">
+    <div id="stopRecPanel"><!-- filled by renderStopRec() --></div>
+  </div>
+
+  <!-- ENABLE TRACKING (10) — GPS permissions + no-GPS fallback, opened from the Record FAB -->
+  <div id="gpsperms" class="panel">
+    <div id="gpsPermsPanel"><!-- filled by renderGpsPerms() --></div>
+  </div>
+
+  <!-- LIVE RECORDING (12) — active GPS session -->
+  <div id="liverecord" class="panel">
+    <div id="liverecordPanel"><!-- filled by renderLiveRecord() --></div>
+  </div>
+  <input id="gpsPhotoInput" type="file" accept="image/*" style="display:none"/>
+
+  <!-- REVIEW & SAVE (13) — after a GPS session ends -->
+  <div id="recreview" class="panel">
+    <div id="recReviewPanel"><!-- filled by renderRecReview() --></div>
+  </div>
+  <input id="gpsReviewPhotoInput" type="file" accept="image/*" style="display:none"/>
+
+  <!-- CRASH RECOVERY (14) — resume an interrupted GPS session -->
+  <div id="crashrecover" class="panel">
+    <div id="crashRecoverPanel"><!-- filled by renderCrashRecover() --></div>
+  </div>
+
   <!-- JOURNALS TAB -->
   <div id="journals" class="panel">
     <div id="journalsPanel"><!-- filled by renderJournalsPanel() --></div>
@@ -1309,8 +1608,14 @@ window.addEventListener('unhandledrejection', (e) => {
     <div id="profilePanel"><!-- filled by renderProfilePanel() --></div>
   </div>
 
+  <!-- UPGRADE / GO PRO — opened from Pro CTAs (My Trips upsell, route-limit gate) -->
+  <div id="upgrade" class="panel">
+    <div id="upgradePanel"><!-- filled by renderUpgrade() --></div>
+  </div>
+
   <!-- CONTRIB MODAL (global overlay) -->
   <div id="contribModal" style="display:none"></div>
+  <div id="deleteTripSheet" style="display:none"></div>
 
   <!-- AUTH MODAL — native (Capacitor) only; web still uses auth.html -->
   <div id="authModal" style="display:none"></div>
@@ -1801,7 +2106,10 @@ async function init() {
     '09-my-journals':'/journals/mine','profile':'/profile','admin':'/admin' };
   let entryPath = (_entryHash && legacy[_entryHash]) ? legacy[_entryHash] : _entryPath;
   if (params.get('jrnl') === 'my') { _jrnlFilter = 'My Journals'; entryPath = '/journals'; }
-  routeFromPath(entryPath);
+  // Crash recovery (§13.4) — an un-cleared GPS checkpoint from a prior session
+  // means recording never got a clean "stop", so this takes over routing for this boot.
+  if (gpsReadCheckpoint() && !_gps.mode) switchTab('crashrecover', null);
+  else routeFromPath(entryPath);
   window.addEventListener('popstate', () => routeFromPath());
 
   // ── Auto-fill + auto-trigger from URL params (?from=X&to=Y&via=Z) ──
@@ -1892,6 +2200,11 @@ function newTripId() {
 // to "open the journal", never back to "start recording from scratch".
 function _journalHasContent(t) {
   return !!t.recordingStarted || (t.stops||[]).some(s => s.visited || (s.diary && s.diary.trim()));
+}
+// Guards against malformed trip data where a stop's name isn't a string
+// (some older/imported/hand-seeded trips have hit this) — never throw, just fall back.
+function _stopCityName(name) {
+  return (typeof name === 'string' ? name.split(',')[0] : '') || '?';
 }
 
 // Shared cloud-persist for a single trip object (used by Journey Detail, Record Journal, Save-to-Trips).
@@ -2224,16 +2537,40 @@ function startNewTrip() {
 // Editor: leave without saving.
 function cancelEditTrip() { goToMyTrips(); }
 // Editor: delete the trip being edited (local + cloud).
+let _deleteTripConfirmOpen = false;
 function deleteCurrentTrip() {
   if (!currentTripId) { goToMyTrips(); return; }
+  _deleteTripConfirmOpen = true;
+  renderDeleteTripSheet();
+}
+function renderDeleteTripSheet() {
+  const el = document.getElementById('deleteTripSheet');
+  if (!el) return;
+  if (!_deleteTripConfirmOpen) { el.style.display = 'none'; el.innerHTML = ''; return; }
   const trips = storage.get('trips') || [];
   const t = trips.find(x => x.id === currentTripId);
-  if (!confirm(`Delete “${(t?.title || tripRouteName(t) || 'this trip')}”? This can’t be undone.`)) return;
+  const title = (t?.title || tripRouteName(t) || 'this trip').replace(/</g, '&lt;');
+  el.style.display = 'block';
+  el.innerHTML = `<div class="del-sheet-overlay" onclick="if(event.target===this){_deleteTripConfirmOpen=false;renderDeleteTripSheet();}">
+    <div class="del-sheet" onclick="event.stopPropagation()">
+      <div class="del-sheet-title">Delete this trip?</div>
+      <div class="del-sheet-body">This will permanently remove "${title}" and all its stops and legs.</div>
+      <div class="del-sheet-actions">
+        <button class="del-sheet-cancel" onclick="_deleteTripConfirmOpen=false;renderDeleteTripSheet()">Cancel</button>
+        <button class="del-sheet-confirm" onclick="confirmDeleteTrip()">Delete</button>
+      </div>
+    </div>
+  </div>`;
+}
+function confirmDeleteTrip() {
+  const trips = storage.get('trips') || [];
   storage.set('trips', trips.filter(x => x.id !== currentTripId));
   if (currentUser && _UUID_RE.test(currentTripId)) {
     try { sb.from('trips').delete().eq('id', currentTripId).eq('user_id', currentUser.id); } catch(e) {}
   }
   currentTripId = null;
+  _deleteTripConfirmOpen = false;
+  renderDeleteTripSheet();
   goToMyTrips();
 }
 
@@ -3083,9 +3420,15 @@ function pathForScreen(tab) {
     case 'mytrips':       return '/trips';
     case 'journey':       return _journeyTrip ? `/trips/${_journeyTrip.id}` : '/trips';
     case 'recordjournal': return _recTrip ? `/trips/${_recTrip.id}/journal` : '/trips';
+    case 'stoprec':       return _journeyTrip ? `/trips/${_journeyTrip.id}/stop` : '/trips';
+    case 'gpsperms':      return '/trips';
+    case 'liverecord':    return '/trips';
+    case 'recreview':     return '/trips';
+    case 'crashrecover':  return '/trips';
     case 'record':        return currentTripId ? `/trips/${currentTripId}/edit` : '/trips/new';
     case 'journals':      return _jrnlFilter === 'My Journals' ? '/journals/mine' : '/journals';
     case 'profile':       return '/profile';
+    case 'upgrade':       return '/profile';
     case 'admin':         return '/admin';
     default:              return '/' + tab;
   }
@@ -3120,10 +3463,17 @@ function switchTab(id, el) {
   if (btn) btn.classList.add('active');
   document.getElementById(id).classList.add('active');
   if (id === 'record')   { render(); }
+  if (id === 'stoprec')  { renderStopRec(); }
+  if (id === 'gpsperms')     { renderGpsPerms(); }
+  if (id === 'liverecord')   { const gi = document.getElementById('gpsPhotoInput'); if (gi) gi.onchange = gpsOnPhotoSelected; renderLiveRecord(); }
+  if (id === 'recreview')    { const gri = document.getElementById('gpsReviewPhotoInput'); if (gri) gri.onchange = gpsReviewOnPhotoSelected; renderRecReview(); }
+  if (id === 'crashrecover') { renderCrashRecover(); }
+  document.body.classList.toggle('gps-fullscreen', id === 'gpsperms' || id === 'liverecord' || id === 'crashrecover');
   if (id === 'admin')    { renderAdminTab(); renderReviewQueue(); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
   if (id === 'journals') { renderJournalsPanel(); }
   if (id === 'profile')  { renderProfilePanel(); }
+  if (id === 'upgrade')  { renderUpgrade(); }
   if (id === 'plan' && !lastSuggestion) { renderPlanLanding(); }
   if (id === 'plan')     { renderGuestBanner(); }
   // Floating route map only belongs on the plan tab while results are shown.
@@ -3430,6 +3780,7 @@ async function importPolarstepsBuild(index, candidatesOverride) {
       if (folder) usedFolders.add(folder);
 
       const photos = [];
+      const photoThumbs = [];
       if (folder) {
         const photoPaths = Object.keys(zip.files)
           .filter(p => p.startsWith(`${candidate.folder}/${folder}/photos/`) && !zip.files[p].dir)
@@ -3442,7 +3793,9 @@ async function importPolarstepsBuild(index, candidatesOverride) {
           // back to the inline data URL on failure (guest user, offline, bucket missing).
           try {
             const dataUrl = await _compressImageFile(await zip.files[pp].async('blob'), 900, 0.6);
-            photos.push(await _uploadPhotoToStorage(dataUrl, tripId));
+            const { url, thumbUrl } = await _uploadPhotoToStorage(dataUrl, tripId);
+            photos.push(url);
+            photoThumbs.push(thumbUrl);
           } catch (e) { /* one bad photo shouldn't fail the whole stop */ }
         }
       }
@@ -3458,7 +3811,7 @@ async function importPolarstepsBuild(index, candidatesOverride) {
         accomSites: [], accomNote: '',
         visited: true,
         diary: (step.description || '').trim(),
-        photos,
+        photos, photoThumbs,
         ...(hasCoords ? { lat: step.location.lat, lon: step.location.lon } : {}),
       });
     }
@@ -3566,7 +3919,7 @@ async function planRoute() {
   const allowed = await checkAndGate('routePlans');
   if (!allowed) {
     document.getElementById('planResult').style.display = 'block';
-    document.getElementById('planResult').innerHTML = `<div class="gate-msg"><h3>Monthly limit reached</h3><p>You've used all your free route plans this month. Upgrade to Pro for unlimited searches.</p><a href="/index.html" class="btn btn-primary">Upgrade to Pro</a></div>`;
+    document.getElementById('planResult').innerHTML = `<div class="gate-msg"><h3>Monthly limit reached</h3><p>You've used all your free route plans this month. Upgrade to Pro for unlimited searches.</p><a href="#" class="btn btn-primary" onclick="openUpgrade();return false;">Upgrade to Pro</a></div>`;
     return;
   }
 
@@ -4846,7 +5199,11 @@ function renderSegs() {
       departHtml = `<span class="stop-date-lbl" style="margin-left:4px">→ Depart</span>
                     <span class="stop-depart-computed">${dep.toLocaleDateString('en',{month:'short',day:'numeric'})}</span>`;
     }
-    const daysBadge = s.days ? `<span class="stop-days-badge">${s.days}d</span>` : '';
+    const daysBadge = `<div class="stop-days-stepper">
+      <button onclick="stepStopDays(${i},-1)">−</button>
+      <span>${s.days||0}d</span>
+      <button onclick="stepStopDays(${i},1)">+</button>
+    </div>`;
 
     h += `<div class="seg">
       <div class="seg-l">
@@ -5536,7 +5893,7 @@ function renderMyTripsPanel() {
       <div style="margin-top:16px;border:0.5px solid var(--border);border-left:3px solid var(--gold);border-radius:var(--radius);padding:14px 16px;text-align:left;max-width:420px;margin-left:auto;margin-right:auto;background:var(--bg2)">
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">✦ bysloth Pro — €6/month</div>
         <div style="font-size:12px;color:var(--text2);line-height:1.6">Unlimited routes · offline maps · journal export · no ads</div>
-        <button class="btn btn-primary" style="margin-top:10px;font-size:12px;padding:6px 14px">Upgrade →</button>
+        <button class="btn btn-primary" style="margin-top:10px;font-size:12px;padding:6px 14px" onclick="openUpgrade()">Upgrade →</button>
       </div>
     </div>`;
     return;
@@ -5545,10 +5902,10 @@ function renderMyTripsPanel() {
   // ── Trips tab ──────────────────────────────────────────────────
   if (_myTripsTab === 'trips') {
     const tagged = trips.map(t => ({ t, st: stateOf(t) }));
-    const rowsHtml = tagged.length ? tagged.map(({ t, st }) => {
+    const rowsHtml = tagged.length ? tagged.map(({ t, st }) => { try {
       const sc       = t.stops?.length || 0;
       const legs     = t.legs || [];
-      const route    = sc >= 2 ? `${t.stops[0].name?.split(',')[0]||'?'} → ${t.stops[sc-1].name?.split(',')[0]||'?'}` : '';
+      const route    = sc >= 2 ? `${_stopCityName(t.stops[0].name)} → ${_stopCityName(t.stops[sc-1].name)}` : '';
       const name     = (t.title||'').trim();
       const primary  = name || route || 'Untitled';
       // Duration from stop dates
@@ -5570,7 +5927,10 @@ function renderMyTripsPanel() {
       const isPublished = !!t.published;
       const hasContent  = _journalHasContent(t);
       const isRecording = hasContent && !t.recordingStopped && !isPublished;
-      const journalBtn = !hasContent
+      const isGpsTracking = !!(_gps.mode && _gps.planned?.id === t.id);
+      const journalBtn = isGpsTracking
+        ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openJourneyDetailById('${t.id}')"><span class="mytrips-rec-dot"></span> Tracking</button>`
+        : !hasContent
         ? `<button class="mytrips-act-btn" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Start journal</button>`
         : isRecording
           ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><span class="mytrips-rec-dot"></span> Recording</button>`
@@ -5579,6 +5939,7 @@ function renderMyTripsPanel() {
         <div>
           <div class="mtr-head">
             <span class="mtr-title">${primary}</span>
+            ${t.source === 'recorded' ? `<span class="mytrips-recorded-badge"><span class="mytrips-recorded-dot"></span> Recorded</span>` : ''}
             <span class="mytrips-status-pill" style="border-color:${st.color};color:${st.color};background:color-mix(in srgb,${st.color} 10%,transparent)">${st.label}</span>
           </div>
           ${sub ? `<div class="mytrips-row-sub">${sub}</div>` : ''}
@@ -5591,7 +5952,17 @@ function renderMyTripsPanel() {
           ${journalBtn}
         </div>
       </div>`;
-    }).join('') : `<div style="padding:2.5rem;text-align:center;font-size:13px;color:var(--text3)">No trips yet.</div>`;
+    } catch (e) {
+      // One malformed trip must never take down the whole My Trips list (or, since this
+      // renders during init(), the whole app) — skip it with a visible placeholder instead.
+      console.error('renderMyTripsPanel: skipping malformed trip', t?.id, e);
+      return `<div class="mytrips-table-row" style="opacity:0.6">
+        <div>
+          <div class="mtr-head"><span class="mtr-title">${(t?.title || 'Untitled trip').toString()}</span></div>
+          <div class="mytrips-row-sub">Couldn't display this trip — its data looks corrupted.</div>
+        </div>
+      </div>`;
+    } }).join('') : `<div style="padding:2.5rem;text-align:center;font-size:13px;color:var(--text3)">No trips yet.</div>`;
 
     const allLegs   = trips.flatMap(t => t.legs||[]);
     const totalKm   = Math.round(allLegs.reduce((a,l)=>a+(+l.km||0),0));
@@ -5653,6 +6024,11 @@ let _jdTab = 'journey';
 let _jdMap = null;
 let _jdDiaryTimer = null;
 let _jdPhotoIdx = {}; // stop index -> currently-shown photo index (Journey tab, read-only)
+// Live-tracking-mode UI state (06.1/06.2 — only meaningful while isTracking)
+let _jdManualCurrent = 0;          // manual mode's user-declared "I am here" stop index
+let _jdDismissedDetections = new Set(); // GPS-detected stop names the user dismissed this session
+let _jdEditLeg = -1;                // which leg's inline edit accordion is open
+let _jdAddStopOpen = false;
 
 // Look up by id at click-time instead of embedding the full trip (photos
 // included) into every list row's onclick attribute — see openJourneyDetailById.
@@ -5700,6 +6076,902 @@ function jdSaveDiary(i, val) {
   _jdDiaryTimer = setTimeout(jdPersist, 400);
 }
 
+// ── Live-tracking-mode Journey tab controls (06.1/06.2) ──────────────
+function jdMoveStop(i, dir) {
+  const stops = _journeyTrip.stops;
+  const j = i + dir;
+  if (j < 0 || j >= stops.length) return;
+  [stops[i], stops[j]] = [stops[j], stops[i]];
+  if (_jdManualCurrent === i) _jdManualCurrent = j;
+  else if (_jdManualCurrent === j) _jdManualCurrent = i;
+  jdPersist();
+  renderJourneyDetail();
+}
+function jdEditDays(i, val) {
+  const s = _journeyTrip.stops[i];
+  s.days = Math.max(0, +val || 0);
+  s.daysAuto = false;
+  jdPersist();
+  renderJourneyDetail();
+}
+// Voice-to-text for the inline journal entry — real Web Speech API, appends
+// to whatever's already written rather than replacing it (a lighter-weight
+// sibling of Record Journal's recStartVoice(), no confirm-overlay needed here).
+function jdVoiceCapture(i) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Voice input is not supported in this browser.'); return; }
+  const btn = document.querySelector(`.jd-voice-btn[data-i="${i}"]`);
+  if (btn) btn.classList.add('listening');
+  try {
+    const rec = new SR();
+    rec.lang = 'en-US'; rec.interimResults = false; rec.maxAlternatives = 1;
+    rec.onresult = (ev) => {
+      const t = (ev.results[0][0].transcript || '').trim();
+      if (t) {
+        const s = _journeyTrip.stops[i];
+        s.diary = (s.diary ? s.diary + ' ' : '') + t;
+        const ta = document.querySelector(`.jd-diary[data-i="${i}"]`);
+        if (ta) ta.value = s.diary;
+        jdPersist();
+      }
+    };
+    rec.onerror = () => { if (btn) btn.classList.remove('listening'); };
+    rec.onend = () => { if (btn) btn.classList.remove('listening'); };
+    rec.start();
+  } catch (e) { if (btn) btn.classList.remove('listening'); }
+}
+function jdMarkCurrentStop(i) {
+  _jdManualCurrent = i;
+  renderJourneyDetail();
+}
+// GPS auto-detected-stop inline confirm/dismiss (§ "Stop detected" card) —
+// confirming inserts it right after the current stop; the end-of-session
+// gpsMergeIntoPlannedTrip() is the safety net for anything left unconfirmed.
+function jdConfirmDetection() {
+  const t = _journeyTrip;
+  const last = _gps.stops[_gps.stops.length - 1];
+  if (!t || !last) return;
+  const curIdx = jdCurrentStopIdx(t.stops, false);
+  t.stops.splice(curIdx + 1, 0, {
+    name: last.name, date: last.arrived_at.slice(0, 10), days: 1, visited: true,
+    diary: last.diary || '', photos: last.photos || [], _unplanned: true, _recorded: true
+  });
+  jdPersist();
+  renderJourneyDetail();
+}
+function jdDismissDetection() {
+  const last = _gps.stops[_gps.stops.length - 1];
+  if (last) _jdDismissedDetections.add(last.name);
+  renderJourneyDetail();
+}
+// "+ Add stop" inline form — inserts after the current position, matching
+// the planned-vs-actual insertion point used by jdConfirmDetection().
+function jdInsertStop() {
+  const city = document.getElementById('jdNewStopCity')?.value.trim();
+  if (!city) return;
+  const cc = document.getElementById('jdNewStopCC')?.value.trim();
+  const date = document.getElementById('jdNewStopDate')?.value.trim();
+  const t = _journeyTrip;
+  const at = jdCurrentStopIdx(t.stops, _gps.mode === 'manual');
+  t.stops.splice(at + 1, 0, { name: cc ? `${city}, ${cc}` : city, date: date || '', days: 1, visited: true, _recorded: true });
+  if (_jdManualCurrent > at) _jdManualCurrent++;
+  jdPersist();
+  _jdAddStopOpen = false;
+  renderJourneyDetail();
+}
+function jdToggleEditLeg(i) {
+  _jdEditLeg = _jdEditLeg === i ? -1 : i;
+  renderJourneyDetail();
+}
+function jdUpdateLegField(i, field, val) {
+  const leg = _journeyTrip.legs[i]; if (!leg) return;
+  leg[field] = (field === 'cost') ? (+val || 0) : val;
+  jdPersist();
+  renderJourneyDetail();
+}
+function jdUpdateAccom(stopIdx, val) {
+  const s = _journeyTrip.stops[stopIdx]; if (!s) return;
+  s.accomNote = val;
+  jdPersist();
+}
+function jdToggleLegBooked(i) {
+  const leg = _journeyTrip.legs[i]; if (!leg) return;
+  leg.booked = !leg.booked;
+  jdPersist();
+  renderJourneyDetail();
+}
+
+// ── [11] Stop tracking — confirm → publish → done ───────────────────
+let _stopRecStep = 'confirm';
+function openStopRec(trip) {
+  _journeyTrip = trip;
+  _stopRecStep = 'confirm';
+  switchTab('stoprec', null);
+  document.getElementById('navbtn_mytrips')?.classList.add('active');
+}
+function stopRecKeepTracking() { openJourneyDetail(_journeyTrip); }
+function stopRecStopAndSave() {
+  if (!_journeyTrip) return;
+  _journeyTrip.recordingStopped = true;
+  jdPersist();
+  _stopRecStep = 'publish';
+  renderStopRec();
+}
+function stopRecSlug(t) {
+  const first = String(t.stops[0]?.name || 'trip').toLowerCase();
+  const last  = String(t.stops[t.stops.length - 1]?.name || '').toLowerCase();
+  return `${first}-${last}-2026`.replace(/[^a-z0-9-]/g, '');
+}
+function stopRecPublish() {
+  const t = _journeyTrip; if (!t) return;
+  t.published = true;
+  t.visibility = 'anyone';
+  t.public_slug = t.public_slug || stopRecSlug(t);
+  t.published_at = new Date().toISOString();
+  jdPersist();
+  _stopRecStep = 'done';
+  renderStopRec();
+}
+function stopRecKeepPrivate() {
+  if (_journeyTrip) { _journeyTrip.published = false; jdPersist(); }
+  openJourneyDetail(_journeyTrip);
+}
+function stopRecViewPublic() {
+  const t = _journeyTrip; if (!t) return;
+  const base = window.location.origin;
+  const url = t.public_slug ? `${base}/journey/${t.public_slug}` : `${base}/journey.html?id=${t.id}`;
+  _openJourneyLink(url);
+}
+
+function renderStopRec() {
+  const el = document.getElementById('stopRecPanel');
+  const t = _journeyTrip;
+  if (!el || !t) return;
+  const stops = t.stops || [];
+  const visited = stops.filter(s => s.visited).length;
+  const photos = stops.reduce((a, s) => a + ((s.photos || []).length), 0);
+  const ds = stops.map(s => s.date ? new Date(s.date + 'T00:00') : null).filter(Boolean);
+  const days = ds.length >= 2 ? Math.round((ds[ds.length - 1] - ds[0]) / 864e5) : stops.reduce((a, s) => a + (+s.days || 0), 0);
+
+  let h = '';
+  if (_stopRecStep === 'confirm') {
+    h = `<div class="strk-wrap">
+      <div class="strk-icon stop"><i class="ph ph-stop-circle" style="font-size:32px;color:var(--danger-text)"></i></div>
+      <div class="strk-title">Stop tracking?</div>
+      <div class="strk-copy">Your journal auto-saves. You can start tracking again any time from this trip.</div>
+      <div class="strk-summary">
+        <div class="strk-summary-lbl">Session summary</div>
+        <div class="strk-summary-grid">
+          <div><div class="strk-summary-val">${visited}</div><div class="strk-summary-lbl2">stops logged</div></div>
+          <div><div class="strk-summary-val">${photos}</div><div class="strk-summary-lbl2">photos</div></div>
+          <div><div class="strk-summary-val">${days || 0}</div><div class="strk-summary-lbl2">days</div></div>
+        </div>
+      </div>
+      <button class="strk-cta danger" onclick="stopRecStopAndSave()"><i class="ph ph-check"></i> Stop &amp; save journal</button>
+      <button class="strk-ghost" onclick="stopRecKeepTracking()">Keep tracking</button>
+    </div>`;
+  } else if (_stopRecStep === 'publish') {
+    h = `<div class="strk-wrap">
+      <div class="strk-icon pub"><i class="ph ph-check-circle" style="font-size:32px;color:var(--sage)"></i></div>
+      <div class="strk-title">Journal saved.</div>
+      <div class="strk-copy">Publish your ${t.title || 'journey'} as a public diary? Others can read it, but only you can edit it.</div>
+      <button class="strk-cta" onclick="stopRecPublish()"><i class="ph ph-globe"></i> Publish journey</button>
+      <button class="strk-ghost outline" onclick="stopRecKeepPrivate()">Keep private</button>
+    </div>`;
+  } else {
+    h = `<div class="strk-wrap">
+      <div class="strk-icon pub"><i class="ph ph-globe-hemisphere-west" style="font-size:32px;color:var(--sage)"></i></div>
+      <div class="strk-title">Journey published.</div>
+      <div class="strk-copy">Your ${t.title || 'journey'} diary is live${t.public_slug ? ` at ${window.location.host}/journey/${t.public_slug}` : ''}.</div>
+      <button class="strk-cta" onclick="stopRecViewPublic()">View public journey <i class="ph ph-arrow-right"></i></button>
+      <button class="strk-ghost" onclick="goToMyTrips()">Back to My Trips</button>
+    </div>`;
+  }
+  el.innerHTML = h;
+}
+
+// ══════════════════ GPS Live Recording engine (docs/gps-recording-feature.md) ══════════════════
+// Guard rule 2 (§14): every function touching the plugin or its data must check this first.
+function gpsIsNative() { return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }
+function gpsPlugin() { return window.Capacitor?.Plugins?.BackgroundGeolocation; }
+
+const GPS_DWELL_METERS = 500;
+const GPS_DWELL_MS = 20 * 60 * 1000; // 20 min — §4 dwell algorithm
+const GPS_CHECKPOINT_KEY = 'gpsCheckpoint';
+
+let _gps = {
+  mode: null,          // 'gps' | 'manual' | null
+  planned: null,       // planned trip being tracked against (Mode A), or null (Mode B — fresh)
+  watcherId: null,
+  paused: false,
+  startedAt: 0,
+  positions: [],        // {lat,lon,speed,time}
+  stops: [],            // detected/confirmed stops this session
+  legs: [],              // legs between stops this session
+  dwellStart: null,     // {lat,lon,time} candidate dwell anchor
+  lastFlush: 0,
+};
+
+function gpsDistanceMeters(a, b) {
+  const R = 6371000;
+  const dLat = (b.lat - a.lat) * Math.PI / 180, dLon = (b.lon - a.lon) * Math.PI / 180;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+function gpsModeFromSpeedKmh(kmh) {
+  if (kmh < 7) return 'walk';
+  if (kmh < 25) return 'bike';
+  if (kmh < 100) return 'bus';
+  if (kmh < 250) return 'train';
+  return 'flight';
+}
+function gpsTotalKm() {
+  let km = 0;
+  for (let i = 1; i < _gps.positions.length; i++) km += gpsDistanceMeters(_gps.positions[i - 1], _gps.positions[i]) / 1000;
+  return km;
+}
+
+// Called on every location update from the watcher (or a manual "Mark as stop" tap).
+function gpsOnLocation(loc) {
+  if (!loc) return;
+  const pt = { lat: loc.latitude, lon: loc.longitude, speed: loc.speed || 0, time: loc.time || Date.now() };
+  if (_gps.paused) return;
+  _gps.positions.push(pt);
+
+  if (!_gps.dwellStart) { _gps.dwellStart = pt; }
+  else {
+    const d = gpsDistanceMeters(_gps.dwellStart, pt);
+    if (d > GPS_DWELL_METERS) { _gps.dwellStart = pt; }
+    else if (pt.time - _gps.dwellStart.time >= GPS_DWELL_MS) {
+      gpsMaybeCreateStop(_gps.dwellStart);
+      _gps.dwellStart = pt;
+    }
+  }
+  gpsFlushCheckpoint();
+  // Lightweight — just move the map layers. A full re-render only happens when a stop is added,
+  // so the map doesn't tear down and re-fit its view on every raw position ping.
+  if (document.getElementById('liverecordPanel')?.offsetParent) gpsUpdateLiveMapLayers();
+}
+
+async function gpsMaybeCreateStop(pt) {
+  const near = _gps.stops.find(s => gpsDistanceMeters(s, pt) < 300);
+  if (near) return;
+  const name = await reverseGeocode(pt.lat, pt.lon) || `${pt.lat.toFixed(3)}, ${pt.lon.toFixed(3)}`;
+  const stop = { name, lat: pt.lat, lon: pt.lon, arrived_at: new Date(pt.time).toISOString(), visited: true, _recorded: true };
+  if (_gps.stops.length) gpsCloseLeg(_gps.stops[_gps.stops.length - 1], stop);
+  _gps.stops.push(stop);
+  gpsFlushCheckpoint();
+  if (document.getElementById('liverecordPanel')?.offsetParent) renderLiveRecord();
+  gpsSyncPill();
+}
+
+function gpsCloseLeg(fromStop, toStop) {
+  const fromT = Date.parse(fromStop.arrived_at), toT = Date.parse(toStop.arrived_at);
+  const seg = _gps.positions.filter(p => p.time >= fromT && p.time <= toT);
+  let km = 0;
+  for (let i = 1; i < seg.length; i++) km += gpsDistanceMeters(seg[i - 1], seg[i]) / 1000;
+  const hours = (toT - fromT) / 36e5;
+  const avgKmh = hours > 0 ? km / hours : 0;
+  _gps.legs.push({
+    from: fromStop.name, to: toStop.name, mode: gpsModeFromSpeedKmh(avgKmh),
+    km: Math.round(km), hours: +hours.toFixed(1), cost: null, notes: '', confidence: 'check', _recorded: true
+  });
+}
+
+// Manual override — "+ Mark as stop" (§13.3), bypasses the dwell threshold.
+async function gpsMarkStopNow() {
+  const last = _gps.positions[_gps.positions.length - 1];
+  if (!last) return;
+  await gpsMaybeCreateStop(last);
+}
+
+// Flushed at most once per position update but throttled — crash recovery (§13.4).
+function gpsFlushCheckpoint() {
+  const now = Date.now();
+  if (now - _gps.lastFlush < 60000) return;
+  _gps.lastFlush = now;
+  localStorage.setItem(GPS_CHECKPOINT_KEY, JSON.stringify({
+    mode: _gps.mode, plannedId: _gps.planned?.id || null,
+    startedAt: _gps.startedAt, stops: _gps.stops, legs: _gps.legs,
+    positions: _gps.positions.slice(-500), savedAt: now
+  }));
+}
+function gpsClearCheckpoint() { localStorage.removeItem(GPS_CHECKPOINT_KEY); }
+function gpsReadCheckpoint() { try { return JSON.parse(localStorage.getItem(GPS_CHECKPOINT_KEY) || 'null'); } catch(e) { return null; } }
+
+// ── Start / stop / pause ────────────────────────────────────────────
+async function gpsStart(trip, { requireBackground = true } = {}) {
+  if (!gpsIsNative()) { alert('Live GPS recording is only available on the bysloth mobile app.'); return false; }
+  _gps.mode = 'gps'; _gps.planned = trip || null;
+  _gps.startedAt = Date.now(); _gps.positions = []; _gps.stops = []; _gps.legs = []; _gps.dwellStart = null; _gps.paused = false;
+  gpsFlushCheckpoint(); _gps.lastFlush = 0; gpsFlushCheckpoint();
+  const watcherOpts = { requestPermissions: true, stale: false, distanceFilter: 30 };
+  if (requireBackground) {
+    watcherOpts.backgroundMessage = 'Cancel to stop tracking your route.';
+    watcherOpts.backgroundTitle = 'bysloth is tracking your journey';
+  }
+  try {
+    const id = await gpsPlugin().addWatcher(watcherOpts, (loc, err) => { if (!err) gpsOnLocation(loc); });
+    _gps.watcherId = id;
+    document.body.classList.add('recording-active');
+    gpsSyncPill();
+    return true;
+  } catch (e) {
+    _gps.mode = null;
+    return false;
+  }
+}
+function gpsStartManual(trip) {
+  _gps.mode = 'manual'; _gps.planned = trip || null;
+  _gps.startedAt = Date.now(); _gps.stops = []; _gps.legs = []; _gps.paused = false;
+  gpsFlushCheckpoint(); _gps.lastFlush = 0; gpsFlushCheckpoint();
+  document.body.classList.add('recording-active');
+  gpsSyncPill();
+}
+async function gpsPause() { _gps.paused = true; gpsSyncPill(); }
+async function gpsResume() { _gps.paused = false; gpsSyncPill(); }
+async function gpsStopAll() {
+  if (_gps.watcherId && gpsIsNative()) {
+    try { await gpsPlugin().removeWatcher({ id: _gps.watcherId }); } catch (e) {}
+  }
+  _gps.watcherId = null;
+  document.body.classList.remove('recording-active', 'gps-fullscreen');
+  gpsSyncPill();
+}
+
+// Mode A (§2) — tracking against an existing planned trip. Detected stops are
+// matched to not-yet-visited planned stops by proximity (<5km); anything that
+// doesn't match is appended as an unplanned extra. This is the "planned vs
+// actual" comparison, as opposed to Mode B which always creates a new trip.
+async function gpsMergeIntoPlannedTrip() {
+  const t = _gps.planned; if (!t) return;
+  const stops = t.stops || [];
+  for (const gs of _gps.stops) {
+    let matched = null;
+    for (const s of stops) {
+      if (s.visited) continue;
+      const g = await geocodeStop(s.name);
+      if (g && gpsDistanceMeters(g, gs) < 5000) { matched = s; break; }
+    }
+    if (matched) {
+      matched.visited = true;
+      matched._recordedArrival = gs.arrived_at;
+      if (gs.diary) matched.diary = gs.diary;
+      if (gs.photos?.length) matched.photos = [...(matched.photos || []), ...gs.photos];
+    } else {
+      stops.push({ name: gs.name, date: gs.arrived_at.slice(0, 10), days: 1, visited: true,
+        diary: gs.diary || '', photos: gs.photos || [], _unplanned: true, _recorded: true });
+    }
+  }
+  t.stops = stops;
+  _journeyTrip = t;
+  jdPersist();
+}
+
+// Universal "stop tracking" handler — Journey Detail's toggle and the Live
+// Recording screen's own stop button both call this.
+async function gpsStopTrackingTap() {
+  if (_gps.mode === 'gps' && _gps.planned) {
+    await gpsMergeIntoPlannedTrip();
+    await gpsStopAll(); gpsClearCheckpoint(); _gps.mode = null; gpsSyncPill();
+    openStopRec(_gps.planned);
+  } else if (_gps.mode === 'manual' && _gps.planned) {
+    await gpsStopAll(); gpsClearCheckpoint(); _gps.mode = null; gpsSyncPill();
+    openStopRec(_gps.planned);
+  } else {
+    switchTab('recreview', null); // Mode B — fresh recording, no planned trip to merge into
+  }
+}
+function gpsStartManualFromJourney() {
+  gpsStartManual(_journeyTrip);
+  const stops = _journeyTrip.stops || [];
+  const firstUnvisited = stops.findIndex(s => !s.visited);
+  _jdManualCurrent = firstUnvisited >= 0 ? firstUnvisited : Math.max(0, stops.length - 1);
+  _jdDismissedDetections = new Set();
+  renderJourneyDetail();
+}
+
+function gpsSyncPill() {
+  const pill = document.getElementById('recordingPill');
+  if (!pill) return;
+  if (!_gps.mode) { pill.style.display = 'none'; return; }
+  pill.style.display = 'flex';
+  const elapsedS = Math.floor((Date.now() - _gps.startedAt) / 1000);
+  const h = Math.floor(elapsedS / 3600), m = Math.floor((elapsedS % 3600) / 60);
+  const label = pill.querySelector('.rp-label');
+  if (label) label.textContent = _gps.mode === 'gps' ? (_gps.paused ? 'Paused' : 'Recording') : 'Journaling';
+  const meta = document.getElementById('recordingPillMeta');
+  const place = _gps.stops[_gps.stops.length - 1]?.name || _gps.planned?.stops?.[0]?.name || '';
+  if (meta) meta.textContent = `${place}${place ? ' · ' : ''}${h}h ${String(m).padStart(2, '0')}m`;
+}
+setInterval(() => { if (_gps.mode) gpsSyncPill(); }, 1000);
+
+// ── FAB / pill tap routing (§2 FAB behaviour table) ─────────────────
+function onRecordFabTap() {
+  if (_gps.mode === 'gps') { switchTab('liverecord', null); return; }
+  if (_gps.mode === 'manual') { openJourneyDetail(_gps.planned || _journeyTrip); return; }
+  const activePanel = document.querySelector('.panel.active')?.id;
+  if (activePanel === 'journey' && _journeyTrip && !_journalHasContent(_journeyTrip)) {
+    openGpsPerms(_journeyTrip); // Mode A — planned vs actual
+  } else {
+    openGpsPerms(null); // Mode B — fresh recording
+  }
+}
+function onRecordingPillTap() {
+  if (_gps.mode === 'gps') switchTab('liverecord', null);
+  else if (_gps.mode === 'manual') openJourneyDetail(_gps.planned || _journeyTrip);
+}
+
+// ── [10] Enable tracking — explain screen + real permission request ─
+let _gpsPermsTrip = null;
+let _gpsPermsStep = 0; // 0 explain | 10 background denied | 20 no location at all
+
+function openGpsPerms(trip) {
+  _gpsPermsTrip = trip || null;
+  _gpsPermsStep = 0;
+  switchTab('gpsperms', null);
+}
+
+async function gpsRequestAndStart() {
+  if (!gpsIsNative()) { alert('Live GPS recording is only available on the bysloth mobile app.'); return; }
+  try {
+    // Phase 1 — cheap foreground-only probe: is location available at all?
+    const testId = await gpsPlugin().addWatcher({ requestPermissions: true, stale: true }, () => {});
+    await gpsPlugin().removeWatcher({ id: testId });
+  } catch (e) {
+    _gpsPermsStep = 20; renderGpsPerms(); return; // no location access at all — offer manual mode
+  }
+  // Phase 2 — the real watcher, this time asking for background too.
+  const ok = await gpsStart(_gpsPermsTrip, { requireBackground: true });
+  if (ok) { _jdDismissedDetections = new Set(); switchTab('liverecord', null); return; }
+  _gpsPermsStep = 10; renderGpsPerms(); // background denied — foreground-only fallback
+}
+async function gpsContinueForegroundOnly() {
+  const ok = await gpsStart(_gpsPermsTrip, { requireBackground: false });
+  if (ok) { _jdDismissedDetections = new Set(); switchTab('liverecord', null); }
+}
+function gpsSkipToManual() {
+  gpsStartManual(_gpsPermsTrip);
+  openJourneyDetail(_gpsPermsTrip || _journeyTrip);
+}
+
+function renderGpsPerms() {
+  const el = document.getElementById('gpsPermsPanel');
+  if (!el) return;
+  let h = '';
+  if (_gpsPermsStep === 10) {
+    h = `<div class="gps-panel gps-light">
+      <div class="gps-hdr"><button class="gps-back" onclick="openJourneyDetail(_gpsPermsTrip || _journeyTrip)"><i class="ph ph-arrow-left"></i></button><span>Route tracking</span></div>
+      <div class="gps-center">
+        <div class="strk-icon" style="background:#FFF8E6;border-color:#FFB80044"><i class="ph ph-warning" style="font-size:30px;color:var(--gold)"></i></div>
+        <div class="strk-title" style="font-size:22px">Background location denied</div>
+        <div class="strk-copy">Tracking works, but will pause when your screen turns off. Keep the app open for best results on long journeys.</div>
+        <button class="strk-cta" onclick="gpsContinueForegroundOnly()">Continue anyway</button>
+        <button class="strk-ghost" onclick="openJourneyDetail(_gpsPermsTrip || _journeyTrip)">Cancel</button>
+      </div>
+    </div>`;
+  } else if (_gpsPermsStep === 20) {
+    h = `<div class="gps-panel gps-light">
+      <div class="gps-hdr"><button class="gps-back" onclick="openJourneyDetail(_gpsPermsTrip || _journeyTrip)"><i class="ph ph-arrow-left"></i></button><span>Route tracking</span></div>
+      <div class="gps-center">
+        <div class="strk-icon" style="background:var(--bg2);border-color:var(--border)"><i class="ph ph-map-pin-slash" style="font-size:28px;color:var(--text3)"></i></div>
+        <div class="strk-title" style="font-size:22px">Skip GPS tracking?</div>
+        <div class="strk-copy">Without location, we can't auto-plot your route. You can still journal this trip yourself — add stops and legs manually as you go.</div>
+        <button class="strk-cta" onclick="gpsSkipToManual()">Journal this trip manually</button>
+        <button class="strk-ghost" onclick="openJourneyDetail(_gpsPermsTrip || _journeyTrip)">Not now</button>
+      </div>
+    </div>`;
+  } else {
+    h = `<div class="gps-panel">
+      <div class="gps-hdr dark"><button class="gps-back" onclick="openJourneyDetail(_gpsPermsTrip || _journeyTrip)"><i class="ph ph-arrow-left"></i></button><span>Route tracking</span></div>
+      <div class="gps-explain">
+        <div class="gps-explain-icon"><i class="ph ph-map-trifold"></i></div>
+        <div class="gps-kicker">Light-touch route tracking</div>
+        <div class="gps-explain-title">Your journey,<br/>auto-documented.</div>
+        <div class="gps-explain-copy">Put your phone in your pocket. Tracking quietly notices when you arrive somewhere new and draws your trail on the map — so your journal writes its own where and when. You can also drop a pin yourself any time to mark a stop it missed.</div>
+        <div class="gps-explain-card">
+          <div class="gps-explain-lbl">What to expect</div>
+          <div class="gps-explain-row"><i class="ph ph-map-trifold"></i><span>A live map plots your route as you move.</span></div>
+          <div class="gps-explain-row"><i class="ph ph-map-pin"></i><span>We'll prompt you to confirm where you are when we detect a new place.</span></div>
+          <div class="gps-explain-row"><i class="ph ph-plus-circle"></i><span>Add your own points in between — tap "Mark as stop" any time.</span></div>
+        </div>
+        <div class="gps-explain-card">
+          <div class="gps-explain-lbl">Permissions needed</div>
+          <div class="gps-explain-row"><i class="ph ph-map-pin"></i><span><strong>Location access</strong><br/>Detects when you arrive at a city and draws your trail.</span></div>
+          <div class="gps-explain-row"><i class="ph ph-device-mobile"></i><span><strong>Background location</strong><br/>Keeps tracking when your screen is off — essential for overnight buses and ferries.</span></div>
+        </div>
+        <div class="gps-explain-fine">Location is only active while tracking is on. No location data is ever sold.</div>
+      </div>
+      <div class="gps-explain-cta">
+        <button class="strk-cta" onclick="gpsRequestAndStart()">Turn on tracking →</button>
+        <button class="strk-ghost" style="color:rgba(245,240,232,0.4)" onclick="_gpsPermsStep=20;renderGpsPerms()">Not now</button>
+      </div>
+    </div>`;
+  }
+  el.innerHTML = h;
+}
+
+// ── [12] Live Recording screen ───────────────────────────────────────
+let _gpsMap = null;
+let _gpsMapMarkers = [];
+let _gpsNoteOpen = -1;
+let _gpsPhotoIdx = -1;
+let _gpsElapsedTimer = null;
+
+function gpsFmtElapsed(s) {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return `${h}h ${String(m).padStart(2, '0')}m ${String(sec).padStart(2, '0')}s`;
+}
+
+function renderLiveRecord() {
+  const el = document.getElementById('liverecordPanel');
+  if (!el) return;
+  const stops = _gps.stops;
+  const cur = stops[stops.length - 1];
+  const rows = stops.map((s, i) => `
+    <div class="gps-stop-row">
+      <div class="gps-stop-dot${i === stops.length - 1 ? ' cur' : ''}"></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:5px">
+          <span style="font-size:13px;font-weight:${i === stops.length - 1 ? 700 : 500};color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.name}</span>
+        </div>
+        <div style="font-family:var(--mono);font-size:9.5px;color:var(--text3);margin-top:1px">${new Date(s.arrived_at).toLocaleTimeString('en',{hour:'numeric',minute:'2-digit'})}</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button class="gps-stop-btn" onclick="gpsAttachPhoto(${i})"><i class="ph ph-camera"></i></button>
+        <button class="gps-stop-btn${_gpsNoteOpen === i ? ' on' : ''}" onclick="_gpsNoteOpen=_gpsNoteOpen===${i}?-1:${i};renderLiveRecord()"><i class="ph ph-pencil-simple"></i></button>
+      </div>
+    </div>
+    ${_gpsNoteOpen === i ? `<div class="gps-note-wrap"><textarea rows="2" placeholder="Quick note for this stop…" oninput="gpsSaveNote(${i}, this.value)">${s.diary || ''}</textarea></div>` : ''}
+    ${(s.photos||[]).length ? `<div style="display:flex;gap:6px;margin:0 14px 8px;flex-wrap:wrap">${s.photos.map(p=>`<img src="${p}" style="width:52px;height:48px;object-fit:cover;border-radius:8px"/>`).join('')}</div>` : ''}
+  `).join('');
+
+  const h = `<div class="gps-panel">
+    <div style="position:relative;flex-shrink:0">
+      <div id="gpsMapEl" style="width:100%;height:228px;background:#E8E3D5"></div>
+      <button class="gps-map-back" onclick="gpsBackFromLive()"><i class="ph ph-arrow-left"></i></button>
+      <div class="gps-map-pill${_gps.paused ? ' paused' : ''}">
+        <span class="gps-map-dot"></span><span>${_gps.paused ? 'Paused' : 'Tracking'}</span>
+      </div>
+      <button class="gps-map-pause" onclick="${_gps.paused ? 'gpsResume' : 'gpsPause'}().then(()=>renderLiveRecord())"><i class="ph ph-${_gps.paused ? 'play' : 'pause'}"></i></button>
+    </div>
+    <div class="gps-stats-bar">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
+        <span class="gps-live-dot"></span>
+        <span style="font-size:14px;font-weight:700;color:var(--text);letter-spacing:-0.2px">${cur?.name || 'Waiting for GPS…'}</span>
+        <span style="font-family:var(--mono);font-size:9.5px;color:var(--text3)">${stops.length <= 1 ? 'starting point' : 'current stop'}</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text2)">
+        <span id="gpsElapsedVal" style="font-weight:600;color:var(--text)">${gpsFmtElapsed(Math.floor((Date.now()-_gps.startedAt)/1000))}</span>
+        <span style="margin:0 8px;color:var(--border2)">·</span><span>${gpsTotalKm().toFixed(0)} km</span>
+        <span style="margin:0 8px;color:var(--border2)">·</span><span>${stops.length} stops</span>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;background:var(--bg)">
+      <div style="padding:10px 14px 6px;display:flex;align-items:center;justify-content:space-between">
+        <div class="gps-section-lbl">Stops detected</div>
+        <button class="gps-mark-btn" onclick="gpsMarkStopNow().then(renderLiveRecord)"><i class="ph ph-plus"></i> Mark as stop</button>
+      </div>
+      ${rows || `<div style="padding:18px 14px;text-align:center;font-size:12px;color:var(--text3);line-height:1.6">Tracking is on. New stops are detected automatically as you travel — nothing else to do.</div>`}
+    </div>
+    <div class="gps-bottom-actions">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="gps-quick-btn" onclick="gpsAttachPhoto(${Math.max(0,stops.length-1)})"><i class="ph ph-camera"></i> Photo</button>
+        <button class="gps-quick-btn" onclick="_gpsNoteOpen=${Math.max(0,stops.length-1)};renderLiveRecord()"><i class="ph ph-pencil-simple"></i> Note</button>
+      </div>
+      <button class="gps-stop-cta" onclick="gpsStopTrackingTap()"><i class="ph ph-stop-circle"></i> Stop tracking</button>
+    </div>
+  </div>`;
+  el.innerHTML = h;
+  gpsInitLiveMap();
+  if (!_gpsElapsedTimer) _gpsElapsedTimer = setInterval(gpsTickElapsed, 1000);
+}
+
+function gpsTickElapsed() {
+  const val = document.getElementById('gpsElapsedVal');
+  if (!val) { clearInterval(_gpsElapsedTimer); _gpsElapsedTimer = null; return; }
+  if (!_gps.paused) val.textContent = gpsFmtElapsed(Math.floor((Date.now() - _gps.startedAt) / 1000));
+}
+
+function gpsInitLiveMap() {
+  const mapEl = document.getElementById('gpsMapEl');
+  if (!mapEl || typeof L === 'undefined') return;
+  if (_gpsMap) { try { _gpsMap.remove(); } catch(e){} _gpsMap = null; }
+  const center = _gps.positions[_gps.positions.length-1] || _gps.stops[0] || { lat: 41.0, lon: 29.0 };
+  _gpsMap = L.map('gpsMapEl', { zoomControl:false, attributionControl:false, scrollWheelZoom:false, dragging:true });
+  _gpsMap.setView([center.lat, center.lon], 12);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom:18 }).addTo(_gpsMap);
+  gpsUpdateLiveMapLayers();
+}
+
+function gpsUpdateLiveMapLayers() {
+  if (!_gpsMap) return;
+  _gpsMapMarkers.forEach(m => { try { _gpsMap.removeLayer(m); } catch(e){} });
+  _gpsMapMarkers = [];
+  if (_gps.positions.length > 1) {
+    const line = L.polyline(_gps.positions.map(p=>[p.lat,p.lon]), { color:'#FF5014', weight:3, opacity:_gps.paused?0.4:0.85 }).addTo(_gpsMap);
+    _gpsMapMarkers.push(line);
+  }
+  _gps.stops.forEach(s => {
+    const dot = L.circleMarker([s.lat, s.lon], { radius:5, color:'#fff', weight:2, fillColor:'#3D7A3D', fillOpacity:1 }).addTo(_gpsMap);
+    _gpsMapMarkers.push(dot);
+  });
+  const last = _gps.positions[_gps.positions.length-1];
+  if (last) {
+    const cur = L.circleMarker([last.lat, last.lon], { radius:7, color:'#fff', weight:2.5, fillColor: _gps.paused?'#FFB800':'#FF5014', fillOpacity:1 }).addTo(_gpsMap);
+    _gpsMapMarkers.push(cur);
+    _gpsMap.panTo([last.lat, last.lon]);
+  }
+}
+
+function gpsSaveNote(i, val) {
+  const s = _gps.stops[i]; if (!s) return;
+  s.diary = val;
+  clearTimeout(_gpsNoteTimer);
+  _gpsNoteTimer = setTimeout(gpsFlushCheckpointNow, 400);
+}
+let _gpsNoteTimer = null;
+function gpsFlushCheckpointNow() { _gps.lastFlush = 0; gpsFlushCheckpoint(); }
+
+function gpsAttachPhoto(idx) {
+  _gpsPhotoIdx = idx;
+  document.getElementById('gpsPhotoInput')?.click();
+}
+function gpsOnPhotoSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file || _gpsPhotoIdx < 0) return;
+  const idx = _gpsPhotoIdx;
+  _compressImageFile(file, 1200, 0.75).then(dataUrl => {
+    const s = _gps.stops[idx]; if (!s) return;
+    s.photos = s.photos || [];
+    s.photos.push(dataUrl);
+    gpsFlushCheckpointNow();
+    renderLiveRecord();
+  });
+  e.target.value = '';
+}
+
+function gpsBackFromLive() {
+  // Tracking keeps running in the background — this just navigates away from the live view.
+  if (_gps.planned) openJourneyDetail(_gps.planned);
+  else goToMyTrips();
+}
+
+// ── [13] Review & Save ───────────────────────────────────────────────
+const GPS_LEG_MODES = ['walk','bike','bus','train','ferry','flight'];
+let _gpsReview = null; // { title, stops:[{name,country,date,days,diary,photos,leg:{mode,km,hours}}], removed:[], savedTripId:null }
+let _gpsReviewEditLeg = -1;
+let _gpsReviewPhotoIdx = -1;
+
+function gpsBuildReviewDraft() {
+  const stops = _gps.stops.map((s, i) => {
+    const [name, ...rest] = (typeof s.name === 'string' ? s.name : '').split(',');
+    const nextArrive = _gps.stops[i+1]?.arrived_at;
+    const days = nextArrive ? Math.max(1, Math.round((Date.parse(nextArrive) - Date.parse(s.arrived_at)) / 864e5)) : 1;
+    return {
+      name: name.trim() || s.name, country: rest.join(',').trim(),
+      lat: s.lat, lon: s.lon,
+      date: s.arrived_at.slice(0,10), days,
+      diary: s.diary || '', photos: s.photos || [],
+      leg: _gps.legs[i] ? { ...(_gps.legs[i]) } : null,
+      _recorded: true
+    };
+  });
+  const first = stops[0]?.name || 'trip', last = stops[stops.length-1]?.name || '';
+  return { title: `Trip — ${first} to ${last}`, stops, removed: [], savedTripId: null };
+}
+
+function renderRecReview() {
+  const el = document.getElementById('recReviewPanel');
+  if (!el) return;
+  if (!_gpsReview) _gpsReview = gpsBuildReviewDraft();
+  const r = _gpsReview;
+
+  if (r.savedTripId) {
+    const t = _tripById(r.savedTripId);
+    el.innerHTML = `<div class="strk-wrap" style="padding-top:60px">
+      <div class="strk-icon pub"><i class="ph ph-check-circle" style="font-size:32px;color:var(--sage)"></i></div>
+      <div class="strk-title">Saved to My Trips.</div>
+      <div class="strk-copy">"<strong>${r.title}</strong>" is now in My Trips with a
+        <span style="display:inline-flex;align-items:center;gap:3px;vertical-align:middle">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--sage);display:inline-block"></span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--sage);font-weight:700">Recorded</span>
+        </span> badge.</div>
+      <button class="strk-cta" onclick="goToMyTrips()">View in My Trips →</button>
+      <button class="strk-ghost outline" onclick="openRecordJournal(_tripById('${r.savedTripId}'))">Publish as journal →</button>
+    </div>`;
+    return;
+  }
+
+  const durS = Math.floor((Date.now() - _gps.startedAt) / 1000);
+  const h1 = Math.floor(durS/3600), m1 = Math.floor((durS%3600)/60);
+  const rows = r.stops.map((s, i) => {
+    const legHtml = (i > 0 && s.leg) ? `<div class="rcv-leg">
+      <div style="display:flex;align-items:center;gap:8px">
+        <i class="ph ${MODE_ICONS[s.leg.mode]||'ph-path'}" style="font-size:14px;color:${MODE_COLORS[s.leg.mode]||'var(--text3)'}"></i>
+        <span style="font-family:var(--mono);font-size:10.5px;color:var(--text2)">${s.leg.km} km · ${s.leg.hours}h</span>
+        <span class="rcv-auto-badge">auto</span>
+        <button class="rcv-edit-btn" onclick="_gpsReviewEditLeg=_gpsReviewEditLeg===${i}?-1:${i};renderRecReview()">Edit</button>
+      </div>
+      ${_gpsReviewEditLeg === i ? `<div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap">
+        ${GPS_LEG_MODES.map(m=>`<button class="rcv-mode-btn${s.leg.mode===m?' on':''}" onclick="gpsReviewSetLegMode(${i},'${m}')">${m}</button>`).join('')}
+      </div>` : ''}
+    </div>` : '';
+    return `${legHtml}
+    <div class="rcv-stop-card">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="width:9px;height:9px;border-radius:50%;background:var(--sage);flex-shrink:0;margin-top:5px"></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="font-size:14px;font-weight:700;color:var(--text)">${s.name}</span>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${s.country}</span>
+            <span class="rcv-recorded-badge">● recorded</span>
+          </div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:8px">${s.date} · ${s.days}d stay</div>
+          <textarea class="rcv-note" placeholder="Add a note for this stop… (optional)" rows="2" oninput="gpsReviewSaveNote(${i}, this.value)">${s.diary}</textarea>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+            ${s.photos.map(p=>`<img src="${p}" style="width:52px;height:48px;object-fit:cover;border-radius:8px"/>`).join('')}
+            <div class="rcv-add-photo" onclick="gpsReviewAttachPhoto(${i})"><i class="ph ph-plus"></i></div>
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">Add photos</span>
+          </div>
+        </div>
+        ${r.stops.length > 1 ? `<button class="rcv-trash" onclick="gpsReviewRemoveStop(${i})"><i class="ph ph-trash"></i></button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div style="padding:14px 14px 24px">
+    <div style="margin-bottom:14px">
+      <div class="gps-explain-lbl" style="color:var(--text3)">Trip name</div>
+      <div style="background:var(--bg);border:0.5px solid color-mix(in srgb,var(--sage) 55%,transparent);border-radius:var(--radius);padding:9px 12px;display:flex;align-items:center;gap:8px">
+        <input value="${r.title.replace(/"/g,'&quot;')}" oninput="gpsReviewSetTitle(this.value)" style="flex:1;font-size:15px;font-weight:600;color:var(--text);border:none;background:transparent;outline:none;font-family:var(--body)"/>
+        <i class="ph ph-pencil-simple" style="font-size:14px;color:var(--text3)"></i>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+      <div class="rcv-stat"><div class="rcv-stat-v">${h1}h ${String(m1).padStart(2,'0')}m</div><div class="rcv-stat-l">duration</div></div>
+      <div class="rcv-stat"><div class="rcv-stat-v">${gpsTotalKm().toFixed(0)} km</div><div class="rcv-stat-l">distance</div></div>
+      <div class="rcv-stat"><div class="rcv-stat-v">${r.stops.length}</div><div class="rcv-stat-l">stops</div></div>
+    </div>
+    ${r.removed.length ? `<div class="rcv-removed-note">Removed: ${r.removed.join(', ')}</div>` : ''}
+    <div class="gps-section-lbl accent" style="margin-bottom:10px">Auto-detected stops</div>
+    ${rows}
+    <div style="text-align:center;margin-top:16px">
+      <button class="strk-ghost" onclick="gpsReviewDiscard()">Discard this route</button>
+    </div>
+  </div>
+  <div class="rcv-footer">
+    <button class="strk-cta" onclick="gpsReviewSave()"><i class="ph ph-floppy-disk"></i> Save to My Trips</button>
+  </div>`;
+}
+
+function gpsReviewSetTitle(val) { if (_gpsReview) _gpsReview.title = val; }
+function gpsReviewSaveNote(i, val) { if (_gpsReview?.stops[i]) _gpsReview.stops[i].diary = val; }
+function gpsReviewSetLegMode(i, mode) { if (_gpsReview?.stops[i]?.leg) { _gpsReview.stops[i].leg.mode = mode; _gpsReviewEditLeg = -1; renderRecReview(); } }
+function gpsReviewRemoveStop(i) {
+  if (!_gpsReview || _gpsReview.stops.length <= 1) return;
+  _gpsReview.removed.push(_gpsReview.stops[i].name);
+  _gpsReview.stops.splice(i, 1);
+  renderRecReview();
+}
+function gpsReviewAttachPhoto(i) { _gpsReviewPhotoIdx = i; document.getElementById('gpsReviewPhotoInput')?.click(); }
+function gpsReviewOnPhotoSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file || _gpsReviewPhotoIdx < 0 || !_gpsReview) return;
+  const idx = _gpsReviewPhotoIdx;
+  _compressImageFile(file, 1200, 0.75).then(dataUrl => {
+    const s = _gpsReview.stops[idx]; if (!s) return;
+    s.photos.push(dataUrl);
+    renderRecReview();
+  });
+  e.target.value = '';
+}
+async function gpsReviewDiscard() {
+  _gpsReview = null; _gpsReviewEditLeg = -1;
+  await gpsStopAll();
+  gpsClearCheckpoint();
+  _gps.mode = null;
+  gpsSyncPill();
+  goToMyTrips();
+}
+async function gpsReviewSave() {
+  const r = _gpsReview; if (!r) return;
+  const legs = r.stops.slice(1).map((s, i) => s.leg || { mode:'bus', km:0, hours:0, cost:null, notes:'', confidence:'check', _recorded:true });
+  const trip = {
+    id: newTripId(), title: r.title, source: 'recorded',
+    recording_started: new Date(_gps.startedAt).toISOString(), recording_ended: new Date().toISOString(),
+    currency: 'USD',
+    stops: r.stops.map(s => ({ name: `${s.name}${s.country?', '+s.country:''}`, country:s.country, lat:s.lat, lon:s.lon,
+      date:s.date, days:s.days, visited:true, diary:s.diary, photos:s.photos, _recorded:true })),
+    legs, updated_at: new Date().toISOString(), recordingStarted: true
+  };
+  const trips = storage.get('trips') || [];
+  trips.push(trip);
+  storage.set('trips', trips);
+  persistTripCloud(trip);
+  await gpsStopAll();
+  gpsClearCheckpoint();
+  _gps.mode = null;
+  gpsSyncPill();
+  r.savedTripId = trip.id;
+  renderRecReview();
+}
+
+// ── [14] Crash recovery ───────────────────────────────────────────────
+// Checked once at boot (see init()) — GPS-specific only (§13.4 / doc §15: manual
+// mode has no background process to crash, so there's nothing to recover there).
+function renderCrashRecover() {
+  const el = document.getElementById('crashRecoverPanel');
+  if (!el) return;
+  const cp = gpsReadCheckpoint();
+  if (!cp) { goToMyTrips(); return; }
+  let km = 0;
+  const pos = cp.positions || [];
+  for (let i = 1; i < pos.length; i++) km += gpsDistanceMeters(pos[i - 1], pos[i]) / 1000;
+  const elapsedS = Math.floor(((cp.savedAt || Date.now()) - cp.startedAt) / 1000);
+  const h = Math.floor(elapsedS / 3600), m = Math.floor((elapsedS % 3600) / 60);
+  const lastStop = cp.stops[cp.stops.length - 1];
+  const lastCheckpointNote = lastStop
+    ? `Last checkpoint: ${lastStop.name} · ${Math.round((Date.now() - (cp.savedAt||Date.now()))/60000)} min ago`
+    : `Last checkpoint: ${Math.round((Date.now() - (cp.savedAt||Date.now()))/60000)} min ago`;
+
+  el.innerHTML = `<div class="gps-panel gps-light">
+    <div class="gps-hdr"><span>bysloth</span></div>
+    <div class="gps-center">
+      <div class="strk-icon" style="background:#FFF8E6;border-color:#FFB80044"><i class="ph ph-lightning" style="font-size:32px;color:var(--gold)"></i></div>
+      <div class="strk-title">Tracking was interrupted.</div>
+      <div class="strk-copy">It looks like tracking was interrupted — the app may have been force-closed or the battery ran out. We recovered your last checkpoint.</div>
+      <div class="strk-summary">
+        <div class="strk-summary-lbl">Recovered data</div>
+        <div class="strk-summary-grid">
+          <div><div class="strk-summary-val">${cp.stops.length}</div><div class="strk-summary-lbl2">stops saved</div></div>
+          <div><div class="strk-summary-val">${km.toFixed(0)} km</div><div class="strk-summary-lbl2">tracked</div></div>
+          <div><div class="strk-summary-val">${h}h ${String(m).padStart(2,'0')}m</div><div class="strk-summary-lbl2">elapsed</div></div>
+        </div>
+      </div>
+      <div style="width:100%;padding:8px 10px;background:var(--bg);border-radius:var(--radius);border:0.5px solid var(--border);display:flex;align-items:center;gap:8px;margin-top:-14px;margin-bottom:24px">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0"></div>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text2)">${lastCheckpointNote}</span>
+      </div>
+      <button class="strk-cta" onclick="gpsResumeFromCheckpoint()">Resume tracking</button>
+      <button class="strk-ghost outline" onclick="gpsReviewFromCheckpoint()">Review &amp; save what was recovered</button>
+      <button class="strk-ghost" onclick="gpsDiscardCheckpoint()">Discard route</button>
+    </div>
+  </div>`;
+}
+
+function gpsResumeFromCheckpoint() {
+  const cp = gpsReadCheckpoint(); if (!cp) return;
+  _gps.mode = cp.mode; _gps.planned = cp.plannedId ? _tripById(cp.plannedId) : null;
+  _gps.startedAt = cp.startedAt; _gps.stops = cp.stops; _gps.legs = cp.legs; _gps.positions = cp.positions || [];
+  _gps.paused = false; _gps.dwellStart = null;
+  document.body.classList.add('recording-active');
+  if (cp.mode === 'gps') gpsRestartWatcher();
+  gpsSyncPill();
+  if (_gps.planned) openJourneyDetail(_gps.planned); else switchTab('liverecord', null);
+}
+async function gpsRestartWatcher() {
+  if (!gpsIsNative()) return;
+  try {
+    const id = await gpsPlugin().addWatcher({
+      backgroundMessage: 'Cancel to stop tracking your route.', backgroundTitle: 'bysloth is tracking your journey',
+      requestPermissions: true, stale: false, distanceFilter: 30
+    }, (loc, err) => { if (!err) gpsOnLocation(loc); });
+    _gps.watcherId = id;
+  } catch (e) {}
+}
+function gpsReviewFromCheckpoint() {
+  const cp = gpsReadCheckpoint(); if (!cp) return;
+  _gps.mode = cp.mode; _gps.planned = cp.plannedId ? _tripById(cp.plannedId) : null;
+  _gps.startedAt = cp.startedAt; _gps.stops = cp.stops; _gps.legs = cp.legs; _gps.positions = cp.positions || [];
+  _gpsReview = null; // force rebuild from the restored session
+  switchTab('recreview', null);
+}
+function gpsDiscardCheckpoint() {
+  gpsClearCheckpoint();
+  goToMyTrips();
+}
+
 // Real elevation profile now lives in renderElevationProfile() (shared with
 // Route Results) — see that function and getElevationProfile() above.
 
@@ -5727,6 +6999,7 @@ function renderJourneyDetail() {
   // actually live-recording, so it shouldn't show the pulsing rec dot).
   const hasContent = _journalHasContent(t);
   const isLive = hasContent && !t.recordingStopped && !t.published;
+  const isTracking = !!(_gps.mode && _gps.planned?.id === t.id);
   let h = `<div class="jd-back" style="display:flex;align-items:center;justify-content:space-between">
     <span onclick="goToMyTrips()" style="cursor:pointer"><i class="ph ph-arrow-left"></i> My Trips</span>
     <button class="btn" style="font-size:12px;padding:5px 13px" onclick="jdShareTrip('${t.id}')"><i class="ph ph-export"></i> Share</button>
@@ -5741,10 +7014,17 @@ function renderJourneyDetail() {
         ${(t.collaborators||[]).map((c,i)=>`<div class="jd-collab-av ${c.role}" title="${c.email} · can ${c.role}" style="z-index:${10-i}">${c.avatar||c.email[0].toUpperCase()}</div>`).join('')}
         <button class="jd-collab-add" onclick="jdOpenInvite()" title="Invite collaborators"><i class="ph ph-user-plus" style="font-size:12px;color:var(--text3)"></i></button>
       </div>
-      ${hasContent
-        ? `<button class="jd-rec-cta" onclick="openRecordJournal(_journeyTrip)">${isLive ? '<span class="jd-rec-dot"></span> Recording · Edit journal' : '<i class="ph ph-book-open" style="font-size:11px"></i> Edit journal'}</button>`
+      <button class="jd-mobile-share" onclick="jdShareTrip('${t.id}')" title="Share journey"><i class="ph ph-share-network" style="font-size:16px"></i></button>
+      <span class="jd-desktop-actions" style="display:flex;gap:8px;align-items:center">
+      ${isTracking
+        ? `<button class="btn" style="font-size:12px;padding:6px 14px" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
+           <button class="jd-toggle-on" onclick="gpsStopTrackingTap()"><span class="jd-rec-dot"></span> <span>${_gps.mode==='gps'?'Track my route':'Current trip'}</span><span class="jd-toggle-switch on"><span class="jd-toggle-knob"></span></span></button>`
+        : hasContent
+        ? `<button class="jd-rec-cta" onclick="openRecordJournal(_journeyTrip)">${isLive ? '<span class="jd-rec-dot"></span> Recording · Edit journal' : '<i class="ph ph-book-open" style="font-size:11px"></i> Edit journal'}</button>
+           ${isLive ? `<button class="jd-stop-ctrl" onclick="openStopRec(_journeyTrip)" title="Stop tracking"><i class="ph ph-stop-circle" style="font-size:15px"></i></button>` : ''}`
         : `<button class="btn" style="font-size:12px;padding:6px 14px" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
-           <button class="jd-rec-cta" onclick="jdStartRecording()"><i class="ph ph-record-fill" style="font-size:11px"></i> Start recording</button>`}
+           <button class="jd-toggle-off" onclick="openGpsPerms(_journeyTrip)"><i class="ph ph-map-trifold" style="color:var(--sage)"></i> <span>Track my route</span><span class="jd-toggle-switch off"><span class="jd-toggle-knob"></span></span></button>`}
+      </span>
     </div>
   </div>
   <div class="jd-tabs">
@@ -5754,11 +7034,29 @@ function renderJourneyDetail() {
   </div>
   <div class="jd-body">`;
 
-  if (_jdTab === 'journey')        h += jdJourneyTabHTML(t, stops, legs, { visited, total });
+  if (_jdTab === 'journey')        h += jdJourneyTabHTML(t, stops, legs, { visited, total, isTracking });
   else if (_jdTab === 'recording') h += jdRecordingTabHTML();
   else if (_jdTab === 'map')       h += `<div id="jdMapMount"></div>`;
 
   h += `</div>`;
+
+  h += `<div class="jd-mobile-cta"><div class="jd-mobile-cta-row">`;
+  if (isTracking) {
+    h += `<button class="jd-mobile-cta-edit" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
+      <button class="jd-toggle-on" style="flex:1" onclick="gpsStopTrackingTap()"><span class="jd-rec-dot"></span> <span>${_gps.mode==='gps'?'Track my route':'Current trip'}</span><span class="jd-toggle-switch on"><span class="jd-toggle-knob"></span></span></button>`;
+  } else if (hasContent) {
+    h += `<button class="jd-mobile-cta-primary" onclick="openRecordJournal(_journeyTrip)">${isLive ? '<span class="jd-rec-dot"></span> <span>Recording · Edit journal</span>' : '<i class="ph ph-book-open" style="font-size:14px"></i> <span>Edit journal</span>'}</button>
+      ${isLive ? `<button class="jd-stop-ctrl" onclick="openStopRec(_journeyTrip)" title="Stop tracking"><i class="ph ph-stop-circle" style="font-size:15px"></i></button>` : ''}`;
+  } else {
+    h += `<button class="jd-mobile-cta-edit" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
+      <button class="jd-toggle-off" style="flex:1" onclick="openGpsPerms(_journeyTrip)"><i class="ph ph-map-trifold" style="color:var(--sage)"></i> <span>Track my route</span><span class="jd-toggle-switch off"><span class="jd-toggle-knob"></span></span></button>`;
+  }
+  h += `</div>`;
+  if (!isTracking && !hasContent) {
+    h += `<button class="jd-manual-link" onclick="gpsStartManualFromJourney()">No GPS access? Journal this trip manually →</button>`;
+  }
+  h += `</div>`;
+
   el.innerHTML = h;
 
   if (_jdTab === 'map') jdInitMap(stops, legs);
@@ -5767,7 +7065,7 @@ function renderJourneyDetail() {
   // Update mobile header: title = trip name, FAB hidden in journey detail
   if (window.innerWidth <= 640) {
     const titleEl = document.getElementById('mobileHeaderTitle');
-    if (titleEl) titleEl.textContent = t.title || (stops[0]?.name?.split(',')[0] + ' → ' + stops[stops.length-1]?.name?.split(',')[0]) || 'Journey';
+    if (titleEl) titleEl.textContent = t.title || (_stopCityName(stops[0]?.name) + ' → ' + _stopCityName(stops[stops.length-1]?.name)) || 'Journey';
     const fab = document.getElementById('mobileHeaderFab');
     if (fab) fab.style.setProperty('display', 'none', 'important');
   }
@@ -5788,16 +7086,30 @@ function jdPhotoNav(i, dir) {
 function jdPhotosHTML(s, i) {
   const n = s.photos?.length || 0;
   if (!n) return '';
-  if (n === 1) return `<div class="jd-photos"><div class="rj-slide"><img src="${s.photos[0]}" alt=""/></div></div>`;
+  if (n === 1) return `<div class="jd-photos"><div class="rj-slide"><img src="${s.photoThumbs?.[0] || s.photos[0]}" alt=""/></div></div>`;
   const cur = ((_jdPhotoIdx[i] || 0) % n + n) % n;
   return `<div class="jd-photos">
     <div class="rj-slide">
-      <img src="${s.photos[cur]}" alt=""/>
+      <img src="${s.photoThumbs?.[cur] || s.photos[cur]}" alt=""/>
       <button class="rj-slide-nav rj-slide-prev" onclick="event.stopPropagation();jdPhotoNav(${i},-1)" title="Previous photo"><i class="ph ph-caret-left"></i></button>
       <button class="rj-slide-nav rj-slide-next" onclick="event.stopPropagation();jdPhotoNav(${i},1)" title="Next photo"><i class="ph ph-caret-right"></i></button>
       <span class="rj-slide-count">${cur+1}/${n}</span>
     </div>
   </div>`;
+}
+
+function jdCurrentStopIdx(stops, manual) {
+  if (manual) return Math.min(Math.max(_jdManualCurrent, 0), stops.length - 1);
+  for (let i = stops.length - 1; i >= 0; i--) if (stops[i].visited) return i;
+  return 0;
+}
+function jdPendingDetection(t) {
+  if (!(_gps.mode === 'gps' && _gps.planned?.id === t.id)) return null;
+  const last = _gps.stops[_gps.stops.length - 1];
+  if (!last || _jdDismissedDetections.has(last.name)) return null;
+  const lastCity = last.name.split(',')[0].trim().toLowerCase();
+  const alreadyIn = (t.stops||[]).some(s => typeof s.name === 'string' && s.name.split(',')[0].trim().toLowerCase() === lastCity);
+  return alreadyIn ? null : last;
 }
 
 function jdJourneyTabHTML(t, stops, legs, m) {
@@ -5808,16 +7120,34 @@ function jdJourneyTabHTML(t, stops, legs, m) {
   const ds = stops.map(s => s.date ? new Date(s.date + 'T00:00') : null).filter(Boolean);
   const duration = ds.length >= 2 ? Math.round((ds[ds.length-1] - ds[0]) / 864e5) : stops.reduce((a,s)=>a+(+s.days||0),0);
 
-  // Mini-map (mobile only — shown via CSS, hidden on desktop)
-  let h = `<div class="jd-mini-map" id="jdMiniMap"></div>`;
+  const totalKm = legs.reduce((a, l) => a + (+l.km || 0), 0);
+  const live = !!m.isTracking;
+  const gps = live && _gps.mode === 'gps';
+  const manual = live && _gps.mode === 'manual';
+  const curIdx = live ? jdCurrentStopIdx(stops, manual) : -1;
+  const pending = live ? jdPendingDetection(t) : null;
+
+  // Live/active-travel banner — journey tab IS the live view (§ Session-2 06.1/06.2)
+  let h = '';
+  if (live) {
+    const curName = _stopCityName(stops[curIdx]?.name);
+    h += `<div class="jd-live-banner${gps?'':' manual'}">
+      <span class="jd-live-dot2${gps?'':' manual'}"></span>
+      <span class="jd-live-label">${gps ? 'TRACKING' : 'ACTIVE TRAVEL'}</span>
+      <span class="jd-live-meta">${gps ? `You're in ${curName} · ${curIdx+1} of ${stops.length} stops` : `No GPS · marked at ${curName} · ${curIdx+1} of ${stops.length} stops`}</span>
+    </div>`;
+  }
 
   // Summary strip
   h += `<div class="jd-summary">
-    <div class="jd-metric"><div class="jd-metric-lbl">Progress</div><div class="jd-metric-val">${m.visited}<span> / ${m.total} visited</span></div><div class="jd-prog"><div class="jd-prog-fill" style="width:${pct}%"></div></div></div>
-    <div class="jd-metric"><div class="jd-metric-lbl">Spent</div><div class="jd-metric-val">${spent}<span> / ${budget||'—'} ${cur}</span></div></div>
-    <div class="jd-metric"><div class="jd-metric-lbl">Stops</div><div class="jd-metric-val">${m.total}<span> cities</span></div></div>
-    <div class="jd-metric"><div class="jd-metric-lbl">Duration</div><div class="jd-metric-val">${duration||'—'}<span> days</span></div></div>
+    <div class="jd-metric jd-metric-progress"><div class="jd-metric-lbl">Progress</div><div class="jd-metric-val">${m.visited}<span> / ${m.total} visited</span></div><div class="jd-prog"><div class="jd-prog-fill" style="width:${pct}%"></div></div></div>
+    <div class="jd-metric jd-metric-spent"><div class="jd-metric-lbl">Spent</div><div class="jd-metric-val">${spent}<span> / ${budget||'—'} ${cur}</span></div></div>
+    <div class="jd-metric jd-metric-stops"><div class="jd-metric-lbl">Stops</div><div class="jd-metric-val">${m.total}<span> cities</span></div></div>
+    <div class="jd-metric jd-metric-duration"><div class="jd-metric-lbl">Duration</div><div class="jd-metric-val">${duration||'—'}<span> days</span></div></div>
+    <div class="jd-metric jd-metric-km"><div class="jd-metric-lbl">Distance</div><div class="jd-metric-val">${totalKm.toLocaleString()}<span> km</span></div></div>
   </div>`;
+
+  h += `<div class="jd-section-lbl accent">Stops &amp; legs</div>`;
 
   // Route overview
   const conflictAdvisories = legs.filter(l => l.conflict?.note).map(l => l.conflict.note);
@@ -5832,21 +7162,52 @@ function jdJourneyTabHTML(t, stops, legs, m) {
   const showAff = appSettings.affiliate_links !== false;
   stops.forEach((s, i) => {
     const isLast = i === stops.length - 1;
+    const isCur = live && i === curIdx;
     const leg = legs[i];
     const dateLbl = s.date ? '· ' + new Date(s.date + 'T00:00').toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
     // §8 Session-2: timeline dot = departing-leg mode color (regardless of visited); connector in same color at 25%.
     const mc = leg ? (MODE_COLORS[leg.mode] || 'var(--text3)') : (i>0 ? (MODE_COLORS[legs[i-1]?.mode] || 'var(--text3)') : 'var(--text3)');
+    const [cityName, ...ccParts] = (typeof s.name === 'string' ? s.name : '—').split(',');
+    const ccName = ccParts.join(',').trim();
     h += `<div class="jd-leg">
       <div class="jd-leg-hdr">
         <div class="jd-leg-gutter"><div class="jd-leg-dot" style="background:${mc};box-shadow:0 0 0 3px var(--bg),0 0 0 4px ${mc}"></div>${!isLast?`<div class="jd-leg-connector" style="background:${mc}"></div>`:''}</div>
-        <span class="jd-leg-name">${s.name || '—'}</span>
+        <span class="jd-leg-name">${cityName.trim() || '—'}</span>
+        ${ccName ? `<span class="jd-leg-cc">${ccName}</span>` : ''}
+        ${gps && isCur ? `<span class="jd-cur-badge gps"><span class="jd-cur-dot"></span> you are here</span>` : ''}
+        ${manual && isCur ? `<span class="jd-cur-badge manual">current stop</span>` : ''}
         <span class="jd-leg-date">${dateLbl}</span>
         <span style="flex:1"></span>
+        ${live ? `<span class="jd-reorder-wrap">
+          <button class="jd-reorder-btn" onclick="jdMoveStop(${i},-1)" ${i===0?'disabled':''}><i class="ph ph-caret-up"></i></button>
+          <button class="jd-reorder-btn" onclick="jdMoveStop(${i},1)" ${isLast?'disabled':''}><i class="ph ph-caret-down"></i></button>
+        </span>` : ''}
         <button class="jd-visit-btn${s.visited?' on':''}" onclick="jdToggleVisited(${i})">${s.visited?'<i class="ph ph-check-circle"></i> Visited':'<i class="ph ph-map-pin"></i> Mark visited'}</button>
       </div>`;
-    if (s.visited) {
-      h += `<div class="jd-diary-wrap"><textarea class="jd-diary" placeholder="What happened in ${s.name||'this stop'}?" oninput="jdSaveDiary(${i}, this.value)">${s.diary||''}</textarea></div>`;
+    if (s.days) {
+      h += live && s.visited
+        ? `<div class="jd-leg-days-edit"><input type="number" min="0" value="${s.days}" onchange="jdEditDays(${i}, this.value)"/><span>d stay</span><span class="jd-days-badge${s.daysAuto===false?' edited':''}">${s.daysAuto===false?'edited':(gps?'auto':'manual')}</span></div>`
+        : `<div class="jd-leg-days">${s.days}d stay</div>`;
+    }
+    if (s.visited || (live && isCur)) {
+      h += `<div class="jd-diary-wrap">
+        <textarea class="jd-diary" data-i="${i}" placeholder="What happened in ${_stopCityName(s.name)||'this stop'}?" oninput="jdSaveDiary(${i}, this.value)">${s.diary||''}</textarea>
+        ${live ? `<button class="jd-voice-btn" data-i="${i}" onclick="jdVoiceCapture(${i})" title="Voice note"><i class="ph ph-microphone"></i></button>` : ''}
+      </div>`;
       h += jdPhotosHTML(s, i);
+    }
+    if (gps && isCur && pending) {
+      h += `<div class="jd-detect-card">
+        <div class="jd-detect-hdr"><span class="jd-detect-dot"></span><span class="jd-detect-lbl">Stop detected</span><span class="jd-detect-time">${new Date(pending.arrived_at).toLocaleTimeString('en',{hour:'numeric',minute:'2-digit'})}</span></div>
+        <div class="jd-detect-name">${_stopCityName(pending.name)}</div>
+        <div class="jd-detect-actions">
+          <button class="jd-detect-confirm" onclick="jdConfirmDetection()">Add between legs</button>
+          <button class="jd-detect-dismiss" onclick="jdDismissDetection()">Dismiss</button>
+        </div>
+      </div>`;
+    }
+    if (manual && !isCur) {
+      h += `<button class="jd-mark-current-btn" onclick="jdMarkCurrentStop(${i})"><i class="ph ph-map-pin"></i> Mark as current stop</button>`;
     }
     if (leg && !isLast) {
       const stayCity   = stops[i+1]?.name || '';
@@ -5855,9 +7216,9 @@ function jdJourneyTabHTML(t, stops, legs, m) {
       const modeTint   = MODE_TINTS[leg.mode]  || '#E4EAF2';
       const transportLinks = showAff ? renderTransportLinks(leg.mode, s.name, stayCity, leg.bookingSites, leg.legRegion, leg.infoSites) : '';
       const stayCol = showAff ? renderAccommodationLinks(stayCity, stops[i+1]?.accomSites, stops[i+1]?.accomNote) : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
-      h += `<div class="jd-leg-cards">
+      h += `<div class="jd-leg-cards"${live ? ` onclick="jdToggleEditLeg(${i})" style="cursor:pointer"` : ''}>
         <div class="res-card journey" style="border-left:3px solid ${modeColor}">
-          <div class="res-card-lbl">Journey</div>
+          <div class="res-card-lbl">Journey${live ? `<i class="ph ph-caret-${_jdEditLeg===i?'up':'down'}" style="float:right;color:var(--text3)"></i>` : ''}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
             <span style="width:24px;height:24px;border-radius:6px;background:${modeTint};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ph ${iconCls}" style="font-size:13px;color:${modeColor}"></i></span>
             <span style="font-size:12.5px;font-weight:500;text-transform:capitalize;color:${modeColor}">${leg.mode}</span>
@@ -5877,9 +7238,40 @@ function jdJourneyTabHTML(t, stops, legs, m) {
           ${stayCol}
         </div>
       </div>`;
+      if (live && _jdEditLeg === i) {
+        h += `<div class="jd-leg-edit" onclick="event.stopPropagation()">
+          <div class="jd-leg-edit-lbl">Transport</div>
+          <div class="jd-leg-edit-modes">${GPS_LEG_MODES.map(md=>`<button class="jd-mode-pill${leg.mode===md?' on':''}" onclick="jdUpdateLegField(${i},'mode','${md}')">${md}</button>`).join('')}</div>
+          <div class="jd-leg-edit-grid">
+            <div class="jd-leg-edit-field"><div class="jd-leg-edit-flbl">duration</div><input value="${leg.hours||''}" onchange="jdUpdateLegField(${i},'hours',this.value)"/></div>
+            <div class="jd-leg-edit-field"><div class="jd-leg-edit-flbl">cost $</div><input type="number" value="${leg.cost||0}" onchange="jdUpdateLegField(${i},'cost',this.value)"/></div>
+          </div>
+          <div class="jd-leg-edit-lbl">Hotel / stay in ${_stopCityName(stayCity)}</div>
+          <input class="jd-leg-edit-accom" value="${(stops[i+1]?.accomNote||'').replace(/"/g,'&quot;')}" placeholder="Add accommodation…" onchange="jdUpdateAccom(${i+1},this.value)"/>
+          <button class="jd-leg-edit-booked${leg.booked?' on':''}" onclick="jdToggleLegBooked(${i})"><i class="ph ph-${leg.booked?'check-circle':'circle'}"></i> Booked</button>
+        </div>`;
+      }
     }
     h += `</div>`;
   });
+  if (live) {
+    h += `<div class="jd-add-stop">
+      ${!_jdAddStopOpen
+        ? `<button class="jd-add-stop-toggle" onclick="_jdAddStopOpen=true;renderJourneyDetail()"><i class="ph ph-plus"></i> Add stop</button>`
+        : `<div class="jd-add-stop-form">
+            <div class="jd-add-stop-lbl">New stop · after where you are now</div>
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <input id="jdNewStopCity" placeholder="City name" style="flex:1"/>
+              <input id="jdNewStopCC" placeholder="Country" style="width:100px"/>
+            </div>
+            <input id="jdNewStopDate" placeholder="Date (e.g. 2024-05-09)" style="margin-bottom:8px"/>
+            <div style="display:flex;gap:6px;justify-content:flex-end">
+              <button class="jd-add-stop-cancel" onclick="_jdAddStopOpen=false;renderJourneyDetail()">Cancel</button>
+              <button class="jd-add-stop-confirm" onclick="jdInsertStop()">Add</button>
+            </div>
+          </div>`}
+    </div>`;
+  }
 
   // Separator + honesty note + elevation at bottom of legs
   h += `<div style="margin-top:28px;border-top:1px solid var(--border)"></div>`;
@@ -5887,6 +7279,11 @@ function jdJourneyTabHTML(t, stops, legs, m) {
     const note = `<span style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600">Honesty note</span> — ${uncertainLegs.length} leg${uncertainLegs.length>1?'s':''} on this route marked <strong>check</strong> or <strong>uncertain</strong> — verify schedules before booking.`;
     h += `<div class="advisory-grid" style="margin-top:16px"><div class="advisory-strip">${note}</div></div>`;
   }
+  h += `<div class="jd-section-lbl" style="margin-top:16px">Route overview</div>
+  <div class="jd-mini-map-wrap" onclick="switchJourneyTab('map')">
+    <div class="jd-mini-map" id="jdMiniMap"></div>
+    <div class="jd-mini-map-pill"><i class="ph ph-arrows-out"></i> Full map</div>
+  </div>`;
   h += renderElevationProfile(stops,
     `<div style="margin-top:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px 10px">`,
     `</div>`);
@@ -6296,7 +7693,7 @@ function renderRecordJournal() {
     <div class="rj-header">
       <div class="rj-cover" onclick="document.getElementById('rjHeaderCoverInput').click()" title="${t.cover_image?'Change cover photo':'Add cover photo'}">
         ${t.cover_image
-          ? `<img src="${t.cover_image}" alt=""/><button class="rj-cover-del" onclick="event.stopPropagation();recRemoveTripCoverImage()" title="Remove cover photo"><i class="ph ph-x"></i></button>`
+          ? `<img src="${t.cover_image_thumb || t.cover_image}" alt=""/><button class="rj-cover-del" onclick="event.stopPropagation();recRemoveTripCoverImage()" title="Remove cover photo"><i class="ph ph-x"></i></button>`
           : `<i class="ph ph-image" style="font-size:20px"></i>`}
       </div>
       <input type="file" id="rjHeaderCoverInput" accept="image/*" style="display:none" onchange="recSetTripCoverImage(this)">
@@ -6496,6 +7893,7 @@ function recRemoveStop(i) {
 function recRemovePhoto(i, pi) {
   if (!_recTrip.stops[i]?.photos) return;
   _recTrip.stops[i].photos.splice(pi, 1);
+  _recTrip.stops[i].photoThumbs?.splice(pi, 1); // keep index-aligned with photos
   delete _rjPhotoIdx[i]; // index may now be out of range — back to the first photo
   recPersist(); renderRecordJournal();
 }
@@ -6511,14 +7909,14 @@ function recPhotoNav(i, dir) {
 function rjPhotosHTML(s, i) {
   const n = s.photos?.length || 0;
   if (n <= 1) {
-    const tiles = (s.photos||[]).map((src,pi) => `<div class="rj-photo"><img src="${src}" alt=""/><button class="rj-photo-del" onclick="event.stopPropagation();recRemovePhoto(${i},${pi})" title="Remove photo"><i class="ph ph-x"></i></button></div>`);
+    const tiles = (s.photos||[]).map((src,pi) => `<div class="rj-photo"><img src="${s.photoThumbs?.[pi] || src}" alt=""/><button class="rj-photo-del" onclick="event.stopPropagation();recRemovePhoto(${i},${pi})" title="Remove photo"><i class="ph ph-x"></i></button></div>`);
     while (tiles.length < 2) tiles.push(`<div class="rj-photo rj-photo-empty" onclick="recAddPhoto(${i})" title="Add a photo"><i class="ph ph-image"></i></div>`);
     return `<div class="rj-photos">${tiles.join('')}<button class="rj-photo-add" onclick="recAddPhoto(${i})" title="Add photo">+</button></div>`;
   }
   const cur = ((_rjPhotoIdx[i] || 0) % n + n) % n;
   return `<div class="rj-photos rj-photos-slideshow">
     <div class="rj-slide">
-      <img src="${s.photos[cur]}" alt=""/>
+      <img src="${s.photoThumbs?.[cur] || s.photos[cur]}" alt=""/>
       <button class="rj-slide-nav rj-slide-prev" onclick="event.stopPropagation();recPhotoNav(${i},-1)" title="Previous photo"><i class="ph ph-caret-left"></i></button>
       <button class="rj-slide-nav rj-slide-next" onclick="event.stopPropagation();recPhotoNav(${i},1)" title="Next photo"><i class="ph ph-caret-right"></i></button>
       <button class="rj-photo-del rj-slide-del" onclick="event.stopPropagation();recRemovePhoto(${i},${cur})" title="Remove this photo"><i class="ph ph-x"></i></button>
@@ -6630,18 +8028,41 @@ function _compressImageFile(file, maxDim, quality) {
 // the actual image bytes are fetched (and cached by the browser) only when
 // actually displayed. Falls back to keeping the data URL inline on failure —
 // bigger sync payload, but the photo still saves rather than being lost.
+//
+// Also uploads a small 320px sibling thumbnail alongside the full photo.
+// Every thumbnail-sized spot in the UI (trip cover, journal cards, photo
+// tiles/slides) was pointing straight at the full 1200px original just to
+// render a ~50-320px square — that's most of this app's Supabase egress,
+// since those views load on every list/timeline render, not just on upload.
+// Returns {url, thumbUrl} — callers store both and prefer thumbUrl for
+// small displays, falling back to url if no thumb exists (old data, or the
+// thumb upload failed).
 async function _uploadPhotoToStorage(dataUrl, tripId) {
-  if (!currentUser) return dataUrl; // guests have no cloud storage — stays local-only
+  if (!currentUser) return { url: dataUrl, thumbUrl: dataUrl }; // guests have no cloud storage — stays local-only
   try {
     const blob = await (await fetch(dataUrl)).blob();
     const ext  = (blob.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
-    const path = `${currentUser.id}/${tripId}/${crypto.randomUUID()}.${ext}`;
+    const id   = crypto.randomUUID();
+    const path = `${currentUser.id}/${tripId}/${id}.${ext}`;
     const { error } = await sb.storage.from('trip-photos').upload(path, blob, { contentType: blob.type });
     if (error) throw error;
-    return sb.storage.from('trip-photos').getPublicUrl(path).data.publicUrl;
+    const url = sb.storage.from('trip-photos').getPublicUrl(path).data.publicUrl;
+
+    let thumbUrl = url;
+    try {
+      const thumbDataUrl = await _resizeDataUrl(dataUrl, 320, 0.7);
+      const thumbBlob = await (await fetch(thumbDataUrl)).blob();
+      const thumbPath = `${currentUser.id}/${tripId}/${id}_thumb.${ext}`;
+      const { error: thumbError } = await sb.storage.from('trip-photos').upload(thumbPath, thumbBlob, { contentType: thumbBlob.type });
+      if (thumbError) throw thumbError;
+      thumbUrl = sb.storage.from('trip-photos').getPublicUrl(thumbPath).data.publicUrl;
+    } catch(e) {
+      console.warn('Thumbnail upload failed, falling back to full photo:', e.message);
+    }
+    return { url, thumbUrl };
   } catch(e) {
     console.warn('Photo upload to Storage failed, keeping inline:', e.message);
-    return dataUrl;
+    return { url: dataUrl, thumbUrl: dataUrl };
   }
 }
 // Deleting a trip only ever removed the trips row — photos uploaded via
@@ -6710,12 +8131,15 @@ function recOnPhotoSelected(e) {
   const idx = _recPhotoIdx;
   _compressImageFile(file, 1200, 0.75)
     .then(dataUrl => _uploadPhotoToStorage(dataUrl, _recTrip.id))
-    .then(url => {
+    .then(({ url, thumbUrl }) => {
       const s = _recTrip.stops[idx];
       s.photos = s.photos || [];
+      s.photoThumbs = s.photoThumbs || [];
       s.photos.push(url);
+      s.photoThumbs.push(thumbUrl);
       if (!recPersist()) {
         s.photos.pop();
+        s.photoThumbs.pop();
         alert("Couldn't save that photo — you're out of local storage space. Try removing a few older photos or trips first.");
       }
       renderRecordJournal();
@@ -6881,8 +8305,9 @@ function recSetTripCoverImage(input) {
   if (!file) return;
   _compressImageFile(file, 900, 0.82)
     .then(dataUrl => _uploadPhotoToStorage(dataUrl, _recTrip.id))
-    .then(url => {
+    .then(({ url, thumbUrl }) => {
       _recTrip.cover_image = url;
+      _recTrip.cover_image_thumb = thumbUrl;
       recPersist();
       renderRecordJournal();
     });
@@ -6890,6 +8315,7 @@ function recSetTripCoverImage(input) {
 function recRemoveTripCoverImage() {
   if (!_recTrip) return;
   _recTrip.cover_image = null;
+  _recTrip.cover_image_thumb = null;
   recPersist();
   renderRecordJournal();
 }
@@ -6900,23 +8326,25 @@ function recSetCoverImage(input) {
   if (!file) return;
   _compressImageFile(file, 900, 0.82)
     .then(dataUrl => _uploadPhotoToStorage(dataUrl, _recTrip.id))
-    .then(url => {
+    .then(({ url, thumbUrl }) => {
       _recPub.coverImage = url;
+      _recPub.coverImageThumb = thumbUrl;
       recRenderPublish();
     });
 }
-function recStopRecording() { _recPub = { open:true, audience:'friends', done:false, coverImage: _recTrip?.cover_image || null }; recRenderPublish(); }
+function recStopRecording() { _recPub = { open:true, audience:'friends', done:false, coverImage: _recTrip?.cover_image || null, coverImageThumb: _recTrip?.cover_image_thumb || null }; recRenderPublish(); }
 function recOpenPublish() {
   const t = _recTrip;
   _recPub.open = true;
   _recPub.done = false;
   if (!_recPub.coverImage) _recPub.coverImage = t?.cover_image || null;
+  if (!_recPub.coverImageThumb) _recPub.coverImageThumb = t?.cover_image_thumb || null;
   if (t?.visibility) _recPub.audience = t.visibility;
   recRenderPublish();
 }
 function recSetAudience(v) { _recPub.audience = v; recRenderPublish(); }
 function recPublishSlug() {
-  const t = _recTrip; const first=(t.stops[0]?.name||'trip').toLowerCase(); const last=(t.stops[t.stops.length-1]?.name||'').toLowerCase();
+  const t = _recTrip; const first=String(t.stops[0]?.name||'trip').toLowerCase(); const last=String(t.stops[t.stops.length-1]?.name||'').toLowerCase();
   return `${first}-${last}-2026`.replace(/[^a-z0-9-]/g,'');
 }
 function recRenderPublish() {
@@ -6955,8 +8383,8 @@ function recRenderPublish() {
           <div class="sr-lbl">Cover photo</div>
           <div style="position:relative;height:130px;border-radius:8px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;border:0.5px dashed var(--border2);margin-bottom:12px;background:var(--mist)" onclick="document.getElementById('rjCoverInput').click()">
             ${_recPub.coverImage
-              ? `<img src="${_recPub.coverImage}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
-                 <button onclick="event.stopPropagation();_recPub.coverImage=null;recRenderPublish()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.55);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:1;padding:0">×</button>`
+              ? `<img src="${_recPub.coverImageThumb || _recPub.coverImage}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
+                 <button onclick="event.stopPropagation();_recPub.coverImage=null;_recPub.coverImageThumb=null;recRenderPublish()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.55);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:1;padding:0">×</button>`
               : `<div style="text-align:center;color:var(--text3);pointer-events:none"><i class="ph ph-image-square" style="font-size:26px;display:block;margin-bottom:5px"></i><span style="font-size:12px">Click to add cover photo</span></div>`
             }
           </div>
@@ -6997,6 +8425,7 @@ function recDoPublish() {
     const nameInput = document.getElementById('rjPubName');
     if (nameInput && nameInput.value.trim()) _recTrip.journal_title = nameInput.value.trim();
     if (_recPub.coverImage) _recTrip.cover_image = _recPub.coverImage;
+    if (_recPub.coverImageThumb) _recTrip.cover_image_thumb = _recPub.coverImageThumb;
     recPersist();
   }
   _recPub.done = true; recRenderPublish();
@@ -7045,7 +8474,7 @@ function generateRouteThumbnail(trip) {
     const end = i === 0 || i === n - 1;
     return `<circle cx="${x}" cy="${y}" r="${end?5:3}" fill="${end?'#FF5014':'#1E3A5C'}" stroke="white" stroke-width="1.5" opacity="0.9"/>`;
   }).join('');
-  const fl = stops[0].name.split(',')[0], ll = stops[n-1].name.split(',')[0];
+  const fl = _stopCityName(stops[0].name), ll = _stopCityName(stops[n-1].name);
   const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
     <rect width="${W}" height="${H}" fill="#F5F2EE"/>
     <line x1="0" y1="${H/3}" x2="${W}" y2="${H/3}" stroke="#E5E0DA" stroke-width="0.5"/>
@@ -7081,6 +8510,7 @@ function renderJournalsPanel() {
       excerpt: (firstDiary?.diary || t.notes || 'A slow overland journey — trains, buses and ferries.').slice(0,140),
       traveler: uname, avatar: (uname[0]||'Y').toUpperCase(),
       cover_image: t.cover_image || generateRouteThumbnail(t) || null,
+      cover_image_thumb: t.cover_image_thumb || t.cover_image || generateRouteThumbnail(t) || null,
       days, cities: stops.length, km, tags: ['My journey'], region: 'all',
       date: t.published_at ? new Date(t.published_at).toLocaleDateString('en',{month:'short',year:'numeric'}) : 'Just now',
     };
@@ -7143,7 +8573,7 @@ function renderJournalsPanel() {
 
   const gridHtml = rest.length ? `<div class="jrnl-grid">${rest.map(j => `
     <div class="jrnl-card" onclick="_openJourneyLink('${j._tripId?('/journey/'+encodeURIComponent(j._tripId)):'/journey'}')">
-      <div class="jrnl-card-img" style="${j.cover_image?`background-image:url('${j.cover_image}');background-size:cover;background-position:center`:''}">
+      <div class="jrnl-card-img" style="${j.cover_image?`background-image:url('${j.cover_image_thumb || j.cover_image}');background-size:cover;background-position:center`:''}">
         ${j.cover_image?'':'<i class="ph ph-image" style="font-size:24px"></i>'}
       </div>
       <div class="jrnl-card-body">
@@ -7197,6 +8627,50 @@ function renderJournalsPanel() {
       ${gridHtml}
       ${emptyHtml}
     </div>`;
+}
+
+// ── Upgrade / Go Pro (v2 UpgradeMobile) ─────────────────────────────
+let _upgradeBilling = 'monthly';
+let _upgradeReturnTab = 'mytrips';
+function openUpgrade() {
+  _upgradeReturnTab = document.querySelector('.panel.active')?.id || 'mytrips';
+  switchTab('upgrade', null);
+}
+function closeUpgrade() { switchTab(_upgradeReturnTab, document.getElementById('navbtn_' + _upgradeReturnTab)); }
+function setUpgradeBilling(b) { _upgradeBilling = b; renderUpgrade(); }
+function renderUpgrade() {
+  const el = document.getElementById('upgradePanel');
+  if (!el) return;
+  const monthly = _upgradeBilling === 'monthly';
+  const FEATURES = [
+    ['ph-infinity',    'var(--sage)',  'Unlimited routes',            'Plan as many as you want'],
+    ['ph-file-pdf',    'var(--rust)',  'PDF export',                  'Download journey diary'],
+    ['ph-download-simple', '#2E6FA8',  'GPX download',                'Import into any map app'],
+    ['ph-wifi-slash',  'var(--bark)',  'Offline maps',                'Access your route without data'],
+    ['ph-users-three', 'var(--sage)',  'Verified contributor badge',  'Profile badge + priority review'],
+    ['ph-star',        'var(--gold)',  'Priority support',            'Direct response within 24h'],
+  ];
+  el.innerHTML = `
+  <div class="upg-hero">
+    <div class="upg-kicker">bysloth Pro</div>
+    <div class="upg-title">Plan without limits.</div>
+    <div class="upg-toggle">
+      <button class="${monthly?'on':''}" onclick="setUpgradeBilling('monthly')">Monthly</button>
+      <button class="${monthly?'':'on'}" onclick="setUpgradeBilling('annual')">Annual · save 25%</button>
+    </div>
+    <div class="upg-price">€${monthly?'6':'54'}<span>${monthly?'/mo':'/yr'}</span></div>
+    ${monthly ? '' : `<div class="upg-price-note">That's €4.50/mo · save €18/yr</div>`}
+  </div>
+  <div class="upg-body">
+    ${FEATURES.map(([ic,c,l,sub])=>`
+      <div class="upg-feature">
+        <div class="upg-feature-icon" style="background:color-mix(in srgb,${c} 12%,transparent)"><i class="ph ${ic}" style="color:${c}"></i></div>
+        <div><div class="upg-feature-lbl">${l}</div><div class="upg-feature-sub">${sub}</div></div>
+        <i class="ph ph-check" style="font-size:16px;color:var(--sage);margin-left:auto"></i>
+      </div>`).join('')}
+    <button class="strk-cta" style="margin-top:12px" onclick="alert('Payments aren\\'t live yet — Pro is coming soon.')"><i class="ph ph-star"></i> Start Pro · €${monthly?'6/mo':'54/yr'}</button>
+    <div class="upg-fine">Cancel anytime. No dark patterns. No flights.</div>
+  </div>`;
 }
 
 async function renderProfilePanel() {
@@ -7279,8 +8753,8 @@ async function renderProfilePanel() {
   el.innerHTML = `
 
   <!-- ── Hero identity card ───────────────────────────── -->
-  <div style="background:var(--dusk);color:var(--cream);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:16px;position:relative;overflow:hidden;display:grid;grid-template-columns:72px 1fr auto;gap:20px;align-items:center">
-    <div style="width:72px;height:72px;border-radius:50%;background:var(--moss);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:32px;font-weight:400;border:2px solid var(--sage);flex-shrink:0">${initials}</div>
+  <div class="profile-hero-grid" style="background:var(--dusk);color:var(--cream);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:16px;position:relative;overflow:hidden;display:grid;grid-template-columns:72px 1fr auto;gap:20px;align-items:center">
+    <div class="profile-avatar" style="width:72px;height:72px;border-radius:50%;background:var(--moss);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:32px;font-weight:400;border:2px solid var(--sage);flex-shrink:0">${initials}</div>
     <div style="min-width:0">
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage)">Contributor${memberSince?' · since '+memberSince:''}</div>
       <div style="font-family:var(--serif);font-size:28px;font-weight:300;letter-spacing:-0.3px;margin-top:2px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
@@ -7293,7 +8767,7 @@ async function renderProfilePanel() {
     </div>
     <div style="text-align:right;flex-shrink:0">
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.5);text-transform:uppercase">Karma</div>
-      <div style="font-family:var(--serif);font-size:44px;font-weight:300;color:var(--gold);letter-spacing:-0.8px;line-height:1">${karma.toLocaleString()}</div>
+      <div class="profile-karma-val" style="font-family:var(--serif);font-size:44px;font-weight:300;color:var(--gold);letter-spacing:-0.8px;line-height:1">${karma.toLocaleString()}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;font-family:var(--mono)">${totalVotes} upvotes received</div>
     </div>
     <div style="position:absolute;right:-40px;top:-20px;opacity:0.08;pointer-events:none">
@@ -7302,7 +8776,7 @@ async function renderProfilePanel() {
   </div>
 
   <!-- ── 4-stat row ───────────────────────────────────── -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+  <div class="profile-meta-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
     ${[
       ['Notes posted', totalNotes,              'across '+legKeys.length+' legs'],
       ['Upvotes received', totalVotes,          totalNotes ? (totalVotes/totalNotes).toFixed(1)+' avg' : '0 avg'],
@@ -7317,7 +8791,7 @@ async function renderProfilePanel() {
   </div>
 
   <!-- ── Karma breakdown + Badges ─────────────────────── -->
-  <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-bottom:16px">
+  <div class="profile-2col" style="display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-bottom:16px">
 
     <!-- Karma breakdown -->
     <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
@@ -7341,7 +8815,7 @@ async function renderProfilePanel() {
     <!-- Badges -->
     <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:12px">Badges · ${BADGES.filter(b=>b.earned).length} earned</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="profile-badges-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
         ${BADGES.map(b=>`
           <div style="text-align:center;padding:10px 4px;border-radius:var(--radius);background:${b.dim?'transparent':b.tint};border:${b.dim?'0.5px dashed var(--border2)':'0.5px solid var(--border)'};opacity:${b.dim?0.45:1}">
             <i class="ph ${b.icon}" style="font-size:20px;color:${b.color}"></i>
@@ -7353,7 +8827,7 @@ async function renderProfilePanel() {
   </div>
 
   <!-- ── Contribution mix (donut) + Recent notes ───────── -->
-  <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:16px">
+  <div class="profile-2col" style="display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:16px">
 
     <!-- Donut -->
     <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem">
@@ -7412,7 +8886,7 @@ async function renderProfilePanel() {
     </div>
     ${trips.length === 0
       ? `<div style="font-size:13px;color:var(--text3);padding:1rem 0;text-align:center">No trips yet — plan one in the Planner!</div>`
-      : `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      : `<div class="profile-trips-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
           ${trips.slice(0,3).map(t=>{
             const legCount = (t.legs||[]).length;
             const bookedCount = (t.legs||[]).filter(l=>l.booked).length;
@@ -7507,6 +8981,12 @@ function insertStop(i) {
   render();
 }
 function removeStop(i)  { stops.splice(i, 1); if (i < legs.length) legs.splice(i, 1); editingLegModes.delete(i); render(); }
+function stepStopDays(i, dir) {
+  stops[i].days = Math.max(0, (+stops[i].days || 0) + dir);
+  renderSegs();
+  updateSum();
+  autoFillDates(i);
+}
 
 function exportTrip() {
   const title = document.getElementById('tripTitle').value;
@@ -7523,7 +9003,8 @@ function exportTrip() {
 
 // ── Mobile bottom nav sync ────────────────────────────────────────
 function bnSync(id) {
-  const map = { journey:'mytrips', recordjournal:'mytrips', record:'plan', admin:'plan' };
+  const map = { journey:'mytrips', recordjournal:'mytrips', stoprec:'mytrips', record:'plan', admin:'plan',
+    gpsperms:'mytrips', liverecord:'mytrips', recreview:'mytrips', crashrecover:'mytrips', upgrade:'profile' };
   const target = map[id] || id;
   document.querySelectorAll('.bn-item').forEach(b => {
     b.classList.remove('bn-active');
@@ -7541,16 +9022,20 @@ function bnSync(id) {
 const MOBILE_TITLES = {
   plan:'Planner', mytrips:'My Trips', journals:'Journals',
   profile:'Profile', admin:'Admin',
-  journey:'Journey', record:'New Journey', recordjournal:'New Entry'
+  journey:'Journey', record:'New Journey', recordjournal:'New Entry',
+  stoprec:'Stop Tracking', recreview:'Review your trip', upgrade:'Go Pro'
 };
 function mobileHeaderSync(id) {
   const titleEl = document.getElementById('mobileHeaderTitle');
   if (titleEl) titleEl.textContent = MOBILE_TITLES[id] || id;
   const backBtn = document.getElementById('mobileHeaderBack');
   if (backBtn) {
-    const isDetail = id === 'journey' || id === 'recordjournal';
+    const isDetail = id === 'journey' || id === 'recordjournal' || id === 'stoprec' || id === 'recreview' || id === 'upgrade';
     backBtn.classList.toggle('visible', isDetail);
-    backBtn.onclick = isDetail ? () => switchTab('mytrips', document.getElementById('navbtn_mytrips')) : null;
+    backBtn.onclick = id === 'stoprec' ? () => openJourneyDetail(_journeyTrip)
+      : id === 'recreview' ? () => switchTab('liverecord', null)
+      : id === 'upgrade' ? () => closeUpgrade()
+      : isDetail ? () => switchTab('mytrips', document.getElementById('navbtn_mytrips')) : null;
   }
   const fab = document.getElementById('mobileHeaderFab');
   if (fab) fab.style.setProperty('display', id === 'mytrips' ? 'flex' : 'none', 'important');
@@ -7685,6 +9170,9 @@ init().catch(e => {
   <button class="bn-item" id="bn_mytrips" data-icon="suitcase-simple"
     onclick="switchTab('mytrips',document.getElementById('navbtn_mytrips'))">
     <i class="ph ph-suitcase-simple"></i><span>Trips</span>
+  </button>
+  <button class="bn-item record-entry" id="bnRecord" onclick="onRecordFabTap()">
+    <span class="bn-fab"><span class="bn-fab-sq"></span></span><span>Record</span>
   </button>
   <button class="bn-item" id="bn_journals" data-icon="book-open"
     onclick="switchTab('journals',document.getElementById('navbtn_journals'))">
