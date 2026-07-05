@@ -74,7 +74,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .nav-link.active{color:var(--cream);border-bottom-color:var(--sage);}
   .nav-utils{display:flex;gap:8px;align-items:center;}
   .nav-vsep{width:1px;height:16px;background:rgba(255,255,255,0.2);flex-shrink:0;}
-  .user-badge{font-size:12px;color:var(--sage);padding:5px 12px;border:0.5px solid rgba(255,80,20,0.35);border-radius:99px;background:rgba(255,80,20,0.10);}
+  .user-badge{font-size:12px;color:var(--sage);padding:5px 12px;border:0.5px solid rgba(217,151,61,0.35);border-radius:99px;background:rgba(217,151,61,0.10);}
   .nav-avatar{width:30px;height:30px;border-radius:50%;background:var(--fern);color:var(--cream);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;border:2px solid rgba(255,255,255,0.15);flex-shrink:0;transition:opacity .15s;}
   .nav-avatar:hover{opacity:0.8;}
   .nav-avatar-wrap{position:relative;display:none;}
@@ -88,8 +88,8 @@ window.addEventListener('unhandledrejection', (e) => {
   .nav-utils .btn{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.22);}
   .nav-utils .btn:hover{background:rgba(255,255,255,0.14);color:var(--cream);}
   .nav-utils select{font-size:12px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);border:0.5px solid rgba(255,255,255,0.22);border-radius:var(--radius);padding:5px 8px;outline:none;font-family:inherit;cursor:pointer;}
-  .btn-primary{font-weight:700;background:var(--sage);color:var(--cta-text);border-color:var(--sage);box-shadow:0 2px 4px rgba(255,80,20,0.25);}
-  .btn-primary:hover{background:#E0440C;border-color:#E0440C;transform:translateY(-1px);box-shadow:0 4px 8px rgba(255,80,20,0.35);}
+  .btn-primary{font-weight:700;background:var(--sage);color:var(--cta-text);border-color:var(--sage);box-shadow:0 2px 4px rgba(217,151,61,0.25);}
+  .btn-primary:hover{background:#C07E2E;border-color:#C07E2E;transform:translateY(-1px);box-shadow:0 4px 8px rgba(217,151,61,0.35);}
   .container{max-width:860px;margin:0 auto;padding:2rem 1.25rem;}
   .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;background:transparent;outline:none;width:320px;letter-spacing:-0.3px;transition:color .2s;}
   .trip-title:focus{color:var(--fern);}
@@ -677,7 +677,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .strk-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
   .strk-summary-val{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.3px;}
   .strk-summary-lbl2{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px;}
-  .strk-cta{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
+  .strk-cta{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:var(--ink-900);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
   .strk-cta.danger{background:var(--danger-text);}
   .strk-ghost{margin-top:10px;background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--body);}
   .strk-ghost.outline{border:0.5px solid var(--border2);border-radius:var(--radius-pill);padding:10px 20px;width:100%;color:var(--text2);margin-top:2px;}
@@ -704,7 +704,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-rec-stats > div{display:flex;flex-direction:column;}
   .jd-rec-stat-v{font-size:22px;font-weight:700;color:#fff;line-height:1.1;}
   .jd-rec-stat-l{font-size:10px;color:rgba(255,255,255,0.55);font-family:var(--mono);margin-top:3px;letter-spacing:0.5px;}
-  .jd-rec-open{background:var(--sage);color:#fff;border:none;border-radius:var(--radius-pill);padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:6px;}
+  .jd-rec-open{background:var(--sage);color:var(--ink-900);border:none;border-radius:var(--radius-pill);padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:6px;}
   .jd-rec-cap{font-size:11px;color:rgba(255,255,255,0.5);margin-top:10px;line-height:1.5;}
   .jd-rec-list{display:flex;flex-direction:column;}
   .jd-rec-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:0.5px solid var(--border);}
@@ -796,7 +796,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .rj-btn-stop{background:#B94040;color:#fff;border:none;font-weight:600;}
   .rj-btn-publish{background:var(--sage);color:var(--cta-text);border:none;font-weight:600;}
   .rj-rec-ind.stopped{color:var(--text3);background:var(--bg2);border-color:var(--border2);}
-  .rj-rec-ind.published{color:var(--fern);background:rgba(30,58,92,0.08);border-color:var(--fern);}
+  .rj-rec-ind.published{color:var(--fern);background:rgba(46,46,46,0.08);border-color:var(--fern);}
   .rj-rec-ind.stopped .rj-rec-dot,.rj-rec-ind.published .rj-rec-dot{display:none;}
   .rj-stop-nopub{display:block;width:100%;margin-top:10px;background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--body);text-decoration:underline;text-underline-offset:2px;}
   .rj-stop-nopub:hover{color:var(--text);}
@@ -874,7 +874,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .rj-ov{position:fixed;inset:0;background:rgba(9,16,34,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
   .rj-ov-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);width:360px;max-width:100%;padding:28px 24px;text-align:center;box-shadow:0 24px 60px rgba(9,16,34,0.28);}
   .rj-mic{width:60px;height:60px;border-radius:50%;background:var(--mist);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;transition:background 0.3s;color:var(--moss);font-size:28px;}
-  .rj-mic.listening{background:var(--sage);color:#fff;animation:rjMic 1.2s ease-in-out infinite;}
+  .rj-mic.listening{background:var(--signal);color:#fff;animation:rjMic 1.2s ease-in-out infinite;}
   @keyframes rjMic{0%,100%{box-shadow:0 0 0 0 rgba(255,80,20,0.35);}50%{box-shadow:0 0 0 12px rgba(255,80,20,0);}}
   .rj-ov-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;}
   .rj-ov-sub{font-size:12px;color:var(--text3);margin-bottom:20px;line-height:1.6;}
@@ -883,7 +883,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .rj-ov-cancel{background:none;border:0.5px solid var(--border2);color:var(--text3);padding:8px 20px;font-size:12px;}
   /* Publish modal audience options */
   .rj-aud{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);cursor:pointer;margin-bottom:8px;}
-  .rj-aud.on{border-color:var(--fern);background:rgba(30,58,92,0.05);}
+  .rj-aud.on{border-color:var(--fern);background:rgba(46,46,46,0.05);}
   .rj-aud-radio{margin-left:auto;width:16px;height:16px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
   .rj-aud.on .rj-aud-radio{border-color:var(--fern);}
   .rj-aud.on .rj-aud-radio::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--fern);}
@@ -935,11 +935,11 @@ window.addEventListener('unhandledrejection', (e) => {
   .contrib-block{margin-top:10px;padding-top:8px;border-top:0.5px dashed var(--border);}
   .contrib-block-hdr{display:flex;align-items:center;gap:8px;cursor:pointer;padding:2px 0;user-select:none;}
   .contrib-block-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-weight:600;display:inline-flex;align-items:center;gap:4px;}
-  .contrib-add-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px dashed var(--sage);color:var(--sage);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:var(--body);font-weight:500;background:rgba(255,80,20,0.05);white-space:nowrap;}
+  .contrib-add-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px dashed var(--sage);color:var(--sage);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:var(--body);font-weight:500;background:rgba(217,151,61,0.05);white-space:nowrap;}
   .contrib-flag-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:var(--body);white-space:nowrap;margin-right:6px;}
   .contrib-flag-pill:hover{border-color:var(--text3);color:var(--text2);}
   .contrib-flag-pill.flagged{background:rgba(192,57,43,0.1);border-color:rgba(192,57,43,0.4);color:#C0392B;font-weight:600;}
-  .contrib-add-pill:hover{background:rgba(255,80,20,0.12);}
+  .contrib-add-pill:hover{background:rgba(217,151,61,0.12);}
   .contrib-card{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;padding:8px 10px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-top:6px;}
   .contrib-card-compact{display:grid;grid-template-columns:18px 1fr auto auto;gap:8px;align-items:center;padding:4px 0;font-size:12px;}
   .contrib-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -961,7 +961,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .contrib-kind-pill{font-size:12px;padding:6px 12px;border-radius:99px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;border:0.5px solid var(--border2);color:var(--text2);background:transparent;}
   .contrib-kind-pill.active{font-weight:600;}
   .contrib-source-pill{font-size:12px;padding:6px 12px;border-radius:99px;cursor:pointer;transition:all .15s;border:0.5px solid var(--border2);color:var(--text2);background:transparent;}
-  .contrib-source-pill.active{border-color:var(--sage);background:rgba(255,80,20,0.08);color:var(--sage);font-weight:600;}
+  .contrib-source-pill.active{border-color:var(--sage);background:rgba(217,151,61,0.08);color:var(--sage);font-weight:600;}
   .contrib-field-lbl{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:600;margin-bottom:6px;}
   .contrib-textarea{width:100%;font-size:13px;color:var(--text);border:0.5px solid var(--fern);border-radius:var(--radius);padding:10px 12px;background:var(--bg);outline:none;resize:vertical;min-height:80px;font-family:inherit;line-height:1.5;}
   .contrib-inp{font-size:13px;color:var(--text);border:0.5px solid var(--border2);border-radius:6px;background:var(--bg);padding:8px 10px;outline:none;font-family:inherit;width:100%;}
@@ -992,10 +992,10 @@ window.addEventListener('unhandledrejection', (e) => {
   .mytrips-row-actions{display:flex;gap:5px;align-items:center;justify-content:flex-end;}
   .mytrips-act-btn{font-size:11px;padding:4px 11px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--body);transition:all .15s;white-space:nowrap;}
   .mytrips-act-btn:hover{background:var(--bg2);}
-  .mytrips-act-btn.journal{border-color:var(--fern);background:rgba(30,58,92,0.08);color:var(--fern);}
+  .mytrips-act-btn.journal{border-color:var(--fern);background:rgba(46,46,46,0.08);color:var(--fern);}
   .mytrips-act-btn.recording{border-color:var(--signal);background:rgba(255,80,20,0.08);color:var(--signal);font-weight:600;}
   .mytrips-rec-dot{width:6px;height:6px;border-radius:50%;background:var(--signal);display:inline-block;animation:rjGps 1.4s ease-in-out infinite;}
-  .mytrips-act-btn.journal:hover{background:rgba(30,58,92,0.16);}
+  .mytrips-act-btn.journal:hover{background:rgba(46,46,46,0.16);}
   .mt-cards{display:none;}
   .mt-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:13px 14px;cursor:pointer;}
   .mt-card.maybe{opacity:0.65;}
@@ -1037,7 +1037,7 @@ window.addEventListener('unhandledrejection', (e) => {
   }
   .mobile-splash-cta-primary{
     display:flex;align-items:center;justify-content:center;gap:8px;
-    background:var(--sage);color:#fff;
+    background:var(--sage);color:var(--ink-900);
     font-family:var(--body);font-size:15px;font-weight:600;
     padding:14px 20px;border-radius:var(--radius);text-decoration:none;
   }
@@ -1051,7 +1051,7 @@ window.addEventListener('unhandledrejection', (e) => {
 /* ── App loading splash ───────────────────── */
 #appSplash{
   position:fixed;inset:0;z-index:99999;overflow:hidden;
-  background:#091022;
+  background:#0A0A0A;
   transition:opacity 0.45s ease;
 }
 #appSplash.hide{opacity:0;pointer-events:none;}
@@ -1140,6 +1140,13 @@ window.addEventListener('unhandledrejection', (e) => {
   body.gps-fullscreen #mobileHeader,
   body.gps-fullscreen #bottomNav{display:none !important;}
   body.gps-fullscreen .container{height:100dvh;padding:0;overflow:hidden;}
+  /* .gps-panel{height:100%} only resolves against a real height if every
+     ancestor between it and .container also has one -- the plain .panel
+     and its render-target wrapper div don't, so .gps-panel silently grew
+     to its full content height instead of being clamped, pushing whatever
+     footer/CTA sits below the scroll area out past the viewport. */
+  body.gps-fullscreen .panel.active{height:100%;}
+  body.gps-fullscreen .panel.active > div{height:100%;}
   /* ── Journey Detail replaces the tab bar with its own bottom CTA (v2 JourneyMobile never renders BottomNav) ── */
   body.no-tabbar #bottomNav{display:none !important;}
   body.no-tabbar .container{height:calc(100dvh - 56px);padding-bottom:110px;}
@@ -1151,11 +1158,11 @@ window.addEventListener('unhandledrejection', (e) => {
   .gps-hdr{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;flex-shrink:0;color:var(--text);font-family:var(--serif);font-size:17px;font-weight:600;}
   .gps-hdr.dark{color:var(--cream);border-bottom:0.5px solid rgba(255,255,255,0.08);}
   .gps-back{width:36px;height:36px;border-radius:10px;border:none;background:none;color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-  .gps-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px;overflow-y:auto;}
+  .gps-center{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px;overflow-y:auto;}
   .gps-center .strk-icon{margin-bottom:20px;}
   .gps-center .strk-title{font-size:22px;}
   /* ── GPS explain screen (step 0) ── */
-  .gps-explain{flex:1;overflow-y:auto;padding:24px 22px 28px;}
+  .gps-explain{flex:1;min-height:0;overflow-y:auto;padding:24px 22px 28px;}
   .gps-explain-icon{width:56px;height:56px;border-radius:18px;background:color-mix(in srgb,var(--sage) 35%,transparent);border:1px solid rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;margin-bottom:22px;}
   .gps-explain-icon i{font-size:26px;color:var(--sage);}
   .gps-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--sage);font-weight:600;}
@@ -1870,32 +1877,32 @@ const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Wal
 // Signal · transport mode accent colors (Session-2 §8 values)
 const MODE_COLORS = {
   bus:          '#6B4F3A', // bark
-  train:        '#1E3A5C', // fern navy
-  hitchhike:    '#C4622D', // rust
-  ferry:        '#2E6FA8', // ocean blue
+  train:        '#2E2E2E', // ink-600
+  hitchhike:    '#C4622D', // rust — approved alternate accent
+  ferry:        '#3D3D3D', // ink-500 (was ocean blue)
   walk:         '#94A0B0', // text3 grey
   walking:      '#94A0B0',
-  cycle:        '#2E6FA8',
-  motorbike:    '#7C4A9E', // purple — distinct from cycle/taxi's warm/blue tones
+  cycle:        '#9C6423', // mustard-700 (was ocean blue)
+  motorbike:    '#7C4A9E', // purple — distinct from cycle/taxi's warm tones
   taxi:         '#B45309', // amber-brown
-  flight:       '#5B7FA6', // slate
+  flight:       '#787878', // ink-300 (was slate blue)
   'shared taxi':'#B45309', // same as taxi
 };
 
 // Mode → tint (light bg for icon chip)
 const MODE_TINTS = {
-  bus:'#F4EADE', train:'rgba(30,58,92,0.08)', ferry:'#EBF4FC', hitchhike:'#FBE3D4',
-  walk:'#F2F4F6', walking:'#F2F4F6', cycle:'#EBF4FC', motorbike:'#F1E9F6',
-  taxi:'#FEF3C7', flight:'#E8EFF5', 'shared taxi':'#FEF3C7',
+  bus:'#F4EADE', train:'rgba(46,46,46,0.08)', ferry:'#EBEBEB', hitchhike:'#FBE3D4',
+  walk:'#F2F4F6', walking:'#F2F4F6', cycle:'#FCEFDC', motorbike:'#F1E9F6',
+  taxi:'#FEF3C7', flight:'#ECECEC', 'shared taxi':'#FEF3C7',
 };
 
 // Community contribution kinds
 const CONTRIB_KINDS = {
   price:    { icon:'ph-tag',           color:'#6B4F3A', bg:'#F4EADE', label:'Price update' },
-  schedule: { icon:'ph-clock-clockwise',color:'#2E6FA8', bg:'#EDF4F9', label:'Schedule tip' },
+  schedule: { icon:'ph-clock-clockwise',color:'#2E2E2E', bg:'#F0F0F0', label:'Schedule tip' },
   border:   { icon:'ph-shield-warning', color:'#C4622D', bg:'#FDF0EC', label:'Border note' },
   tip:      { icon:'ph-lightbulb',     color:'#6B5410', bg:'#FDF6E3', label:'Local tip' },
-  confirmed:{ icon:'ph-check-circle',  color:'#13213A', bg:'#FFE8E0', label:'Confirmed working' },
+  confirmed:{ icon:'ph-check-circle',  color:'#3D7A3D', bg:'#E4F0E2', label:'Confirmed working' },
   warning:  { icon:'ph-warning',       color:'#C4622D', bg:'#FDF0EC', label:'Heads up' },
 };
 
@@ -3606,8 +3613,8 @@ function renderImportModal() {
       <button class="btn" style="margin-top:10px" onclick="_importState='choose';renderImportModal()">← Back</button>`;
   } else {
     body = `<div class="imp-desc">Import an existing planned route. We’ll parse your file and pre-fill the stops so you can review before saving.</div>
-      <div class="imp-opt" style="--imp-accent:#2E6FA8" onclick="importPick('gpx')">
-        <div class="imp-opt-icon" style="background:rgba(46,111,168,0.15)"><i class="ph ph-file" style="font-size:22px;color:#2E6FA8"></i></div>
+      <div class="imp-opt" style="--imp-accent:#2E2E2E" onclick="importPick('gpx')">
+        <div class="imp-opt-icon" style="background:rgba(46,46,46,0.15)"><i class="ph ph-file" style="font-size:22px;color:#2E2E2E"></i></div>
         <div><div class="imp-opt-title">GPX file</div><div class="imp-opt-sub">From a GPS device, Komoot, OsmAnd, or any mapping app</div></div>
         <i class="ph ph-arrow-right imp-opt-arrow" style="font-size:14px"></i>
       </div>
@@ -4604,7 +4611,7 @@ function _elevationChartHTML(stopNames, samples, wrapOpen, wrapClose) {
       <div id="${eid}" style="overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 36px">
         <div style="width:${W}px">
           <svg viewBox="0 0 ${W} ${H}" width="${W}" height="60" style="display:block">
-            <path d="${fill}" fill="rgba(255,80,20,0.06)"/>
+            <path d="${fill}" fill="rgba(217,151,61,0.06)"/>
             <path d="${line}" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linejoin="round"/>
           </svg>
           <div style="position:relative;height:18px;margin-top:4px">${lbls}</div>
@@ -4770,7 +4777,7 @@ async function updatePlannerMap() {
   for (let i = 0; i < _plannerStops.length - 1; i++) {
     if (!coords[i] || !coords[i + 1]) continue;
     const mode  = _plannerLegs[i]?.mode || 'bus';
-    const color = MODE_COLORS[mode] || '#FF5014';
+    const color = MODE_COLORS[mode] || '#D9973D';
     const isAir = mode === 'flight';
     const isSea = mode === 'ferry';
     const dash  = isAir ? '8 10' : (mode === 'walk' || mode === 'walking' || mode === 'cycle') ? '4 6' : null;
@@ -4808,7 +4815,7 @@ async function updatePlannerMap() {
   // Numbered stop markers
   for (let i = 0; i < _plannerStops.length; i++) {
     if (!coords[i]) continue;
-    const bg = i === 0 ? '#FF5014' : i === _plannerStops.length - 1 ? '#091022' : '#13213A';
+    const bg = i === 0 ? '#D9973D' : i === _plannerStops.length - 1 ? '#0A0A0A' : '#161616';
     const icon = L.divIcon({
       className: '',
       html: `<div style="width:22px;height:22px;border-radius:50%;background:${bg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Albert Sans',sans-serif;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.28)">${i + 1}</div>`,
@@ -5697,7 +5704,7 @@ function showContribModal(legIdx, legKey) {
   document.getElementById('contribModal').innerHTML = `<div class="contrib-modal-overlay" onclick="if(event.target===this)closeContribModal()">
     <div class="contrib-modal" onclick="event.stopPropagation()">
       <div class="contrib-modal-hdr">
-        <div style="width:34px;height:34px;border-radius:8px;background:rgba(255,80,20,0.15);color:var(--sage);display:flex;align-items:center;justify-content:center"><i class="ph ph-users-three" style="font-size:18px"></i></div>
+        <div style="width:34px;height:34px;border-radius:8px;background:rgba(217,151,61,0.15);color:var(--sage);display:flex;align-items:center;justify-content:center"><i class="ph ph-users-three" style="font-size:18px"></i></div>
         <div style="flex:1">
           <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);font-weight:400">Contribute a note</div>
           <div style="font-family:var(--serif);font-size:20px;font-weight:400;letter-spacing:-0.2px;margin-top:2px;color:var(--cream)">Help the next traveller on this leg</div>
@@ -6659,7 +6666,7 @@ function renderGpsPerms() {
 let _recNotesTrip = null;
 const REC_NOTES_STEPS = [
   { icon: 'map-pin', color: 'var(--sage)', title: 'Check in at each stop', desc: 'When you arrive at a city or crossing, open the app and tap your stop to write a quick note.' },
-  { icon: 'microphone', color: '#2E6FA8', title: 'Voice or text', desc: 'Dictate hands-free or type. Voice is transcribed directly into your journal entry.' },
+  { icon: 'microphone', color: '#2E2E2E', title: 'Voice or text', desc: 'Dictate hands-free or type. Voice is transcribed directly into your journal entry.' },
   { icon: 'camera', color: 'var(--bark)', title: 'Attach photos', desc: 'Add up to 6 photos per stop. They appear in your public journey diary.' },
   { icon: 'share-network', color: 'var(--sage)', title: 'Turn a note into a community tip', desc: 'Hit "Share tip" on any leg entry to submit it as a community note — it goes to review first.' },
   { icon: 'stop-circle', color: 'var(--rust)', title: "Stop when you're done", desc: 'Tap Stop to end the session. Your journal auto-saves. You can publish it as a public journey or keep it private.' },
@@ -6745,7 +6752,7 @@ function renderLiveRecord() {
         <span style="margin:0 8px;color:var(--border2)">·</span><span>${stops.length} stops</span>
       </div>
     </div>
-    <div style="flex:1;overflow-y:auto;background:var(--bg)">
+    <div style="flex:1;min-height:0;overflow-y:auto;background:var(--bg)">
       <div style="padding:10px 14px 6px;display:flex;align-items:center;justify-content:space-between">
         <div class="gps-section-lbl">Stops detected</div>
         <button class="gps-mark-btn" onclick="gpsMarkStopNow().then(renderLiveRecord)"><i class="ph ph-plus"></i> Mark as stop</button>
@@ -7692,11 +7699,11 @@ async function renderMapView() {
   _mapViewLeafletMap = L.map('mapviewMapEl', { zoomControl:false, attributionControl:false, scrollWheelZoom:false });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_mapViewLeafletMap);
   const ll = coords.map(c => [c.lat, c.lon]);
-  L.polyline(ll, { color:'#FF5014', weight:2.5, opacity:0.8, dashArray:'5 7' }).addTo(_mapViewLeafletMap);
+  L.polyline(ll, { color:'#D9973D', weight:2.5, opacity:0.8, dashArray:'5 7' }).addTo(_mapViewLeafletMap);
   coords.forEach((c, i) => {
     L.circleMarker([c.lat, c.lon], {
       radius: i===_mapViewSel ? 7 : 5, color:'#fff', weight:2,
-      fillColor: isTracking && i===curIdx ? '#FF5014' : c.visited ? '#1E3A5C' : '#94A0B0', fillOpacity:1
+      fillColor: isTracking && i===curIdx ? '#FF5014' : c.visited ? '#3D7A3D' : '#94A0B0', fillOpacity:1
     }).addTo(_mapViewLeafletMap);
   });
   _mapViewLeafletMap.fitBounds(L.latLngBounds(ll).pad(0.25));
@@ -7730,12 +7737,12 @@ async function jdInitMap(stops, legs) {
   _jdMap = L.map('jdMapEl', { zoomControl:true, attributionControl:false, scrollWheelZoom:false });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_jdMap);
   const ll = coords.map(c => [c.lat, c.lon]);
-  L.polyline(ll, { color:'#FF5014', weight:2.5, opacity:0.75, dashArray:'5 7' }).addTo(_jdMap);
+  L.polyline(ll, { color:'#D9973D', weight:2.5, opacity:0.75, dashArray:'5 7' }).addTo(_jdMap);
   coords.forEach((c, i) => {
     const first = i===0, last = i===coords.length-1;
     L.circleMarker([c.lat, c.lon], {
       radius: first||last ? 6 : 5, color:'#fff', weight:2,
-      fillColor: c.visited ? '#1E3A5C' : last ? '#FF5014' : '#94A0B0', fillOpacity:1
+      fillColor: c.visited ? '#3D7A3D' : last ? '#D9973D' : '#94A0B0', fillOpacity:1
     }).bindTooltip(c.name, { permanent:true, direction:'top', offset:[0,-8], className:'' }).addTo(_jdMap);
   });
   // GPS "you are here" dot (mid-leg transitProgress)
@@ -7795,9 +7802,9 @@ async function jdInitMiniMap(stops, legs) {
   if (_jdMiniMap) { try { _jdMiniMap.remove(); } catch(e){} _jdMiniMap = null; }
   _jdMiniMap = L.map('jdMiniMapEl', { zoomControl:false, attributionControl:false, scrollWheelZoom:false, dragging:false, touchZoom:false });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_jdMiniMap);
-  L.polyline(coords, { color:'#FF5014', weight:2.5, opacity:0.8, dashArray:'5 7' }).addTo(_jdMiniMap);
-  L.circleMarker(coords[0], { radius:5, color:'#fff', weight:2, fillColor:'#091022', fillOpacity:1 }).addTo(_jdMiniMap);
-  L.circleMarker(coords[coords.length-1], { radius:5, color:'#fff', weight:2, fillColor:'#FF5014', fillOpacity:1 }).addTo(_jdMiniMap);
+  L.polyline(coords, { color:'#D9973D', weight:2.5, opacity:0.8, dashArray:'5 7' }).addTo(_jdMiniMap);
+  L.circleMarker(coords[0], { radius:5, color:'#fff', weight:2, fillColor:'#0A0A0A', fillOpacity:1 }).addTo(_jdMiniMap);
+  L.circleMarker(coords[coords.length-1], { radius:5, color:'#fff', weight:2, fillColor:'#D9973D', fillOpacity:1 }).addTo(_jdMiniMap);
   _jdMiniMap.fitBounds(L.latLngBounds(coords).pad(0.2));
 }
 
@@ -8454,10 +8461,10 @@ async function recInitStickyMap() {
   _recMap = L.map('rjStickyMap', { zoomControl:false, attributionControl:false, scrollWheelZoom:false });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_recMap);
   const ll = coords.map(c => [c.lat, c.lon]);
-  L.polyline(ll, { color:'#FF5014', weight:2.5, opacity:0.75, dashArray:'5 7' }).addTo(_recMap);
+  L.polyline(ll, { color:'#D9973D', weight:2.5, opacity:0.75, dashArray:'5 7' }).addTo(_recMap);
   coords.forEach((c, i) => {
     const first=i===0, lastC=i===coords.length-1;
-    L.circleMarker([c.lat,c.lon], { radius:first||lastC?6:5, color:'#fff', weight:2, fillColor:c.visited?'#1E3A5C':lastC?'#FF5014':'#94A0B0', fillOpacity:1 })
+    L.circleMarker([c.lat,c.lon], { radius:first||lastC?6:5, color:'#fff', weight:2, fillColor:c.visited?'#3D7A3D':lastC?'#D9973D':'#94A0B0', fillOpacity:1 })
       .bindTooltip(c.name, { permanent:true, direction:'top', offset:[0,-8], className:'' }).addTo(_recMap);
   });
   const ti = coords.findIndex(c => c.transitProgress != null);
@@ -8644,7 +8651,7 @@ function generateRouteThumbnail(trip) {
   }
   const dots = pts.map(([x, y], i) => {
     const end = i === 0 || i === n - 1;
-    return `<circle cx="${x}" cy="${y}" r="${end?5:3}" fill="${end?'#FF5014':'#1E3A5C'}" stroke="white" stroke-width="1.5" opacity="0.9"/>`;
+    return `<circle cx="${x}" cy="${y}" r="${end?5:3}" fill="${end?'#D9973D':'#2E2E2E'}" stroke="white" stroke-width="1.5" opacity="0.9"/>`;
   }).join('');
   const fl = _stopCityName(stops[0].name), ll = _stopCityName(stops[n-1].name);
   const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
@@ -8654,11 +8661,11 @@ function generateRouteThumbnail(trip) {
     <line x1="${W/4}" y1="0" x2="${W/4}" y2="${H}" stroke="#E5E0DA" stroke-width="0.5"/>
     <line x1="${W/2}" y1="0" x2="${W/2}" y2="${H}" stroke="#E5E0DA" stroke-width="0.5"/>
     <line x1="${3*W/4}" y1="0" x2="${3*W/4}" y2="${H}" stroke="#E5E0DA" stroke-width="0.5"/>
-    <path d="${d} L ${W-24},${H+10} L 24,${H+10} Z" fill="rgba(30,58,92,0.05)"/>
-    <path d="${d}" fill="none" stroke="#1E3A5C" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+    <path d="${d} L ${W-24},${H+10} L 24,${H+10} Z" fill="rgba(22,22,22,0.05)"/>
+    <path d="${d}" fill="none" stroke="#2E2E2E" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
     ${dots}
-    <text x="${pts[0][0]+8}" y="${pts[0][1]-9}" font-family="sans-serif" font-size="9" fill="#091022" font-weight="600" opacity="0.65">${fl}</text>
-    <text x="${pts[n-1][0]-8}" y="${pts[n-1][1]-9}" font-family="sans-serif" font-size="9" fill="#FF5014" font-weight="600" text-anchor="end">${ll}</text>
+    <text x="${pts[0][0]+8}" y="${pts[0][1]-9}" font-family="sans-serif" font-size="9" fill="#0A0A0A" font-weight="600" opacity="0.65">${fl}</text>
+    <text x="${pts[n-1][0]-8}" y="${pts[n-1][1]-9}" font-family="sans-serif" font-size="9" fill="#D9973D" font-weight="600" text-anchor="end">${ll}</text>
   </svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
@@ -8819,7 +8826,7 @@ function renderUpgrade() {
   const FEATURES = [
     ['ph-infinity',    'var(--sage)',  'Unlimited routes',            'Plan as many as you want'],
     ['ph-file-pdf',    'var(--rust)',  'PDF export',                  'Download journey diary'],
-    ['ph-download-simple', '#2E6FA8',  'GPX download',                'Import into any map app'],
+    ['ph-download-simple', '#2E2E2E',  'GPX download',                'Import into any map app'],
     ['ph-wifi-slash',  'var(--bark)',  'Offline maps',                'Access your route without data'],
     ['ph-users-three', 'var(--sage)',  'Verified contributor badge',  'Profile badge + priority review'],
     ['ph-star',        'var(--gold)',  'Priority support',            'Direct response within 24h'],
@@ -8906,9 +8913,9 @@ async function renderProfilePanel() {
 
   // ── Badges ────────────────────────────────────────────────────────
   const BADGES = [
-    { icon:'ph-train',          color:'#2E6FA8', tint:'#E3EEF7', label:'Rails',        sub:'Train notes ×10', earned: (kindCounts.schedule||0)>=10 },
-    { icon:'ph-shield-check',   color:'#13213A', tint:'#FFE8E0', label:'Trusted',      sub:'20+ confirms',   earned: totalConf>=20 },
-    { icon:'ph-tag',            color:'#1E3A5C', tint:'#FFE8E0', label:'Honest price', sub:'5 price updates', earned:(kindCounts.price||0)>=5 },
+    { icon:'ph-train',          color:'#2E2E2E', tint:'#E0E0E0', label:'Rails',        sub:'Train notes ×10', earned: (kindCounts.schedule||0)>=10 },
+    { icon:'ph-shield-check',   color:'#3D7A3D', tint:'#E4F0E2', label:'Trusted',      sub:'20+ confirms',   earned: totalConf>=20 },
+    { icon:'ph-tag',            color:'#9C6423', tint:'#FCEFDC', label:'Honest price', sub:'5 price updates', earned:(kindCounts.price||0)>=5 },
     { icon:'ph-lock-key-open',  color:'#94A0B0', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
     { icon:'ph-lock-key-open',  color:'#94A0B0', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
     { icon:'ph-lock-key-open',  color:'#94A0B0', tint:'var(--bg2)', label:'Locked',    sub:'…',              earned: false, dim:true },
@@ -9235,23 +9242,23 @@ function mobileHeaderSync(id) {
     </svg>
     <svg id="spRoute" style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 393 790" preserveAspectRatio="xMidYMid slice">
       <defs><filter id="spGF"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-      <path id="spTG" d="${ROUTE}" fill="none" stroke="rgba(255,80,20,0.25)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${RLEN}" stroke-dashoffset="${RLEN}" filter="url(#spGF)"/>
-      <path id="spT"  d="${ROUTE}" fill="none" stroke="#FF5014" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="${RLEN}" stroke-dashoffset="${RLEN}"/>
+      <path id="spTG" d="${ROUTE}" fill="none" stroke="rgba(217,151,61,0.25)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${RLEN}" stroke-dashoffset="${RLEN}" filter="url(#spGF)"/>
+      <path id="spT"  d="${ROUTE}" fill="none" stroke="#D9973D" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="${RLEN}" stroke-dashoffset="${RLEN}"/>
       ${STOPS.map((s,i)=>`
         <g id="spPin${i}" opacity="0" transform="translate(${s.x},${s.y})">
-          <circle id="spPulse${i}" r="8" fill="none" stroke="#FF5014" stroke-width="1" opacity="0.6"/>
-          <circle id="spPO${i}" r="0" fill="#091022" stroke="#FF5014" stroke-width="1.5"/>
-          <circle id="spPI${i}" r="0" fill="#FF5014"/>
-          <text x="${i===1?-10:10}" y="-10" text-anchor="${i===1?'end':'start'}" font-size="9" font-weight="600" fill="#FF5014" font-family="JetBrains Mono,monospace" opacity="0" paint-order="stroke" stroke="#091022" stroke-width="3">${s.label}</text>
+          <circle id="spPulse${i}" r="8" fill="none" stroke="#D9973D" stroke-width="1" opacity="0.6"/>
+          <circle id="spPO${i}" r="0" fill="#0A0A0A" stroke="#D9973D" stroke-width="1.5"/>
+          <circle id="spPI${i}" r="0" fill="#D9973D"/>
+          <text x="${i===1?-10:10}" y="-10" text-anchor="${i===1?'end':'start'}" font-size="9" font-weight="600" fill="#D9973D" font-family="JetBrains Mono,monospace" opacity="0" paint-order="stroke" stroke="#0A0A0A" stroke-width="3">${s.label}</text>
         </g>`).join('')}
     </svg>
     <svg id="spCorner" style="position:absolute;bottom:0;right:0;opacity:0" width="160" height="160">
-      <path d="M 160,160 C 130,110 100,80 60,50 C 30,25 10,0 0,0" fill="none" stroke="#FF5014" stroke-width="1.5" stroke-dasharray="4 8"/>
-      <circle cx="60" cy="50" r="5" fill="none" stroke="#FF5014" stroke-width="1"/>
-      <circle cx="60" cy="50" r="2" fill="#FF5014"/>
+      <path d="M 160,160 C 130,110 100,80 60,50 C 30,25 10,0 0,0" fill="none" stroke="#D9973D" stroke-width="1.5" stroke-dasharray="4 8"/>
+      <circle cx="60" cy="50" r="5" fill="none" stroke="#D9973D" stroke-width="1"/>
+      <circle cx="60" cy="50" r="2" fill="#D9973D"/>
     </svg>
-    <div id="spGlow" style="position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,80,20,0.12) 0%,transparent 70%);opacity:0"></div>
-    <img id="spLogo" src="/public/bysloth.png" alt="" style="position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(0.55);opacity:0;width:72px;height:72px;filter:drop-shadow(0 0 20px rgba(255,80,20,0.5))">
+    <div id="spGlow" style="position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(217,151,61,0.12) 0%,transparent 70%);opacity:0"></div>
+    <img id="spLogo" src="/public/bysloth.png" alt="" style="position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(0.55);opacity:0;width:72px;height:72px;filter:drop-shadow(0 0 20px rgba(217,151,61,0.5))">
     <div id="spWord" style="position:absolute;left:50%;top:calc(42% + 64px);transform:translate(-50%,14px);opacity:0;font-family:'Sora',sans-serif;font-size:32px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;white-space:nowrap">bysloth</div>
     <div id="spTag"  style="position:absolute;left:50%;top:calc(42% + 110px);transform:translateX(-50%);opacity:0;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:2px;text-transform:uppercase;white-space:nowrap">overland · no flights, ever</div>
     <div id="spPill" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);width:120px;height:4px;border-radius:2px;background:rgba(255,255,255,0.2);opacity:0"></div>`;
@@ -9362,11 +9369,11 @@ init().catch(e => {
 <div id="mobileSplash" class="mobile-splash">
   <div style="position:absolute;right:-30px;bottom:60px;width:260px;height:320px;opacity:0.08;pointer-events:none">
     <svg viewBox="0 0 260 320" width="100%" height="100%" fill="none">
-      <path d="M30 300 C 80 250, 100 200, 150 160 C 200 120, 220 80, 240 40" stroke="#FF5014" stroke-width="2.5" stroke-dasharray="5 10" stroke-linecap="round"/>
-      <circle cx="30" cy="300" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="30" cy="300" r="3" fill="#FF5014"/>
-      <circle cx="150" cy="160" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="150" cy="160" r="3" fill="#FF5014"/>
-      <circle cx="240" cy="40" r="8" stroke="#FF5014" stroke-width="1.5" fill="none"/><circle cx="240" cy="40" r="3" fill="#FF5014"/>
-      <circle cx="240" cy="40" r="22" stroke="#FF5014" stroke-width="1" opacity="0.5" fill="none"/>
+      <path d="M30 300 C 80 250, 100 200, 150 160 C 200 120, 220 80, 240 40" stroke="#D9973D" stroke-width="2.5" stroke-dasharray="5 10" stroke-linecap="round"/>
+      <circle cx="30" cy="300" r="8" stroke="#D9973D" stroke-width="1.5" fill="none"/><circle cx="30" cy="300" r="3" fill="#D9973D"/>
+      <circle cx="150" cy="160" r="8" stroke="#D9973D" stroke-width="1.5" fill="none"/><circle cx="150" cy="160" r="3" fill="#D9973D"/>
+      <circle cx="240" cy="40" r="8" stroke="#D9973D" stroke-width="1.5" fill="none"/><circle cx="240" cy="40" r="3" fill="#D9973D"/>
+      <circle cx="240" cy="40" r="22" stroke="#D9973D" stroke-width="1" opacity="0.5" fill="none"/>
     </svg>
   </div>
   <div style="flex:1;padding:40px 28px 32px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1">
