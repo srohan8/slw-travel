@@ -37,16 +37,29 @@ Always commit locally, then ask "shall I push?" before running `git push`.
 
 ## Design system tokens
 
+Rebranded to a mustard + ink palette (no blue) — the table below reflects
+the actual current `:root` values in `app/index.html`, not the original
+navy/orange scheme.
+
 | Token | Value | Use |
 |-------|-------|-----|
-| `--dusk` | `#091022` | Nav background, dark surfaces |
-| `--moss` | `#13213A` | Secondary dark |
-| `--fern` | `#1E3A5C` | Accent blue |
-| `--sage` | `#FF5014` | CTA orange (primary action colour) |
+| `--dusk` | `var(--ink-900)` `#0A0A0A` | Nav background, dark surfaces |
+| `--moss` | `var(--ink-800)` `#161616` | Secondary dark |
+| `--fern` | `var(--ink-600)` `#2E2E2E` | Neutral dark accent (e.g. "planned" status) |
+| `--sage` | `var(--mustard-500)` `#D9973D` | General brand/CTA accent — buttons, kickers, tab underlines |
+| `--rust` | `var(--signal)` `#FF5014` | Same value as `--signal` — do not use for non-live UI |
+| `--signal` | `#FF5014` | **Live/recording indicators ONLY** — tracking dots, "LIVE" pills, active-recording state. Never a generic accent. |
 | `--cream` | `#FFFFFF` | Light text on dark |
 | `--body` | `Albert Sans` | Body font |
 | `--serif` | `Sora` | Headings |
 | `--mono` | `JetBrains Mono` | Labels, metadata, footer |
+
+**Important:** `--signal`/`--rust` are reserved exclusively for actual live
+GPS/recording state (per the comment at `app/index.html:40`). If you're
+tempted to reach for orange to make something stand out — a status badge,
+a CTA, a kicker — use `--sage` (mustard) instead. Reusing `--signal` for a
+non-live element visually implies "this is currently tracking," which is
+misleading.
 
 ## Footer — consistent across all pages
 
@@ -54,3 +67,17 @@ All pages use the light border-top footer from `index.html`. Never use a dark `b
 
 Footer CSS class: `.footer` (tool pages) / `.site-footer` (blog pages).
 Footer always contains: bysloth logo + nav links + `© 2026 · Lisbon`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (srohan8/slw-travel), managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) — no repo-specific mapping yet. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root (neither exists yet — created lazily by `/grill-with-docs`). See `docs/agents/domain.md`.
