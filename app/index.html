@@ -985,6 +985,14 @@ window.addEventListener('unhandledrejection', (e) => {
   .mytrips-act-btn.recording{border-color:var(--sage);background:rgba(255,80,20,0.08);color:var(--sage);font-weight:600;}
   .mytrips-rec-dot{width:6px;height:6px;border-radius:50%;background:var(--sage);display:inline-block;animation:rjGps 1.4s ease-in-out infinite;}
   .mytrips-act-btn.journal:hover{background:rgba(30,58,92,0.16);}
+  .mt-cards{display:none;}
+  .mt-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:13px 14px;cursor:pointer;}
+  .mt-card.maybe{opacity:0.65;}
+  .mt-card-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;}
+  .mt-card-title{flex:1;min-width:0;font-size:15px;font-weight:700;color:var(--text);line-height:1.2;}
+  .mt-card-sub{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin-bottom:2px;}
+  .mt-card-meta{font-family:var(--mono);font-size:10.5px;color:var(--text2);margin-bottom:10px;}
+  .mt-card-actions{display:flex;gap:6px;flex-wrap:wrap;}
   .mytrips-jgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .mytrips-jcard{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
   .mytrips-jcard-img{height:130px;background:var(--mist);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;}
@@ -1222,26 +1230,13 @@ window.addEventListener('unhandledrejection', (e) => {
   #plannerMapWrap{bottom:64px !important;}
   .mytrips-hdr{display:none !important;}
   .mytrips-serif-title{font-size:22px !important;}
-  .mytrips-table-hdr{display:none !important;}
-  .mtr-head{justify-content:space-between !important;flex-wrap:nowrap !important;align-items:flex-start !important;}
-  .mtr-title{font-size:15px;font-weight:600;}
   .mytrips-status-pill{font-size:9px;white-space:nowrap;flex-shrink:0;}
-  .mytrips-table-row > .mtr-dist{display:none !important;}
   .mytrips-new-btn{width:40px !important;height:40px !important;border-radius:50% !important;padding:0 !important;font-size:0 !important;display:flex !important;align-items:center;justify-content:center;background:var(--sage) !important;border:none !important;box-shadow:0 2px 8px color-mix(in srgb,var(--sage) 40%,transparent);}
   .mytrips-new-btn::before{content:'+';font-size:24px;font-weight:300;line-height:1;color:#fff;}
-  .mytrips-table{border:none !important;background:transparent !important;}
-  .mytrips-table-row{
-    display:flex !important;flex-direction:column;align-items:stretch !important;
-    grid-template-columns:unset !important;
-    padding:14px !important;
-    background:var(--bg);border:0.5px solid var(--border);
-    border-radius:var(--radius-lg);margin-bottom:10px;
-    gap:6px;
-  }
-  .mytrips-table-row > *{display:flex !important;align-items:center;width:100%;}
-  .mytrips-table-row > *:first-child{flex-direction:column !important;align-items:flex-start !important;gap:4px;}
-  .mtr-head{width:100% !important;}
-  .mytrips-row-actions{justify-content:flex-start !important;width:100%;}
+  /* v2's TripsMobile renders a stacked MCard list, not a table -- swap in
+     .mt-cards (built from the same trip data) and hide the desktop table. */
+  .mytrips-table{display:none !important;}
+  .mt-cards{display:flex !important;flex-direction:column;gap:9px;}
   .mytrips-yearly{grid-template-columns:repeat(2,1fr) !important;}
   .mytrips-tabs{gap:48px !important;margin-bottom:1rem !important;}
   .mytrips-tab{font-size:15px !important;padding:10px 2px !important;font-weight:400 !important;border-bottom-width:2px !important;}
@@ -5925,7 +5920,7 @@ function renderMyTripsPanel() {
   // ── Trips tab ──────────────────────────────────────────────────
   if (_myTripsTab === 'trips') {
     const tagged = trips.map(t => ({ t, st: stateOf(t) }));
-    const rowsHtml = tagged.length ? tagged.map(({ t, st }) => { try {
+    const taggedHtml = tagged.length ? tagged.map(({ t, st }) => { try {
       const sc       = t.stops?.length || 0;
       const legs     = t.legs || [];
       const route    = sc >= 2 ? `${_stopCityName(t.stops[0].name)} → ${_stopCityName(t.stops[sc-1].name)}` : '';
@@ -5958,7 +5953,7 @@ function renderMyTripsPanel() {
         : isRecording
           ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><span class="mytrips-rec-dot"></span> Recording</button>`
           : `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>`;
-      return `<div class="mytrips-table-row" style="cursor:pointer;${isMaybe?'opacity:0.65':''}" onclick="openJourneyDetailById('${t.id}')" title="View journey">
+      const rowHtml = `<div class="mytrips-table-row" style="cursor:pointer;${isMaybe?'opacity:0.65':''}" onclick="openJourneyDetailById('${t.id}')" title="View journey">
         <div>
           <div class="mtr-head">
             <span class="mtr-title">${primary}</span>
@@ -5975,17 +5970,41 @@ function renderMyTripsPanel() {
           ${journalBtn}
         </div>
       </div>`;
+      // v2's TripsMobile renders one stacked MCard per trip: title+pill row,
+      // "route · sub" mono line, "dates · N stops" mono line, then View/Edit
+      // + one conditional action -- not this table's column layout.
+      const cardHtml = `<div class="mt-card${isMaybe?' maybe':''}" onclick="openJourneyDetailById('${t.id}')">
+        <div class="mt-card-top">
+          <div class="mt-card-title">${primary}</div>
+          <span class="mytrips-status-pill" style="border-color:${st.color};color:${st.color};background:color-mix(in srgb,${st.color} 10%,transparent)">${st.label}</span>
+        </div>
+        ${sub ? `<div class="mt-card-sub">${sub}</div>` : ''}
+        <div class="mt-card-meta">${dateRange}${sc ? ' · '+sc+' stops' : ''}</div>
+        <div class="mt-card-actions">
+          <button class="mytrips-act-btn" onclick="event.stopPropagation();openJourneyDetailById('${t.id}')">View</button>
+          <button class="mytrips-act-btn" onclick="event.stopPropagation();loadTripById('${t.id}','edit')">Edit</button>
+          ${journalBtn}
+        </div>
+      </div>`;
+      return { rowHtml, cardHtml };
     } catch (e) {
       // One malformed trip must never take down the whole My Trips list (or, since this
       // renders during init(), the whole app) — skip it with a visible placeholder instead.
       console.error('renderMyTripsPanel: skipping malformed trip', t?.id, e);
-      return `<div class="mytrips-table-row" style="opacity:0.6">
+      const errRow = `<div class="mytrips-table-row" style="opacity:0.6">
         <div>
           <div class="mtr-head"><span class="mtr-title">${(t?.title || 'Untitled trip').toString()}</span></div>
           <div class="mytrips-row-sub">Couldn't display this trip — its data looks corrupted.</div>
         </div>
       </div>`;
-    } }).join('') : `<div style="padding:2.5rem;text-align:center;font-size:13px;color:var(--text3)">No trips yet.</div>`;
+      const errCard = `<div class="mt-card" style="opacity:0.6">
+        <div class="mt-card-top"><div class="mt-card-title">${(t?.title || 'Untitled trip').toString()}</div></div>
+        <div class="mt-card-sub">Couldn't display this trip — its data looks corrupted.</div>
+      </div>`;
+      return { rowHtml: errRow, cardHtml: errCard };
+    } }) : [];
+    const rowsHtml = taggedHtml.length ? taggedHtml.map(x => x.rowHtml).join('') : `<div style="padding:2.5rem;text-align:center;font-size:13px;color:var(--text3)">No trips yet.</div>`;
+    const cardsListHtml = taggedHtml.length ? taggedHtml.map(x => x.cardHtml).join('') : `<div style="padding:2.5rem;text-align:center;font-size:13px;color:var(--text3)">No trips yet.</div>`;
 
     const allLegs   = trips.flatMap(t => t.legs||[]);
     const totalKm   = Math.round(allLegs.reduce((a,l)=>a+(+l.km||0),0));
@@ -6001,6 +6020,7 @@ function renderMyTripsPanel() {
       <div class="mytrips-table-hdr"><span>Trip</span><span>Dates</span><span>Stops</span><span>Actions</span></div>
       ${rowsHtml}
     </div>
+    <div class="mt-cards">${cardsListHtml}</div>
     <div class="mytrips-yearly">
       <div class="met"><div class="met-lbl">Trips</div><div class="met-val">${trips.length}</div></div>
       <div class="met"><div class="met-lbl">Overland</div><div class="met-val">${totalKm.toLocaleString()} <span class="met-u">km</span></div></div>
