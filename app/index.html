@@ -561,7 +561,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-rec-cta{font-size:12px;padding:7px 14px;border-radius:var(--radius-pill);background:var(--sage);color:var(--cta-text);border:none;cursor:pointer;font-family:var(--body);font-weight:600;display:inline-flex;align-items:center;gap:6px;}
   .jd-rec-dot{width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block;}
   /* ── Journey Detail: GPS/manual tracking toggle ── */
-  .jd-toggle-on,.jd-toggle-off{font-size:13px;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;font-family:var(--body);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;}
+  .jd-toggle-on,.jd-toggle-off{font-size:13px;padding:12px 16px;border-radius:var(--radius-pill);cursor:pointer;font-family:var(--body);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;}
   .jd-toggle-on{background:color-mix(in srgb,var(--signal) 12%,transparent);border:0.5px solid color-mix(in srgb,var(--signal) 55%,transparent);color:var(--signal);}
   .jd-toggle-on .jd-rec-dot{background:var(--signal);animation:recBlink 1.6s ease-in-out infinite;}
   .jd-toggle-off{background:var(--bg);border:0.5px solid var(--border2);color:var(--text);}
@@ -679,7 +679,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .strk-summary-lbl2{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px;}
   .strk-cta{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:var(--ink-900);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
   .strk-cta.danger{background:var(--danger-text);}
-  .strk-ghost{margin-top:10px;background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--body);}
+  .strk-ghost{margin-top:10px;display:block;width:100%;background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--body);text-align:center;}
   .strk-ghost.outline{border:0.5px solid var(--border2);border-radius:var(--radius-pill);padding:10px 20px;width:100%;color:var(--text2);margin-top:2px;}
   /* ── Upgrade / Go Pro (v2 UpgradeMobile) ── */
   .upg-hero{background:var(--dusk);border-radius:var(--radius-lg);padding:22px 20px 24px;text-align:center;margin-bottom:16px;}
@@ -1202,6 +1202,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .mapview-chip{flex-shrink:0;padding:8px 12px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);cursor:pointer;text-align:center;min-width:72px;font-size:12px;color:var(--text2);}
   .mapview-chip.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--text);font-weight:700;}
   .mapview-chip-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);margin:0 auto 4px;animation:recBlink 1s ease-in-out infinite;}
+  .mapview-gps-upsell{position:absolute;top:16px;left:16px;right:16px;display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(9,16,34,0.84);border:1px solid var(--sage);border-radius:var(--radius-pill);padding:9px 14px;font-family:var(--mono);font-size:10.5px;color:var(--sage);cursor:pointer;backdrop-filter:blur(8px);}
   /* ── "How the journal works" explainer (v2 RecNotesMobile) ── */
   .recnotes-wrap{height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);}
   .recnotes-body{flex:1;overflow-y:auto;padding:16px 16px 24px;}
@@ -1279,9 +1280,11 @@ window.addEventListener('unhandledrejection', (e) => {
   .mytrips-table{display:none !important;}
   .mt-cards{display:flex !important;flex-direction:column;gap:9px;}
   .mytrips-yearly{grid-template-columns:repeat(2,1fr) !important;}
-  .mytrips-tabs{gap:48px !important;margin-bottom:1rem !important;}
-  .mytrips-tab{font-size:15px !important;padding:10px 2px !important;font-weight:400 !important;border-bottom-width:2px !important;}
-  .mytrips-tab.on{font-weight:600 !important;border-bottom-color:var(--dusk) !important;color:var(--dusk) !important;}
+  /* v2's TripsMobile tabs: full-width even split, sage underline, constant
+     weight -- not a left-aligned text row with a dark bold-on-active state. */
+  .mytrips-tabs{gap:0 !important;margin-bottom:1rem !important;}
+  .mytrips-tab{flex:1 !important;font-size:13px !important;font-weight:500 !important;padding:11px 0 !important;text-align:center;border-bottom-width:2px !important;}
+  .mytrips-tab.on{font-weight:500 !important;border-bottom-color:var(--sage) !important;color:var(--text) !important;}
   .mytrips-jgrid{grid-template-columns:1fr !important;}
   .jd-back{display:none !important;}
   .jd-kicker{display:none !important;}
@@ -1318,7 +1321,9 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-metric-spent{order:3;}
   .jd-metric-km{order:4;}
   .jd-leg-cards{grid-template-columns:1fr !important;}
-  .jd-tabs{flex-wrap:wrap;}
+  /* Journey/Map act as a secondary nav under the global header while the
+     Journey tab's content scrolls -- keep it pinned, not scroll away. */
+  .jd-tabs{flex-wrap:wrap;position:sticky;top:0;z-index:15;background:var(--bg);}
   .res-overview-card{display:none !important;}
   .jd-tab.rec{display:none !important;}
   .jd-mini-map{display:block !important;height:160px !important;border-radius:10px;overflow:hidden;margin-bottom:4px;}
@@ -6000,13 +6005,16 @@ function renderMyTripsPanel() {
       const hasContent  = _journalHasContent(t);
       const isRecording = hasContent && !t.recordingStopped && !isPublished;
       const isGpsTracking = !!(_gps.mode && _gps.planned?.id === t.id);
+      const publicUrl = t.public_slug ? `/journey/${t.public_slug}` : `/journey.html?id=${t.id}`;
       const journalBtn = isGpsTracking
         ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openJourneyDetailById('${t.id}')"><span class="mytrips-rec-dot"></span> Tracking</button>`
         : !hasContent
         ? `<button class="mytrips-act-btn" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Start journal</button>`
         : isRecording
           ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><span class="mytrips-rec-dot"></span> Recording</button>`
-          : `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>`;
+          : isPublished
+            ? `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();_openJourneyLink('${publicUrl}')"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>`
+            : `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>`;
       const rowHtml = `<div class="mytrips-table-row" style="cursor:pointer;${isMaybe?'opacity:0.65':''}" onclick="openJourneyDetailById('${t.id}')" title="View journey">
         <div>
           <div class="mtr-head">
@@ -7657,6 +7665,8 @@ async function renderMapView() {
   if (!el || !t) return;
   const stops = t.stops || [];
   const isTracking = !!(_gps.mode && _gps.planned?.id === t.id);
+  const isGpsLive = isTracking && _gps.mode === 'gps';
+  const isManualTracking = isTracking && _gps.mode === 'manual';
   const curIdx = isTracking ? jdCurrentStopIdx(stops, _gps.mode === 'manual') : -1;
   const title = t.title || (_stopCityName(stops[0]?.name) + ' → ' + _stopCityName(stops[stops.length-1]?.name));
 
@@ -7670,7 +7680,8 @@ async function renderMapView() {
     </div>
     <div class="mapview-body">
       <div id="mapviewMapEl" class="mapview-map"><div style="padding:2rem;text-align:center;color:rgba(245,240,232,0.5);font-size:13px">Loading map…</div></div>
-      ${isTracking ? `<div class="gps-map-pill" style="top:16px;left:16px"><span class="gps-map-dot"></span> Live · ${_stopCityName(stops[curIdx]?.name)}</div>` : ''}
+      ${isGpsLive ? `<div class="gps-map-pill" style="top:16px;left:16px"><span class="gps-map-dot"></span> Live · ${_stopCityName(stops[curIdx]?.name)}</div>` : ''}
+      ${isManualTracking ? `<button class="mapview-gps-upsell" onclick="openGpsPerms(_mapViewTrip)"><i class="ph ph-map-trifold"></i> No GPS · tap to enable live tracking</button>` : ''}
       <div class="mapview-sheet">
         <div class="mapview-sheet-handle"></div>
         <div class="mapview-chips" id="mapviewChips">${stops.map((s,i) => `
@@ -8952,7 +8963,7 @@ async function renderProfilePanel() {
       <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;font-family:var(--mono)">${totalVotes} upvotes received</div>
     </div>
     <div style="position:absolute;right:-40px;top:-20px;opacity:0.08;pointer-events:none">
-      <img src="/public/sloth-logo.svg" width="200" style="filter:brightness(0) invert(1)"/>
+      <img src="/public/bysloth-motif-white.png" width="200"/>
     </div>
   </div>
 
