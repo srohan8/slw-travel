@@ -5124,7 +5124,7 @@ function renderPlanSuggestion(d, fromCache = false) {
         ${leg.booked
           ? `<div class="res-leg-card3-booked"><i class="ph ph-check-circle"></i> Booked${leg.bookingRef?' · '+leg.bookingRef:''}</div>`
           : `<button class="res-leg-card3-book" onclick="event.stopPropagation();toggleBookingPanel('${bookKey}',()=>renderPlanSuggestion(lastSuggestion))"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-arrow-right"></i></button>`}
-        ${!leg.booked && bookOpen ? `<div class="jd-book-options" onclick="event.stopPropagation()">
+        ${!leg.booked && bookOpen ? `<div class="jd-book-options" id="${_bookOptsId(bookKey)}" onclick="event.stopPropagation()">
           <div class="jd-book-section-lbl">Transport</div>
           ${transportCol || '<div class="jd-book-empty">No links for this leg</div>'}
           <div class="jd-book-section-lbl">Stay at ${stayCity}</div>
@@ -5358,9 +5358,16 @@ function renderAccommodationLinks(city, suggestedNames, accomNote) {
 // reveals both link lists together. Booked legs skip the button entirely
 // and just show the confirmed state. Desktop keeps the original always-
 // expanded two-card layout (more room, no need to collapse there).
+function _bookOptsId(key) { return `bookopts_${key.replace(/[^a-z0-9]/gi,'_')}`; }
 function toggleBookingPanel(key, rerender) {
-  if (_bookingOpen.has(key)) _bookingOpen.delete(key); else _bookingOpen.add(key);
+  const opening = !_bookingOpen.has(key);
+  if (opening) _bookingOpen.add(key); else _bookingOpen.delete(key);
   rerender();
+  // Re-render replaces the DOM synchronously, but the browser hasn't laid
+  // it out yet -- scroll on the next frame so the revealed transport/stay
+  // links are actually visible instead of the tap silently expanding
+  // something below the fold.
+  if (opening) requestAnimationFrame(() => document.getElementById(_bookOptsId(key))?.scrollIntoView({behavior:'smooth', block:'end'}));
 }
 function bookingBlockHTML(key, leg, transportLinksHtml, stayLinksHtml, stayCity, rerenderCall) {
   if (leg.booked) {
@@ -5372,7 +5379,7 @@ function bookingBlockHTML(key, leg, transportLinksHtml, stayLinksHtml, stayCity,
       <span class="jd-booked">Not booked</span>
       <button class="jd-book-btn" onclick="event.stopPropagation();toggleBookingPanel('${key}',()=>{${rerenderCall}})">Book <i class="ph ph-caret-${open?'up':'down'}"></i></button>
     </div>
-    ${open ? `<div class="jd-book-options" onclick="event.stopPropagation()">
+    ${open ? `<div class="jd-book-options" id="${_bookOptsId(key)}" onclick="event.stopPropagation()">
       <div class="jd-book-section-lbl">Transport</div>
       ${transportLinksHtml || '<div class="jd-book-empty">No links for this leg</div>'}
       <div class="jd-book-section-lbl">Stay at ${stayCity}</div>
@@ -5649,7 +5656,7 @@ function renderLeg(i) {
             <span class="jd-booked">Not booked</span>
             <button class="jd-book-btn" onclick="event.stopPropagation();toggleBookingPanel('${bookKey}',()=>renderSegs())">Book <i class="ph ph-caret-${open?'up':'down'}"></i></button>
           </div>
-          ${open ? `<div class="jd-book-options" onclick="event.stopPropagation()">
+          ${open ? `<div class="jd-book-options" id="${_bookOptsId(bookKey)}" onclick="event.stopPropagation()">
             <div class="jd-book-section-lbl">Transport</div>
             ${transportLinks || '<div class="jd-book-empty">No links for this leg.</div>'}
             ${bookedSection}
@@ -7670,7 +7677,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
           : live
             ? `<div class="jd-leg-notbooked-pill" style="display:inline-flex">Not booked · tap card to edit</div>`
             : `<button class="jd-leg-card3-book" onclick="event.stopPropagation();toggleBookingPanel('jd-${i}',()=>renderJourneyDetail())"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-arrow-right"></i></button>`}
-        ${!live && !leg.booked && _bookingOpen.has('jd-'+i) ? `<div class="jd-book-options" onclick="event.stopPropagation()">
+        ${!live && !leg.booked && _bookingOpen.has('jd-'+i) ? `<div class="jd-book-options" id="${_bookOptsId('jd-'+i)}" onclick="event.stopPropagation()">
           <div class="jd-book-section-lbl">Transport</div>
           ${transportLinks || '<div class="jd-book-empty">No links for this leg</div>'}
           <div class="jd-book-section-lbl">Stay at ${stayCity}</div>
