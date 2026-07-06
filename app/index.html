@@ -397,8 +397,10 @@ window.addEventListener('unhandledrejection', (e) => {
   .stop-days-stepper span{font-family:var(--mono);font-size:11px;color:var(--text);min-width:22px;text-align:center;}
   .rec-mobile-save-bar{display:none;}
   /* Stop card top row -- numbered circle + country tag + trash-icon delete,
-     replacing the plain checkbox/×-button row. */
-  .stop-card2-num{width:22px;height:22px;border-radius:50%;background:var(--sage);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;flex-shrink:0;}
+     replacing the plain checkbox/×-button row. Background is set inline per
+     stop (the outgoing leg's transport-mode color) so the numbering shares
+     the same size + color logic as Route Results and Journey Detail. */
+  .stop-card2-num{width:22px;height:22px;border-radius:50%;background:var(--border2);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;flex-shrink:0;}
   .stop-card2-country{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;}
   .stop-card2-del{width:22px;height:22px;border-radius:6px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
   .stop-card2-del:hover{color:var(--danger-text);background:var(--danger-bg,rgba(192,57,43,0.08));}
@@ -429,7 +431,9 @@ window.addEventListener('unhandledrejection', (e) => {
   .leg-card2-metric{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:7px 9px;}
   .leg-card2-metric-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:3px;}
   .leg-card2-metric input{width:100%;font-size:13px;font-weight:600;color:var(--text);border:none;background:transparent;outline:none;font-family:inherit;}
-  .leg-card2-book{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--sage);color:var(--cream);border:none;border-radius:var(--radius);padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;}
+  /* Outline pill, not a solid-filled button -- same treatment as every other
+     "Book this leg" CTA (Route Results, Journey Detail). */
+  .leg-card2-book{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:color-mix(in srgb,var(--sage) 8%,transparent);color:var(--sage);border:0.5px solid var(--sage);border-radius:var(--radius);padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;}
   .leg-mode-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .leg-mode-icon i{font-size:11px;color:#fff;}
   .leg-route-lbl{flex:1;font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
@@ -534,14 +538,19 @@ window.addEventListener('unhandledrejection', (e) => {
   .advisory-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 0;}
   .advisory-strip{background:var(--warn-bg);border:0.5px solid var(--warn-border);border-radius:var(--radius);padding:8px 12px;font-size:12px;line-height:1.65;color:var(--warn-text);}
   .res-route-kicker{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin:4px 0 14px;}
-  .res-leg{margin-bottom:18px;position:relative;}
-  .res-leg-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-  .res-leg-gutter{display:flex;align-items:center;flex-shrink:0;position:relative;}
-  .res-leg-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;position:relative;z-index:1;}
-  .res-leg-num{width:22px;height:22px;border-radius:50%;background:var(--dusk);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;flex-shrink:0;position:relative;z-index:1;}
-  .res-leg-connector{position:absolute;left:10.25px;top:22px;bottom:-20px;width:1.5px;opacity:0.28;border-radius:2px;}
-  .res-leg-name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.2px;}
-  .res-leg-contrib{margin-top:8px;margin-left:24px;}
+  /* Grid, not an absolute-positioned overlay on a header-only-height gutter --
+     the gutter column naturally stretches to the full row height (name +
+     card + notes), so the connector line reaches all the way down to the
+     next stop's circle instead of stopping short right after the header. */
+  .res-leg{display:grid;grid-template-columns:22px 1fr;column-gap:10px;margin-bottom:18px;}
+  .res-leg-gutter{display:flex;flex-direction:column;align-items:center;position:relative;}
+  .res-leg-body{min-width:0;}
+  /* Background set inline per stop (outgoing leg's transport-mode color) --
+     same size + color logic as Trip Editor and Journey Detail's numbering. */
+  .res-leg-num{width:22px;height:22px;border-radius:50%;background:var(--border2);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;flex-shrink:0;position:relative;z-index:1;}
+  .res-leg-connector{position:absolute;left:50%;transform:translateX(-50%);top:22px;bottom:0;width:1.5px;opacity:0.28;border-radius:2px;}
+  .res-leg-name{display:block;font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.2px;margin-bottom:10px;}
+  .res-leg-contrib{margin-top:8px;}
   /* v2's ResultsMobile leg card -- one compact card (mode/duration/cost,
      confidence + inline booking links, optional stay row) instead of a
      Journey/Transport/Stay res-card grid. */
@@ -562,7 +571,7 @@ window.addEventListener('unhandledrejection', (e) => {
      accommodation summary (from stop.accom_note), a single prominent Book
      CTA that reveals the existing transport+stay link panel, and the
      existing traveller-notes row underneath. */
-  .res-leg-card3{margin:0 0 14px 24px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+  .res-leg-card3{margin:0 0 14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
   .res-leg-card3-kicker{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);opacity:0.75;margin-bottom:8px;}
   .res-leg-card3-top{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
   .res-leg-card3-icon{width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;}
@@ -574,7 +583,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .res-leg-card3-desc{font-size:12.5px;line-height:1.55;color:var(--text2);}
   .res-leg-card3-divider{border-top:0.5px dashed var(--border);margin:10px 0;}
   .res-leg-card3-stay{font-size:12.5px;line-height:1.55;color:var(--text2);display:flex;gap:6px;}
-  .res-leg-card3-book{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--sage);color:var(--cream);border:none;border-radius:var(--radius);padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;}
+  .res-leg-card3-book{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:color-mix(in srgb,var(--sage) 8%,transparent);color:var(--sage);border:0.5px solid var(--sage);border-radius:var(--radius);padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;}
   .res-leg-card3-booked{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--sage);font-weight:600;}
   /* ── [06] Journey Detail screen ── */
   .jd-back{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--text3);cursor:pointer;margin-bottom:12px;}
@@ -651,15 +660,23 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-section-lbl{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:600;margin-bottom:10px;}
   .jd-section-lbl.accent{color:var(--fern);}
   .jd-metric-km{display:none;}
-  .jd-leg{margin-bottom:16px;position:relative;}
+  /* Grid, not an absolute-positioned overlay on a header-only-height gutter --
+     the gutter column naturally stretches to the full row height (name +
+     days/diary/detected-stop/leg card), so the connector line reaches all
+     the way down to the next stop's circle instead of stopping short right
+     after the header row. Same fix as Route Results' .res-leg. */
+  .jd-leg{display:grid;grid-template-columns:22px 1fr;column-gap:10px;margin-bottom:16px;}
+  .jd-leg-body{min-width:0;}
   .jd-leg-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-  .jd-leg-gutter{display:flex;align-items:center;flex-shrink:0;}
-  .jd-leg-dot{width:14px;height:14px;border-radius:50%;background:var(--bg);flex-shrink:0;box-shadow:0 0 0 3px var(--bg),0 0 0 4px var(--border2);position:relative;z-index:1;}
+  .jd-leg-gutter{display:flex;flex-direction:column;align-items:center;position:relative;}
+  /* Same size + color logic as Route Results (.res-leg-num) and Trip Editor
+     (.stop-card2-num) -- background set inline per stop. */
+  .jd-leg-num{width:22px;height:22px;border-radius:50%;color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;flex-shrink:0;position:relative;z-index:1;}
   /* §8 mode-colored connector down to the next stop's dot */
-  .jd-leg-connector{position:absolute;left:6.25px;top:18px;bottom:-18px;width:1.5px;opacity:0.28;border-radius:2px;}
+  .jd-leg-connector{position:absolute;left:50%;transform:translateX(-50%);top:22px;bottom:0;width:1.5px;opacity:0.28;border-radius:2px;}
   .jd-leg-name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.2px;}
   .jd-leg-cc{font-family:var(--mono);font-size:10px;color:var(--text3);}
-  .jd-leg-days{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin:2px 0 0 24px;}
+  .jd-leg-days{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin:2px 0 0;}
   .jd-leg-date{font-family:var(--mono);font-size:11px;color:var(--text3);}
   .jd-visited-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-family:var(--mono);color:var(--success);background:color-mix(in srgb,var(--success) 14%,transparent);border-radius:var(--radius-pill);padding:1px 6px;}
   /* ── Live/manual tracking mode — Journey tab (06.1/06.2) ── */
@@ -683,15 +700,15 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-reorder-wrap{display:flex;gap:2px;flex-shrink:0;}
   .jd-reorder-btn{width:18px;height:18px;border-radius:5px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-size:9px;}
   .jd-reorder-btn:disabled{color:var(--border2);cursor:default;}
-  .jd-leg-days-edit{display:flex;align-items:center;gap:5px;margin:2px 0 0 24px;font-family:var(--mono);font-size:10.5px;color:var(--text2);}
+  .jd-leg-days-edit{display:flex;align-items:center;gap:5px;margin:2px 0 0;font-family:var(--mono);font-size:10.5px;color:var(--text2);}
   .jd-leg-days-edit input{width:44px;font-family:var(--mono);font-size:10.5px;color:var(--text2);border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);padding:2px 6px;outline:none;}
   .jd-days-badge{font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sage) 14%,transparent);color:var(--sage);border:0.5px solid color-mix(in srgb,var(--sage) 40%,transparent);}
   .jd-days-badge.edited{background:color-mix(in srgb,var(--gold) 14%,transparent);color:#7A5C10;border-color:color-mix(in srgb,var(--gold) 40%,transparent);}
-  .jd-diary-wrap{margin-left:24px;margin-bottom:12px;position:relative;}
+  .jd-diary-wrap{margin-bottom:12px;position:relative;}
   .jd-diary-btns{position:absolute;bottom:8px;right:8px;display:flex;gap:4px;}
   .jd-voice-btn{width:24px;height:24px;border-radius:12px;background:transparent;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .jd-voice-btn.listening{border-color:var(--signal);color:var(--signal);animation:recBlink 1s ease-in-out infinite;}
-  .jd-detect-card{margin:0 0 8px 24px;background:color-mix(in srgb,var(--signal) 5%,transparent);border:1px dashed color-mix(in srgb,var(--signal) 45%,transparent);border-radius:var(--radius);padding:9px 11px;}
+  .jd-detect-card{margin:0 0 8px;background:color-mix(in srgb,var(--signal) 5%,transparent);border:1px dashed color-mix(in srgb,var(--signal) 45%,transparent);border-radius:var(--radius);padding:9px 11px;}
   .jd-detect-hdr{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
   .jd-detect-dot{width:7px;height:7px;border-radius:50%;background:var(--signal);flex-shrink:0;animation:recBlink 1.6s ease-in-out infinite;}
   .jd-detect-lbl{font-family:var(--mono);font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--signal);font-weight:700;}
@@ -700,8 +717,8 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-detect-actions{display:flex;gap:6px;}
   .jd-detect-confirm{flex:1;padding:7px 0;border-radius:var(--radius-pill);border:none;background:var(--signal);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--body);}
   .jd-detect-dismiss{padding:7px 14px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--body);}
-  .jd-mark-current-btn{margin:0 0 8px 24px;display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 24px);border:1px dashed color-mix(in srgb,var(--gold) 40%,transparent);background:transparent;border-radius:var(--radius-pill);padding:6px 0;cursor:pointer;color:#7A5C10;font-size:11px;font-family:var(--body);}
-  .jd-leg-edit{margin:8px 0 12px 24px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
+  .jd-mark-current-btn{margin:0 0 8px;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;border:1px dashed color-mix(in srgb,var(--gold) 40%,transparent);background:transparent;border-radius:var(--radius-pill);padding:6px 0;cursor:pointer;color:#7A5C10;font-size:11px;font-family:var(--body);}
+  .jd-leg-edit{margin:8px 0 12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
   .jd-leg-edit-lbl{font-family:var(--mono);font-size:8.5px;color:var(--text3);letter-spacing:1px;margin-bottom:6px;}
   .jd-leg-edit-modes{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
   .jd-mode-pill{font-size:11px;padding:4px 10px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--body);text-transform:capitalize;}
@@ -747,7 +764,7 @@ window.addEventListener('unhandledrejection', (e) => {
      leg-card concept looks the same everywhere it appears. Adds a live-mode
      click-to-edit affordance (whole card opens .jd-leg-edit) that Route
      Results doesn't need. */
-  .jd-leg-card3{margin:0 0 12px 24px;background:var(--bg);border-radius:var(--radius);padding:11px 13px;}
+  .jd-leg-card3{margin:0 0 12px;background:var(--bg);border-radius:var(--radius);padding:11px 13px;}
   .jd-leg-card3-kicker{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);opacity:0.75;margin-bottom:8px;}
   .jd-leg-card3-top{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
   .jd-leg-card3-icon{width:20px;height:20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;}
@@ -758,7 +775,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-leg-card3-desc{font-size:12.5px;line-height:1.55;color:var(--text2);}
   .jd-leg-card3-divider{border-top:0.5px dashed var(--border);margin:10px 0;}
   .jd-leg-card3-stay{font-size:12.5px;line-height:1.55;color:var(--text2);display:flex;gap:6px;}
-  .jd-leg-card3-book{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--sage);color:var(--cream);border:none;border-radius:var(--radius);padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;}
+  .jd-leg-card3-book{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:color-mix(in srgb,var(--sage) 8%,transparent);color:var(--sage);border:0.5px solid var(--sage);border-radius:var(--radius);padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;}
   .jd-leg-booked-pill{font-size:10px;padding:2px 7px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);border:0.5px solid color-mix(in srgb,var(--sage) 44%,transparent);font-family:var(--mono);display:inline-flex;align-items:center;gap:3px;}
   .jd-leg-notbooked-pill{font-size:10px;padding:2px 7px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);color:var(--text3);font-family:var(--body);display:inline-flex;align-items:center;gap:3px;}
   /* ── Bottom CTA bar (mobile) + separate stop-tracking control ── */
@@ -1196,8 +1213,6 @@ window.addEventListener('unhandledrejection', (e) => {
   .plan-hero-new{flex-direction:column;padding:1.5rem 0 1rem;}
   .plan-hero-photo-wrap{width:100%;max-width:none;aspect-ratio:16/7;}
   .res-leg-card2{margin-left:0;}
-  .res-leg-card3{margin-left:0;}
-  .res-leg-contrib{margin-left:0;}
   /* v2's Route Results: sticky "Save to trip" bar instead of an inline
      button buried in the (scrollable) route overview card. Toggled via
      .show (set in JS only while a result is actually on screen) rather
@@ -5118,12 +5133,11 @@ function renderPlanSuggestion(d, fromCache = false) {
   d.stops.forEach((stop, i) => {
     const leg = d.legs[i];
     const isLastStop = i === d.stops.length - 1;
-    const modeColor = leg ? (MODE_COLORS[leg.mode] || 'var(--fern)') : 'var(--border2)';
+    const modeColor = leg ? (MODE_COLORS[leg.mode] || 'var(--fern)') : (i>0 ? (MODE_COLORS[d.legs[i-1]?.mode] || 'var(--fern)') : 'var(--border2)');
     h += `<div class="res-leg">
-      <div class="res-leg-hdr">
-        <div class="res-leg-gutter"><div class="res-leg-num">${i+1}</div>${!isLastStop?`<div class="res-leg-connector" style="background:${modeColor}"></div>`:''}</div>
-        <span class="res-leg-name">${stop.name || 'Unknown'}</span>
-      </div>`;
+      <div class="res-leg-gutter"><div class="res-leg-num" style="background:${modeColor}">${i+1}</div>${!isLastStop?`<div class="res-leg-connector" style="background:${modeColor}"></div>`:''}</div>
+      <div class="res-leg-body">
+      <span class="res-leg-name">${stop.name || 'Unknown'}</span>`;
     if (leg) {
       const ps         = stop;
       const ns         = d.stops[i + 1];
@@ -5168,7 +5182,7 @@ function renderPlanSuggestion(d, fromCache = false) {
         <div class="res-leg-card3-divider"></div>
         ${leg.booked
           ? `<div class="res-leg-card3-booked"><i class="ph ph-check-circle"></i> Booked${leg.bookingRef?' · '+leg.bookingRef:''}</div>`
-          : `<button class="res-leg-card3-book" onclick="event.stopPropagation();toggleBookingPanel('${bookKey}',()=>renderPlanSuggestion(lastSuggestion))"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-arrow-right"></i></button>`}
+          : `<button class="res-leg-card3-book" onclick="event.stopPropagation();toggleBookingPanel('${bookKey}',()=>renderPlanSuggestion(lastSuggestion))"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-caret-right"></i></button>`}
         ${!leg.booked && bookOpen ? `<div class="jd-book-options" id="${_bookOptsId(bookKey)}" onclick="event.stopPropagation()">
           <div class="jd-book-section-lbl">Transport</div>
           ${transportCol || '<div class="jd-book-empty">No links for this leg</div>'}
@@ -5178,7 +5192,7 @@ function renderPlanSuggestion(d, fromCache = false) {
       </div>
       <div class="res-leg-contrib">${renderContribBlockForKey(legKey, i)}</div>`;
     }
-    h += `</div>`;
+    h += `</div></div>`; // close .res-leg-body, .res-leg
   });
   document.getElementById('planResult').innerHTML = h;
   document.getElementById('planSaveBar')?.classList.add('show');
@@ -5542,6 +5556,10 @@ function renderSegs() {
   stops.forEach((s, i) => {
     const isF = i === 0, isL = i === stops.length - 1;
     const dotCls = isF ? ' s' : isL ? ' e' : s.visited ? ' v' : '';
+    // Same size + color logic as Route Results / Journey Detail: the
+    // numbered badge takes the outgoing leg's transport-mode color.
+    const outLeg = !isL ? getLeg(i) : null;
+    const numColor = outLeg ? (MODE_COLORS[outLeg.mode] || 'var(--fern)') : (i>0 ? (MODE_COLORS[getLeg(i-1)?.mode] || 'var(--fern)') : 'var(--border2)');
 
     let departHtml = '';
     const dep = s.days ? parseStopDate(s.date) : null;
@@ -5574,7 +5592,7 @@ function renderSegs() {
       <div style="flex:1">
         <div class="stop-card">
           <div class="stop-city-row">
-            <span class="stop-card2-num">${i+1}</span>
+            <span class="stop-card2-num" style="background:${numColor}">${i+1}</span>
             <input class="sinp-lg" placeholder="City / place" value="${s.name}"
               oninput="stops[${i}].name=this.value;renderTl();updateSum()"/>
             ${s.country ? `<span class="stop-card2-country">${s.country}</span>` : ''}
@@ -5632,7 +5650,7 @@ function renderLeg(i) {
   // status pill, and a chevron. Expanding reveals mode pills + km/h/cost
   // metric boxes + a single full-width Book CTA (transport links reveal)
   // -- accommodation now lives on the arrival stop's own card, not here.
-  return `<div class="leg-card${leg.booked?' leg-booked':''}" style="border-left:3px solid ${modeColor}">
+  return `<div class="leg-card${leg.booked?' leg-booked':''}">
     <div class="leg-summary-row" onclick="toggleLegExpand(${i})">
       <span style="width:20px;height:20px;border-radius:5px;background:${modeTint};color:${modeColor};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ph ${iconCls}" style="font-size:11px"></i></span>
       <span style="font-size:13px;font-weight:600;color:var(--text)">${fromCity||'?'}→${toCity||'?'}</span>
@@ -5662,7 +5680,7 @@ function renderLeg(i) {
         <div class="booking-rec-row"><i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
           <input placeholder="Booking URL" value="${leg.bookingUrl||''}" oninput="legs[${i}].bookingUrl=this.value"/></div>
         <button class="booked-pill on" style="margin-top:6px" onclick="legs[${i}].booked=false;renderSegs();renderBookingProgress()"><i class="ph ph-check-circle"></i> Booked · unmark</button>
-      </div>` : `<button class="leg-card2-book" onclick="toggleBookingPanel('${bookKey}',()=>renderSegs())"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-arrow-right"></i></button>
+      </div>` : `<button class="leg-card2-book" onclick="toggleBookingPanel('${bookKey}',()=>renderSegs())"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-caret-right"></i></button>
       ${bookOpen ? `<div class="jd-book-options" id="${_bookOptsId(bookKey)}" style="margin-top:8px">
         ${transportLinks || '<div class="jd-book-empty">No links for this leg.</div>'}
         <button class="booked-pill" style="margin-top:8px" onclick="if(!legs[${i}])legs[${i}]={};legs[${i}].booked=true;renderSegs();renderBookingProgress()">Mark as booked</button>
@@ -7582,12 +7600,19 @@ function jdJourneyTabHTML(t, stops, legs, m) {
     const dateLblD = parseStopDate(s.date);
     const dateLbl = dateLblD ? '· ' + dateLblD.toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
     // §8 Session-2: timeline dot = departing-leg mode color (regardless of visited); connector in same color at 25%.
-    const mc = leg ? (MODE_COLORS[leg.mode] || 'var(--text3)') : (i>0 ? (MODE_COLORS[legs[i-1]?.mode] || 'var(--text3)') : 'var(--text3)');
+    // Same size + color logic as Route Results / Trip Editor's numbered
+    // badge (outgoing leg's transport-mode color, falling back to the
+    // preceding leg's color for the final stop). The only tracking-mode-
+    // specific difference is the highlight ring on the current stop while
+    // live (added below via curRing), not the base circle design.
+    const mc = leg ? (MODE_COLORS[leg.mode] || 'var(--fern)') : (i>0 ? (MODE_COLORS[legs[i-1]?.mode] || 'var(--fern)') : 'var(--border2)');
+    const curRing = (live && isCur) ? `box-shadow:0 0 0 3px var(--bg),0 0 0 5px ${gps?'var(--signal)':'var(--gold)'};` : '';
     const [cityName, ...ccParts] = (typeof s.name === 'string' ? s.name : '—').split(',');
     const ccName = ccParts.join(',').trim();
     h += `<div class="jd-leg">
+      <div class="jd-leg-gutter"><div class="jd-leg-num" style="background:${mc};${curRing}">${i+1}</div>${!isLast?`<div class="jd-leg-connector" style="background:${mc}"></div>`:''}</div>
+      <div class="jd-leg-body">
       <div class="jd-leg-hdr">
-        <div class="jd-leg-gutter"><div class="jd-leg-dot" style="background:${mc};box-shadow:0 0 0 3px var(--bg),0 0 0 4px ${mc}"></div>${!isLast?`<div class="jd-leg-connector" style="background:${mc}"></div>`:''}</div>
         <span class="jd-leg-name">${cityName.trim() || '—'}</span>
         ${ccName ? `<span class="jd-leg-cc">${ccName}</span>` : ''}
         ${gps && isCur ? `<span class="jd-cur-badge gps"><span class="jd-cur-dot"></span> you are here</span>` : ''}
@@ -7670,7 +7695,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
           ? `<div class="jd-leg-card3-book" style="background:transparent;color:var(--sage);border:0.5px solid color-mix(in srgb,var(--sage) 44%,transparent);cursor:default"><i class="ph ph-check-circle"></i> Booked${leg.bookingRef?' · '+leg.bookingRef:''}</div>`
           : live
             ? `<div class="jd-leg-notbooked-pill" style="display:inline-flex">Not booked · tap card to edit</div>`
-            : `<button class="jd-leg-card3-book" onclick="event.stopPropagation();toggleBookingPanel('jd-${i}',()=>renderJourneyDetail())"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-arrow-right"></i></button>`}
+            : `<button class="jd-leg-card3-book" onclick="event.stopPropagation();toggleBookingPanel('jd-${i}',()=>renderJourneyDetail())"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-caret-right"></i></button>`}
         ${!live && !leg.booked && _bookingOpen.has('jd-'+i) ? `<div class="jd-book-options" id="${_bookOptsId('jd-'+i)}" onclick="event.stopPropagation()">
           <div class="jd-book-section-lbl">Transport</div>
           ${transportLinks || '<div class="jd-book-empty">No links for this leg</div>'}
@@ -7694,7 +7719,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
         </div>`;
       }
     }
-    h += `</div>`;
+    h += `</div></div>`; // close .jd-leg-body, .jd-leg
   });
   if (live) {
     h += `<div class="jd-add-stop">
@@ -9797,7 +9822,7 @@ init().catch(e => {
   </div>
   <div style="flex:1;padding:40px 28px 32px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:44px">
-      <img src="/public/bysloth-motif-black.png" alt="" style="height:38px;width:auto;flex-shrink:0">
+      <img src="/public/bysloth-motif-mustard.png" alt="" style="height:38px;width:auto;flex-shrink:0">
       <div style="font-family:var(--body);font-size:22px;font-weight:700;color:var(--ink-900);letter-spacing:-0.5px;line-height:1">bysloth</div>
     </div>
     <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-900);font-weight:600;margin-bottom:10px">Overland planner · no flights, ever</div>
