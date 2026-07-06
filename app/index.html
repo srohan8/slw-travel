@@ -6420,6 +6420,14 @@ function openJourneyDetail(trip) {
   renderJourneyDetail();
   // Load collaborators from Supabase in background and refresh strip
   if (currentUser && trip.id) jdLoadCollabs();
+  // While live-tracking, bring the current stop into view immediately on
+  // open instead of leaving the user to scroll down and find "you are
+  // here"/"current stop" themselves -- only on this initial open, not on
+  // every renderJourneyDetail() re-render (editing a leg, typing a diary
+  // entry, etc. would otherwise keep yanking the scroll position back).
+  requestAnimationFrame(() => {
+    document.querySelector('.jd-cur-badge')?.closest('.jd-leg')?.scrollIntoView({behavior:'smooth', block:'center'});
+  });
 }
 
 function switchJourneyTab(tab) {
