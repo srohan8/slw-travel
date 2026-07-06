@@ -524,11 +524,13 @@ window.addEventListener('unhandledrejection', (e) => {
   #plannerMapWrap.pmw-expanded #plannerMap{height:calc(90vh - 36px);}
   #pmw-backdrop{display:none;position:fixed;inset:0;background:rgba(9,16,34,0.45);z-index:899;}
   body.pmw-expanded-on #pmw-backdrop{display:block;}
-  #plannerMapWrap.pmw-pill{width:auto;height:auto;border-radius:99px;cursor:pointer;}
-  #plannerMapWrap.pmw-pill .pmw-head{border-bottom:none;padding:9px 14px;}
-  #plannerMapWrap.pmw-pill .pmw-title{font-size:12px;}
-  #plannerMapWrap.pmw-pill .pmw-btn-expand,#plannerMapWrap.pmw-pill .pmw-btn-min{display:none;}
-  #plannerMapWrap.pmw-pill #plannerMap{display:none;}
+  /* Collapsed default state: a round icon-only button, not the map itself --
+     tapping it opens the docked map. Route Results starts here rather than
+     with the map already open. */
+  #plannerMapWrap.pmw-pill{width:52px;height:52px;border-radius:50%;cursor:pointer;border:none;box-shadow:0 8px 24px rgba(9,16,34,0.35);}
+  #plannerMapWrap.pmw-pill .pmw-head,#plannerMapWrap.pmw-pill #plannerMap{display:none;}
+  .pmw-pill-icon{display:none;width:100%;height:100%;align-items:center;justify-content:center;background:var(--dusk);color:var(--sage);font-size:20px;}
+  #plannerMapWrap.pmw-pill .pmw-pill-icon{display:flex;}
   /* ── Screen 04 · Route Results redesign ─────────────── */
   #planResult{padding:0;background:transparent;border:none;box-shadow:none;}
   .res-overview-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:16px;overflow:hidden;}
@@ -1712,11 +1714,11 @@ window.addEventListener('unhandledrejection', (e) => {
     </div>
     <div id="planSaveToast" class="plan-save-toast"></div>
     <div id="plannerMapWrap">
+      <div class="pmw-pill-icon" title="Open map"><i class="ph ph-map-trifold"></i></div>
       <div class="pmw-resize" title="Drag to resize" onmousedown="pmwStartResize(event)" ontouchstart="pmwStartResize(event)"></div>
       <div class="pmw-head">
         <span class="pmw-title"><i class="ph ph-map-pin" style="font-size:11px;margin-right:3px"></i><span id="pmwRouteLabel">Route map</span></span>
         <span style="display:flex;gap:2px;align-items:center">
-          <button class="pmw-btn-restore" title="Open map" onclick="event.stopPropagation();setMapState('docked')" style="display:none">Open</button>
           <button class="pmw-btn-expand" title="Expand" onclick="setMapState(_mapState==='expanded'?'docked':'expanded')">⤢</button>
           <button class="pmw-btn-min" title="Minimize" onclick="setMapState('pill')">–</button>
         </span>
@@ -4887,14 +4889,11 @@ function setMapState(next) {
   if (!wrap) return;
   wrap.classList.remove('pmw-expanded', 'pmw-pill');
   document.body.classList.remove('pmw-expanded-on');
-  const restore = wrap.querySelector('.pmw-btn-restore');
-  if (restore) restore.style.display = 'none';
   if (next === 'expanded') {
     wrap.classList.add('pmw-expanded');
     document.body.classList.add('pmw-expanded-on');
   } else if (next === 'pill') {
     wrap.classList.add('pmw-pill');
-    if (restore) restore.style.display = '';
     wrap.onclick = (e) => { if (e.target.tagName !== 'BUTTON') setMapState('docked'); };
   } else {
     wrap.onclick = null;
@@ -5077,8 +5076,10 @@ function showRouteMap(d) {
   const lbl = document.getElementById('pmwRouteLabel');
   if (lbl) lbl.textContent = `${_plannerStops[0].name} → ${_plannerStops[_plannerStops.length - 1].name}`;
   document.body.classList.add('show-floating-map');
-  if (_mapState === 'pill') setMapState('docked');
-  else updatePlannerMap();
+  // Collapsed icon by default -- don't force the map open just because
+  // showRouteMap() runs again (e.g. switching back to the Planner tab with
+  // existing results); only update the docked/expanded map's contents.
+  if (_mapState !== 'pill') updatePlannerMap();
 }
 
 function hideRouteMap() {
@@ -5232,6 +5233,9 @@ function renderPlanSuggestion(d, fromCache = false) {
   document.getElementById('planResult').innerHTML = h;
   _syncPlanSaveBar(true);
   setScreenUrl('/route');
+  // Route Results starts with the map collapsed to its icon -- the user
+  // taps it to open, rather than the map being open by default.
+  setMapState('pill');
   showRouteMap(d);
 }
 
