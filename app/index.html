@@ -7118,7 +7118,10 @@ function gpsBackFromLive() {
 }
 
 // ── [13] Review & Save ───────────────────────────────────────────────
-const GPS_LEG_MODES = ['walk','bike','bus','train','ferry','flight'];
+// Matches v2's LEG_MODES exactly (bus/train/ferry/walk/taxi/hitch) -- this
+// previously had bike/flight instead of taxi/hitchhike, neither of which
+// make sense for a GPS-tracked overland leg.
+const GPS_LEG_MODES = ['bus','train','ferry','walk','taxi','hitchhike'];
 let _gpsReview = null; // { title, stops:[{name,country,date,days,diary,photos,leg:{mode,km,hours}}], removed:[], savedTripId:null }
 let _gpsReviewEditLeg = -1;
 let _gpsReviewPhotoIdx = -1;
@@ -7174,7 +7177,7 @@ function renderRecReview() {
         <button class="rcv-edit-btn" onclick="_gpsReviewEditLeg=_gpsReviewEditLeg===${i}?-1:${i};renderRecReview()">Edit</button>
       </div>
       ${_gpsReviewEditLeg === i ? `<div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap">
-        ${GPS_LEG_MODES.map(m=>`<button class="rcv-mode-btn${s.leg.mode===m?' on':''}" onclick="gpsReviewSetLegMode(${i},'${m}')">${m}</button>`).join('')}
+        ${GPS_LEG_MODES.map(m=>`<button class="rcv-mode-btn${s.leg.mode===m?' on':''}" onclick="gpsReviewSetLegMode(${i},'${m}')">${MI[m]||m}</button>`).join('')}
       </div>` : ''}
     </div>` : '';
     return `${legHtml}
@@ -7599,9 +7602,11 @@ function jdJourneyTabHTML(t, stops, legs, m) {
     // badge (outgoing leg's transport-mode color, falling back to the
     // preceding leg's color for the final stop). The only tracking-mode-
     // specific difference is the highlight ring on the current stop while
-    // live (added below via curRing), not the base circle design.
+    // GPS-tracking (added below via curRing, matching v2 exactly -- v2
+    // only rings the GPS current stop, not the manual one), not the base
+    // circle design.
     const mc = leg ? (MODE_COLORS[leg.mode] || 'var(--fern)') : (i>0 ? (MODE_COLORS[legs[i-1]?.mode] || 'var(--fern)') : 'var(--border2)');
-    const curRing = (live && isCur) ? `box-shadow:0 0 0 3px var(--bg),0 0 0 5px ${gps?'var(--signal)':'var(--gold)'};` : '';
+    const curRing = (gps && isCur) ? `box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--signal);` : '';
     const [cityName, ...ccParts] = (typeof s.name === 'string' ? s.name : '—').split(',');
     const ccName = ccParts.join(',').trim();
     h += `<div class="jd-leg">
@@ -7701,7 +7706,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
       if (isEditingThis) {
         h += `<div class="jd-leg-edit" onclick="event.stopPropagation()">
           <div class="jd-leg-edit-lbl">Transport</div>
-          <div class="jd-leg-edit-modes">${GPS_LEG_MODES.map(md=>`<button class="jd-mode-pill${leg.mode===md?' on':''}" onclick="jdUpdateLegField(${i},'mode','${md}')">${md}</button>`).join('')}</div>
+          <div class="jd-leg-edit-modes">${GPS_LEG_MODES.map(md=>`<button class="jd-mode-pill${leg.mode===md?' on':''}" onclick="jdUpdateLegField(${i},'mode','${md}')">${MI[md]||md}</button>`).join('')}</div>
           <div class="jd-leg-edit-grid">
             <div class="jd-leg-edit-field"><div class="jd-leg-edit-flbl">duration</div><input value="${leg.hours||''}" onchange="jdUpdateLegField(${i},'hours',this.value)"/></div>
             <div class="jd-leg-edit-field"><div class="jd-leg-edit-flbl">cost $</div><input type="number" value="${leg.cost||0}" onchange="jdUpdateLegField(${i},'cost',this.value)"/></div>
