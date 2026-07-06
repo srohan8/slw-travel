@@ -521,6 +521,26 @@ window.addEventListener('unhandledrejection', (e) => {
   .res-leg-card2-links .search-links-label{display:none;}
   .res-leg-card2-stay{margin-top:8px;padding-top:8px;border-top:0.5px dashed var(--border);}
   .res-leg-card2-stay-lbl{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);opacity:0.75;margin-bottom:6px;}
+  /* Consolidated leg card -- richer than v2's literal minimal card, by explicit
+     user request: mode/duration/confidence header, price, notes+distance
+     prose (from leg.notes/leg.km, already AI-generated per-leg text), an
+     accommodation summary (from stop.accom_note), a single prominent Book
+     CTA that reveals the existing transport+stay link panel, and the
+     existing traveller-notes row underneath. */
+  .res-leg-card3{margin:0 0 14px 24px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+  .res-leg-card3-kicker{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);opacity:0.75;margin-bottom:8px;}
+  .res-leg-card3-top{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+  .res-leg-card3-icon{width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;}
+  .res-leg-card3-label{font-size:12.5px;font-weight:500;text-transform:capitalize;color:var(--text);}
+  .res-leg-card3-hours{font-family:var(--mono);font-size:11px;color:var(--text3);}
+  .res-leg-card3-badge{margin-left:auto;flex-shrink:0;}
+  .res-leg-card3-price{font-size:19px;font-weight:700;color:var(--text);letter-spacing:-0.3px;margin-bottom:6px;}
+  .res-leg-card3-price-unit{font-size:12px;font-weight:500;color:var(--text3);}
+  .res-leg-card3-desc{font-size:12.5px;line-height:1.55;color:var(--text2);}
+  .res-leg-card3-divider{border-top:0.5px dashed var(--border);margin:10px 0;}
+  .res-leg-card3-stay{font-size:12.5px;line-height:1.55;color:var(--text2);display:flex;gap:6px;}
+  .res-leg-card3-book{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--sage);color:var(--cream);border:none;border-radius:var(--radius);padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;}
+  .res-leg-card3-booked{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--sage);font-weight:600;}
   /* ── [06] Journey Detail screen ── */
   .jd-back{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--text3);cursor:pointer;margin-bottom:12px;}
   .jd-back:hover{color:var(--text);}
@@ -1125,6 +1145,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .plan-hero-new{flex-direction:column;padding:1.5rem 0 1rem;}
   .plan-hero-photo-wrap{width:100%;max-width:none;aspect-ratio:16/7;}
   .res-leg-card2{margin-left:0;}
+  .res-leg-card3{margin-left:0;}
   .res-leg-contrib{margin-left:0;}
   /* v2's Route Results: sticky "Save to trip" bar instead of an inline
      button buried in the (scrollable) route overview card. Toggled via
@@ -5053,31 +5074,42 @@ function renderPlanSuggestion(d, fromCache = false) {
       : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
     const legKey = `${startCity}→${stayCity}`;
     const isLastLeg = i === d.legs.length - 1;
-    // v2's ResultsMobile leg card is one compact card per leg (mode/duration/
-    // cost line, confidence + inline booking links, optional traveller-notes
-    // row) -- not a Journey/Transport/Stay res-card grid. Stay links aren't
-    // part of v2's Route Results at all (that's Trip Editor/Journey Detail
-    // territory), but dropping them here would lose real functionality, so
-    // they're kept as a lighter third row instead of their own boxed card.
+    const accomNote = ns?.accom_note || ns?.accomNote || '';
+    const bookKey = `res-${i}`;
+    const bookOpen = _bookingOpen.has(bookKey);
+    // Consolidated leg card, per explicit user request -- richer than v2's
+    // literal minimal card: mode/duration/confidence header, price, a
+    // notes+distance prose line (leg.notes/leg.km, AI-generated per leg),
+    // an accommodation summary (stop.accom_note), one prominent Book CTA
+    // that reveals the transport+stay link panel, and the existing
+    // traveller-notes row underneath.
     h += `<div class="res-leg">
       <div class="res-leg-hdr">
         <div class="res-leg-gutter"><div class="res-leg-dot" style="background:${modeColor};box-shadow:0 0 0 3px var(--bg),0 0 0 4px ${modeColor}"></div>${!isLastLeg?`<div class="res-leg-connector" style="background:${modeColor}"></div>`:''}</div>
         <span class="res-leg-name">${startCity} — ${stayCity}</span>
       </div>
-      <div class="res-leg-card2">
-        <div class="res-leg-card2-top">
-          <span class="res-leg-card2-icon" style="background:${modeTint};color:${modeColor}"><i class="ph ${iconCls}"></i></span>
-          <span class="res-leg-card2-label">${MI[leg.mode]||leg.mode}</span>
-          ${leg.hours ? `<span class="res-leg-card2-hours">· ${leg.hours}h</span>` : ''}
-          <span class="res-leg-card2-cost">${fmtCost(leg.cost_usd)}</span>
+      <div class="res-leg-card3">
+        <div class="res-leg-card3-kicker">Journey</div>
+        <div class="res-leg-card3-top">
+          <span class="res-leg-card3-icon" style="background:${modeTint};color:${modeColor}"><i class="ph ${iconCls}"></i></span>
+          <span class="res-leg-card3-label">${MI[leg.mode]||leg.mode}</span>
+          ${leg.hours ? `<span class="res-leg-card3-hours">· ${leg.hours}h</span>` : ''}
+          <span class="res-leg-card3-badge">${renderConfidenceBadge(leg.confidence)}</span>
         </div>
-        <div class="res-leg-card2-badges">
-          ${renderConfidenceBadge(leg.confidence)}${renderConflictAlert(leg.conflict)}
-        </div>
-        <div class="res-leg-card2-links">${transportCol || '<div style="font-size:12px;color:var(--text3)">No links for this leg</div>'}</div>
-        ${stayCol ? `<div class="res-leg-card2-stay">
-          <div class="res-leg-card2-stay-lbl">Stay at ${stayCity}</div>
-          ${stayCol}
+        ${renderConflictAlert(leg.conflict)}
+        <div class="res-leg-card3-price">from ${fmtCost(leg.cost_usd)} <span class="res-leg-card3-price-unit">ticket</span></div>
+        ${(leg.km || leg.notes) ? `<div class="res-leg-card3-desc">${leg.km?`${leg.km} km`:''}${leg.km&&leg.notes?' · ':''}${leg.notes||''}</div>` : ''}
+        ${accomNote ? `<div class="res-leg-card3-divider"></div>
+        <div class="res-leg-card3-stay"><i class="ph ph-house-line"></i> ${stayCity} — ${accomNote}</div>` : ''}
+        <div class="res-leg-card3-divider"></div>
+        ${leg.booked
+          ? `<div class="res-leg-card3-booked"><i class="ph ph-check-circle"></i> Booked${leg.bookingRef?' · '+leg.bookingRef:''}</div>`
+          : `<button class="res-leg-card3-book" onclick="event.stopPropagation();toggleBookingPanel('${bookKey}',()=>renderPlanSuggestion(lastSuggestion))"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-arrow-right"></i></button>`}
+        ${!leg.booked && bookOpen ? `<div class="jd-book-options" onclick="event.stopPropagation()">
+          <div class="jd-book-section-lbl">Transport</div>
+          ${transportCol || '<div class="jd-book-empty">No links for this leg</div>'}
+          <div class="jd-book-section-lbl">Stay at ${stayCity}</div>
+          ${stayCol || '<div class="jd-book-empty">No links</div>'}
         </div>` : ''}
       </div>
       <div class="res-leg-contrib">${renderContribBlockForKey(legKey, i)}</div>
