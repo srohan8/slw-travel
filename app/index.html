@@ -1679,7 +1679,6 @@ window.addEventListener('unhandledrejection', (e) => {
         <div class="psc-footer-cta">
           <span id="planFormHint" style="font-size:12px;color:var(--text3)">Free · 3 routes a month · no card</span>
           <span style="flex:1"></span>
-          <button class="import-route-btn" onclick="openImportModal()"><i class="ph ph-upload-simple" style="font-size:13px"></i> Import a route</button>
           <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
         </div>
       </div>
@@ -5651,11 +5650,11 @@ function renderLeg(i) {
   return `<div class="leg-card${leg.booked?' leg-booked':''}">
     <div class="leg-summary-row" onclick="toggleLegExpand(${i})">
       <span style="width:20px;height:20px;border-radius:5px;background:${modeTint};color:${modeColor};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ph ${iconCls}" style="font-size:11px"></i></span>
-      <span style="font-size:13px;font-weight:600;color:var(--text)">${fromCity||'?'}→${toCity||'?'}</span>
+      <span style="font-size:13px;font-weight:600;color:var(--text)">${(fromCity && toCity) ? `${fromCity}→${toCity}` : 'Add transport'}</span>
       <span style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
         ${leg.hours ? `<span class="leg-card2-cost">${leg.hours}h</span>` : ''}
         ${leg.cost  ? `<span class="leg-card2-cost">~${getCurrSym()}${leg.cost}</span>` : ''}
-        <span class="leg-card2-book-pill${leg.booked?' on':''}"><i class="ph ph-${leg.booked?'check-circle':'ticket'}"></i> ${leg.booked?'Booked':'Book this leg'}${leg.booked?'':' <i class=\'ph ph-caret-right\' style=\'font-size:9px\'></i>'}</span>
+        <span class="leg-card2-book-pill${leg.booked?' on':''}"><i class="ph ph-${leg.booked?'check-circle':'circle-dashed'}"></i> ${leg.booked?'Booked':'Not booked'}</span>
         <i class="ph ph-caret-${expanded?'up':'down'}" style="font-size:11px;color:var(--text3)"></i>
       </span>
     </div>
