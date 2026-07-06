@@ -703,13 +703,22 @@ window.addEventListener('unhandledrejection', (e) => {
   /* v2's leg card -- one compact card (mode/duration/cost line, then
      confidence + booked status line) instead of a Journey/Transport/Stay
      res-card grid. Used for both live and static Journey Detail views. */
-  .jd-leg-card2{margin:0 0 12px 24px;background:var(--bg);border-radius:var(--radius);padding:9px 11px;}
-  .jd-leg-card2-top{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
-  .jd-leg-card2-icon{width:20px;height:20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;}
-  .jd-leg-card2-label{font-size:12px;font-weight:500;color:var(--text);}
-  .jd-leg-card2-hours{font-size:11px;color:var(--text3);}
-  .jd-leg-card2-cost{margin-left:auto;font-size:14px;font-weight:700;color:var(--text);flex-shrink:0;}
-  .jd-leg-card2-badges{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  /* Consolidated leg card -- mirrors .res-leg-card3 (Route Results) so the
+     leg-card concept looks the same everywhere it appears. Adds a live-mode
+     click-to-edit affordance (whole card opens .jd-leg-edit) that Route
+     Results doesn't need. */
+  .jd-leg-card3{margin:0 0 12px 24px;background:var(--bg);border-radius:var(--radius);padding:11px 13px;}
+  .jd-leg-card3-kicker{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);opacity:0.75;margin-bottom:8px;}
+  .jd-leg-card3-top{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+  .jd-leg-card3-icon{width:20px;height:20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;}
+  .jd-leg-card3-label{font-size:12px;font-weight:500;color:var(--text);}
+  .jd-leg-card3-hours{font-size:11px;color:var(--text3);}
+  .jd-leg-card3-badge{margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:6px;}
+  .jd-leg-card3-price{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.3px;margin-bottom:6px;}
+  .jd-leg-card3-desc{font-size:12.5px;line-height:1.55;color:var(--text2);}
+  .jd-leg-card3-divider{border-top:0.5px dashed var(--border);margin:10px 0;}
+  .jd-leg-card3-stay{font-size:12.5px;line-height:1.55;color:var(--text2);display:flex;gap:6px;}
+  .jd-leg-card3-book{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--sage);color:var(--cream);border:none;border-radius:var(--radius);padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;}
   .jd-leg-booked-pill{font-size:10px;padding:2px 7px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);border:0.5px solid color-mix(in srgb,var(--sage) 44%,transparent);font-family:var(--mono);display:inline-flex;align-items:center;gap:3px;}
   .jd-leg-notbooked-pill{font-size:10px;padding:2px 7px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);color:var(--text3);font-family:var(--body);display:inline-flex;align-items:center;gap:3px;}
   /* ── Bottom CTA bar (mobile) + separate stop-tracking control ── */
@@ -7623,25 +7632,31 @@ function jdJourneyTabHTML(t, stops, legs, m) {
       const cardBorder = gps && isCur ? '1px solid color-mix(in srgb,var(--signal) 35%,transparent)'
         : manual && isCur ? '1px solid color-mix(in srgb,var(--gold) 55%,transparent)'
         : '0.5px solid var(--border)';
-      // v2's leg card is one compact two-line card (mode/duration/cost, then
-      // confidence + booked status) for BOTH live and static views -- not the
-      // separate Journey/Transport/Stay res-cards this used to render.
-      h += `<div class="jd-leg-card2" style="border:${cardBorder}"${live ? ` onclick="jdToggleEditLeg(${i})"` : ''}>
-        <div class="jd-leg-card2-top">
-          <span class="jd-leg-card2-icon" style="background:${modeTint};color:${modeColor}"><i class="ph ${iconCls}"></i></span>
-          <span class="jd-leg-card2-label">${MI[leg.mode]||leg.mode}</span>
-          ${leg.hours ? `<span class="jd-leg-card2-hours">· ${leg.hours}h</span>` : ''}
-          <span class="jd-leg-card2-cost">${getCurrSym()}${leg.cost||0}</span>
-          ${live ? `<i class="ph ph-caret-${isEditingThis?'up':'down'}" style="font-size:11px;color:var(--text3);flex-shrink:0"></i>` : ''}
+      const accomNote = stops[i+1]?.accomNote || '';
+      // Consolidated leg card -- matches the Route Results leg card
+      // (.res-leg-card3): kicker, mode/duration/confidence header, price,
+      // notes+distance prose, accommodation summary, single Book CTA. Live
+      // mode keeps the whole-card click-to-edit affordance (jd-leg-edit
+      // accordion) instead of the Book button, since booking there happens
+      // inside that accordion.
+      h += `<div class="jd-leg-card3" style="border:${cardBorder}"${live ? ` onclick="jdToggleEditLeg(${i})"` : ''}>
+        <div class="jd-leg-card3-kicker">Journey</div>
+        <div class="jd-leg-card3-top">
+          <span class="jd-leg-card3-icon" style="background:${modeTint};color:${modeColor}"><i class="ph ${iconCls}"></i></span>
+          <span class="jd-leg-card3-label">${MI[leg.mode]||leg.mode}</span>
+          ${leg.hours ? `<span class="jd-leg-card3-hours">· ${leg.hours}h</span>` : ''}
+          <span class="jd-leg-card3-badge">${renderConfidenceBadge(leg.confidence)}${live ? `<i class="ph ph-caret-${isEditingThis?'up':'down'}" style="font-size:11px;color:var(--text3);flex-shrink:0"></i>` : ''}</span>
         </div>
-        <div class="jd-leg-card2-badges">
-          ${renderConfidenceBadge(leg.confidence)}
-          ${leg.booked
-            ? `<span class="jd-leg-booked-pill"><i class="ph ph-check-circle"></i> Booked${leg.bookingRef?' · '+leg.bookingRef:''}</span>`
-            : live
-              ? `<span class="jd-leg-notbooked-pill">Mark as booked</span>`
-              : `<span class="jd-leg-notbooked-pill" style="cursor:pointer" onclick="event.stopPropagation();toggleBookingPanel('jd-${i}',()=>renderJourneyDetail())">Not booked · Book <i class="ph ph-caret-${_bookingOpen.has('jd-'+i)?'up':'down'}"></i></span>`}
-        </div>
+        <div class="jd-leg-card3-price">${getCurrSym()}${leg.cost||0}</div>
+        ${(leg.km || leg.notes) ? `<div class="jd-leg-card3-desc">${leg.km?`${leg.km} km`:''}${leg.km&&leg.notes?' · ':''}${leg.notes||''}</div>` : ''}
+        ${accomNote ? `<div class="jd-leg-card3-divider"></div>
+        <div class="jd-leg-card3-stay"><i class="ph ph-house-line"></i> ${_stopCityName(stayCity)} — ${accomNote}</div>` : ''}
+        <div class="jd-leg-card3-divider"></div>
+        ${leg.booked
+          ? `<div class="jd-leg-card3-book" style="background:transparent;color:var(--sage);border:0.5px solid color-mix(in srgb,var(--sage) 44%,transparent);cursor:default"><i class="ph ph-check-circle"></i> Booked${leg.bookingRef?' · '+leg.bookingRef:''}</div>`
+          : live
+            ? `<div class="jd-leg-notbooked-pill" style="display:inline-flex">Not booked · tap card to edit</div>`
+            : `<button class="jd-leg-card3-book" onclick="event.stopPropagation();toggleBookingPanel('jd-${i}',()=>renderJourneyDetail())"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-arrow-right"></i></button>`}
         ${!live && !leg.booked && _bookingOpen.has('jd-'+i) ? `<div class="jd-book-options" onclick="event.stopPropagation()">
           <div class="jd-book-section-lbl">Transport</div>
           ${transportLinks || '<div class="jd-book-empty">No links for this leg</div>'}
