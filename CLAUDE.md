@@ -31,6 +31,25 @@ grep -c "bottom-nav\|mobileHeader\|mobileSplash\|bnSync" app/index.html
 
 The mobile nav was silently wiped in commit `564edf3` during a nav refactor. It wasn't noticed until the user reported missing mobile navbar two sessions later. The fix was commit `926b6d5`.
 
+## Journey Detail: GPS and manual tracking must stay in sync
+
+Journey Detail's live view renders from the same markup for both GPS
+(`_gps.mode==='gps'`) and manual (`_gps.mode==='manual'`) tracking. Shared UI
+(leg cards, journal box, Add photos/Share tip, reorder arrows, mark-current
+button) must be gated on `live` (`gps || manual`), never on `gps` alone,
+unless the element is genuinely tracking-mode-specific:
+
+- Current-stop ring highlight — GPS-only, signal-orange
+- "You are here" (GPS) vs "current stop" (manual) badge text/color
+- Live banner "TRACKING" vs "ACTIVE TRAVEL" label
+- Day-stay badge "auto · from tracking" (GPS) vs "manual" text
+
+**Any change to Journey Detail's live-tracking UI must be verified in both
+GPS and manual mode before considering it done** — toggle `_gps.mode` between
+`'gps'` and `'manual'` and confirm the same element renders identically
+(aside from the exceptions above). This caught a real bug once already: a
+current-stop ring that was accidentally showing in manual mode too.
+
 ## Never push without explicit user confirmation
 
 Always commit locally, then ask "shall I push?" before running `git push`.
