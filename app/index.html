@@ -1214,6 +1214,22 @@ window.addEventListener('unhandledrejection', (e) => {
   .recnotes-step-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;}
   .recnotes-step-desc{font-size:12px;color:var(--text2);line-height:1.6;}
   .recnotes-cta{width:100%;margin-top:20px;padding:13px 16px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body);display:flex;align-items:center;justify-content:center;gap:8px;}
+  /* ── Share & Export (v2 ExportMobile) ── */
+  .export-wrap{padding:16px 16px 24px;height:100%;overflow-y:auto;background:var(--bg3);}
+  .export-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);font-weight:600;margin-bottom:10px;}
+  .export-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:8px;}
+  .export-card-body{padding:12px 14px;}
+  .export-share-copy{font-size:13px;color:var(--text2);margin-bottom:10px;}
+  .export-link-row{display:flex;gap:8px;align-items:center;}
+  .export-link-box{flex:1;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px 10px;font-family:var(--mono);font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .export-copy-btn{padding:9px 14px;border-radius:var(--radius);background:color-mix(in srgb,var(--sage) 13%,transparent);border:none;color:var(--sage);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--body);flex-shrink:0;}
+  .export-copy-btn.on{background:var(--sage);color:var(--ink-900);}
+  .export-formats{display:flex;flex-direction:column;}
+  .export-format-row{padding:13px 14px;display:flex;align-items:center;gap:12px;}
+  .export-format-icon{width:40px;height:40px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .export-format-label{font-size:14px;font-weight:600;color:var(--text);}
+  .export-format-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;}
+  .export-pro-badge{font-family:var(--mono);font-size:8.5px;padding:2px 6px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--gold) 22%,transparent);color:var(--gold);border:0.5px solid color-mix(in srgb,var(--gold) 44%,transparent);}
   .gps-stop-btn{width:30px;height:30px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .gps-stop-btn.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage);}
   .gps-note-wrap{margin:0 14px 8px;padding:9px 10px;background:var(--bg2);border:0.5px solid var(--sage);border-radius:var(--radius);}
@@ -1607,6 +1623,11 @@ window.addEventListener('unhandledrejection', (e) => {
   <!-- HOW THE JOURNAL WORKS (v2 RecNotesMobile) — opened from the Enable Tracking screen -->
   <div id="recnotes" class="panel">
     <div id="recNotesPanel"><!-- filled by renderRecNotes() --></div>
+  </div>
+
+  <!-- SHARE & EXPORT (v2 ExportMobile) — opened from Journey Detail's share icon -->
+  <div id="exportscreen" class="panel">
+    <div id="exportScreenPanel"><!-- filled by renderExportScreen() --></div>
   </div>
 
   <!-- RECORD JOURNAL (07) — opened from Journey Detail -->
@@ -3561,6 +3582,7 @@ function switchTab(id, el) {
   if (id === 'crashrecover') { renderCrashRecover(); }
   if (id === 'mapview')  { renderMapView(); }
   if (id === 'recnotes') { renderRecNotes(); }
+  if (id === 'exportscreen') { renderExportScreen(); }
   document.body.classList.toggle('gps-fullscreen', id === 'gpsperms' || id === 'liverecord' || id === 'crashrecover' || id === 'mapview');
   document.body.classList.toggle('tabs-flush', id === 'journey' || id === 'mytrips');
   // None of these v2 screens render <BottomNav/> (verified against every
@@ -3569,7 +3591,7 @@ function switchTab(id, el) {
   // my route), TripEditMobile (Cancel + Save changes), RecReviewMobile
   // (Save to My Trips), StopRecMobile (centered confirm/publish/done),
   // RecNotesMobile (plain explainer, no footer at all).
-  document.body.classList.toggle('no-tabbar', id === 'journey' || id === 'record' || id === 'recreview' || id === 'stoprec' || id === 'recnotes');
+  document.body.classList.toggle('no-tabbar', id === 'journey' || id === 'record' || id === 'recreview' || id === 'stoprec' || id === 'recnotes' || id === 'exportscreen');
   if (id === 'admin')    { renderAdminTab(); renderReviewQueue(); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
   if (id === 'journals') { renderJournalsPanel(); }
@@ -6723,9 +6745,9 @@ function openRecNotes(trip) {
 function renderRecNotes() {
   const el = document.getElementById('recNotesPanel');
   if (!el) return;
-  const backTarget = _recNotesTrip ? `openJourneyDetail(_recNotesTrip)` : `openGpsPerms(_recNotesTrip)`;
+  // Title + back button come from the global #mobileHeader (see
+  // mobileHeaderSync) -- a local header here would duplicate it.
   el.innerHTML = `<div class="recnotes-wrap">
-    <div class="gps-hdr"><button class="gps-back" onclick="${backTarget}"><i class="ph ph-arrow-left"></i></button><span>How the journal works</span></div>
     <div class="recnotes-body">
       <div class="recnotes-lede">Your journey, your words. We just keep the thread.</div>
       <div class="recnotes-steps">${REC_NOTES_STEPS.map(s => `
@@ -7164,7 +7186,7 @@ function renderJourneyDetail() {
         ${(t.collaborators||[]).map((c,i)=>`<div class="jd-collab-av ${c.role}" title="${c.email} · can ${c.role}" style="z-index:${10-i}">${c.avatar||c.email[0].toUpperCase()}</div>`).join('')}
         <button class="jd-collab-add" onclick="jdOpenInvite()" title="Invite collaborators"><i class="ph ph-user-plus" style="font-size:12px;color:var(--text3)"></i></button>
       </div>
-      <button class="jd-mobile-share" onclick="jdShareTrip('${t.id}')" title="Share journey"><i class="ph ph-share-network" style="font-size:16px"></i></button>
+      <button class="jd-mobile-share" onclick="openExportScreen(_journeyTrip)" title="Share journey"><i class="ph ph-share-network" style="font-size:16px"></i></button>
       <span class="jd-desktop-actions" style="display:flex;gap:8px;align-items:center">
       ${isTracking
         ? `<button class="btn jd-desktop-edit locked" disabled title="Locked while active — edit legs inline below"><i class="ph ph-lock-simple"></i> Edit</button>
@@ -7463,6 +7485,80 @@ function jdShareTrip(id) {
     prompt('Copy this link:', url);
   }
 }
+// ── Share & Export (v2 ExportMobile) ──────────────────────────────
+let _exportTrip = null;
+function openExportScreen(trip) {
+  if (!trip) return;
+  _exportTrip = trip;
+  switchTab('exportscreen', null);
+}
+function exportPublicUrl(t) {
+  const base = window.location.origin;
+  return t.public_slug ? `${base}/journey/${t.public_slug}` : `${base}/journey.html?id=${t.id}`;
+}
+function exportCopyLink() {
+  const t = _exportTrip; if (!t) return;
+  const url = exportPublicUrl(t);
+  const btn = document.getElementById('exportCopyBtn');
+  const done = () => { if (btn) { btn.textContent = 'Copied!'; btn.classList.add('on'); setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('on'); }, 2000); } };
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copy this link:', url));
+  else prompt('Copy this link:', url);
+}
+function exportAsMarkdown() {
+  const t = _exportTrip; if (!t) return;
+  const stops = t.stops || [];
+  const lines = [`# ${t.title || 'Untitled trip'}`, ''];
+  stops.forEach(s => {
+    lines.push(`## ${_stopCityName(s.name)}${s.date ? ' — ' + s.date : ''}`);
+    if (s.diary) lines.push('', s.diary);
+    lines.push('');
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${(t.title || 'trip').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.md`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function renderExportScreen() {
+  const el = document.getElementById('exportScreenPanel');
+  const t = _exportTrip;
+  if (!el || !t) return;
+  const url = exportPublicUrl(t);
+  const FORMATS = [
+    { icon: 'file-pdf', label: 'PDF Journey Diary', sub: 'Formatted for print or saving', pro: false, color: 'var(--rust)', action: 'window.print()' },
+    { icon: 'file-arrow-down', label: 'GPX Track', sub: 'Import into Maps, Komoot, OsmAnd', pro: true, color: '#2E6FA8', action: 'openUpgrade()' },
+    { icon: 'file-text', label: 'Markdown / Plain text', sub: 'All journal entries as text', pro: false, color: 'var(--text2)', action: 'exportAsMarkdown()' },
+  ];
+  el.innerHTML = `<div class="export-wrap">
+    <div class="export-kicker">Share link</div>
+    <div class="export-card">
+      <div class="export-card-body">
+        <div class="export-share-copy">Anyone with this link can read your public journey diary.</div>
+        <div class="export-link-row">
+          <div class="export-link-box">${url}</div>
+          <button id="exportCopyBtn" class="export-copy-btn" onclick="exportCopyLink()">Copy</button>
+        </div>
+      </div>
+    </div>
+    <div class="export-kicker" style="margin-top:18px">Export</div>
+    <div class="export-formats">${FORMATS.map(f => `
+      <div class="export-card">
+        <div class="export-format-row" style="${f.pro ? 'opacity:0.7;cursor:pointer' : 'cursor:default'}" onclick="${f.pro ? 'openUpgrade()' : f.action}">
+          <div class="export-format-icon" style="background:color-mix(in srgb,${f.color} 15%,transparent)"><i class="ph ph-${f.icon}" style="font-size:20px;color:${f.color}"></i></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="export-format-label">${f.label}</span>
+              ${f.pro ? `<span class="export-pro-badge">Pro</span>` : ''}
+            </div>
+            <div class="export-format-sub">${f.sub}</div>
+          </div>
+          <i class="ph ph-${f.pro ? 'lock' : 'download-simple'}" style="font-size:18px;color:${f.pro ? 'var(--gold)' : 'var(--text3)'}"></i>
+        </div>
+      </div>`).join('')}</div>
+  </div>`;
+}
+
 let _jdInviteRole = 'edit';
 let _jdCollabs = []; // loaded from Supabase
 
@@ -9254,19 +9350,22 @@ const MOBILE_TITLES = {
   plan:'Planner', mytrips:'My Trips', journals:'Shared Journeys',
   profile:'Profile', admin:'Admin',
   journey:'Journey', record:'New Journey', recordjournal:'New Entry',
-  stoprec:'Stop Tracking', recreview:'Review your trip', upgrade:'Go Pro'
+  stoprec:'Stop Tracking', recreview:'Review your trip', upgrade:'Go Pro',
+  recnotes:'How the journal works', exportscreen:'Share & Export'
 };
 function mobileHeaderSync(id) {
   const titleEl = document.getElementById('mobileHeaderTitle');
   if (titleEl) titleEl.textContent = id === 'record' ? (currentTripId ? 'Edit trip' : 'New Journey') : (MOBILE_TITLES[id] || id);
   const backBtn = document.getElementById('mobileHeaderBack');
   if (backBtn) {
-    const isDetail = id === 'journey' || id === 'record' || id === 'recordjournal' || id === 'stoprec' || id === 'recreview' || id === 'upgrade';
+    const isDetail = id === 'journey' || id === 'record' || id === 'recordjournal' || id === 'stoprec' || id === 'recreview' || id === 'upgrade' || id === 'recnotes' || id === 'exportscreen';
     backBtn.classList.toggle('visible', isDetail);
     backBtn.onclick = id === 'stoprec' ? () => openJourneyDetail(_journeyTrip)
       : id === 'record' ? () => cancelEditTrip()
       : id === 'recreview' ? () => switchTab('liverecord', null)
       : id === 'upgrade' ? () => closeUpgrade()
+      : id === 'recnotes' ? () => (_recNotesTrip ? openJourneyDetail(_recNotesTrip) : openGpsPerms(_recNotesTrip))
+      : id === 'exportscreen' ? () => openJourneyDetail(_exportTrip)
       : isDetail ? () => switchTab('mytrips', document.getElementById('navbtn_mytrips')) : null;
   }
   const fab = document.getElementById('mobileHeaderFab');
