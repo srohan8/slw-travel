@@ -704,7 +704,13 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-leg-days-edit input{width:44px;font-family:var(--mono);font-size:10.5px;color:var(--text2);border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);padding:2px 6px;outline:none;}
   .jd-days-badge{font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sage) 14%,transparent);color:var(--sage);border:0.5px solid color-mix(in srgb,var(--sage) 40%,transparent);}
   .jd-days-badge.edited{background:color-mix(in srgb,var(--gold) 14%,transparent);color:#7A5C10;border-color:color-mix(in srgb,var(--gold) 40%,transparent);}
-  .jd-diary-wrap{margin-bottom:12px;position:relative;}
+  .jd-diary-wrap{margin-bottom:12px;}
+  /* Camera/mic buttons are absolutely positioned within just the textarea's
+     own wrapper -- NOT the outer .jd-diary-wrap, which also holds the
+     Add-photos/Share-tip row below the textarea. Sharing that positioning
+     context pinned the icons to the bottom of the whole wrap (i.e. on top
+     of Share-tip) instead of the textarea's own corner. */
+  .jd-diary-textwrap{position:relative;}
   .jd-diary-btns{position:absolute;bottom:8px;right:8px;display:flex;gap:4px;}
   .jd-voice-btn{width:24px;height:24px;border-radius:12px;background:transparent;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .jd-voice-btn.listening{border-color:var(--signal);color:var(--signal);animation:recBlink 1s ease-in-out infinite;}
@@ -7657,11 +7663,13 @@ function jdJourneyTabHTML(t, stops, legs, m) {
     if (live && (s.visited || isCur)) {
       const tipLegKey = !isLast ? `${s.name}→${stops[i+1]?.name||''}` : '';
       h += `<div class="jd-diary-wrap">
-        <textarea class="jd-diary" data-i="${i}" placeholder="What happened in ${_stopCityName(s.name)||'this stop'}?" oninput="jdSaveDiary(${i}, this.value)">${s.diary||''}</textarea>
-        ${live ? `<span class="jd-diary-btns">
-          <button class="jd-voice-btn" onclick="jdAttachPhoto(${i})" title="Add photo"><i class="ph ph-camera"></i></button>
-          <button class="jd-voice-btn" data-i="${i}" onclick="jdVoiceCapture(${i})" title="Voice note"><i class="ph ph-microphone"></i></button>
-        </span>` : ''}
+        <div class="jd-diary-textwrap">
+          <textarea class="jd-diary" data-i="${i}" placeholder="What happened in ${_stopCityName(s.name)||'this stop'}?" oninput="jdSaveDiary(${i}, this.value)">${s.diary||''}</textarea>
+          ${live ? `<span class="jd-diary-btns">
+            <button class="jd-voice-btn" onclick="jdAttachPhoto(${i})" title="Add photo"><i class="ph ph-camera"></i></button>
+            <button class="jd-voice-btn" data-i="${i}" onclick="jdVoiceCapture(${i})" title="Voice note"><i class="ph ph-microphone"></i></button>
+          </span>` : ''}
+        </div>
         <div class="jd-diary-actions">
           <div class="jd-diary-addphoto" onclick="jdAttachPhoto(${i})"><i class="ph ph-plus"></i></div>
           <span class="jd-diary-addphoto-lbl">Add photos</span>
