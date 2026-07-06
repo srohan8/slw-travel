@@ -7652,6 +7652,11 @@ function jdJourneyTabHTML(t, stops, legs, m) {
           <button class="jd-reorder-btn" onclick="jdMoveStop(${i},1)" ${isLast?'disabled':''}><i class="ph ph-caret-down"></i></button>
         </span>` : ''}
       </div>`;
+    // Per-stop advisory -- the incoming leg's real AI-generated conflict
+    // data (already shown route-wide in the overview card), surfaced here
+    // too so it's visible right where it's relevant, not just aggregated
+    // at the top.
+    if (i > 0 && legs[i-1]?.conflict) h += renderConflictAlert(legs[i-1].conflict, false);
     if (s.days) {
       h += live && s.visited
         ? `<div class="jd-leg-days-edit"><input type="number" min="0" value="${s.days}" onchange="jdEditDays(${i}, this.value)"/><span>d stay</span><span class="jd-days-badge${s.daysAuto===false?' edited':''}">${s.daysAuto===false?'edited':(gps?'auto · from tracking':'manual')}</span></div>`
