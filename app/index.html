@@ -5198,6 +5198,15 @@ function renderAccommodationLinks(city, suggestedNames, accomNote) {
   </div>`;
 }
 
+// Parses a stop's `date` (expected "YYYY-MM-DD") into a Date, or null if
+// missing/unparseable — guards against "Invalid Date" leaking into date-range
+// UI when a stop's date field is malformed rather than simply empty.
+function parseStopDate(dateStr, timeSuffix) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + (timeSuffix || 'T00:00'));
+  return isNaN(d.getTime()) ? null : d;
+}
+
 // ── Record tab ────────────────────────────────────────────────────
 function getLeg(i) {
   return legs[i] || { mode: 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' };
@@ -5294,8 +5303,8 @@ function renderSegs() {
     const dotCls = isF ? ' s' : isL ? ' e' : s.visited ? ' v' : '';
 
     let departHtml = '';
-    if (s.date && s.days) {
-      const dep = new Date(s.date + 'T00:00');
+    const dep = s.days ? parseStopDate(s.date) : null;
+    if (dep) {
       dep.setDate(dep.getDate() + (s.days || 0));
       departHtml = `<span class="stop-date-lbl" style="margin-left:4px">→ Depart</span>
                     <span class="stop-depart-computed">${dep.toLocaleDateString('en',{month:'short',day:'numeric'})}</span>`;
@@ -5487,7 +5496,8 @@ function renderTl() {
   const el = document.getElementById('tl'); let h = '';
   stops.forEach((s, i) => {
     const isF = i === 0, isL = i === stops.length - 1;
-    const ds = s.date ? new Date(s.date + 'T00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' }) : '';
+    const dsD = parseStopDate(s.date);
+    const ds = dsD ? dsD.toLocaleDateString('en', { month: 'short', day: 'numeric' }) : '';
     h += `<div class="tl-stop"><div class="tl-dot${isF ? ' s' : isL ? ' e' : ''}"></div><div class="tl-nm">${s.name || '?'}</div><div class="tl-dt">${ds}</div></div>`;
     if (!isL) { const leg = getLeg(i); const mc = MODE_COLORS[leg.mode]; h += `<div class="tl-leg"><div class="tl-line" style="${mc?'background:'+mc+';opacity:0.35':''}"></div><div class="tl-badge" style="${mc?'color:'+mc+';border-color:'+mc+';opacity:0.9':''}">${MI[leg.mode] || leg.mode}${leg.booked ? '<span class="tl-booked">✓</span>' : ''}</div></div>`; }
   });
@@ -5524,7 +5534,7 @@ function updateSum() {
   const tk = legs.reduce((a, l) => a + (+l.km   || 0), 0);
   document.getElementById('sumCost').innerHTML = Math.round(tc) + ' <span class="met-u" id="sumCurr">' + getCurr() + '</span>';
   document.getElementById('sumDist').innerHTML = Math.round(tk) + ' <span class="met-u">km</span>';
-  const dates = stops.map(s => s.date ? new Date(s.date + 'T00:00') : null).filter(Boolean);
+  const dates = stops.map(s => parseStopDate(s.date)).filter(Boolean);
   let days = '—';
   if (dates.length >= 2) { const d = (dates[dates.length - 1] - dates[0]) / 864e5; if (!isNaN(d)) days = Math.round(d); }
   document.getElementById('sumDays').textContent = days;
@@ -6010,7 +6020,7 @@ function renderMyTripsPanel() {
       const name     = (t.title||'').trim();
       const primary  = name || route || 'Untitled';
       // Duration from stop dates
-      const stopDates = (t.stops||[]).map(s => s.date ? new Date(s.date+'T12:00') : null).filter(Boolean);
+      const stopDates = (t.stops||[]).map(s => parseStopDate(s.date, 'T12:00')).filter(Boolean);
       const totalDays = stopDates.length >= 2 ? Math.round((stopDates[stopDates.length-1]-stopDates[0])/864e5) : 0;
       // Sub: route · Xd (or leg count fallback)
       const sub = [name ? route : '', totalDays ? totalDays+'d' : (legs.length ? legs.length+' legs' : '')].filter(Boolean).join(' · ');
@@ -6090,7 +6100,7 @@ function renderMyTripsPanel() {
     const allLegs   = trips.flatMap(t => t.legs||[]);
     const totalKm   = Math.round(allLegs.reduce((a,l)=>a+(+l.km||0),0));
     const totalDays = trips.reduce((a,t) => {
-      const ds = (t.stops||[]).map(s=>s.date?new Date(s.date+'T00:00'):null).filter(Boolean);
+      const ds = (t.stops||[]).map(s=>parseStopDate(s.date)).filter(Boolean);
       return ds.length>=2 ? a + Math.round((ds[ds.length-1]-ds[0])/864e5) : a;
     }, 0);
     const co2t = (totalKm * 0.21 / 1000);
@@ -7118,7 +7128,7 @@ function renderJourneyDetail() {
   const visited = stops.filter(s => s.visited).length;
   const total = stops.length;
 
-  const ds = stops.map(s => s.date ? new Date(s.date + 'T00:00') : null).filter(Boolean);
+  const ds = stops.map(s => parseStopDate(s.date)).filter(Boolean);
   const dateRange = ds.length >= 2
     ? `${ds[0].toLocaleDateString('en',{month:'short',day:'numeric'})} — ${ds[ds.length-1].toLocaleDateString('en',{month:'short',day:'numeric'})}`
     : '';
@@ -7255,7 +7265,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
   const pct = m.total ? Math.round(m.visited / m.total * 100) : 0;
   const spent = legs.reduce((a, l) => a + (l.booked ? (+l.cost || 0) : 0), 0);
   const budget = +t.budget || 0;
-  const ds = stops.map(s => s.date ? new Date(s.date + 'T00:00') : null).filter(Boolean);
+  const ds = stops.map(s => parseStopDate(s.date)).filter(Boolean);
   const duration = ds.length >= 2 ? Math.round((ds[ds.length-1] - ds[0]) / 864e5) : stops.reduce((a,s)=>a+(+s.days||0),0);
 
   const totalKm = legs.reduce((a, l) => a + (+l.km || 0), 0);
@@ -7302,7 +7312,8 @@ function jdJourneyTabHTML(t, stops, legs, m) {
     const isLast = i === stops.length - 1;
     const isCur = live && i === curIdx;
     const leg = legs[i];
-    const dateLbl = s.date ? '· ' + new Date(s.date + 'T00:00').toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
+    const dateLblD = parseStopDate(s.date);
+    const dateLbl = dateLblD ? '· ' + dateLblD.toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
     // §8 Session-2: timeline dot = departing-leg mode color (regardless of visited); connector in same color at 25%.
     const mc = leg ? (MODE_COLORS[leg.mode] || 'var(--text3)') : (i>0 ? (MODE_COLORS[legs[i-1]?.mode] || 'var(--text3)') : 'var(--text3)');
     const [cityName, ...ccParts] = (typeof s.name === 'string' ? s.name : '—').split(',');
@@ -7791,7 +7802,8 @@ async function jdInitMap(stops, legs) {
   (legs || []).forEach(l => { totalKm += (+l.km || 0); });
   const rows = stops.map((s, i) => {
     const isLast = i === n - 1;
-    const dateLbl = s.date ? new Date(s.date + 'T00:00').toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
+    const dateLblD = parseStopDate(s.date);
+    const dateLbl = dateLblD ? dateLblD.toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
     const dotCls = s.visited ? 'visited' : 'upcoming';
     const lineCls = s.visited ? 'visited' : '';
     const stopRow = `<div class="jd-stop-row">
@@ -7874,7 +7886,7 @@ function recPersist() {
   persistTripCloud(_recTrip);   // sync to backend (no-op for guests)
   return ok;
 }
-function recFmtDate(d) { return d ? new Date(d + 'T00:00').toLocaleDateString('en',{month:'short',day:'numeric'}) : ''; }
+function recFmtDate(d) { const p = parseStopDate(d); return p ? p.toLocaleDateString('en',{month:'short',day:'numeric'}) : ''; }
 
 function renderRecordJournal() {
   const el = document.getElementById('recordJournalPanel');
@@ -7887,7 +7899,7 @@ function renderRecordJournal() {
   const total = stops.length;
   const pct = total ? Math.round(visited/total*100) : 0;
   const first = stops[0]?.name || '?', last = stops[stops.length-1]?.name || '?';
-  const ds = stops.map(s => s.date ? new Date(s.date+'T00:00') : null).filter(Boolean);
+  const ds = stops.map(s => parseStopDate(s.date)).filter(Boolean);
   const dateRange = ds.length>=2 ? `${ds[0].toLocaleDateString('en',{month:'short',day:'numeric'})} — ${ds[ds.length-1].toLocaleDateString('en',{month:'short',day:'numeric'})}` : '';
   const duration = ds.length>=2 ? Math.round((ds[ds.length-1]-ds[0])/864e5) : stops.reduce((a,s)=>a+(+s.days||0),0);
   // Subtitle: dates · duration · name — but skip the name when it's just the route (contains "→").
@@ -8707,7 +8719,7 @@ function renderJournalsPanel() {
   // Real published trips (from this user) become real journal cards that open their own public page.
   const realJournals = (storage.get('trips') || []).filter(t => t.published).map(t => {
     const stops = (t.stops||[]).filter(s => s.name);
-    const ds = stops.map(s => s.date ? new Date(s.date+'T00:00') : null).filter(Boolean);
+    const ds = stops.map(s => parseStopDate(s.date)).filter(Boolean);
     const days = ds.length>=2 ? Math.round((ds[ds.length-1]-ds[0])/864e5) : stops.reduce((a,s)=>a+(+s.days||0),0);
     const km = (t.legs||[]).reduce((a,l)=>a+(+l.km||0),0);
     const firstDiary = stops.find(s => (s.diary||'').trim());
