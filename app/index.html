@@ -3789,6 +3789,12 @@ function setScreenUrl(arg, push = false) {
 // in-place there instead; desktop keeps the new-tab behavior since it works
 // fine and avoids losing whatever the user was doing in the current tab.
 function _openJourneyLink(url) {
+  // Path-style /journey/:id links only resolve on web because 404.html
+  // rewrites them to journey.html?trip=:id server-side. The native app
+  // serves bundled local files directly with no such rewrite, so that path
+  // 404s there. Do the same translation client-side before navigating.
+  const m = url.match(/^(https?:\/\/[^/]+)?\/journey\/([^/?#]+)([#?].*)?$/);
+  if (m) url = `${m[1]||''}/journey.html?trip=${m[2]}${m[3]||''}`;
   const isMobileOrStandalone = window.innerWidth <= 640
     || window.matchMedia('(display-mode: standalone)').matches
     || window.navigator.standalone === true;

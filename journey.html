@@ -317,7 +317,8 @@ async function buildJourneyFromTrip(id) {
   _pubTripId = id;
   try {
     const trips = JSON.parse(localStorage.getItem('slw_trips') || '[]');
-    t = trips.find(x => x.id === id) || null;
+    // id may be the trip's real id (?trip=<id>) or its public_slug (/journey/<slug>)
+    t = trips.find(x => x.id === id || x.public_slug === id) || null;
     if (t) _pubOwnerId = pubLoggedInUser()?.id || null; // found locally → it's this device's trip
   } catch(e) {}
   if (!t) {
