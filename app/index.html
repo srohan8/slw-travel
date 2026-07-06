@@ -1252,11 +1252,15 @@ window.addEventListener('unhandledrejection', (e) => {
     background:var(--bg);border-bottom:0.5px solid var(--border);
     position:sticky;top:0;z-index:100;
   }
+  .mobile-header-titlewrap{flex:1;min-width:0;padding:0 10px;}
   .mobile-header-title{
-    flex:1;min-width:0;padding:0 10px;
     font-family:var(--serif);font-size:17px;font-weight:600;
     color:var(--text);line-height:1.2;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .mobile-header-sub{
+    font-family:var(--mono);font-size:11px;color:var(--text3);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;
   }
   .mobile-header-back{
     display:none;background:none;border:none;cursor:pointer;
@@ -1573,7 +1577,10 @@ window.addEventListener('unhandledrejection', (e) => {
 
 <div class="mobile-header" id="mobileHeader">
   <button class="mobile-header-back" id="mobileHeaderBack"><i class="ph ph-arrow-left" style="font-size:20px"></i></button>
-  <div class="mobile-header-title" id="mobileHeaderTitle">Planner</div>
+  <div class="mobile-header-titlewrap">
+    <div class="mobile-header-title" id="mobileHeaderTitle">Planner</div>
+    <div class="mobile-header-sub" id="mobileHeaderSub" style="display:none"></div>
+  </div>
   <button class="mobile-header-action" id="mobileHeaderAction" style="display:none"></button>
   <button class="mytrips-new-btn" id="mobileHeaderFab" style="display:none;margin-right:8px" onclick="startNewTrip();switchTab('record',document.getElementById('navbtn_record'))">+ New trip</button>
 </div>
@@ -3723,6 +3730,7 @@ function pathForScreen(tab) {
 function _syncPlanSaveBar(show) {
   document.getElementById('planSaveBar')?.classList.toggle('show', show);
   document.body.classList.toggle('plan-results-active', show);
+  if (typeof mobileHeaderSync === 'function') mobileHeaderSync('plan');
 }
 // Accepts a tab id or an explicit path (starting with '/'). Preserves query string (e.g. ?seed=1).
 function setScreenUrl(arg, push = false) {
@@ -6071,6 +6079,24 @@ async function submitContrib() {
 }
 
 // ── Plan landing: hero + corridors + recent ───────────────────────────
+// Reverses _collapseSearchForm()'s hiding of the landing hero/grid/search
+// form and showing of the compact edit bar + results box -- the mobile
+// header's back button from Route Results needs this, not just
+// renderPlanLanding() (which only repopulates the grid's content and
+// assumes the landing was already visible).
+function planGoBackToLanding() {
+  const res = document.getElementById('planResult');
+  const bar = document.getElementById('planEditBar');
+  const hero = document.getElementById('planLanding');
+  const grid = document.getElementById('planLandingGrid');
+  const form = document.getElementById('planSearchForm');
+  if (res) res.style.display = 'none';
+  if (bar) bar.style.display = 'none';
+  if (hero) hero.style.display = '';
+  if (grid) grid.style.display = '';
+  if (form) form.style.display = '';
+  renderPlanLanding();
+}
 function renderPlanLanding() {
   setScreenUrl('/planner');
   _syncPlanSaveBar(false);
@@ -9645,10 +9671,32 @@ const MOBILE_TITLES = {
 };
 function mobileHeaderSync(id) {
   const titleEl = document.getElementById('mobileHeaderTitle');
-  if (titleEl) titleEl.textContent = id === 'record' ? (currentTripId ? 'Edit trip' : 'New Journey') : (MOBILE_TITLES[id] || id);
+  const subEl = document.getElementById('mobileHeaderSub');
+  // Route Results: show the auto-named route + a stop/day-count subtitle
+  // instead of the generic "Planner" title, so there's something to
+  // orient by (and a way back) once results replace the landing form.
+  const resultsVisible = id === 'plan' && !!lastSuggestion && document.getElementById('planResult')?.style.display === 'block';
+  if (titleEl) {
+    titleEl.textContent = resultsVisible ? suggestionRouteName(lastSuggestion)
+      : id === 'record' ? (currentTripId ? 'Edit trip' : 'New Journey')
+      : (MOBILE_TITLES[id] || id);
+  }
+  if (subEl) {
+    if (resultsVisible) {
+      const d = lastSuggestion;
+      const stopCount = d.stops?.length || 0;
+      const parts = [];
+      if (d.total_days) parts.push(`${d.total_days} days`);
+      if (stopCount) parts.push(`${stopCount} stop${stopCount===1?'':'s'}`);
+      subEl.textContent = parts.join(' · ');
+      subEl.style.display = parts.length ? '' : 'none';
+    } else {
+      subEl.style.display = 'none';
+    }
+  }
   const backBtn = document.getElementById('mobileHeaderBack');
   if (backBtn) {
-    const isDetail = id === 'journey' || id === 'record' || id === 'recordjournal' || id === 'stoprec' || id === 'recreview' || id === 'upgrade' || id === 'recnotes' || id === 'exportscreen';
+    const isDetail = id === 'journey' || id === 'record' || id === 'recordjournal' || id === 'stoprec' || id === 'recreview' || id === 'upgrade' || id === 'recnotes' || id === 'exportscreen' || resultsVisible;
     backBtn.classList.toggle('visible', isDetail);
     backBtn.onclick = id === 'stoprec' ? () => openJourneyDetail(_journeyTrip)
       : id === 'record' ? () => cancelEditTrip()
@@ -9656,6 +9704,7 @@ function mobileHeaderSync(id) {
       : id === 'upgrade' ? () => closeUpgrade()
       : id === 'recnotes' ? () => (_recNotesTrip ? openJourneyDetail(_recNotesTrip) : openGpsPerms(_recNotesTrip))
       : id === 'exportscreen' ? () => openJourneyDetail(_exportTrip)
+      : resultsVisible ? () => planGoBackToLanding()
       : isDetail ? () => switchTab('mytrips', document.getElementById('navbtn_mytrips')) : null;
   }
   const fab = document.getElementById('mobileHeaderFab');
