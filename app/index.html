@@ -7224,10 +7224,11 @@ function renderJourneyDetail() {
   if (isTracking) {
     h += `<button class="jd-mobile-cta-edit locked" disabled title="Locked while active — edit legs inline below"><i class="ph ph-lock-simple"></i> Edit</button>
       <button class="jd-toggle-on" style="flex:1" onclick="gpsStopTrackingTap()"><span class="jd-rec-dot"></span> <span>${_gps.mode==='gps'?'Track my route':'Current trip'}</span><span class="jd-toggle-switch on"><span class="jd-toggle-knob"></span></span></button>`;
-  } else if (hasContent) {
-    h += `<button class="jd-mobile-cta-primary" onclick="openRecordJournal(_journeyTrip)">${isLive ? '<span class="jd-rec-dot"></span> <span>Recording · Edit journal</span>' : '<i class="ph ph-book-open" style="font-size:14px"></i> <span>Edit journal</span>'}</button>
-      ${isLive ? `<button class="jd-stop-ctrl" onclick="openStopRec(_journeyTrip)" title="Stop tracking"><i class="ph ph-stop-circle" style="font-size:15px"></i></button>` : ''}`;
   } else {
+    // Same Edit + Track my route bar regardless of hasContent -- the Journal
+    // Saved card (above, when present) already surfaces journal-specific
+    // actions (Continue writing / Read journal), so duplicating an
+    // "Edit journal" CTA down here would be redundant, not clearer.
     h += `<button class="jd-mobile-cta-edit" onclick="loadTrip('${t.id}')"><i class="ph ph-pencil-simple"></i> Edit</button>
       <button class="jd-toggle-off" style="flex:1" onclick="openGpsPerms(_journeyTrip)"><i class="ph ph-map-trifold" style="color:var(--sage)"></i> <span>Track my route</span><span class="jd-toggle-switch off"><span class="jd-toggle-knob"></span></span></button>`;
   }
