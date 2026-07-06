@@ -1284,7 +1284,7 @@ window.addEventListener('unhandledrejection', (e) => {
   /* v2's TripsMobile tabs: full-width even split, sage underline, constant
      weight, edge-to-edge -- not a left-aligned text row inset from the
      screen edges with a dark bold-on-active state. */
-  .mytrips-tabs{gap:0 !important;margin:0 -0.875rem 1rem !important;}
+  .mytrips-tabs{gap:0 !important;margin:0 -0.875rem 1rem !important;position:sticky;top:0;z-index:15;background:var(--bg);}
   .mytrips-tab{flex:1 !important;font-size:13px !important;font-weight:500 !important;padding:11px 0 !important;text-align:center;border-bottom-width:2px !important;}
   .mytrips-tab.on{font-weight:500 !important;border-bottom-color:var(--sage) !important;color:var(--text) !important;}
   .mytrips-jgrid{grid-template-columns:1fr !important;}
@@ -1329,13 +1329,14 @@ window.addEventListener('unhandledrejection', (e) => {
      constant weight, edge-to-edge -- not a left-aligned inline row with
      a fern underline and bold-on-active. */
   .jd-tabs{flex-wrap:nowrap;margin:0 -0.875rem 18px;position:sticky;top:0;z-index:15;background:var(--bg);}
-  /* .container's padding-top:1rem sits ABOVE the sticky tabs' stuck
+  /* .container's padding-top:1rem sits ABOVE a sticky tab bar's stuck
      position (sticky respects the scroller's own padding as permanent
      inset space) -- that 1rem stayed visible as a gap above the tabs
      once stuck, with scrolled-past content (a stop photo, in the
      reported case) showing through it. Removing the padding here and
-     letting .jd-tabs supply its own top spacing instead. */
-  body.jd-view .container{padding-top:0 !important;}
+     letting the tab bar itself supply top spacing instead. Applies to
+     every screen with a sticky tab row (Journey Detail, My Trips). */
+  body.tabs-flush .container{padding-top:0 !important;}
   /* .jd-tab is display:inline-flex (for the icon+text "Recording" tab) --
      text-align has no effect on a flex container's children, so the label
      was hugging the left edge of its flex:1 segment instead of centering. */
@@ -3561,7 +3562,7 @@ function switchTab(id, el) {
   if (id === 'mapview')  { renderMapView(); }
   if (id === 'recnotes') { renderRecNotes(); }
   document.body.classList.toggle('gps-fullscreen', id === 'gpsperms' || id === 'liverecord' || id === 'crashrecover' || id === 'mapview');
-  document.body.classList.toggle('jd-view', id === 'journey');
+  document.body.classList.toggle('tabs-flush', id === 'journey' || id === 'mytrips');
   // None of these v2 screens render <BottomNav/> (verified against every
   // component in the handoff) — each replaces the tab bar with its own
   // fixed footer or centered content instead: JourneyMobile (Edit + Track
@@ -6020,24 +6021,19 @@ function renderMyTripsPanel() {
         : (t.updated_at ? new Date(t.updated_at).toLocaleDateString('en',{month:'short',year:'numeric'}) : '—');
       const dist = Math.round(legs.reduce((a,l)=>a+(+l.km||0),0));
       const isMaybe = st.cls === 'maybe';
-      // Trip lifecycle: one button, three states — "Start journal" (no content
-      // yet), a live "Recording" (has content, not stopped/published), or a
-      // neutral "Journal" (content exists but recording's stopped, or it's
-      // published — e.g. a Polarsteps import, where nothing is actually live).
+      // Per v2's actual flow: before publishing, everything lives on the trip
+      // page itself (View / Edit / Track — GPS or manual), with no separate
+      // "journal" concept at all. "Journal" only exists as a distinct thing
+      // once the trip is published, at which point it links to the public
+      // journey page instead of the private editor.
       const isPublished = !!t.published;
-      const hasContent  = _journalHasContent(t);
-      const isRecording = hasContent && !t.recordingStopped && !isPublished;
       const isGpsTracking = !!(_gps.mode && _gps.planned?.id === t.id);
       const publicUrl = t.public_slug ? `/journey/${t.public_slug}` : `/journey.html?id=${t.id}`;
       const journalBtn = isGpsTracking
         ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openJourneyDetailById('${t.id}')"><span class="mytrips-rec-dot"></span> Tracking</button>`
-        : !hasContent
-        ? `<button class="mytrips-act-btn" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Start journal</button>`
-        : isRecording
-          ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><span class="mytrips-rec-dot"></span> Recording</button>`
-          : isPublished
-            ? `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();_openJourneyLink('${publicUrl}')"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>`
-            : `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();openRecordJournalById('${t.id}')"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>`;
+        : isPublished
+          ? `<button class="mytrips-act-btn journal" onclick="event.stopPropagation();_openJourneyLink('${publicUrl}')"><i class="ph ph-book-open" style="font-size:11px"></i> Journal</button>`
+          : '';
       const rowHtml = `<div class="mytrips-table-row" style="cursor:pointer;${isMaybe?'opacity:0.65':''}" onclick="openJourneyDetailById('${t.id}')" title="View journey">
         <div>
           <div class="mtr-head">
