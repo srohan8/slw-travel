@@ -1109,11 +1109,8 @@ window.addEventListener('unhandledrejection', (e) => {
   .contrib-modal-footer{padding:14px 22px;border-top:0.5px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:10px;flex-shrink:0;}
   .contrib-kind-pill{font-size:12px;padding:6px 12px;border-radius:99px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;border:0.5px solid var(--border2);color:var(--text2);background:transparent;}
   .contrib-kind-pill.active{font-weight:600;}
-  .contrib-source-pill{font-size:12px;padding:6px 12px;border-radius:99px;cursor:pointer;transition:all .15s;border:0.5px solid var(--border2);color:var(--text2);background:transparent;}
-  .contrib-source-pill.active{border-color:var(--sage);background:rgba(217,151,61,0.08);color:var(--sage);font-weight:600;}
   .contrib-field-lbl{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:600;margin-bottom:6px;}
   .contrib-textarea{width:100%;font-size:13px;color:var(--text);border:0.5px solid var(--fern);border-radius:var(--radius);padding:10px 12px;background:var(--bg);outline:none;resize:vertical;min-height:80px;font-family:inherit;line-height:1.5;}
-  .contrib-inp{font-size:13px;color:var(--text);border:0.5px solid var(--border2);border-radius:6px;background:var(--bg);padding:8px 10px;outline:none;font-family:inherit;width:100%;}
 
   /* ── My Trips panel ─────────────────────────────────── */
   .mytrips-hdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.5rem;}
@@ -5991,84 +5988,43 @@ function showContribModal(legIdx, legKey) {
       ><i class="ph ${v.icon}" style="font-size:12px"></i> ${v.label}</span>`
   ).join('');
 
-  const sourcesHtml = ['I did this leg','Heard from another traveller','Operator / official source','I work in the area'].map(s =>
-    `<span class="contrib-source-pill${s==='I did this leg'?' active':''}" id="cs_${s.replace(/[^a-z]/gi,'_')}"
-      onclick="selectContribSource('${s}')">${s}</span>`
-  ).join('');
-
   const modeColor = MODE_COLORS[leg.mode] || 'var(--fern)';
   const iconCls   = MODE_ICONS[leg.mode]  || 'ph-path';
 
+  // Simplified to match v2's RouteTipMobile exactly: leg context, kind
+  // pills, a note textarea, one submit button -- no price/when/name
+  // fields, no "how do you know" source pills, no photo attach. Those
+  // extra fields aren't in v2's actual design.
   document.getElementById('contribModal').style.display = 'block';
   document.getElementById('contribModal').innerHTML = `<div class="contrib-modal-overlay" onclick="if(event.target===this)closeContribModal()">
     <div class="contrib-modal" onclick="event.stopPropagation()">
       <div class="contrib-modal-hdr">
         <div style="width:34px;height:34px;border-radius:8px;background:rgba(217,151,61,0.15);color:var(--sage);display:flex;align-items:center;justify-content:center"><i class="ph ph-users-three" style="font-size:18px"></i></div>
         <div style="flex:1">
-          <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);font-weight:400">Contribute a note</div>
-          <div style="font-family:var(--serif);font-size:20px;font-weight:400;letter-spacing:-0.2px;margin-top:2px;color:var(--cream)">Help the next traveller on this leg</div>
+          <div style="font-family:var(--serif);font-size:20px;font-weight:400;letter-spacing:-0.2px;color:var(--cream)">Share a route tip</div>
         </div>
         <span onclick="closeContribModal()" style="color:rgba(245,240,232,0.5);cursor:pointer;padding:6px;display:flex;align-items:center"><i class="ph ph-x" style="font-size:18px"></i></span>
       </div>
       <div class="contrib-modal-ctx">
         <div style="width:38px;height:38px;border-radius:8px;background:var(--bg);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:${modeColor}"><i class="ph ${iconCls}" style="font-size:20px"></i></div>
         <div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px">Leg ${legIdx+1}</div>
           <div style="font-family:var(--serif);font-size:17px;color:var(--text)">${from} <span style="color:var(--text3);font-size:13px;margin:0 6px">→</span> ${to}</div>
-          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px">${MI[leg.mode]||leg.mode}${leg.hours?' · ~'+leg.hours+'h':''}${leg.cost?' · '+getCurrSym()+leg.cost:''}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px">${MI[leg.mode]||leg.mode}</div>
         </div>
-        ${renderConfidenceBadge(leg.confidence||'uncertain')}
       </div>
       <div class="contrib-modal-body">
         <div style="margin-bottom:16px">
-          <div class="contrib-field-lbl">What kind of note?</div>
+          <div class="contrib-field-lbl">Kind</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">${kindsHtml}</div>
         </div>
-        <div style="margin-bottom:14px">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-            <div class="contrib-field-lbl">Your note</div>
-            <div id="contribCharCount" style="font-size:11px;color:var(--text3);font-family:var(--mono)">0 / 400</div>
-          </div>
-          <textarea class="contrib-textarea" id="contribText" maxlength="400" rows="4" placeholder="First-person observations only. What did you see, pay, or experience?"
-            oninput="document.getElementById('contribCharCount').textContent=this.value.length+' / 400'"></textarea>
-          <div style="font-size:11px;color:var(--text3);margin-top:5px;display:flex;gap:5px;align-items:center">
-            <i class="ph ph-info" style="font-size:11px"></i> First-person only. No affiliate links. Other travellers will vote on this.
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:10px;margin-bottom:14px" id="contribPriceRow">
-          <div>
-            <div class="contrib-field-lbl">Price paid <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-family:var(--body)">· optional</span></div>
-            <div style="display:grid;grid-template-columns:56px 1fr;gap:6px">
-              <select id="contribPriceCurr" class="contrib-inp" style="padding:7px 4px">
-                <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option><option>AUD</option><option>THB</option>
-              </select>
-              <input class="contrib-inp" id="contribPrice" type="number" placeholder="Amount" min="0"/>
-            </div>
-          </div>
-          <div>
-            <div class="contrib-field-lbl">When were you there? <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-family:var(--body)">· optional</span></div>
-            <input class="contrib-inp" id="contribWhen" placeholder="e.g. March 2025"/>
-          </div>
-          <div>
-            <div class="contrib-field-lbl">Your name / handle <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-family:var(--body)">· optional</span></div>
-            <input class="contrib-inp" id="contribAuthor" placeholder="@handle or anonymous"/>
-          </div>
-        </div>
-        <div style="margin-bottom:10px">
-          <div class="contrib-field-lbl">How do you know?</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">${sourcesHtml}</div>
-        </div>
         <div style="margin-bottom:18px">
-          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:0.5px dashed var(--border2);border-radius:var(--radius);color:var(--text3);font-size:12px;cursor:pointer;background:var(--bg2)">
-            <i class="ph ph-paperclip" style="font-size:14px"></i>
-            Attach a photo · optional — ticket, timetable, or schedule photo
-          </div>
+          <div class="contrib-field-lbl" style="margin-bottom:6px">Your note</div>
+          <textarea class="contrib-textarea" id="contribText" maxlength="400" rows="5" placeholder="First-person. What did you experience on this leg?"></textarea>
         </div>
       </div>
       <div class="contrib-modal-footer">
-        <div style="font-size:11px;color:var(--text3);flex:1;line-height:1.5">Posting as <strong style="color:var(--text2)">${currentUser?.email?.split('@')[0]||'you'}</strong> · Notes go live immediately. Travellers can upvote or confirm.</div>
         <button class="btn" onclick="closeContribModal()">Cancel</button>
-        <button class="btn btn-primary" id="contribSubmitBtn" onclick="submitContrib()"><i class="ph ph-paper-plane-tilt" style="font-size:12px"></i> Post note</button>
+        <button class="btn btn-primary" id="contribSubmitBtn" onclick="submitContrib()">Submit tip <i class="ph ph-arrow-right" style="font-size:12px"></i></button>
       </div>
     </div>
   </div>`;
@@ -6086,14 +6042,6 @@ function selectContribKind(k) {
       el.classList.remove('active');
       el.style.borderColor = 'var(--border2)'; el.style.background = 'transparent'; el.style.color = 'var(--text2)';
     }
-  });
-}
-
-function selectContribSource(s) {
-  _contribModalState.source = s;
-  document.querySelectorAll('.contrib-source-pill').forEach(el => {
-    const isActive = el.textContent.trim() === s;
-    el.classList.toggle('active', isActive);
   });
 }
 
