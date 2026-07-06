@@ -709,6 +709,15 @@ window.addEventListener('unhandledrejection', (e) => {
   .strk-summary-val{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.3px;}
   .strk-summary-lbl2{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px;}
   .strk-cta{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:var(--ink-900);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
+  /* v2's Route Results: one sticky "Save to trip" bar, no naming modal --
+     auto-named, tap-and-toast. Mobile-only; desktop keeps the named-save
+     modal via the inline "Add to planner" button. */
+  .plan-save-bar{display:none;}
+  .plan-save-toast{display:none;position:fixed;left:14px;right:14px;bottom:78px;z-index:60;background:var(--moss);color:var(--cream);border-radius:var(--radius-lg);padding:12px 16px;align-items:center;gap:10px;animation:fadeUp 0.3s ease-out;}
+  .plan-save-toast.show{display:flex;}
+  .plan-save-toast-title{font-size:13px;font-weight:600;}
+  .plan-save-toast-sub{font-size:11px;color:rgba(245,240,232,0.65);margin-top:1px;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
   .strk-cta.danger{background:var(--danger-text);}
   .strk-ghost{margin-top:10px;display:block;width:100%;background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--body);text-align:center;}
   .strk-ghost.outline{border:0.5px solid var(--border2);border-radius:var(--radius-pill);padding:10px 20px;width:100%;color:var(--text2);margin-top:2px;}
@@ -1117,6 +1126,12 @@ window.addEventListener('unhandledrejection', (e) => {
   .plan-hero-photo-wrap{width:100%;max-width:none;aspect-ratio:16/7;}
   .res-leg-card2{margin-left:0;}
   .res-leg-contrib{margin-left:0;}
+  /* v2's Route Results: sticky "Save to trip" bar instead of an inline
+     button buried in the (scrollable) route overview card. Toggled via
+     .show (set in JS only while a result is actually on screen) rather
+     than !important, so it doesn't fight the inline display:none default. */
+  .res-overview-hdr .btn-primary{display:none !important;}
+  .plan-save-bar.show{display:block;position:fixed;left:0;right:0;bottom:64px;z-index:20;padding:11px 14px calc(11px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
   .advisory-grid{grid-template-columns:1fr;}
   .jd-summary{grid-template-columns:1fr 1fr;}
   .jd-leg-cards{grid-template-columns:1fr;margin-left:0;}
@@ -1571,6 +1586,12 @@ window.addEventListener('unhandledrejection', (e) => {
     <!-- Summary strip (shown with results) -->
     <div id="planSummaryStrip" style="display:none"></div>
     <div id="planResult" class="result-box" style="display:none"></div>
+    <!-- Mobile-only: v2's ResultsMobile sticky "Save to trip" bar + toast --
+         one tap, auto-named, no modal (desktop keeps the named-save modal). -->
+    <div id="planSaveBar" class="plan-save-bar">
+      <button class="strk-cta" onclick="planSaveDirect()"><i class="ph ph-bookmark-simple"></i> Save to trip</button>
+    </div>
+    <div id="planSaveToast" class="plan-save-toast"></div>
     <div id="plannerMapWrap">
       <div class="pmw-resize" title="Drag to resize" onmousedown="pmwStartResize(event)" ontouchstart="pmwStartResize(event)"></div>
       <div class="pmw-head">
@@ -3636,6 +3657,9 @@ function switchTab(id, el) {
   const resultsVisible = document.getElementById('planResult')?.style.display === 'block';
   if (id === 'plan' && lastSuggestion && resultsVisible) showRouteMap(lastSuggestion);
   else hideRouteMap();
+  // Same for the mobile "Save to trip" bar -- it's position:fixed, so it
+  // must not linger over other tabs once navigated away from Route Results.
+  document.getElementById('planSaveBar')?.classList.toggle('show', id === 'plan' && !!lastSuggestion && resultsVisible);
   setScreenUrl(id);
   if (typeof bnSync === 'function') bnSync(id);
   if (typeof mobileHeaderSync === 'function') mobileHeaderSync(id);
@@ -5060,6 +5084,7 @@ function renderPlanSuggestion(d, fromCache = false) {
     </div>`;
   });
   document.getElementById('planResult').innerHTML = h;
+  document.getElementById('planSaveBar')?.classList.add('show');
   setScreenUrl('/route');
   showRouteMap(d);
 }
@@ -5161,6 +5186,29 @@ function saveRouteToTrips() {
   storage.set('trips', trips);
   persistTripCloud(trip);   // sync new trip to backend (no-op for guests)
   renderSaveRouteModal(true);
+}
+
+// v2's Route Results save flow: one tap, no naming modal -- auto-named,
+// a toast confirms ("Saved as '...' / Opening My Trips…"), then it
+// navigates itself. Mobile only; desktop keeps the named-save modal above.
+function planSaveDirect() {
+  const d = lastSuggestion;
+  if (!d) return;
+  if (!currentUser) { goToAuth('planner'); return; }
+  const name = suggestionRouteName(d);
+  _savedRouteName = name;
+  const trip = buildTripFromSuggestion(d, name);
+  const trips = storage.get('trips') || [];
+  trips.push(trip);
+  storage.set('trips', trips);
+  persistTripCloud(trip);
+  const toast = document.getElementById('planSaveToast');
+  if (toast) {
+    toast.innerHTML = `<i class="ph ph-check-circle" style="font-size:18px;color:var(--sage)"></i>
+      <div><div class="plan-save-toast-title">Saved as "${name.replace(/"/g,'&quot;')}"</div><div class="plan-save-toast-sub">Opening My Trips…</div></div>`;
+    toast.classList.add('show');
+  }
+  setTimeout(() => { toast?.classList.remove('show'); goToMyTrips(); }, 1100);
 }
 
 
@@ -5986,6 +6034,7 @@ async function submitContrib() {
 // ── Plan landing: hero + corridors + recent ───────────────────────────
 function renderPlanLanding() {
   setScreenUrl('/planner');
+  document.getElementById('planSaveBar')?.classList.remove('show');
   const lg = document.getElementById('planLandingGrid');
   if (!lg) return;
 
