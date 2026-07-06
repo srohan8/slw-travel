@@ -1002,13 +1002,15 @@ window.addEventListener('unhandledrejection', (e) => {
 
   /* ── Community contrib block ────────────────────────── */
   .contrib-block{margin-top:10px;padding-top:8px;border-top:0.5px dashed var(--border);}
-  .contrib-block-hdr{display:flex;align-items:center;gap:8px;cursor:pointer;padding:2px 0;user-select:none;}
-  .contrib-block-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-weight:600;display:inline-flex;align-items:center;gap:4px;}
-  .contrib-add-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px dashed var(--sage);color:var(--sage);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:var(--body);font-weight:500;background:rgba(217,151,61,0.05);white-space:nowrap;}
-  .contrib-flag-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:var(--body);white-space:nowrap;margin-right:6px;}
-  .contrib-flag-pill:hover{border-color:var(--text3);color:var(--text2);}
-  .contrib-flag-pill.flagged{background:rgba(192,57,43,0.1);border-color:rgba(192,57,43,0.4);color:#C0392B;font-weight:600;}
-  .contrib-add-pill:hover{background:rgba(217,151,61,0.12);}
+  .contrib-block-hdr{display:flex;align-items:center;gap:6px;cursor:pointer;padding:2px 0;user-select:none;}
+  .contrib-block-label{font-size:12px;color:var(--text3);display:inline-flex;align-items:center;gap:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+  /* Compact icon-only flag/add buttons -- replaces the old full-width text
+     pills, which overflowed/wrapped inside the narrower leg-card layout. */
+  .contrib-icon-btn{width:24px;height:24px;border-radius:12px;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;background:transparent;}
+  .contrib-icon-btn:hover{border-color:var(--text3);color:var(--text2);}
+  .contrib-icon-btn.flagged{background:rgba(192,57,43,0.1);border-color:rgba(192,57,43,0.4);color:#C0392B;}
+  .contrib-icon-btn.add{border:0.5px dashed var(--sage);color:var(--sage);background:rgba(217,151,61,0.05);}
+  .contrib-icon-btn.add:hover{background:rgba(217,151,61,0.12);}
   .contrib-card{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;padding:8px 10px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-top:6px;}
   .contrib-card-compact{display:grid;grid-template-columns:18px 1fr auto auto;gap:8px;align-items:center;padding:4px 0;font-size:12px;}
   .contrib-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -5826,14 +5828,16 @@ function renderContribBlockForKey(legKey, legIdx) {
     });
   }
 
+  // Compact single-line row -- icon-only flag/add buttons instead of full
+  // text pills, so it fits inside the narrower leg-card layout without
+  // overflowing or wrapping.
   if (items.length === 0) {
     return `<div class="contrib-block" id="${blockId}">
       <div class="contrib-block-hdr">
-        <span class="contrib-block-label"><i class="ph ph-users-three" style="font-size:11px"></i> From travellers</span>
-        <span style="font-size:11px;color:var(--text3);font-style:italic">No notes yet — be the first.</span>
+        <span class="contrib-block-label"><i class="ph ph-flag" style="font-size:12px"></i> No notes yet</span>
         <span style="flex:1"></span>
-        <span class="contrib-flag-pill" onclick="event.stopPropagation();flagToggle(this)"><i class="ph ph-flag"></i> Flag issue</span>
-        <span class="contrib-add-pill" onclick="showContribModal(${legIdx||0},'${safeKey}')"><i class="ph ph-plus" style="font-size:10px"></i> Add a note</span>
+        <span class="contrib-icon-btn" onclick="event.stopPropagation();flagToggle(this)" title="Flag issue"><i class="ph ph-flag"></i></span>
+        <span class="contrib-icon-btn add" onclick="showContribModal(${legIdx||0},'${safeKey}')" title="Add a note"><i class="ph ph-plus"></i></span>
       </div>
     </div>`;
   }
@@ -5841,21 +5845,21 @@ function renderContribBlockForKey(legKey, legIdx) {
   const top = items[0];
   return `<div class="contrib-block" id="${blockId}">
     <div class="contrib-block-hdr" onclick="toggleContribBlock('${blockId}')">
-      <span class="contrib-block-label"><i class="ph ph-users-three" style="font-size:11px"></i> From travellers <span style="color:var(--text2);margin-left:4px">· ${items.length} note${items.length===1?'':'s'}</span></span>
+      <span class="contrib-block-label"><i class="ph ph-users-three" style="font-size:12px"></i> ${items.length} note${items.length===1?'':'s'} from travellers</span>
       <span style="flex:1"></span>
-      <span class="contrib-flag-pill" onclick="event.stopPropagation();flagToggle(this)"><i class="ph ph-flag"></i> Flag issue</span>
-      <span class="contrib-add-pill" onclick="event.stopPropagation();showContribModal(${legIdx||0},'${safeKey}')"><i class="ph ph-plus" style="font-size:10px"></i> Add a note</span>
-      <span style="color:var(--text3);display:inline-flex;align-items:center;margin-left:4px"><i class="ph ph-caret-down" id="${blockId}_chev" style="font-size:12px;transition:transform .2s"></i></span>
+      <span class="contrib-icon-btn" onclick="event.stopPropagation();flagToggle(this)" title="Flag issue"><i class="ph ph-flag"></i></span>
+      <span class="contrib-icon-btn add" onclick="event.stopPropagation();showContribModal(${legIdx||0},'${safeKey}')" title="Add a note"><i class="ph ph-plus"></i></span>
+      <span style="color:var(--text3);display:inline-flex;align-items:center"><i class="ph ph-caret-down" id="${blockId}_chev" style="font-size:12px;transition:transform .2s"></i></span>
     </div>
     <div id="${blockId}_preview" style="margin-top:2px;padding-left:2px">${renderContribCard(top, true)}</div>
     <div id="${blockId}_list" style="display:none">${items.map(n => renderContribCard(n, false)).join('')}</div>
   </div>`;
 }
 
-// §7 Session-2: per-leg "Flag issue" pill (local-only toggle in this prototype)
+// §7 Session-2: per-leg "Flag issue" button (local-only toggle in this prototype)
 function flagToggle(el) {
   const on = el.classList.toggle('flagged');
-  el.innerHTML = on ? '<i class="ph ph-flag-fill"></i> Flagged' : '<i class="ph ph-flag"></i> Flag issue';
+  el.innerHTML = `<i class="ph ph-flag${on?'-fill':''}"></i>`;
 }
 
 function toggleContribBlock(id) {
