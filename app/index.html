@@ -478,6 +478,28 @@ window.addEventListener('unhandledrejection', (e) => {
   .psc-chips-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .psc-inputs-row{display:flex;align-items:center;gap:8px;}
 
+  /* ── "What you can do" feature intro strip ─────────────
+     Token note: the design handoff's reference uses #FF5014 for the tile
+     accent, but that's --signal in this app's actual token system --
+     reserved exclusively for live/recording indicators. Using --sage
+     (mustard) instead, per CLAUDE.md. */
+  .feature-strip-lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);font-weight:600;margin-bottom:10px;}
+  .feature-strip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:20px;}
+  .feature-tile{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 4px 12px;background:var(--bg);border:0.5px solid color-mix(in srgb,var(--sage) 25%,transparent);border-radius:var(--radius-lg);cursor:pointer;font-family:var(--body);animation:tileIn 0.45s cubic-bezier(0.16,1,0.3,1) both;}
+  .feature-tile-icon{width:34px;height:34px;border-radius:17px;background:color-mix(in srgb,var(--sage) 14%,transparent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .feature-tile-icon i{font-size:17px;color:var(--sage);}
+  .feature-tile-lbl{font-size:10px;font-weight:600;color:var(--text2);text-align:center;line-height:1.25;}
+  @keyframes tileIn{from{opacity:0;transform:scale(0.92) translateY(6px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  .feature-sheet-overlay{position:fixed;inset:0;background:rgba(9,16,34,0.55);z-index:300;display:none;align-items:flex-end;}
+  .feature-sheet-overlay.show{display:flex;}
+  .feature-sheet{width:100%;background:var(--bg);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:20px 20px 24px;}
+  .feature-sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:0 auto 16px;}
+  .feature-sheet-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .feature-sheet-icon{width:36px;height:36px;border-radius:18px;background:color-mix(in srgb,var(--sage) 14%,transparent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .feature-sheet-icon i{font-size:18px;color:var(--sage);}
+  .feature-sheet-title{font-family:var(--serif);font-size:18px;font-weight:300;color:var(--text);letter-spacing:-0.3px;}
+  .feature-sheet-desc{font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:18px;}
+  .feature-sheet-close{width:100%;padding:13px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--body);}
   /* ── Plan landing grid ──────────────────────────────── */
   .plan-landing-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:1.2rem;}
   .plan-landing-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;box-shadow:var(--shadow);}
@@ -1838,6 +1860,7 @@ window.addEventListener('unhandledrejection', (e) => {
   <!-- CONTRIB MODAL (global overlay) -->
   <div id="contribModal" style="display:none"></div>
   <div id="deleteTripSheet" style="display:none"></div>
+  <div id="featureSheet" class="feature-sheet-overlay" onclick="closeFeaturePop()"></div>
 
   <!-- AUTH MODAL — native (Capacitor) only; web still uses auth.html -->
   <div id="authModal" style="display:none"></div>
@@ -2108,6 +2131,46 @@ const CONTRIB_KINDS = {
   confirmed:{ icon:'ph-check-circle',  color:'#3D7A3D', bg:'#E4F0E2', label:'Confirmed working' },
   warning:  { icon:'ph-warning',       color:'#C4622D', bg:'#FDF0EC', label:'Heads up' },
 };
+
+// "What you can do" feature intro strip (Planner landing) — copy source of
+// truth for the tile grid + tap-to-open bottom-sheet explainer.
+const FEATURES = [
+  { icon: 'magnifying-glass',      label: 'Search',        desc: 'Enter a from/to and we plan an overland route — no flights, ever.' },
+  { icon: 'map-trifold',           label: 'Plan',           desc: 'Pick transport modes and get a stop-by-stop itinerary with honest cost & confidence estimates.' },
+  { icon: 'bookmark-simple',       label: 'Save',           desc: 'Save any planned route to My Trips — edit stops, legs and bookings any time.' },
+  { icon: 'path',                  label: 'Track',          desc: 'Follow your trip live with GPS, or mark your position manually if you’re off-grid.' },
+  { icon: 'share-network',         label: 'Share',          desc: 'Invite collaborators to view or edit your trip together.' },
+  { icon: 'globe-hemisphere-west', label: 'Publish',        desc: 'Turn your journal into a public diary others can read at your own link.' },
+  { icon: 'chat-circle-text',      label: 'Community tips', desc: 'Add a note on any leg — border conditions, ferry waits, hostel picks — for other travellers.' },
+];
+function renderFeatureIntroStrip() {
+  return `<div class="feature-strip-lbl">What you can do</div>
+    <div class="feature-strip-grid">
+      ${FEATURES.map((f, idx) => `<button class="feature-tile" style="animation-delay:${idx*0.05}s" onclick="showFeaturePop(${idx})">
+        <div class="feature-tile-icon"><i class="ph-fill ph-${f.icon}"></i></div>
+        <span class="feature-tile-lbl">${f.label}</span>
+      </button>`).join('')}
+    </div>`;
+}
+function showFeaturePop(idx) {
+  const f = FEATURES[idx]; if (!f) return;
+  const el = document.getElementById('featureSheet');
+  if (!el) return;
+  el.innerHTML = `<div class="feature-sheet" onclick="event.stopPropagation()">
+    <div class="feature-sheet-handle"></div>
+    <div class="feature-sheet-hdr">
+      <div class="feature-sheet-icon"><i class="ph-fill ph-${f.icon}"></i></div>
+      <div class="feature-sheet-title">${f.label}</div>
+    </div>
+    <div class="feature-sheet-desc">${f.desc}</div>
+    <button class="feature-sheet-close" onclick="closeFeaturePop()">Got it</button>
+  </div>`;
+  el.classList.add('show');
+}
+function closeFeaturePop() {
+  const el = document.getElementById('featureSheet');
+  if (el) { el.classList.remove('show'); el.innerHTML = ''; }
+}
 
 // Popular corridors for plan landing (curated real overland routes)
 const POPULAR_CORRIDORS = [
@@ -6108,7 +6171,8 @@ function renderPlanLanding() {
     </div>`
   ).join('');
 
-  lg.innerHTML = `<div class="plan-landing-grid">
+  lg.innerHTML = `${renderFeatureIntroStrip()}
+  <div class="plan-landing-grid">
     <div class="plan-landing-card">
       <div class="plan-landing-card-hdr">
         <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);font-weight:400">Popular corridors</div>
