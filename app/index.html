@@ -5418,16 +5418,24 @@ function renderLeg(i) {
     : `<div style="font-size:12px;color:var(--text3)">Add next stop name for accommodation links.</div>`;
 
   const contribs = renderContribBlock(i);
+  const expanded = expandedLegs.has(i);
 
+  // Collapsed by default (v2's TripEditMobile shows one compact summary row
+  // per leg, expanding to the full editor on tap) -- all the same fields
+  // (mode, cost/km, transport links, booking, stay) still render, just
+  // inside the expanded state instead of always visible.
   return `<div class="leg-card${leg.booked?' leg-booked':''}" style="border-left:3px solid ${modeColor}">
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 6px;border-bottom:0.5px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;${expanded?'border-bottom:0.5px solid var(--border)':''}" onclick="toggleLegExpand(${i})">
       <span style="width:20px;height:20px;border-radius:5px;background:${modeTint};color:${modeColor};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ph ${iconCls}" style="font-size:11px"></i></span>
       <span style="font-size:13px;font-weight:600;color:var(--text)">${fromCity||'?'} → ${toCity||'?'}</span>
-      ${leg.cost ? `<span class="leg-cost-lbl">${getCurrSym()}${leg.cost}</span>` : ''}
-      ${leg.km   ? `<span class="leg-cost-lbl" style="color:var(--text3)">${leg.km} km</span>` : ''}
-      ${leg.booked ? `<span class="booked-pill on" style="font-size:10px;padding:2px 7px;pointer-events:none">✓</span>` : ''}
+      <span style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0">
+        ${leg.cost ? `<span class="leg-cost-lbl">${getCurrSym()}${leg.cost}</span>` : ''}
+        ${leg.km   ? `<span class="leg-cost-lbl" style="color:var(--text3)">${leg.km} km</span>` : ''}
+        ${leg.booked ? `<span class="booked-pill on" style="font-size:10px;padding:2px 7px;pointer-events:none">✓</span>` : ''}
+        <i class="ph ph-caret-${expanded?'up':'down'}" style="font-size:11px;color:var(--text3)"></i>
+      </span>
     </div>
-    <div class="leg-grid" style="padding:8px 10px 10px">
+    ${expanded ? `<div class="leg-grid" style="padding:8px 10px 10px">
       <div class="leg-col leg-col-b">
         <div class="leg-col-lbl">Journey</div>
         ${modeSection}
@@ -5446,7 +5454,7 @@ function renderLeg(i) {
         ${staySection}
       </div>
     </div>
-    ${contribs ? `<div style="margin-top:4px;padding:6px 10px 8px;border-top:0.5px solid var(--border)">${contribs}</div>` : ''}
+    ${contribs ? `<div style="margin-top:4px;padding:6px 10px 8px;border-top:0.5px solid var(--border)">${contribs}</div>` : ''}` : ''}
   </div>`;
 }
 
