@@ -605,6 +605,14 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-visited-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-family:var(--mono);color:var(--success);background:color-mix(in srgb,var(--success) 14%,transparent);border-radius:var(--radius-pill);padding:1px 6px;}
   /* ── Live/manual tracking mode — Journey tab (06.1/06.2) ── */
   .jd-live-banner{display:flex;align-items:center;gap:8px;background:var(--dusk);border-radius:var(--radius);padding:9px 12px;margin-bottom:12px;}
+  .jd-journal-card{background:color-mix(in srgb,var(--sage) 8%,var(--bg));border:0.5px solid color-mix(in srgb,var(--sage) 30%,var(--border));border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:14px;}
+  .jd-journal-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .jd-journal-kicker{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--sage);font-weight:700;}
+  .jd-journal-meta{font-family:var(--mono);font-size:10.5px;color:var(--text3);}
+  .jd-journal-excerpt{font-size:13px;font-style:italic;color:var(--text2);line-height:1.55;margin-bottom:12px;}
+  .jd-journal-actions{display:flex;gap:8px;}
+  .jd-journal-continue{flex:1;padding:9px 14px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);}
+  .jd-journal-read{flex:1;padding:9px 14px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:var(--ink-900);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body);}
   .jd-live-dot2{width:8px;height:8px;border-radius:50%;background:var(--signal);flex-shrink:0;animation:recBlink 1.6s ease-in-out infinite;}
   .jd-live-dot2.manual{background:var(--gold);animation:none;}
   .jd-live-label{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;color:#fff;font-weight:700;}
@@ -7313,6 +7321,29 @@ function jdJourneyTabHTML(t, stops, legs, m) {
       <span class="jd-live-dot2${gps?'':' manual'}"></span>
       <span class="jd-live-label">${gps ? 'TRACKING' : 'ACTIVE TRAVEL'}</span>
       <span class="jd-live-meta">${gps ? `You're in ${curName} · ${curIdx+1} of ${stops.length} stops` : `No GPS · marked at ${curName} · ${curIdx+1} of ${stops.length} stops`}</span>
+    </div>`;
+  }
+
+  // Journal summary card — a trip that already has saved journal content
+  // (and isn't currently live) leads with a recap instead of jumping
+  // straight to the stats grid, so returning to an already-journaled trip
+  // shows what's there before anything else.
+  if (!live && _journalHasContent(t)) {
+    const diaryEntries = stops.filter(s => (s.diary||'').trim());
+    const photoCount = stops.reduce((a,s) => a + ((s.photos||[]).length), 0);
+    const excerpt = diaryEntries[0]?.diary || '';
+    const isPublished = !!t.published;
+    const publicUrl = t.public_slug ? `/journey/${t.public_slug}` : `/journey.html?id=${t.id}`;
+    h += `<div class="jd-journal-card">
+      <div class="jd-journal-top">
+        <span class="jd-journal-kicker"><i class="ph ph-book-open"></i> Journal saved</span>
+        <span class="jd-journal-meta">${diaryEntries.length} ${diaryEntries.length===1?'entry':'entries'} · ${photoCount} photo${photoCount===1?'':'s'}</span>
+      </div>
+      ${excerpt ? `<div class="jd-journal-excerpt">"${(excerpt.length>140?excerpt.slice(0,140)+'…':excerpt).replace(/"/g,'&quot;')}"</div>` : ''}
+      <div class="jd-journal-actions">
+        <button class="jd-journal-continue" onclick="openRecordJournal(_journeyTrip)">Continue writing</button>
+        <button class="jd-journal-read" onclick="${isPublished ? `_openJourneyLink('${publicUrl}')` : `openRecordJournal(_journeyTrip)`}">Read journal →</button>
+      </div>
     </div>`;
   }
 
