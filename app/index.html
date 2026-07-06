@@ -1328,7 +1328,10 @@ window.addEventListener('unhandledrejection', (e) => {
      constant weight, edge-to-edge -- not a left-aligned inline row with
      a fern underline and bold-on-active. */
   .jd-tabs{flex-wrap:nowrap;margin:0 -0.875rem 18px;position:sticky;top:0;z-index:15;background:var(--bg);}
-  .jd-tab{flex:1;font-size:13px !important;font-weight:500 !important;padding:11px 0 !important;text-align:center;}
+  /* .jd-tab is display:inline-flex (for the icon+text "Recording" tab) --
+     text-align has no effect on a flex container's children, so the label
+     was hugging the left edge of its flex:1 segment instead of centering. */
+  .jd-tab{flex:1;font-size:13px !important;font-weight:500 !important;padding:11px 0 !important;justify-content:center;}
   .jd-tab.on{font-weight:500 !important;border-bottom-color:var(--sage) !important;}
   .res-overview-card{display:none !important;}
   .jd-tab.rec{display:none !important;}
@@ -1338,14 +1341,19 @@ window.addEventListener('unhandledrejection', (e) => {
   .rj-card-grid{grid-template-columns:1fr !important;}
   .rj-sticky{bottom:64px !important;}
   .rj-gutter{display:none;}
-  .jrnl-header-top{flex-direction:column;gap:10px;}
+  /* v2's chip row sits directly under the (single, global) header with tight
+     padding -- our header still carried desktop's 28px/32px spacing meant
+     for the title block we just hid, leaving a big empty gap. Break the
+     header out edge-to-edge and tighten it down to match. */
+  .jrnl-header{margin:0 -0.875rem !important;padding:10px 0.875rem 0 !important;}
+  .jrnl-header-top{flex-direction:column;gap:8px;margin-bottom:8px !important;}
   /* v2's JournalsMobile has one header row total (the global #mobileHeader) —
      a second "Shared Journeys" title + subtitle here would duplicate it. */
   .jrnl-sub{display:none !important;}
   .jrnl-title{display:none !important;}
   .jrnl-search{width:100% !important;}
   .jrnl-search input{width:100% !important;}
-  .jrnl-chips{flex-wrap:nowrap !important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -0.875rem;padding:0 0.875rem 12px;}
+  .jrnl-chips{flex-wrap:nowrap !important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 !important;padding:0 0 10px !important;}
   .jrnl-chips::-webkit-scrollbar{display:none;}
   .jrnl-chip{white-space:nowrap;flex-shrink:0;}
   .jrnl-featured{grid-template-columns:1fr !important;}
@@ -7035,7 +7043,7 @@ function renderCrashRecover() {
     : `Last checkpoint: ${Math.round((Date.now() - (cp.savedAt||Date.now()))/60000)} min ago`;
 
   el.innerHTML = `<div class="gps-panel gps-light">
-    <div class="gps-hdr"><span>bysloth</span></div>
+    <div class="gps-hdr"><img src="/public/bysloth-motif-black.png" alt="" style="height:24px;width:auto;flex-shrink:0"><span>bysloth</span></div>
     <div class="gps-center">
       <div class="strk-icon" style="background:#FFF8E6;border-color:#FFB80044"><i class="ph ph-lightning" style="font-size:32px;color:var(--gold)"></i></div>
       <div class="strk-title">Tracking was interrupted.</div>
@@ -9225,12 +9233,13 @@ const MOBILE_TITLES = {
 };
 function mobileHeaderSync(id) {
   const titleEl = document.getElementById('mobileHeaderTitle');
-  if (titleEl) titleEl.textContent = MOBILE_TITLES[id] || id;
+  if (titleEl) titleEl.textContent = id === 'record' ? (currentTripId ? 'Edit trip' : 'New Journey') : (MOBILE_TITLES[id] || id);
   const backBtn = document.getElementById('mobileHeaderBack');
   if (backBtn) {
-    const isDetail = id === 'journey' || id === 'recordjournal' || id === 'stoprec' || id === 'recreview' || id === 'upgrade';
+    const isDetail = id === 'journey' || id === 'record' || id === 'recordjournal' || id === 'stoprec' || id === 'recreview' || id === 'upgrade';
     backBtn.classList.toggle('visible', isDetail);
     backBtn.onclick = id === 'stoprec' ? () => openJourneyDetail(_journeyTrip)
+      : id === 'record' ? () => cancelEditTrip()
       : id === 'recreview' ? () => switchTab('liverecord', null)
       : id === 'upgrade' ? () => closeUpgrade()
       : isDetail ? () => switchTab('mytrips', document.getElementById('navbtn_mytrips')) : null;
@@ -9395,7 +9404,7 @@ init().catch(e => {
   </div>
   <div style="flex:1;padding:40px 28px 32px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:44px">
-      <img src="/public/bysloth.png" alt="" style="height:38px;width:auto;flex-shrink:0">
+      <img src="/public/bysloth-motif-black.png" alt="" style="height:38px;width:auto;flex-shrink:0">
       <div style="font-family:var(--body);font-size:22px;font-weight:700;color:var(--ink-900);letter-spacing:-0.5px;line-height:1">bysloth</div>
     </div>
     <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-900);font-weight:600;margin-bottom:10px">Overland planner · no flights, ever</div>
