@@ -2793,7 +2793,10 @@ function startNewTrip() {
   expandedLegs.clear();
   currentTripId = null;
   _editorImported = false;
-  document.getElementById('tripTitle').value = '';
+  // A real default value (not an empty input showing the muted placeholder)
+  // so the title reads with the same solid, confident weight as an actual
+  // saved trip's title -- matching how it looks once you're editing one.
+  document.getElementById('tripTitle').value = 'My overland journey';
   document.getElementById('tripNotes').value = '';
   document.getElementById('budgInp').value   = '';
   updateActiveTripBar();
