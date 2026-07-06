@@ -392,11 +392,40 @@ window.addEventListener('unhandledrejection', (e) => {
   .stop-days-stepper button{width:18px;height:18px;border-radius:5px;border:none;background:var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0;}
   .stop-days-stepper span{font-family:var(--mono);font-size:11px;color:var(--text);min-width:22px;text-align:center;}
   .rec-mobile-save-bar{display:none;}
+  /* Stop card top row -- numbered circle + country tag + trash-icon delete,
+     replacing the plain checkbox/×-button row. */
+  .stop-card2-num{width:22px;height:22px;border-radius:50%;background:var(--sage);color:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;flex-shrink:0;}
+  .stop-card2-country{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;}
+  .stop-card2-del{width:22px;height:22px;border-radius:6px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .stop-card2-del:hover{color:var(--danger-text);background:var(--danger-bg,rgba(192,57,43,0.08));}
+  .stop-card2-visbtn{margin-left:auto;}
+  /* Per-stop accommodation -- lives on the stop you're staying at rather than
+     tacked onto the leg before it, so the first stop can have a stay too. */
+  .stop-stay2{margin-top:8px;padding-top:8px;border-top:0.5px dashed var(--border);}
+  .stop-stay2-lbl{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .stop-stay2-price{font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--text2);}
+  .stop-stay2-row{display:flex;gap:6px;align-items:center;}
+  .stop-stay2-input{flex:1;min-width:0;font-size:12.5px;padding:7px 9px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit;outline:none;}
+  .stop-stay2-input:focus{border-color:var(--fern);}
+  .stop-stay2-book{flex-shrink:0;font-size:12px;padding:7px 12px;border-radius:var(--radius);border:0.5px solid var(--sage);color:var(--sage);background:transparent;cursor:pointer;font-family:inherit;font-weight:600;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+  .stop-stay2-book.on{background:color-mix(in srgb,var(--sage) 15%,transparent);}
 
   /* Leg compact summary row */
   .leg-summary-row{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;user-select:none;border-radius:var(--radius);}
   .leg-summary-row:hover{background:rgba(0,0,0,0.02);}
   .leg-card.leg-booked .leg-summary-row{opacity:0.7;}
+  /* Leg card v2 -- collapsed row (icon, name, duration, cost, Book pill,
+     chevron) + expanded panel (Transport mode pills, km/h/$ metrics,
+     Booking section with a single full-width Book CTA). */
+  .leg-card2-cost{font-size:12.5px;color:var(--text2);}
+  .leg-card2-book-pill{font-size:10.5px;padding:2px 9px;border-radius:99px;border:0.5px solid var(--sage);color:var(--sage);font-family:var(--mono);flex-shrink:0;}
+  .leg-card2-book-pill.on{background:color-mix(in srgb,var(--sage) 15%,transparent);}
+  .leg-card2-section-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin:10px 0 6px;}
+  .leg-card2-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .leg-card2-metric{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:7px 9px;}
+  .leg-card2-metric-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:3px;}
+  .leg-card2-metric input{width:100%;font-size:13px;font-weight:600;color:var(--text);border:none;background:transparent;outline:none;font-family:inherit;}
+  .leg-card2-book{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--sage);color:var(--cream);border:none;border-radius:var(--radius);padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;}
   .leg-mode-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .leg-mode-icon i{font-size:11px;color:#fff;}
   .leg-route-lbl{flex:1;font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
@@ -5505,6 +5534,16 @@ function renderSegs() {
       <button onclick="stepStopDays(${i},1)">+</button>
     </div>`;
 
+    // Best-effort nightly-rate estimate parsed out of the AI-generated
+    // accomNote prose (e.g. "hostels from $22") -- shown only when a real
+    // dollar figure is actually present in that text, never fabricated.
+    const priceMatch = (s.accomNote || '').match(/\$(\d+)/);
+    const nightly = priceMatch ? +priceMatch[1] : null;
+    const nights = s.days || 0;
+    const priceLine = nightly
+      ? `<span class="stop-stay2-price">~$${nightly}/night${nights ? ` · ~$${nightly*nights} for ${nights}n` : ''}</span>`
+      : '';
+
     h += `<div class="seg">
       <div class="seg-l">
         <div class="dot${dotCls}"></div>
@@ -5513,11 +5552,13 @@ function renderSegs() {
       <div style="flex:1">
         <div class="stop-card">
           <div class="stop-city-row">
-            <button class="stop-vis-btn${s.visited?' on':''}" title="${s.visited?'Visited':'Mark visited'}"
-              onclick="stops[${i}].visited=!stops[${i}].visited;renderSegs();renderVisitedProgress()">✓</button>
+            <span class="stop-card2-num">${i+1}</span>
             <input class="sinp-lg" placeholder="City / place" value="${s.name}"
               oninput="stops[${i}].name=this.value;renderTl();updateSum()"/>
-            ${stops.length > 2 ? `<button class="rm" onclick="removeStop(${i})">×</button>` : ''}
+            ${s.country ? `<span class="stop-card2-country">${s.country}</span>` : ''}
+            <button class="stop-vis-btn stop-card2-visbtn${s.visited?' on':''}" title="${s.visited?'Visited':'Mark visited'}"
+              onclick="stops[${i}].visited=!stops[${i}].visited;renderSegs();renderVisitedProgress()">✓</button>
+            ${stops.length > 2 ? `<button class="stop-card2-del" onclick="removeStop(${i})" title="Remove stop"><i class="ph ph-trash"></i></button>` : ''}
           </div>
           <div class="stop-date-row">
             <span class="stop-date-lbl">Arrive</span>
@@ -5525,6 +5566,16 @@ function renderSegs() {
               oninput="stops[${i}].date=this.value;stops[${i}]._autoFilled=false;autoFillDates(${i})"/>
             ${departHtml}
             ${daysBadge}
+          </div>
+          <div class="stop-stay2">
+            <div class="stop-stay2-lbl"><i class="ph ph-house-line"></i> Stay · ${(s.name||'this stop').toUpperCase()} ${priceLine}</div>
+            <div class="stop-stay2-row">
+              <input class="stop-stay2-input" placeholder="Add accommodation…" value="${(s.accomNote||'').replace(/"/g,'&quot;')}"
+                onchange="stops[${i}].accomNote=this.value;renderSegs()"/>
+              <button class="stop-stay2-book${s.accomBooked?' on':''}" onclick="stops[${i}].accomBooked=!stops[${i}].accomBooked;renderSegs();renderBookingProgress()">
+                <i class="ph ph-${s.accomBooked?'check-circle':'house-line'}"></i> ${s.accomBooked?'Booked':'Book stay'}
+              </button>
+            </div>
           </div>
           ${s.visited ? `<textarea class="stop-diary" rows="2"
             placeholder="Notes from ${s.name||'this stop'}…"
@@ -5546,135 +5597,56 @@ function renderLeg(i) {
   const iconCls    = MODE_ICONS[leg.mode] || 'ph-path';
   const modeColor  = MODE_COLORS[leg.mode] || 'var(--fern)';
   const modeTint   = MODE_TINTS[leg.mode]  || '#E0EAF2';
-  const isEditing  = editingLegModes.has(i);
-  const nextStop   = stops[i+1];
-
-  const modeSection = isEditing
-    ? `<div style="margin:4px 0 6px">
-        <div class="pills" style="flex-wrap:wrap">
-          ${MODES.map(m=>`<button class="mp${leg.mode===m?' on':''}" onclick="setMode(${i},'${m}')">${MI[m]}</button>`).join('')}
-        </div>
-        <button class="leg-edit-btn" style="margin-top:4px" onclick="editingLegModes.delete(${i});renderSegs()">Cancel</button>
-      </div>`
-    : `<div style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:5px">
-        <span style="width:20px;height:20px;border-radius:5px;background:${modeTint};color:${modeColor};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ph ${iconCls}" style="font-size:11px"></i></span>
-        <span style="text-transform:capitalize;font-weight:500;color:${modeColor}">${leg.mode||'bus'}</span>
-        ${leg.hours ? `<span style="color:var(--text3)">· ${leg.hours}h</span>` : ''}
-        <button class="leg-edit-btn" onclick="editingLegModes.add(${i});renderSegs()">Edit</button>
-      </div>`;
-
-  const metricsRow = `<div style="display:flex;gap:4px;align-items:center;margin-bottom:4px;flex-wrap:wrap">
-    <input class="linp" type="number" placeholder="cost" value="${leg.cost||''}"
-      oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].cost=+this.value;updateSum();renderBudgetBar()"/>
-    <span class="lsep">${getCurrSym()}</span>
-    <input class="linp" type="number" placeholder="km" value="${leg.km||''}"
-      oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].km=+this.value;updateSum()"/>
-    <span class="lsep">km</span>
-    ${leg.hours ? `<span style="font-size:11px;color:var(--text3)">${leg.hours}h</span>` : ''}
-  </div>`;
+  const expanded   = expandedLegs.has(i);
+  const bookKey    = `rec-${i}`;
+  const bookOpen   = _bookingOpen.has(bookKey);
 
   const transportLinks = showAff && fromCity && toCity
     ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites||[], leg.legRegion||'', leg.infoSites||[])
     : '';
-
-  const bookedSection = `<div style="margin-top:6px">
-    <button class="booked-pill${leg.booked?' on':''}"
-      onclick="if(!legs[${i}])legs[${i}]={};legs[${i}].booked=!legs[${i}].booked;renderSegs();renderBookingProgress()">
-      ${leg.booked ? '✓ Booked' : 'Mark as booked'}
-    </button>
-    ${leg.booked ? `<div class="booking-rec">
-      <div class="booking-rec-row"><i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
-        <input placeholder="Ref #" value="${leg.bookingRef||''}" oninput="legs[${i}].bookingRef=this.value"/></div>
-      <div class="booking-rec-row"><i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
-        <input placeholder="Booking URL" value="${leg.bookingUrl||''}" oninput="legs[${i}].bookingUrl=this.value"/></div>
-    </div>` : ''}
-  </div>`;
-
-  const stayBooked = nextStop?.accomBooked || false;
-  const staySection = nextStop?.name
-    ? `<div>
-        <button class="booked-pill${stayBooked?' on':''}"
-          onclick="if(!stops[${i+1}])stops[${i+1}]={};stops[${i+1}].accomBooked=!stops[${i+1}].accomBooked;renderSegs();renderBookingProgress()">
-          ${stayBooked ? '✓ Stay booked' : 'Book stay'}
-        </button>
-        ${stayBooked ? `<div class="booking-rec">
-          <div class="booking-rec-row"><i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
-            <input placeholder="Ref #" value="${nextStop?.accomRef||''}" oninput="stops[${i+1}].accomRef=this.value"/></div>
-          <div class="booking-rec-row"><i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
-            <input placeholder="Booking URL" value="${nextStop?.accomUrl||''}" oninput="stops[${i+1}].accomUrl=this.value"/></div>
-        </div>` : ''}
-        ${showAff ? renderAccommodationLinks(nextStop.name, nextStop.accomSites||[], nextStop.accomNote||'') : ''}
-      </div>`
-    : `<div style="font-size:12px;color:var(--text3)">Add next stop name for accommodation links.</div>`;
-
   const contribs = renderContribBlock(i);
-  const expanded = expandedLegs.has(i);
 
-  // Collapsed by default (v2's TripEditMobile shows one compact summary row
-  // per leg, expanding to the full editor on tap) -- all the same fields
-  // (mode, cost/km, transport links, booking, stay) still render, just
-  // inside the expanded state instead of always visible.
+  // Collapsed by default: icon, "From→To", duration, cost, a small Book
+  // status pill, and a chevron. Expanding reveals mode pills + km/h/cost
+  // metric boxes + a single full-width Book CTA (transport links reveal)
+  // -- accommodation now lives on the arrival stop's own card, not here.
   return `<div class="leg-card${leg.booked?' leg-booked':''}" style="border-left:3px solid ${modeColor}">
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;${expanded?'border-bottom:0.5px solid var(--border)':''}" onclick="toggleLegExpand(${i})">
+    <div class="leg-summary-row" onclick="toggleLegExpand(${i})">
       <span style="width:20px;height:20px;border-radius:5px;background:${modeTint};color:${modeColor};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ph ${iconCls}" style="font-size:11px"></i></span>
-      <span style="font-size:13px;font-weight:600;color:var(--text)">${fromCity||'?'} → ${toCity||'?'}</span>
-      <span style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0">
-        ${leg.cost ? `<span class="leg-cost-lbl">${getCurrSym()}${leg.cost}</span>` : ''}
-        ${leg.km   ? `<span class="leg-cost-lbl" style="color:var(--text3)">${leg.km} km</span>` : ''}
-        ${leg.booked ? `<span class="booked-pill on" style="font-size:10px;padding:2px 7px;pointer-events:none">✓</span>` : ''}
+      <span style="font-size:13px;font-weight:600;color:var(--text)">${fromCity||'?'}→${toCity||'?'}</span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0">
+        ${leg.hours ? `<span class="leg-card2-cost">${leg.hours}h</span>` : ''}
+        ${leg.cost  ? `<span class="leg-card2-cost">~${getCurrSym()}${leg.cost}</span>` : ''}
+        <span class="leg-card2-book-pill${leg.booked?' on':''}">${leg.booked?'Booked':'Book'}</span>
         <i class="ph ph-caret-${expanded?'up':'down'}" style="font-size:11px;color:var(--text3)"></i>
       </span>
     </div>
-    ${expanded ? `<div class="leg-grid" style="padding:8px 10px 10px">
-      <div class="leg-col leg-col-b">
-        <div class="leg-col-lbl">Journey</div>
-        ${modeSection}
-        ${metricsRow}
-        ${leg.notes ? `<div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-style:italic">${leg.notes}</div>` : ''}
-        ${renderConfidenceBadge(leg.confidence||'uncertain')}
-        ${renderConflictAlert(leg.conflict, false)}
+    ${expanded ? `<div style="padding:0 10px 12px" onclick="event.stopPropagation()">
+      <div class="leg-card2-section-lbl">Transport</div>
+      <div class="pills" style="flex-wrap:wrap;margin-bottom:8px">
+        ${MODES.map(m=>`<button class="mp${leg.mode===m?' on':''}" onclick="setMode(${i},'${m}')">${MI[m]}</button>`).join('')}
       </div>
-      ${window.innerWidth <= 640 ? (() => {
-        // Mobile: one combined "Book" action for transport + stay together,
-        // collapsed by default -- instead of two always-expanded columns
-        // full of link lists. Desktop keeps the original two-column layout.
-        const bothBooked = leg.booked && stayBooked;
-        const bookKey = `rec-${i}`;
-        const open = _bookingOpen.has(bookKey);
-        if (bothBooked) {
-          return `<div class="leg-col leg-col-b" style="grid-column:span 2">
-            <div class="leg-col-lbl">Booked</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <span class="booked-pill on">✓ Transport booked</span>
-              <span class="booked-pill on">✓ Stay booked</span>
-            </div>
-          </div>`;
-        }
-        return `<div class="leg-col leg-col-b" style="grid-column:span 2">
-          <div class="leg-col-lbl">Book transport &amp; stay</div>
-          <div class="jd-booked-row">
-            <span class="jd-booked">Not booked</span>
-            <button class="jd-book-btn" onclick="event.stopPropagation();toggleBookingPanel('${bookKey}',()=>renderSegs())">Book <i class="ph ph-caret-${open?'up':'down'}"></i></button>
-          </div>
-          ${open ? `<div class="jd-book-options" id="${_bookOptsId(bookKey)}" onclick="event.stopPropagation()">
-            <div class="jd-book-section-lbl">Transport</div>
-            ${transportLinks || '<div class="jd-book-empty">No links for this leg.</div>'}
-            ${bookedSection}
-            <div class="jd-book-section-lbl">Stay at ${nextStop?.name || toCity || '—'}</div>
-            ${staySection}
-          </div>` : ''}
-        </div>`;
-      })() : `<div class="leg-col leg-col-b">
-        <div class="leg-col-lbl">Transport</div>
-        ${transportLinks || '<div style="font-size:12px;color:var(--text3)">No links for this leg.</div>'}
-        ${bookedSection}
+      <div class="leg-card2-metrics">
+        <div class="leg-card2-metric"><div class="leg-card2-metric-lbl">km</div><input type="number" value="${leg.km||''}" oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].km=+this.value;updateSum()"/></div>
+        <div class="leg-card2-metric"><div class="leg-card2-metric-lbl">h</div><input type="number" value="${leg.hours||''}" oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].hours=+this.value;updateSum()"/></div>
+        <div class="leg-card2-metric"><div class="leg-card2-metric-lbl">${getCurrSym()} approx</div><input type="number" value="${leg.cost||''}" oninput="if(!legs[${i}])legs[${i}]={};legs[${i}].cost=+this.value;updateSum();renderBudgetBar()"/></div>
       </div>
-      <div class="leg-col leg-col-b">
-        <div class="leg-col-lbl">Stay at ${nextStop?.name || toCity || '—'}</div>
-        ${staySection}
-      </div>`}
-    </div>
-    ${contribs ? `<div style="margin-top:4px;padding:6px 10px 8px;border-top:0.5px solid var(--border)">${contribs}</div>` : ''}` : ''}
+      ${leg.notes ? `<div style="font-size:11px;color:var(--text3);margin-top:8px;font-style:italic">${leg.notes}</div>` : ''}
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${renderConfidenceBadge(leg.confidence||'uncertain')}${renderConflictAlert(leg.conflict, false)}</div>
+      <div class="leg-card2-section-lbl">Booking</div>
+      ${leg.booked ? `<div class="booking-rec" style="margin-top:0">
+        <div class="booking-rec-row"><i class="ph ph-ticket" style="color:var(--text3);font-size:14px"></i>
+          <input placeholder="Ref #" value="${leg.bookingRef||''}" oninput="legs[${i}].bookingRef=this.value"/></div>
+        <div class="booking-rec-row"><i class="ph ph-link" style="color:var(--text3);font-size:14px"></i>
+          <input placeholder="Booking URL" value="${leg.bookingUrl||''}" oninput="legs[${i}].bookingUrl=this.value"/></div>
+        <button class="booked-pill on" style="margin-top:6px" onclick="legs[${i}].booked=false;renderSegs();renderBookingProgress()"><i class="ph ph-check-circle"></i> Booked · unmark</button>
+      </div>` : `<button class="leg-card2-book" onclick="toggleBookingPanel('${bookKey}',()=>renderSegs())"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-arrow-right"></i></button>
+      ${bookOpen ? `<div class="jd-book-options" id="${_bookOptsId(bookKey)}" style="margin-top:8px">
+        ${transportLinks || '<div class="jd-book-empty">No links for this leg.</div>'}
+        <button class="booked-pill" style="margin-top:8px" onclick="if(!legs[${i}])legs[${i}]={};legs[${i}].booked=true;renderSegs();renderBookingProgress()">Mark as booked</button>
+      </div>` : ''}`}
+      ${contribs ? `<div style="margin-top:10px;padding-top:8px;border-top:0.5px solid var(--border)">${contribs}</div>` : ''}
+    </div>` : ''}
   </div>`;
 }
 
