@@ -1284,6 +1284,12 @@ window.addEventListener('unhandledrejection', (e) => {
   /* ── Journey Detail replaces the tab bar with its own bottom CTA (v2 JourneyMobile never renders BottomNav) ── */
   body.no-tabbar #bottomNav{display:none !important;}
   body.no-tabbar .container{height:calc(100dvh - 56px);padding-bottom:110px;}
+  /* Route Results' "Save to trip" bar -- same treatment as no-tabbar, but
+     state-based (only while results + the bar are actually showing) rather
+     than screen-based, since the Planner landing view keeps the normal nav. */
+  body.plan-results-active #bottomNav{display:none !important;}
+  body.plan-results-active .container{height:calc(100dvh - 56px);padding-bottom:110px;}
+  body.plan-results-active .plan-save-bar.show{bottom:0;}
   /* Review & Save (recreview) — RecReviewMobile also has no BottomNav; fix its footer too */
   .rcv-footer{position:fixed !important;left:0;right:0;bottom:0;z-index:20;box-shadow:0 -4px 24px rgba(14,26,46,0.08);padding-bottom:calc(11px + env(safe-area-inset-bottom,0px)) !important;}
   .gps-panel{height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--dusk);}
@@ -3693,6 +3699,13 @@ function pathForScreen(tab) {
     default:              return '/' + tab;
   }
 }
+// Toggles the mobile "Save to trip" bar and hides the bottom tab nav while
+// it's showing (mobile only, via body.plan-results-active) -- the nav
+// underneath added nothing once there's a second fixed bar stacked above it.
+function _syncPlanSaveBar(show) {
+  document.getElementById('planSaveBar')?.classList.toggle('show', show);
+  document.body.classList.toggle('plan-results-active', show);
+}
 // Accepts a tab id or an explicit path (starting with '/'). Preserves query string (e.g. ?seed=1).
 function setScreenUrl(arg, push = false) {
   const path = (arg && arg[0] === '/') ? arg : pathForScreen(arg);
@@ -3740,6 +3753,9 @@ function switchTab(id, el) {
   // (Save to My Trips), StopRecMobile (centered confirm/publish/done),
   // RecNotesMobile (plain explainer, no footer at all).
   document.body.classList.toggle('no-tabbar', id === 'journey' || id === 'record' || id === 'recreview' || id === 'stoprec' || id === 'recnotes' || id === 'exportscreen');
+  // Same idea as no-tabbar, but state-based rather than screen-based: only
+  // while Route Results' "Save to trip" bar is actually showing, not for
+  // the whole Planner tab (the landing/corridors view keeps the normal nav).
   if (id === 'admin')    { renderAdminTab(); renderReviewQueue(); }
   if (id === 'mytrips')  { renderMyTripsPanel(); }
   if (id === 'journals') { renderJournalsPanel(); }
@@ -3753,7 +3769,7 @@ function switchTab(id, el) {
   else hideRouteMap();
   // Same for the mobile "Save to trip" bar -- it's position:fixed, so it
   // must not linger over other tabs once navigated away from Route Results.
-  document.getElementById('planSaveBar')?.classList.toggle('show', id === 'plan' && !!lastSuggestion && resultsVisible);
+  _syncPlanSaveBar(id === 'plan' && !!lastSuggestion && resultsVisible);
   setScreenUrl(id);
   if (typeof bnSync === 'function') bnSync(id);
   if (typeof mobileHeaderSync === 'function') mobileHeaderSync(id);
@@ -5195,7 +5211,7 @@ function renderPlanSuggestion(d, fromCache = false) {
     h += `</div></div>`; // close .res-leg-body, .res-leg
   });
   document.getElementById('planResult').innerHTML = h;
-  document.getElementById('planSaveBar')?.classList.add('show');
+  _syncPlanSaveBar(true);
   setScreenUrl('/route');
   showRouteMap(d);
 }
@@ -6107,7 +6123,7 @@ async function submitContrib() {
 // ── Plan landing: hero + corridors + recent ───────────────────────────
 function renderPlanLanding() {
   setScreenUrl('/planner');
-  document.getElementById('planSaveBar')?.classList.remove('show');
+  _syncPlanSaveBar(false);
   const lg = document.getElementById('planLandingGrid');
   if (!lg) return;
 
@@ -9703,7 +9719,7 @@ function mobileHeaderSync(id) {
     </svg>
     <div id="spGlow" style="position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(217,151,61,0.12) 0%,transparent 70%);opacity:0"></div>
     <img id="spLogo" src="/public/bysloth.png" alt="" style="position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(0.55);opacity:0;width:72px;height:72px;filter:drop-shadow(0 0 20px rgba(217,151,61,0.5))">
-    <div id="spWord" style="position:absolute;left:50%;top:calc(42% + 64px);transform:translate(-50%,14px);opacity:0;font-family:'Sora',sans-serif;font-size:32px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;white-space:nowrap">bysloth</div>
+    <div id="spWord" style="position:absolute;left:50%;top:calc(42% + 64px);transform:translate(-50%,14px);opacity:0;font-family:'Sora',sans-serif;font-size:32px;font-weight:600;color:#fff;letter-spacing:-1px;line-height:1;white-space:nowrap">bysloth</div>
     <div id="spTag"  style="position:absolute;left:50%;top:calc(42% + 110px);transform:translateX(-50%);opacity:0;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:2px;text-transform:uppercase;white-space:nowrap">overland · no flights, ever</div>
     <div id="spPill" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);width:120px;height:4px;border-radius:2px;background:rgba(255,255,255,0.2);opacity:0"></div>`;
 
@@ -9823,7 +9839,7 @@ init().catch(e => {
   <div style="flex:1;padding:40px 28px 32px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:44px">
       <img src="/public/bysloth-motif-black.png" alt="" style="height:38px;width:auto;flex-shrink:0">
-      <div style="font-family:var(--body);font-size:22px;font-weight:700;color:var(--ink-900);letter-spacing:-0.5px;line-height:1">bysloth</div>
+      <div style="font-family:var(--body);font-size:22px;font-weight:600;color:var(--ink-900);letter-spacing:-0.5px;line-height:1">bysloth</div>
     </div>
     <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-900);font-weight:600;margin-bottom:10px">Overland planner · no flights, ever</div>
     <div style="font-family:var(--serif);font-size:40px;font-weight:300;line-height:1.05;letter-spacing:-0.8px;color:var(--ink-900);margin-bottom:18px">Go the long<br>way. <em style="font-style:normal;font-weight:700;color:var(--ink-900);text-decoration:underline">On purpose.</em></div>
