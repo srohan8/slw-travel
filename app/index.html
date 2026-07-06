@@ -629,7 +629,8 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-days-badge{font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sage) 14%,transparent);color:var(--sage);border:0.5px solid color-mix(in srgb,var(--sage) 40%,transparent);}
   .jd-days-badge.edited{background:color-mix(in srgb,var(--gold) 14%,transparent);color:#7A5C10;border-color:color-mix(in srgb,var(--gold) 40%,transparent);}
   .jd-diary-wrap{margin-left:24px;margin-bottom:12px;position:relative;}
-  .jd-voice-btn{position:absolute;bottom:8px;right:8px;width:24px;height:24px;border-radius:12px;background:transparent;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .jd-diary-btns{position:absolute;bottom:8px;right:8px;display:flex;gap:4px;}
+  .jd-voice-btn{width:24px;height:24px;border-radius:12px;background:transparent;border:0.5px solid var(--border2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .jd-voice-btn.listening{border-color:var(--signal);color:var(--signal);animation:recBlink 1s ease-in-out infinite;}
   .jd-detect-card{margin:0 0 8px 24px;background:color-mix(in srgb,var(--signal) 5%,transparent);border:1px dashed color-mix(in srgb,var(--signal) 45%,transparent);border-radius:var(--radius);padding:9px 11px;}
   .jd-detect-hdr{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
@@ -1627,6 +1628,7 @@ window.addEventListener('unhandledrejection', (e) => {
   <!-- JOURNEY DETAIL (06) — opened from My Trips -->
   <div id="journey" class="panel">
     <div id="journeyPanel"><!-- filled by renderJourneyDetail() --></div>
+    <input id="jdPhotoInput" type="file" accept="image/*" style="display:none" onchange="jdOnPhotoSelected(event)"/>
   </div>
 
   <!-- ROUTE MAP (mobile-only full-screen, v2 MapViewMobile) — opened from Journey Detail's Map tab / Full map pill -->
@@ -7337,6 +7339,24 @@ function jdPhotoNav(i, dir) {
   _jdPhotoIdx[i] = ((_jdPhotoIdx[i] || 0) + dir + n) % n;
   renderJourneyDetail();
 }
+let _jdPhotoAttachIdx = -1;
+function jdAttachPhoto(i) {
+  _jdPhotoAttachIdx = i;
+  document.getElementById('jdPhotoInput')?.click();
+}
+function jdOnPhotoSelected(e) {
+  const file = e.target.files?.[0];
+  const i = _jdPhotoAttachIdx;
+  if (!file || i < 0 || !_journeyTrip) return;
+  _compressImageFile(file, 1200, 0.75).then(dataUrl => {
+    const s = _journeyTrip.stops[i]; if (!s) return;
+    s.photos = s.photos || [];
+    s.photos.push(dataUrl);
+    jdPersist();
+    renderJourneyDetail();
+  });
+  e.target.value = '';
+}
 function jdPhotosHTML(s, i) {
   const n = s.photos?.length || 0;
   if (!n) return '';
@@ -7464,7 +7484,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
       </div>`;
     if (s.days) {
       h += live && s.visited
-        ? `<div class="jd-leg-days-edit"><input type="number" min="0" value="${s.days}" onchange="jdEditDays(${i}, this.value)"/><span>d stay</span><span class="jd-days-badge${s.daysAuto===false?' edited':''}">${s.daysAuto===false?'edited':(gps?'auto':'manual')}</span></div>`
+        ? `<div class="jd-leg-days-edit"><input type="number" min="0" value="${s.days}" onchange="jdEditDays(${i}, this.value)"/><span>d stay</span><span class="jd-days-badge${s.daysAuto===false?' edited':''}">${s.daysAuto===false?'edited':(gps?'auto · from tracking':'manual')}</span></div>`
         : `<div class="jd-leg-days">${s.days}d stay</div>`;
     }
     // Notes/photos only show while live (matching v2 exactly) -- the plain,
@@ -7473,13 +7493,20 @@ function jdJourneyTabHTML(t, stops, legs, m) {
     if (live && (s.visited || isCur)) {
       h += `<div class="jd-diary-wrap">
         <textarea class="jd-diary" data-i="${i}" placeholder="What happened in ${_stopCityName(s.name)||'this stop'}?" oninput="jdSaveDiary(${i}, this.value)">${s.diary||''}</textarea>
-        ${live ? `<button class="jd-voice-btn" data-i="${i}" onclick="jdVoiceCapture(${i})" title="Voice note"><i class="ph ph-microphone"></i></button>` : ''}
+        ${live ? `<span class="jd-diary-btns">
+          <button class="jd-voice-btn" onclick="jdAttachPhoto(${i})" title="Add photo"><i class="ph ph-camera"></i></button>
+          <button class="jd-voice-btn" data-i="${i}" onclick="jdVoiceCapture(${i})" title="Voice note"><i class="ph ph-microphone"></i></button>
+        </span>` : ''}
       </div>`;
       h += jdPhotosHTML(s, i);
     }
     if (gps && isCur && pending) {
+      const pendingArrived = new Date(pending.arrived_at);
+      const pendingMin = Math.max(0, Math.round((Date.now() - pendingArrived.getTime()) / 60000));
+      const pendingH = Math.floor(pendingMin / 60), pendingM = pendingMin % 60;
+      const pendingDwell = `${pendingArrived.toLocaleDateString('en',{month:'short',day:'numeric'})} · ${pendingH?pendingH+'h ':''}${pendingM}m here`;
       h += `<div class="jd-detect-card">
-        <div class="jd-detect-hdr"><span class="jd-detect-dot"></span><span class="jd-detect-lbl">Stop detected</span><span class="jd-detect-time">${new Date(pending.arrived_at).toLocaleTimeString('en',{hour:'numeric',minute:'2-digit'})}</span></div>
+        <div class="jd-detect-hdr"><span class="jd-detect-dot"></span><span class="jd-detect-lbl">Stop detected</span><span class="jd-detect-time">${pendingDwell}</span></div>
         <div class="jd-detect-name">${_stopCityName(pending.name)}</div>
         <div class="jd-detect-actions">
           <button class="jd-detect-confirm" onclick="jdConfirmDetection()">Add between legs</button>
