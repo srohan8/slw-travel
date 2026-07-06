@@ -1338,20 +1338,10 @@ window.addEventListener('unhandledrejection', (e) => {
   .gps-explain-fine{font-size:11px;color:rgba(245,240,232,0.26);line-height:1.65;}
   .gps-learn-link{display:block;width:100%;margin-top:14px;background:none;border:none;font-family:var(--mono);font-size:11px;letter-spacing:0.3px;color:rgba(245,240,232,0.45);cursor:pointer;text-align:left;padding:0;}
   .gps-explain-cta{flex-shrink:0;padding:14px 22px 20px;background:linear-gradient(rgba(9,16,46,0),var(--dusk) 40%);}
-  /* ── Live Recording screen ── */
-  .gps-map-back{position:absolute;top:10px;left:10px;width:36px;height:36px;border-radius:10px;background:rgba(9,16,34,0.76);border:1px solid rgba(255,255,255,0.12);color:var(--cream);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
-  .gps-map-pause{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:10px;background:rgba(9,16,34,0.76);border:1px solid rgba(255,255,255,0.12);color:var(--cream);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
   .gps-map-pill{position:absolute;top:10px;left:54px;display:flex;align-items:center;gap:6px;background:rgba(9,16,34,0.84);border-radius:var(--radius-pill);padding:5px 11px;border:1px solid rgba(255,80,20,0.42);backdrop-filter:blur(8px);height:36px;box-sizing:border-box;font-family:var(--mono);font-size:9px;color:#FF6030;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;}
   .gps-map-pill.paused{border-color:rgba(255,184,0,0.45);color:var(--gold);}
   .gps-map-dot{width:7px;height:7px;border-radius:50%;background:var(--signal);flex-shrink:0;animation:recBlink 1.2s ease-in-out infinite;}
   .gps-map-pill.paused .gps-map-dot{background:var(--gold);animation:none;}
-  .gps-stats-bar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:10px 14px;flex-shrink:0;}
-  .gps-live-dot{width:8px;height:8px;border-radius:50%;background:var(--signal);flex-shrink:0;animation:recBlink 1.5s ease-in-out infinite;}
-  .gps-section-lbl{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:600;}
-  .gps-mark-btn{font-size:11px;padding:4px 10px;border-radius:var(--radius-pill);border:0.5px solid var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage);cursor:pointer;font-family:var(--body);display:inline-flex;align-items:center;gap:4px;}
-  .gps-stop-row{padding:9px 14px;border-top:0.5px solid var(--border);display:flex;align-items:center;gap:10px;}
-  .gps-stop-dot{width:8px;height:8px;border-radius:50%;background:var(--fern);flex-shrink:0;}
-  .gps-stop-dot.cur{background:var(--signal);animation:recBlink 1.5s ease-in-out infinite;}
   /* ── Route Map (mobile full-screen, v2 MapViewMobile) ── */
   .mapview-wrap{height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--dusk);}
   .mapview-title{font-family:var(--serif);font-size:17px;font-weight:600;color:var(--cream);line-height:1.2;}
@@ -1391,13 +1381,6 @@ window.addEventListener('unhandledrejection', (e) => {
   .export-format-label{font-size:14px;font-weight:600;color:var(--text);}
   .export-format-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;}
   .export-pro-badge{font-family:var(--mono);font-size:8.5px;padding:2px 6px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--gold) 22%,transparent);color:var(--gold);border:0.5px solid color-mix(in srgb,var(--gold) 44%,transparent);}
-  .gps-stop-btn{width:30px;height:30px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
-  .gps-stop-btn.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--sage);}
-  .gps-note-wrap{margin:0 14px 8px;padding:9px 10px;background:var(--bg2);border:0.5px solid var(--sage);border-radius:var(--radius);}
-  .gps-note-wrap textarea{width:100%;font-size:12.5px;border:none;background:transparent;outline:none;font-family:var(--body);color:var(--text);resize:none;line-height:1.5;}
-  .gps-bottom-actions{background:var(--bg);border-top:0.5px solid var(--border);padding:10px 14px 12px;flex-shrink:0;}
-  .gps-quick-btn{flex:1;padding:9px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;cursor:pointer;font-family:var(--body);display:flex;align-items:center;justify-content:center;gap:5px;}
-  .gps-stop-cta{width:100%;padding:13px;border-radius:var(--radius-pill);border:none;background:var(--danger-text);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--body);display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:-0.2px;}
   /* ── Review & Save screen ── */
   .rcv-stat{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px 8px;text-align:center;}
   .rcv-stat-v{font-size:13px;font-weight:700;color:var(--text);letter-spacing:-0.2px;}
@@ -1826,12 +1809,6 @@ window.addEventListener('unhandledrejection', (e) => {
   <div id="gpsperms" class="panel">
     <div id="gpsPermsPanel"><!-- filled by renderGpsPerms() --></div>
   </div>
-
-  <!-- LIVE RECORDING (12) — active GPS session -->
-  <div id="liverecord" class="panel">
-    <div id="liverecordPanel"><!-- filled by renderLiveRecord() --></div>
-  </div>
-  <input id="gpsPhotoInput" type="file" accept="image/*" style="display:none"/>
 
   <!-- REVIEW & SAVE (13) — after a GPS session ends -->
   <div id="recreview" class="panel">
@@ -3713,7 +3690,6 @@ function pathForScreen(tab) {
     case 'recordjournal': return _recTrip ? `/trips/${_recTrip.id}/journal` : '/trips';
     case 'stoprec':       return _journeyTrip ? `/trips/${_journeyTrip.id}/stop` : '/trips';
     case 'gpsperms':      return '/trips';
-    case 'liverecord':    return '/trips';
     case 'recreview':     return '/trips';
     case 'crashrecover':  return '/trips';
     case 'record':        return currentTripId ? `/trips/${currentTripId}/edit` : '/trips/new';
@@ -3764,13 +3740,12 @@ function switchTab(id, el) {
   if (id === 'record')   { render(); }
   if (id === 'stoprec')  { renderStopRec(); }
   if (id === 'gpsperms')     { renderGpsPerms(); }
-  if (id === 'liverecord')   { const gi = document.getElementById('gpsPhotoInput'); if (gi) gi.onchange = gpsOnPhotoSelected; renderLiveRecord(); }
   if (id === 'recreview')    { const gri = document.getElementById('gpsReviewPhotoInput'); if (gri) gri.onchange = gpsReviewOnPhotoSelected; renderRecReview(); }
   if (id === 'crashrecover') { renderCrashRecover(); }
   if (id === 'mapview')  { renderMapView(); }
   if (id === 'recnotes') { renderRecNotes(); }
   if (id === 'exportscreen') { renderExportScreen(); }
-  document.body.classList.toggle('gps-fullscreen', id === 'gpsperms' || id === 'liverecord' || id === 'crashrecover' || id === 'mapview');
+  document.body.classList.toggle('gps-fullscreen', id === 'gpsperms' || id === 'crashrecover' || id === 'mapview');
   document.body.classList.toggle('tabs-flush', id === 'journey' || id === 'mytrips');
   // None of these v2 screens render <BottomNav/> (verified against every
   // component in the handoff) — each replaces the tab bar with its own
@@ -6700,9 +6675,6 @@ function gpsOnLocation(loc) {
     }
   }
   gpsFlushCheckpoint();
-  // Lightweight — just move the map layers. A full re-render only happens when a stop is added,
-  // so the map doesn't tear down and re-fit its view on every raw position ping.
-  if (document.getElementById('liverecordPanel')?.offsetParent) gpsUpdateLiveMapLayers();
 }
 
 async function gpsMaybeCreateStop(pt) {
@@ -6713,7 +6685,10 @@ async function gpsMaybeCreateStop(pt) {
   if (_gps.stops.length) gpsCloseLeg(_gps.stops[_gps.stops.length - 1], stop);
   _gps.stops.push(stop);
   gpsFlushCheckpoint();
-  if (document.getElementById('liverecordPanel')?.offsetParent) renderLiveRecord();
+  // Refresh Journey Detail if it's the active view, so a newly-detected
+  // stop (and its "Stop detected" card) shows up live instead of only
+  // appearing after the user navigates away and back.
+  if (document.getElementById('journeyPanel')?.offsetParent) renderJourneyDetail();
   gpsSyncPill();
 }
 
@@ -6974,152 +6949,6 @@ function renderRecNotes() {
       <button class="recnotes-cta" onclick="openGpsPerms(_recNotesTrip || _journeyTrip)"><i class="ph ph-map-trifold" style="color:var(--sage)"></i> Turn on route tracking</button>
     </div>
   </div>`;
-}
-
-// ── [12] Live Recording screen ───────────────────────────────────────
-let _gpsMap = null;
-let _gpsMapMarkers = [];
-let _gpsNoteOpen = -1;
-let _gpsPhotoIdx = -1;
-let _gpsElapsedTimer = null;
-
-function gpsFmtElapsed(s) {
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
-  return `${h}h ${String(m).padStart(2, '0')}m ${String(sec).padStart(2, '0')}s`;
-}
-
-function renderLiveRecord() {
-  const el = document.getElementById('liverecordPanel');
-  if (!el) return;
-  const stops = _gps.stops;
-  const cur = stops[stops.length - 1];
-  const rows = stops.map((s, i) => `
-    <div class="gps-stop-row">
-      <div class="gps-stop-dot${i === stops.length - 1 ? ' cur' : ''}"></div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:5px">
-          <span style="font-size:13px;font-weight:${i === stops.length - 1 ? 700 : 500};color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.name}</span>
-        </div>
-        <div style="font-family:var(--mono);font-size:9.5px;color:var(--text3);margin-top:1px">${new Date(s.arrived_at).toLocaleTimeString('en',{hour:'numeric',minute:'2-digit'})}</div>
-      </div>
-      <div style="display:flex;gap:5px;flex-shrink:0">
-        <button class="gps-stop-btn" onclick="gpsAttachPhoto(${i})"><i class="ph ph-camera"></i></button>
-        <button class="gps-stop-btn${_gpsNoteOpen === i ? ' on' : ''}" onclick="_gpsNoteOpen=_gpsNoteOpen===${i}?-1:${i};renderLiveRecord()"><i class="ph ph-pencil-simple"></i></button>
-      </div>
-    </div>
-    ${_gpsNoteOpen === i ? `<div class="gps-note-wrap"><textarea rows="2" placeholder="Quick note for this stop…" oninput="gpsSaveNote(${i}, this.value)">${s.diary || ''}</textarea></div>` : ''}
-    ${(s.photos||[]).length ? `<div style="display:flex;gap:6px;margin:0 14px 8px;flex-wrap:wrap">${s.photos.map(p=>`<img src="${p}" style="width:52px;height:48px;object-fit:cover;border-radius:8px"/>`).join('')}</div>` : ''}
-  `).join('');
-
-  const h = `<div class="gps-panel">
-    <div style="position:relative;flex-shrink:0">
-      <div id="gpsMapEl" style="width:100%;height:228px;background:#E8E3D5"></div>
-      <button class="gps-map-back" onclick="gpsBackFromLive()"><i class="ph ph-arrow-left"></i></button>
-      <div class="gps-map-pill${_gps.paused ? ' paused' : ''}">
-        <span class="gps-map-dot"></span><span>${_gps.paused ? 'Paused' : 'Tracking'}</span>
-      </div>
-      <button class="gps-map-pause" onclick="${_gps.paused ? 'gpsResume' : 'gpsPause'}().then(()=>renderLiveRecord())"><i class="ph ph-${_gps.paused ? 'play' : 'pause'}"></i></button>
-    </div>
-    <div class="gps-stats-bar">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
-        <span class="gps-live-dot"></span>
-        <span style="font-size:14px;font-weight:700;color:var(--text);letter-spacing:-0.2px">${cur?.name || 'Waiting for GPS…'}</span>
-        <span style="font-family:var(--mono);font-size:9.5px;color:var(--text3)">${stops.length <= 1 ? 'starting point' : 'current stop'}</span>
-      </div>
-      <div style="font-family:var(--mono);font-size:11px;color:var(--text2)">
-        <span id="gpsElapsedVal" style="font-weight:600;color:var(--text)">${gpsFmtElapsed(Math.floor((Date.now()-_gps.startedAt)/1000))}</span>
-        <span style="margin:0 8px;color:var(--border2)">·</span><span>${gpsTotalKm().toFixed(0)} km</span>
-        <span style="margin:0 8px;color:var(--border2)">·</span><span>${stops.length} stops</span>
-      </div>
-    </div>
-    <div style="flex:1;min-height:0;overflow-y:auto;background:var(--bg)">
-      <div style="padding:10px 14px 6px;display:flex;align-items:center;justify-content:space-between">
-        <div class="gps-section-lbl">Stops detected</div>
-        <button class="gps-mark-btn" onclick="gpsMarkStopNow().then(renderLiveRecord)"><i class="ph ph-plus"></i> Mark as stop</button>
-      </div>
-      ${rows || `<div style="padding:18px 14px;text-align:center;font-size:12px;color:var(--text3);line-height:1.6">Tracking is on. New stops are detected automatically as you travel — nothing else to do.</div>`}
-    </div>
-    <div class="gps-bottom-actions">
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <button class="gps-quick-btn" onclick="gpsAttachPhoto(${Math.max(0,stops.length-1)})"><i class="ph ph-camera"></i> Photo</button>
-        <button class="gps-quick-btn" onclick="_gpsNoteOpen=${Math.max(0,stops.length-1)};renderLiveRecord()"><i class="ph ph-pencil-simple"></i> Note</button>
-      </div>
-      <button class="gps-stop-cta" onclick="gpsStopTrackingTap()"><i class="ph ph-stop-circle"></i> Stop tracking</button>
-    </div>
-  </div>`;
-  el.innerHTML = h;
-  gpsInitLiveMap();
-  if (!_gpsElapsedTimer) _gpsElapsedTimer = setInterval(gpsTickElapsed, 1000);
-}
-
-function gpsTickElapsed() {
-  const val = document.getElementById('gpsElapsedVal');
-  if (!val) { clearInterval(_gpsElapsedTimer); _gpsElapsedTimer = null; return; }
-  if (!_gps.paused) val.textContent = gpsFmtElapsed(Math.floor((Date.now() - _gps.startedAt) / 1000));
-}
-
-function gpsInitLiveMap() {
-  const mapEl = document.getElementById('gpsMapEl');
-  if (!mapEl || typeof L === 'undefined') return;
-  if (_gpsMap) { try { _gpsMap.remove(); } catch(e){} _gpsMap = null; }
-  const center = _gps.positions[_gps.positions.length-1] || _gps.stops[0] || { lat: 41.0, lon: 29.0 };
-  _gpsMap = L.map('gpsMapEl', { zoomControl:false, attributionControl:false, scrollWheelZoom:false, dragging:true });
-  _gpsMap.setView([center.lat, center.lon], 12);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom:18 }).addTo(_gpsMap);
-  gpsUpdateLiveMapLayers();
-}
-
-function gpsUpdateLiveMapLayers() {
-  if (!_gpsMap) return;
-  _gpsMapMarkers.forEach(m => { try { _gpsMap.removeLayer(m); } catch(e){} });
-  _gpsMapMarkers = [];
-  if (_gps.positions.length > 1) {
-    const line = L.polyline(_gps.positions.map(p=>[p.lat,p.lon]), { color:'#FF5014', weight:3, opacity:_gps.paused?0.4:0.85 }).addTo(_gpsMap);
-    _gpsMapMarkers.push(line);
-  }
-  _gps.stops.forEach(s => {
-    const dot = L.circleMarker([s.lat, s.lon], { radius:5, color:'#fff', weight:2, fillColor:'#3D7A3D', fillOpacity:1 }).addTo(_gpsMap);
-    _gpsMapMarkers.push(dot);
-  });
-  const last = _gps.positions[_gps.positions.length-1];
-  if (last) {
-    const cur = L.circleMarker([last.lat, last.lon], { radius:7, color:'#fff', weight:2.5, fillColor: _gps.paused?'#FFB800':'#FF5014', fillOpacity:1 }).addTo(_gpsMap);
-    _gpsMapMarkers.push(cur);
-    _gpsMap.panTo([last.lat, last.lon]);
-  }
-}
-
-function gpsSaveNote(i, val) {
-  const s = _gps.stops[i]; if (!s) return;
-  s.diary = val;
-  clearTimeout(_gpsNoteTimer);
-  _gpsNoteTimer = setTimeout(gpsFlushCheckpointNow, 400);
-}
-let _gpsNoteTimer = null;
-function gpsFlushCheckpointNow() { _gps.lastFlush = 0; gpsFlushCheckpoint(); }
-
-function gpsAttachPhoto(idx) {
-  _gpsPhotoIdx = idx;
-  document.getElementById('gpsPhotoInput')?.click();
-}
-function gpsOnPhotoSelected(e) {
-  const file = e.target.files?.[0];
-  if (!file || _gpsPhotoIdx < 0) return;
-  const idx = _gpsPhotoIdx;
-  _compressImageFile(file, 1200, 0.75).then(dataUrl => {
-    const s = _gps.stops[idx]; if (!s) return;
-    s.photos = s.photos || [];
-    s.photos.push(dataUrl);
-    gpsFlushCheckpointNow();
-    renderLiveRecord();
-  });
-  e.target.value = '';
-}
-
-function gpsBackFromLive() {
-  // Tracking keeps running in the background — this just navigates away from the live view.
-  if (_gps.planned) openJourneyDetail(_gps.planned);
-  else goToMyTrips();
 }
 
 // ── [13] Review & Save ───────────────────────────────────────────────
@@ -9647,7 +9476,7 @@ function exportTrip() {
 // ── Mobile bottom nav sync ────────────────────────────────────────
 function bnSync(id) {
   const map = { journey:'mytrips', recordjournal:'mytrips', stoprec:'mytrips', record:'plan', admin:'plan',
-    gpsperms:'mytrips', liverecord:'mytrips', recreview:'mytrips', crashrecover:'mytrips', upgrade:'profile' };
+    gpsperms:'mytrips', recreview:'mytrips', crashrecover:'mytrips', upgrade:'profile' };
   const target = map[id] || id;
   document.querySelectorAll('.bn-item').forEach(b => {
     b.classList.remove('bn-active');
