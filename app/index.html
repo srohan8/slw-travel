@@ -6248,7 +6248,7 @@ function renderMyTripsPanel() {
       // journey page instead of the private editor.
       const isPublished = !!t.published;
       const isGpsTracking = !!(_gps.mode && _gps.planned?.id === t.id);
-      const publicUrl = t.public_slug ? `/journey/${t.public_slug}` : `/journey.html?id=${t.id}`;
+      const publicUrl = t.public_slug ? `/journey/${t.public_slug}` : `/journey.html?trip=${t.id}`;
       const journalBtn = isGpsTracking
         ? `<button class="mytrips-act-btn recording" onclick="event.stopPropagation();openJourneyDetailById('${t.id}')"><span class="mytrips-rec-dot"></span> Tracking</button>`
         : isPublished
@@ -6566,7 +6566,7 @@ function stopRecKeepPrivate() {
 function stopRecViewPublic() {
   const t = _journeyTrip; if (!t) return;
   const base = window.location.origin;
-  const url = t.public_slug ? `${base}/journey/${t.public_slug}` : `${base}/journey.html?id=${t.id}`;
+  const url = t.public_slug ? `${base}/journey/${t.public_slug}` : `${base}/journey.html?trip=${t.id}`;
   _openJourneyLink(url);
 }
 
@@ -7389,7 +7389,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
     const photoCount = stops.reduce((a,s) => a + ((s.photos||[]).length), 0);
     const excerpt = diaryEntries[0]?.diary || '';
     const isPublished = !!t.published;
-    const publicUrl = t.public_slug ? `/journey/${t.public_slug}` : `/journey.html?id=${t.id}`;
+    const publicUrl = t.public_slug ? `/journey/${t.public_slug}` : `/journey.html?trip=${t.id}`;
     h += `<div class="jd-journal-card">
       <div class="jd-journal-top">
         <span class="jd-journal-kicker"><i class="ph ph-book-open"></i> Journal saved</span>
@@ -7614,7 +7614,7 @@ function jdShareTrip(id) {
   const t = trips.find(x => x.id === id);
   if (!t) return;
   const base = window.location.origin;
-  const url = t.public_slug ? `${base}/journey/${t.public_slug}` : `${base}/journey.html?id=${id}`;
+  const url = t.public_slug ? `${base}/journey/${t.public_slug}` : `${base}/journey.html?trip=${id}`;
   if (navigator.clipboard) {
     navigator.clipboard.writeText(url).then(() => {
       const btn = document.querySelector('.jd-header-actions .btn');
@@ -7633,7 +7633,7 @@ function openExportScreen(trip) {
 }
 function exportPublicUrl(t) {
   const base = window.location.origin;
-  return t.public_slug ? `${base}/journey/${t.public_slug}` : `${base}/journey.html?id=${t.id}`;
+  return t.public_slug ? `${base}/journey/${t.public_slug}` : `${base}/journey.html?trip=${t.id}`;
 }
 function exportCopyLink() {
   const t = _exportTrip; if (!t) return;
