@@ -6873,12 +6873,12 @@ async function gpsRequestAndStart() {
   }
   // Phase 2 — the real watcher, this time asking for background too.
   const ok = await gpsStart(_gpsPermsTrip, { requireBackground: true });
-  if (ok) { _jdDismissedDetections = new Set(); switchTab('liverecord', null); return; }
+  if (ok) { _jdDismissedDetections = new Set(); openJourneyDetail(_gpsPermsTrip); return; }
   _gpsPermsStep = 10; renderGpsPerms(); // background denied — foreground-only fallback
 }
 async function gpsContinueForegroundOnly() {
   const ok = await gpsStart(_gpsPermsTrip, { requireBackground: false });
-  if (ok) { _jdDismissedDetections = new Set(); switchTab('liverecord', null); }
+  if (ok) { _jdDismissedDetections = new Set(); openJourneyDetail(_gpsPermsTrip); }
 }
 function gpsSkipToManual() {
   gpsStartManual(_gpsPermsTrip);
@@ -7336,7 +7336,7 @@ function gpsResumeFromCheckpoint() {
   document.body.classList.add('recording-active');
   if (cp.mode === 'gps') gpsRestartWatcher();
   gpsSyncPill();
-  if (_gps.planned) openJourneyDetail(_gps.planned); else switchTab('liverecord', null);
+  if (_gps.planned) openJourneyDetail(_gps.planned); else switchTab('mytrips', document.getElementById('navbtn_mytrips'));
 }
 async function gpsRestartWatcher() {
   if (!gpsIsNative()) return;
@@ -9700,7 +9700,7 @@ function mobileHeaderSync(id) {
     backBtn.classList.toggle('visible', isDetail);
     backBtn.onclick = id === 'stoprec' ? () => openJourneyDetail(_journeyTrip)
       : id === 'record' ? () => cancelEditTrip()
-      : id === 'recreview' ? () => switchTab('liverecord', null)
+      : id === 'recreview' ? () => (_gps.planned ? openJourneyDetail(_gps.planned) : switchTab('mytrips', document.getElementById('navbtn_mytrips')))
       : id === 'upgrade' ? () => closeUpgrade()
       : id === 'recnotes' ? () => (_recNotesTrip ? openJourneyDetail(_recNotesTrip) : openGpsPerms(_recNotesTrip))
       : id === 'exportscreen' ? () => openJourneyDetail(_exportTrip)
