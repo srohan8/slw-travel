@@ -1689,7 +1689,7 @@ window.addEventListener('unhandledrejection', (e) => {
     <!-- Mobile-only: v2's ResultsMobile sticky "Save to trip" bar + toast --
          one tap, auto-named, no modal (desktop keeps the named-save modal). -->
     <div id="planSaveBar" class="plan-save-bar">
-      <button class="strk-cta" onclick="planSaveDirect()"><i class="ph ph-bookmark-simple"></i> Save to trip</button>
+      <button class="strk-cta" onclick="openSaveRouteModal()"><i class="ph ph-bookmark-simple"></i> Save to trip</button>
     </div>
     <div id="planSaveToast" class="plan-save-toast"></div>
     <div id="plannerMapWrap">
@@ -5318,27 +5318,6 @@ function saveRouteToTrips() {
 // v2's Route Results save flow: one tap, no naming modal -- auto-named,
 // a toast confirms ("Saved as '...' / Opening My Trips…"), then it
 // navigates itself. Mobile only; desktop keeps the named-save modal above.
-function planSaveDirect() {
-  const d = lastSuggestion;
-  if (!d) return;
-  if (!currentUser) { goToAuth('planner'); return; }
-  const name = suggestionRouteName(d);
-  _savedRouteName = name;
-  const trip = buildTripFromSuggestion(d, name);
-  const trips = storage.get('trips') || [];
-  trips.push(trip);
-  storage.set('trips', trips);
-  persistTripCloud(trip);
-  const toast = document.getElementById('planSaveToast');
-  if (toast) {
-    toast.innerHTML = `<i class="ph ph-check-circle" style="font-size:18px;color:var(--sage)"></i>
-      <div><div class="plan-save-toast-title">Saved as "${name.replace(/"/g,'&quot;')}"</div><div class="plan-save-toast-sub">Opening My Trips…</div></div>`;
-    toast.classList.add('show');
-  }
-  setTimeout(() => { toast?.classList.remove('show'); goToMyTrips(); }, 1100);
-}
-
-
 // ── Affiliate link renderers ──────────────────────────────────────
 function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowedInfoNames) {
   let sources = [], category = '';
