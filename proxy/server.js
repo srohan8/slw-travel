@@ -65,7 +65,7 @@ async function getAiProviderSettings() {
 
 // ── POST /api/ai — forward to Anthropic, with optional DeepSeek failsafe ─────
 app.post('/api/ai', async (req, res) => {
-  const { max_tokens, messages, system } = req.body || {};
+  const { max_tokens, messages, system, user_id } = req.body || {};
   if (!messages?.length) {
     return res.status(400).json({ error: { message: 'messages array is required' } });
   }
@@ -151,7 +151,7 @@ app.post('/api/ai', async (req, res) => {
 
     // Log usage to Supabase (fire-and-forget — don't block the response)
     if (r.ok && data.usage) {
-      logUsageToSupabase(data.model, data.usage, usedProvider.startsWith('deepseek') ? 'deepseek' : 'claude')
+      logUsageToSupabase(data.model, data.usage, usedProvider.startsWith('deepseek') ? 'deepseek' : 'claude', user_id || null)
         .catch(e => console.warn('Usage log failed:', e.message));
     }
   } catch (err) {
@@ -210,7 +210,7 @@ const PRICES_PER_MTOK = {
   deepseek: { input: 0.28, output: 0.42, cache_read: 0,   cache_write: 0    },
 };
 
-async function logUsageToSupabase(model, usage, provider = 'claude') {
+async function logUsageToSupabase(model, usage, provider = 'claude', userId = null) {
   const sbUrl = process.env.SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_KEY;
   if (!sbUrl || !sbKey) {
@@ -236,6 +236,7 @@ async function logUsageToSupabase(model, usage, provider = 'claude') {
     },
     body: JSON.stringify({
       model,
+      user_id: userId,
       input_tokens:                usage.input_tokens                || 0,
       output_tokens:               usage.output_tokens               || 0,
       cache_read_input_tokens:     usage.cache_read_input_tokens     || 0,

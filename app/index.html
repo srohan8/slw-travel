@@ -1913,6 +1913,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
       <button class="admin-stab" id="adminStab_review" onclick="switchAdminSubTab('review')">Review queue <span id="adminReviewBadge" style="display:none;background:var(--gold);color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px;font-family:var(--mono);font-weight:600"></span></button>
       <button class="admin-stab" id="adminStab_usage" onclick="switchAdminSubTab('usage')">AI usage</button>
       <button class="admin-stab" id="adminStab_aiprovider" onclick="switchAdminSubTab('aiprovider')">AI provider</button>
+      <button class="admin-stab" id="adminStab_users" onclick="switchAdminSubTab('users')">Users</button>
     </div>
 
     <div id="adminContent_sites">
@@ -2073,6 +2074,15 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
         </div>
 
         <span id="aiProviderSaveStatus" style="font-size:12px;color:var(--fern)"></span>
+      </div>
+    </div>
+
+    <!-- Users panel -->
+    <div id="adminContent_users" style="display:none">
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 0.75rem">Users</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.55;margin:0 0 1.25rem">Plan is a manual label — there's no billing system behind it yet, so changing it here doesn't unlock or restrict anything on its own.</p>
+        <div id="adminUsersList"></div>
       </div>
     </div>
 
@@ -2999,7 +3009,7 @@ async function callAI(prompt, maxTokens = 16000) {
   }
   const r = await fetch(url, {
     method: 'POST', headers,
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }], user_id: currentUser?.id || null })
   });
   const d = await r.json();
   if (!r.ok || d.error) {
@@ -3255,12 +3265,14 @@ function switchAdminSubTab(tab) {
   document.getElementById('adminContent_review').style.display     = tab === 'review'     ? '' : 'none';
   document.getElementById('adminContent_usage').style.display      = tab === 'usage'      ? '' : 'none';
   document.getElementById('adminContent_aiprovider').style.display = tab === 'aiprovider' ? '' : 'none';
+  document.getElementById('adminContent_users').style.display      = tab === 'users'      ? '' : 'none';
   document.querySelectorAll('.admin-stab').forEach(b => b.classList.remove('on'));
   const btn = document.getElementById('adminStab_' + tab);
   if (btn) btn.classList.add('on');
   if (tab === 'review')     renderReviewQueue();
   if (tab === 'usage')      renderAdminUsage();
   if (tab === 'aiprovider') renderAdminAiProvider();
+  if (tab === 'users')      renderAdminUsers();
 }
 
 // ── Admin > AI provider — reads/writes admin_settings (ai_failsafe_enabled,
@@ -3351,6 +3363,53 @@ async function renderAdminUsage() {
       <td>${(r.output_tokens || 0).toLocaleString()}</td>
       <td>$${(r.cost_usd || 0).toFixed(4)}</td>
     </tr>`).join('')}</tbody></table>`;
+}
+
+// ── Admin > Users — profiles + per-user AI usage (api_usage_log.user_id).
+// Usage only covers calls made after that column was added; older calls
+// have no user_id to attribute to and aren't counted per-user here (they
+// still show up in the totals on the AI usage tab).
+async function renderAdminUsers() {
+  const el = document.getElementById('adminUsersList');
+  if (!el) return;
+  el.innerHTML = '<div class="aff-empty">Loading…</div>';
+
+  const [{ data: profiles, error: profErr }, { data: usage, error: usageErr }] = await Promise.all([
+    sb.from('profiles').select('id, email, display_name, plan, is_admin, created_at').order('created_at', { ascending: false }),
+    sb.from('api_usage_log').select('user_id, input_tokens, output_tokens, cache_read_input_tokens, cache_creation_input_tokens, cost_usd').not('user_id', 'is', null),
+  ]);
+
+  if (profErr) { el.innerHTML = `<div class="aff-empty">Could not load users — ${profErr.message}</div>`; return; }
+  if (!profiles?.length) { el.innerHTML = '<div class="aff-empty">No users yet.</div>'; return; }
+
+  const byUser = {};
+  (usage || []).forEach(r => {
+    const b = byUser[r.user_id] = byUser[r.user_id] || { calls: 0, tokens: 0, cost: 0 };
+    b.calls++;
+    b.tokens += (r.input_tokens||0) + (r.output_tokens||0) + (r.cache_read_input_tokens||0) + (r.cache_creation_input_tokens||0);
+    b.cost += r.cost_usd || 0;
+  });
+
+  el.innerHTML = `<table class="aff-table"><thead><tr><th>User</th><th>Plan</th><th>AI calls</th><th>Tokens</th><th>Cost</th><th>Joined</th></tr></thead>
+    <tbody>${profiles.map(p => {
+      const u = byUser[p.id] || { calls: 0, tokens: 0, cost: 0 };
+      return `<tr>
+        <td>${p.display_name || p.email || p.id}${p.is_admin ? ' <span style="font-size:10px;color:var(--sage);font-family:var(--mono)">ADMIN</span>' : ''}</td>
+        <td><select class="inp" style="font-size:12px;padding:4px 6px" onchange="setUserPlan('${p.id}', this.value)">
+          <option value="free" ${p.plan!=='pro'?'selected':''}>Free</option>
+          <option value="pro" ${p.plan==='pro'?'selected':''}>Pro</option>
+        </select></td>
+        <td>${u.calls}</td>
+        <td>${u.tokens.toLocaleString()}</td>
+        <td>$${u.cost.toFixed(4)}</td>
+        <td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}</td>
+      </tr>`;
+    }).join('')}</tbody></table>${usageErr ? `<div class="aff-empty">Per-user usage couldn't load — ${usageErr.message}</div>` : ''}`;
+}
+
+async function setUserPlan(userId, plan) {
+  const { error } = await sb.from('profiles').update({ plan }).eq('id', userId);
+  if (error) alert('Could not update plan: ' + error.message);
 }
 
 function switchReviewFilter(f) {
