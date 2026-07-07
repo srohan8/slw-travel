@@ -500,6 +500,12 @@ window.addEventListener('unhandledrejection', (e) => {
   .feature-sheet-title{font-family:var(--serif);font-size:18px;font-weight:300;color:var(--text);letter-spacing:-0.3px;}
   .feature-sheet-desc{font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:18px;}
   .feature-sheet-close{width:100%;padding:13px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text2);font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--body);}
+  /* Desktop: centered content-width popup, not a full-bleed mobile bottom sheet */
+  @media(min-width:641px){
+    .feature-sheet-overlay{align-items:center;justify-content:center;}
+    .feature-sheet{width:100%;max-width:360px;border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(9,16,34,0.25);}
+    .feature-sheet-handle{display:none;}
+  }
   /* ── Plan landing grid ──────────────────────────────── */
   .plan-landing-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:1.2rem;}
   .plan-landing-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;box-shadow:var(--shadow);}
