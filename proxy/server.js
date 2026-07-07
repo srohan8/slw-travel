@@ -213,7 +213,10 @@ const PRICES_PER_MTOK = {
 async function logUsageToSupabase(model, usage, provider = 'claude') {
   const sbUrl = process.env.SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_KEY;
-  if (!sbUrl || !sbKey) return; // env vars not set — skip silently
+  if (!sbUrl || !sbKey) {
+    console.warn('logUsageToSupabase: SUPABASE_URL/SUPABASE_SERVICE_KEY not set — usage not logged');
+    return;
+  }
 
   const prices = PRICES_PER_MTOK[provider] || PRICES_PER_MTOK.claude;
   const cost = (

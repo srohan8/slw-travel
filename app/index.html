@@ -23,6 +23,9 @@ window.onerror = (msg, src, line, col, err) => {
 window.addEventListener('unhandledrejection', (e) => {
   showFatalError(`Unhandled rejection:\n${e.reason?.message || e.reason}\n${e.reason?.stack || ''}`);
 });
+// Flags the native app so web-only styling (see the desktop top-nav
+// overrides below) can never apply there, regardless of viewport width.
+if (window.Capacitor) document.documentElement.classList.add('native-app');
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="showFatalError('CDN load failed: supabase-js (cdn.jsdelivr.net unreachable)')"></script>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
@@ -88,6 +91,21 @@ window.addEventListener('unhandledrejection', (e) => {
   .nav-utils .btn{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.22);}
   .nav-utils .btn:hover{background:rgba(255,255,255,0.14);color:var(--cream);}
   .nav-utils select{font-size:12px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);border:0.5px solid rgba(255,255,255,0.22);border-radius:var(--radius);padding:5px 8px;outline:none;font-family:inherit;cursor:pointer;}
+  /* Desktop top nav: white background on the web build only — the native
+     app keeps the dark bar. `nav:not(#bottomNav)` is already hidden on
+     mobile (see @media(max-width:640px) below), and `html.native-app` is
+     set from window.Capacitor at load, so this can't leak into the app
+     even on a wide native viewport (tablet, landscape). */
+  html:not(.native-app) nav:not(#bottomNav){background:var(--bg);box-shadow:0 2px 12px rgba(14,26,46,0.08);border-bottom:0.5px solid var(--border);}
+  html:not(.native-app) nav:not(#bottomNav) .logo{color:var(--text);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-link{color:var(--text3);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-link:hover{color:var(--text);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-link.active{color:var(--text);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-vsep{background:var(--border2);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-avatar{border-color:var(--border2);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-utils .btn{background:var(--bg2);color:var(--text2);border-color:var(--border2);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-utils .btn:hover{background:var(--bg3);color:var(--text);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-utils select{background:var(--bg2);color:var(--text2);border-color:var(--border2);}
   .btn-primary{font-weight:700;background:var(--sage);color:var(--cta-text);border-color:var(--sage);box-shadow:0 2px 4px rgba(217,151,61,0.25);}
   .btn-primary:hover{background:#C07E2E;border-color:#C07E2E;transform:translateY(-1px);box-shadow:0 4px 8px rgba(217,151,61,0.35);}
   .container{max-width:860px;margin:0 auto;padding:2rem 1.25rem;}
