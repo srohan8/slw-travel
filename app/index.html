@@ -115,9 +115,11 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
   .app-footer-logo{display:flex;align-items:center;gap:7px;text-decoration:none;}
   .app-footer-logo img{height:20px;opacity:0.7;}
   .app-footer-logo-text{font-size:14px;font-weight:500;color:var(--text2);font-family:var(--body);}
-  .app-footer-links{display:flex;gap:18px;flex-wrap:wrap;}
+  .app-footer-links{display:flex;flex-wrap:wrap;align-items:center;}
   .app-footer-links a{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .2s;}
   .app-footer-links a:hover{color:var(--text2);}
+  .app-footer-links a:not(:first-child){margin-left:16px;}
+  .app-footer-links a:not(:first-child)::before{content:'|';display:inline-block;margin-right:16px;color:var(--border2);}
   .app-footer-copy{font-family:var(--mono);font-size:11px;color:var(--text3);}
   @media(max-width:640px){.app-footer{display:none !important;}}
   .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;background:transparent;outline:none;width:320px;letter-spacing:-0.3px;transition:color .2s;}
@@ -2084,15 +2086,15 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
       <img src="/public/bysloth.png" alt="bysloth"/>
       <span class="app-footer-logo-text">bysloth</span>
     </a>
-    <nav class="app-footer-links">
+    <div class="app-footer-links">
       <a href="/how-long">Time estimator</a>
       <a href="/carbon">CO₂ calc</a>
       <a href="/bike-on-train">Bike on train</a>
       <a href="/blog/">Blog</a>
       <a href="/privacy/">Privacy</a>
       <a href="mailto:hello@bysloth.com">Contact</a>
-    </nav>
-    <span class="app-footer-copy">© 2026 · Lisbon</span>
+    </div>
+    <span class="app-footer-copy">© 2026</span>
   </div>
 </footer>
 
