@@ -3228,16 +3228,13 @@ function renderAdminTab() {
 let _adminSubTab = 'sites';
 let _reviewFilter = 'pending';
 
-const REVIEW_QUEUE = [
-  { id:'r1', status:'pending', kind:'price', route:'Istanbul → Kathmandu', leg:'Baku → Aktau · ferry', author:'@ferry_fiend', when:'12 min ago', guest:false,
-    text:'Cabin was $120 not $110 as of last week. Deck passage no longer sold to foreigners — cabins only. They take USD cash at the window.' },
-  { id:'r2', status:'pending', kind:'border', route:'Tbilisi → Yerevan', leg:'Sadakhlo crossing', author:'guest · maria.l', when:'40 min ago', guest:true,
-    text:'Crossed at Sadakhlo on foot 3 days ago. Georgian side fast; Armenian side took an hour and they wanted proof of onward travel. No Azerbaijan stamp questions.' },
-  { id:'r3', status:'pending', kind:'schedule', route:'Lisbon → Singapore', leg:'Moscow → Irkutsk · train', author:'@transsib_sara', when:'2 hours ago', guest:false,
-    text:'Train 002 now departs Yaroslavsky at 13:20 not 11:50. Restaurant car was attached the whole way — pleasant surprise.' },
-  { id:'r4', status:'pending', kind:'warning', route:'Cape Town → Cairo', leg:'Nairobi → Moyale · bus', author:'guest · t.okonkwo', when:'5 hours ago', guest:true,
-    text:'Road past Marsabit was washed out for two days in April. Buses were turning back. Check before committing to this leg in the rainy season.' }
-];
+// No real moderation queue is wired up yet — contributions publish
+// immediately today, and `flagged` (see supabase-schema.sql) is a separate
+// community-flag, not a pre-publish approval gate. This used to be a
+// hardcoded demo array that reset to "pending" on every reload, which made
+// Approve/Reject look broken since nothing ever actually persisted. Empty
+// until a real flagged-contributions review flow exists.
+const REVIEW_QUEUE = [];
 
 function switchAdminSubTab(tab) {
   _adminSubTab = tab;
