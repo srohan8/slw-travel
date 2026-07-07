@@ -7,9 +7,9 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18271935883"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','AW-18271935883');</script>
 <title>Bike on Train &amp; Bus: Which Operators Accept Bikes? — By Sloth</title>
-<meta name="description" content="Find out which trains, buses, and ferries accept bikes. Covers Flixbus, Eurostar, DB, SNCF, Amtrak, and 35+ operators worldwide. Updated 2026."/>
+<meta name="description" content="Find out which trains, buses, and ferries accept bikes. Covers Flixbus, Eurostar, DB, SNCF, Amtrak, and 40+ operators worldwide. Updated 2026."/>
 <meta property="og:title" content="Does this train take bikes? The answer most apps don't have."/>
-<meta property="og:description" content="Bike policies for 35+ train, bus, and ferry operators worldwide. Plan your bike tour with confidence."/>
+<meta property="og:description" content="Bike policies for 40+ train, bus, and ferry operators worldwide. Plan your bike tour with confidence."/>
 <meta property="og:url" content="https://bysloth.com/bike-on-train"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <!-- PostHog -->
@@ -153,7 +153,7 @@ a:hover{text-decoration:underline}
   <div class="inner">
     <div class="kicker">Bike + transit · Updated 2026</div>
     <h1>Does this train take <em>bikes?</em></h1>
-    <p class="hero-sub">The answer most route apps don't have. Policies for 35+ trains, buses, and ferries worldwide — curated from operator T&amp;Cs and community reports.</p>
+    <p class="hero-sub">The answer most route apps don't have. Policies for 40+ trains, buses, and ferries worldwide — curated from operator T&amp;Cs and community reports.</p>
   </div>
 </div>
 
@@ -312,6 +312,25 @@ const OPERATORS = [
     bikes:'yes',
     notes:'Accepted on most trains with a bike ticket (CZK 50–80). Some express trains require reservation. Good regional coverage for cycling routes across Bohemia and Moravia.',
     booking:'Express: recommended', spaces:'Available', cost:'CZK 50–80', source:'cd.cz', url:'https://www.cd.cz', verified:'2026-01'
+  },
+  // Norway
+  {
+    op:'Vy (trains)', region:'Norway',
+    bikes:'yes',
+    notes:'Generally fine — take your bike to the carriage marked with a bicycle symbol and buy a bike ticket on board on most lines. Advance reservation is mandatory on the scenic Bergen Line and Flåm Railway (both popular with cycle-tourers) and the Gjøvik Line, and recommended on Oslo–Gothenburg. Space depends on how many wheelchairs/strollers are also on board that trip.',
+    booking:'Bergen Line/Flåm/Gjøvik: required', spaces:'Varies by trip', cost:'Bike ticket (on board or online)', source:'vy.no', url:'https://www.vy.no', verified:'2026-07'
+  },
+  {
+    op:'Vy Buss', region:'Norway (bus)',
+    bikes:'check',
+    notes:"Only carried on a specific subset of routes (VY1, VY3, VY6, VY123, VY175, VY450) — most of Vy's long-distance network doesn't take bikes at all. Must be pre-purchased at booking, packed in a bike bag/case, max 50×60×220cm and 23kg. E-bikes not allowed. Not available on the Oslo–Gothenburg/Copenhagen/Stockholm services (operated by Vy Travel AB in Sweden).",
+    booking:'Required — pre-purchase online', spaces:'Route-dependent (limited)', cost:'Included in special-luggage pricing', source:'vybuss.com', url:'https://www.vybuss.com', verified:'2026-07'
+  },
+  {
+    op:'NOR-WAY Bussekspress', region:'Norway (bus)',
+    bikes:'check',
+    notes:"Bikes booked as their own product (not as general luggage) when you buy your ticket — space is very limited, only 1–2 bikes per bus, and availability varies by route. If the booking flow doesn't offer a bike add-on for your route, there's no space; don't count on turning up with one unbooked.",
+    booking:'Required at ticket purchase', spaces:'1–2 per bus', cost:'270 kr', source:'nor-way.no', url:'https://www.nor-way.no', verified:'2026-07'
   },
   // UK
   {
