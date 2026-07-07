@@ -2361,6 +2361,7 @@ let currentTripId  = null;
 let myTripsFilter  = 'all'; // kept for legacy references
 let appSettings    = {};
 let currentUser    = null;
+let isAdminUser    = false; // profiles.is_admin for currentUser — refreshed in updateNavAuth()
 
 // ── Init ──────────────────────────────────────────────────────────
 async function init() {
@@ -2672,11 +2673,12 @@ async function saveCurrentTrip() {
 }
 
 
-function updateNavAuth() {
+async function updateNavAuth() {
   const avatarWrap = document.getElementById('navAvatarWrap');
   const avatar     = document.getElementById('navAvatar');
   const signIn     = document.getElementById('signInBtn');
-  const gatedTabs  = ['navbtn_mytrips','navbtn_journals','navbtn_profile','navbtn_admin'];
+  const gatedTabs  = ['navbtn_mytrips','navbtn_journals','navbtn_profile'];
+  const adminBtn   = document.getElementById('navbtn_admin');
   if (currentUser) {
     const handle = currentUser.user_metadata?.display_name || currentUser.email?.split('@')[0] || 'U';
     if (avatar) { avatar.textContent = handle.slice(0,1).toUpperCase(); avatar.title = handle; }
@@ -2687,6 +2689,15 @@ function updateNavAuth() {
     if (avatarWrap) avatarWrap.style.display = 'none';
     if (signIn) signIn.style.display = 'inline-block';
     gatedTabs.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  }
+  // Admin tab: hidden unless profiles.is_admin is actually true for this
+  // user — being signed in isn't enough (that's all "gatedTabs" checks).
+  isAdminUser = false;
+  if (adminBtn) adminBtn.style.display = 'none';
+  if (currentUser) {
+    const { data } = await sb.from('profiles').select('is_admin').eq('id', currentUser.id).single();
+    isAdminUser = data?.is_admin === true;
+    if (adminBtn) adminBtn.style.display = isAdminUser ? '' : 'none';
   }
   updateMobileSplash();
 }
@@ -3850,6 +3861,10 @@ function _openJourneyLink(url) {
 }
 
 function switchTab(id, el) {
+  // Belt-and-braces: the nav link is already hidden for non-admins
+  // (updateNavAuth), but a direct URL/hash to #admin would otherwise
+  // still open the panel.
+  if (id === 'admin' && !isAdminUser) { switchTab('plan', document.getElementById('navbtn_plan')); return; }
   document.querySelectorAll('.nav-link').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const btn = el || document.getElementById('navbtn_' + id);
