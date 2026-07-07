@@ -1520,6 +1520,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
      this bar replaces the tab bar's slot, matching Journey Detail's treatment. */
   .rec-mobile-save-bar{display:flex !important;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:20;padding:11px 14px calc(11px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
   .rec-mobile-cancel{padding:12px 16px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);flex-shrink:0;}
+  .rec-mobile-refine{width:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:12px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--sage);font-size:16px;cursor:pointer;font-family:var(--body);}
   .rec-mobile-save{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:var(--ink-900);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
   /* Share/Cancel/Save at the top of the editor duplicate the mobile fixed
      bottom bar (Cancel + Save) -- and Share isn't relevant while editing --
@@ -1781,6 +1782,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
       <input class="trip-title" placeholder="Name your trip..." value="My overland journey" id="tripTitle"/>
       <div class="save-trip-actions">
         <button class="import-route-btn" onclick="openImportModal()" title="Import a route from GPX, Excel or CSV"><i class="ph ph-upload-simple" style="font-size:13px"></i> Import a route</button>
+        <button id="btnAIRefine" class="btn editor-top-action" style="display:none" onclick="refineWithAI()" title="Ask AI to fill in missing route details (booking sites, km, hours, costs)"><i class="ph ph-sparkle" style="font-size:13px"></i> AI Refine</button>
         <button class="btn editor-delete-btn" id="deleteTripBtn" onclick="deleteCurrentTrip()" style="display:none" title="Delete this trip"><i class="ph ph-trash" style="font-size:13px"></i><span class="editor-delete-lbl"> Delete</span></button>
         <button class="btn editor-top-action" id="shareLinkBtn" onclick="shareTripLink()" title="Copy shareable link"><i class="ph ph-share-network" style="font-size:13px"></i> Share link</button>
         <button class="btn editor-top-action" onclick="cancelEditTrip()">Cancel</button>
@@ -1820,6 +1822,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
     <div id="budgetBar"></div>
     <div class="rec-mobile-save-bar">
       <button class="rec-mobile-cancel" onclick="cancelEditTrip()">Cancel</button>
+      <button id="btnAIRefineMobile" class="rec-mobile-refine" style="display:none" onclick="refineWithAI()" title="Ask AI to fill in missing route details"><i class="ph ph-sparkle"></i></button>
       <button class="rec-mobile-save" onclick="saveCurrentTrip()"><i class="ph ph-floppy-disk"></i> Save changes</button>
     </div>
   </div>
@@ -2689,6 +2692,92 @@ async function saveCurrentTrip() {
   setTimeout(() => document.getElementById('saveStatus').textContent = '', 2500);
 }
 
+// ── AI Refine ─────────────────────────────────────────────────────
+// Sends the current plan (stops + legs) to Claude and merges back the
+// enriched details: booking sites, accom notes, km, hours, costs,
+// confidence flags, etc. Works on any trip — manually typed, imported,
+// or AI-generated. Only fills in *missing* (zero/empty) values, so the
+// user's existing data is never overwritten.
+async function refineWithAI() {
+  if (!stops.some(s => s.name)) return;
+  const btn   = document.getElementById('btnAIRefine');
+  const btnMb = document.getElementById('btnAIRefineMobile');
+  const st    = document.getElementById('saveStatus');
+  [btn, btnMb].forEach(b => { if (b) b.disabled = true; });
+  if (btn) btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite"></i> Refining…';
+  if (st) st.textContent = 'Asking AI to enhance your trip…';
+
+  // Every "new leg" call site in this file defaults a fresh leg's mode to
+  // 'bus' — matching that here is what "hasn't customised it" means below.
+  const defaultMode = 'bus';
+  const stopsJson = JSON.stringify(stops.map(s => ({ name: s.name, days: s.days || 0 })));
+  const legsJson  = JSON.stringify(legs.map(l => ({
+    mode: l.mode || defaultMode, km: l.km || 0, hours: l.hours || 0, cost: l.cost || 0, notes: l.notes || ''
+  })));
+
+  const prompt = `You are an expert overland travel planner. A user has a trip plan and wants you to enhance it with practical details.
+
+Current stops: ${stopsJson}
+Current legs: ${legsJson}
+
+Return a JSON object with EXACTLY the same number of stops and legs in the same order. Fill in missing/zero values and add platform recommendations.
+
+Schema:
+{"stops":[{"name":"City, Country","days":N,"accom_sites":["Booking.com","Hostelworld"],"accom_note":"practical one-liner"}],"legs":[{"mode":"bus","km":N,"hours":N,"cost_usd":N,"notes":"practical tip","booking_sites":["Busbud"],"info_sites":[],"leg_region":"Southeast Asia","confidence":"verified","conflict":null}]}
+
+Rules:
+- Keep stop names EXACTLY as given. Add country suffix only if clearly missing (e.g. "Bangkok" → "Bangkok, Thailand").
+- km/hours/cost_usd: estimate realistically if 0; keep existing value if non-zero. km should reflect actual road/rail distance, not straight-line.
+- mode: keep exactly as given unless it is clearly wrong (e.g. "bus" for a transoceanic leg). Do NOT change mode just because a different transport exists.
+- booking_sites: choose platforms appropriate for that mode AND region:
+  • bus → Busbud, FlixBus (Europe), 12go.asia (SE Asia), RedBus (South/SE Asia), Distribuidora (LatAm), etc.
+  • train → Omio, Rail Europe, 12go.asia (Asia), IRCTC (India), etc.
+  • flight → Google Flights, Skyscanner, Kiwi.com
+  • shared taxi / hitchhike → BlaBlaCar (Europe/LatAm), or info_sites with local carpooling resources
+  • ferry → Direct operator sites (e.g. Stena Line, DFDS), Rome2Rio
+  • cycle / walk / motorbike → empty array (no booking needed)
+  • car → none (own vehicle); or rental sites (Rentalcars.com, Sixt) if context implies rental
+- info_sites: research/info sites when booking_sites is empty (e.g. Seat61 for trains, WikiVoyage)
+- confidence: "verified"=well-established/community-confirmed; "check"=exists but seasonal/irregular/border uncertain, verify first; "uncertain"=limited data, research carefully.
+- conflict: only include if leg actually passes through a conflict/advisory zone; otherwise null.
+- accom_sites: only platforms that work for that city/region.
+- Respond with ONLY the raw JSON object. No markdown, no preamble.`;
+
+  try {
+    const d = await callAI(prompt, 6000);
+
+    if (d.stops?.length === stops.length) {
+      d.stops.forEach((s, i) => {
+        stops[i].accomSites = s.accom_sites || [];
+        stops[i].accomNote  = s.accom_note  || '';
+        if (s.days && !stops[i].days) stops[i].days = s.days;
+      });
+    }
+    if (d.legs?.length === legs.length) {
+      d.legs.forEach((l, i) => {
+        if (!legs[i].km    && l.km)       legs[i].km    = l.km;
+        if (!legs[i].hours && l.hours)    legs[i].hours = l.hours;
+        if (!legs[i].cost  && l.cost_usd) legs[i].cost  = Math.round(l.cost_usd);
+        if (!legs[i].notes && l.notes)    legs[i].notes = l.notes;
+        // Always update AI-enriched metadata (booking sites, region, confidence)
+        legs[i].bookingSites = l.booking_sites || [];
+        legs[i].infoSites    = l.info_sites    || [];
+        legs[i].legRegion    = l.leg_region    || '';
+        legs[i].confidence   = l.confidence    || 'uncertain';
+        legs[i].conflict     = l.conflict      || null;
+        // Update mode only if the leg was still on the shared default (user hasn't customised it)
+        if (l.mode && legs[i].mode === defaultMode) legs[i].mode = l.mode;
+      });
+    }
+    render();
+    if (st) { st.textContent = 'AI Refine complete ✓'; setTimeout(() => st.textContent = '', 3000); }
+  } catch(err) {
+    if (st) { st.textContent = 'AI Refine failed: ' + err.message; setTimeout(() => st.textContent = '', 5000); }
+  } finally {
+    [btn, btnMb].forEach(b => { if (b) b.disabled = false; });
+    if (btn) btn.innerHTML = '<i class="ph ph-sparkle" style="font-size:13px"></i> AI Refine';
+  }
+}
 
 async function updateNavAuth() {
   const avatarWrap = document.getElementById('navAvatarWrap');
@@ -5732,6 +5821,12 @@ function updateEditorMeta() {
   const del = document.getElementById('deleteTripBtn');
   const saved = currentTripId && (storage.get('trips') || []).some(t => t.id === currentTripId);
   if (del) del.style.display = saved ? '' : 'none';
+  // AI Refine only makes sense once at least one stop has a name to work with.
+  const hasNamedStop = stops.some(s => s.name);
+  const refine = document.getElementById('btnAIRefine');
+  const refineMb = document.getElementById('btnAIRefineMobile');
+  if (refine) refine.style.display = hasNamedStop ? '' : 'none';
+  if (refineMb) refineMb.style.display = hasNamedStop ? '' : 'none';
 }
 
 function renderVisitedProgress() {
