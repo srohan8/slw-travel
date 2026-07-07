@@ -91,6 +91,17 @@ window.addEventListener('unhandledrejection', (e) => {
   .btn-primary{font-weight:700;background:var(--sage);color:var(--cta-text);border-color:var(--sage);box-shadow:0 2px 4px rgba(217,151,61,0.25);}
   .btn-primary:hover{background:#C07E2E;border-color:#C07E2E;transform:translateY(-1px);box-shadow:0 4px 8px rgba(217,151,61,0.35);}
   .container{max-width:860px;margin:0 auto;padding:2rem 1.25rem;}
+  /* App footer — desktop only; mobile already has the bottom nav for this. */
+  .app-footer{max-width:860px;margin:32px auto 0;padding:20px 1.25rem 48px;border-top:0.5px solid var(--border);}
+  .app-footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+  .app-footer-logo{display:flex;align-items:center;gap:7px;text-decoration:none;}
+  .app-footer-logo img{height:20px;opacity:0.7;}
+  .app-footer-logo-text{font-size:14px;font-weight:500;color:var(--text2);font-family:var(--body);}
+  .app-footer-links{display:flex;gap:18px;flex-wrap:wrap;}
+  .app-footer-links a{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .2s;}
+  .app-footer-links a:hover{color:var(--text2);}
+  .app-footer-copy{font-family:var(--mono);font-size:11px;color:var(--text3);}
+  @media(max-width:640px){.app-footer{display:none !important;}}
   .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;background:transparent;outline:none;width:320px;letter-spacing:-0.3px;transition:color .2s;}
   .trip-title:focus{color:var(--fern);}
   .trip-title::placeholder{color:var(--text3);font-weight:300;}
@@ -2047,6 +2058,25 @@ window.addEventListener('unhandledrejection', (e) => {
 
   </div>
 </div>
+
+<!-- ── Footer (desktop only — mobile uses the bottom nav) ─────────── -->
+<footer class="app-footer">
+  <div class="app-footer-inner">
+    <a class="app-footer-logo" href="/">
+      <img src="/public/bysloth.png" alt="bysloth"/>
+      <span class="app-footer-logo-text">bysloth</span>
+    </a>
+    <nav class="app-footer-links">
+      <a href="/how-long">Time estimator</a>
+      <a href="/carbon">CO₂ calc</a>
+      <a href="/bike-on-train">Bike on train</a>
+      <a href="/blog/">Blog</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="mailto:hello@bysloth.com">Contact</a>
+    </nav>
+    <span class="app-footer-copy">© 2026 · Lisbon</span>
+  </div>
+</footer>
 
 <script>
 // ── Supabase client ───────────────────────────────────────────────
