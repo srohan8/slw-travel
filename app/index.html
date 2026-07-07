@@ -122,9 +122,15 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
   .app-footer-links a:not(:first-child)::before{content:'|';display:inline-block;margin-right:16px;color:var(--border2);}
   .app-footer-copy{font-family:var(--mono);font-size:11px;color:var(--text3);}
   @media(max-width:640px){.app-footer{display:none !important;}}
-  .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;background:transparent;outline:none;width:320px;letter-spacing:-0.3px;transition:color .2s;}
+  .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;background:transparent;outline:none;width:320px;letter-spacing:-0.3px;transition:color .2s, border-color .2s, background .2s;}
   .trip-title:focus{color:var(--fern);}
   .trip-title::placeholder{color:var(--text3);font-weight:300;}
+  /* Web only — reads as plain heading text otherwise, with no affordance
+     that it's actually an editable field. Mobile is untouched. */
+  @media(min-width:641px){
+    .trip-title{border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);padding:8px 12px;}
+    .trip-title:focus{border-color:var(--fern);background:var(--bg);}
+  }
   .panel{display:none;animation: fadeIn 0.3s ease;}.panel.active{display:block;}
   @keyframes fadeIn { from {opacity:0; transform: translateY(5px);} to {opacity:1; transform: translateY(0);} }
   .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.2rem;box-shadow: var(--shadow);}
