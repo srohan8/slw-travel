@@ -2559,7 +2559,7 @@ async function persistTripCloud(trip) {
 async function saveCurrentTrip() {
   if (!currentUser) {
     const el = document.getElementById('saveStatus');
-    if (el) el.innerHTML = `<a href="#" onclick="goToAuth();return false;" style="color:var(--rust);font-size:12px">Sign in to save trips →</a>`;
+    if (el) el.innerHTML = `<a href="#" onclick="goToAuth();return false;" style="color:var(--sage);font-size:12px">Sign in to save trips →</a>`;
     return;
   }
   document.getElementById('saveStatus').textContent = 'Saving...';
@@ -6164,7 +6164,7 @@ function renderPlanLanding() {
       }).join('')
     : `<div style="font-size:13px;color:var(--text3);padding:6px 0">No saved trips yet.</div>`;
 
-  const confDot = { verified:'var(--fern)', check:'var(--amber)', uncertain:'var(--rust)' };
+  const confDot = { verified:'var(--fern)', check:'var(--amber)', uncertain:'var(--danger)' };
 
   const corridorRows = POPULAR_CORRIDORS.map(c =>
     `<div class="corridor-row" onclick="loadCorridorSearch('${c.from}','${c.to}')">
@@ -6218,7 +6218,7 @@ function renderBudgetBar() {
   const pct = Math.min(100, Math.round(tc / budg * 100));
   const rem = budg - tc;
   const remColor = rem >= 0 ? 'var(--fern)' : 'var(--danger-text)';
-  const fillColor = pct > 90 ? 'var(--rust)' : pct > 70 ? 'var(--amber)' : 'var(--fern)';
+  const fillColor = pct > 90 ? 'var(--danger)' : pct > 70 ? 'var(--amber)' : 'var(--fern)';
   el.innerHTML = `<div class="budget-bar-wrap">
     <span class="budget-bar-kicker">Budget</span>
     <span class="budget-bar-nums">${getCurrSym()}${Math.round(budg)} total · <span style="color:${remColor}">${getCurrSym()}${Math.abs(Math.round(rem))} ${rem >= 0 ? 'remaining':'over'}</span></span>
@@ -6799,6 +6799,24 @@ function gpsClearCheckpoint() { localStorage.removeItem(GPS_CHECKPOINT_KEY); }
 function gpsReadCheckpoint() { try { return JSON.parse(localStorage.getItem(GPS_CHECKPOINT_KEY) || 'null'); } catch(e) { return null; } }
 
 // ── Start / stop / pause ────────────────────────────────────────────
+// _gps is a single global tracking slot — only one trip can be tracked
+// (GPS or manual) at a time. Ask before silently cancelling whatever's
+// already running, so a real in-progress recording is never lost by
+// accident. Callers that choose a trip to track check this first.
+function _gpsConfirmSwitch(trip) {
+  if (!_gps.mode || !_gps.planned || (trip && _gps.planned.id === trip.id)) return true;
+  const stops = _gps.planned.stops || [];
+  const oldName = (stops[0]?.name && stops[stops.length - 1]?.name)
+    ? `${stops[0].name} → ${stops[stops.length - 1].name}`
+    : (_gps.planned.title || 'another trip');
+  const modeLabel = _gps.mode === 'gps' ? 'GPS-tracking' : 'tracking';
+  return confirm(`You're currently ${modeLabel} "${oldName}". Stop that and start tracking this trip instead?`);
+}
+async function gpsEndCurrentTracking() {
+  if (!_gps.mode) return;
+  if (_gps.mode === 'gps' && _gps.planned) await gpsMergeIntoPlannedTrip();
+  await gpsStopAll(); gpsClearCheckpoint(); _gps.mode = null; gpsSyncPill();
+}
 async function gpsStart(trip, { requireBackground = true } = {}) {
   if (!gpsIsNative()) { alert('Live GPS recording is only available on the bysloth mobile app.'); return false; }
   _gps.mode = 'gps'; _gps.planned = trip || null;
@@ -6881,7 +6899,9 @@ async function gpsStopTrackingTap() {
     switchTab('recreview', null); // Mode B — fresh recording, no planned trip to merge into
   }
 }
-function gpsStartManualFromJourney() {
+async function gpsStartManualFromJourney() {
+  if (!_gpsConfirmSwitch(_journeyTrip)) return;
+  await gpsEndCurrentTracking();
   gpsStartManual(_journeyTrip);
   const stops = _journeyTrip.stops || [];
   const firstUnvisited = stops.findIndex(s => !s.visited);
@@ -6903,7 +6923,9 @@ function gpsSyncPill() {
 let _gpsPermsTrip = null;
 let _gpsPermsStep = 0; // 0 explain | 10 background denied | 20 no location at all
 
-function openGpsPerms(trip) {
+async function openGpsPerms(trip) {
+  if (!_gpsConfirmSwitch(trip)) return;
+  await gpsEndCurrentTracking();
   _gpsPermsTrip = trip || null;
   _gpsPermsStep = 0;
   switchTab('gpsperms', null);
@@ -6996,7 +7018,7 @@ const REC_NOTES_STEPS = [
   { icon: 'microphone', color: '#2E2E2E', title: 'Voice or text', desc: 'Dictate hands-free or type. Voice is transcribed directly into your journal entry.' },
   { icon: 'camera', color: 'var(--bark)', title: 'Attach photos', desc: 'Add up to 6 photos per stop. They appear in your public journey diary.' },
   { icon: 'share-network', color: 'var(--sage)', title: 'Turn a note into a community tip', desc: 'Hit "Share tip" on any leg entry to submit it as a community note — it goes to review first.' },
-  { icon: 'stop-circle', color: 'var(--rust)', title: "Stop when you're done", desc: 'Tap Stop to end the session. Your journal auto-saves. You can publish it as a public journey or keep it private.' },
+  { icon: 'stop-circle', color: 'var(--sage)', title: "Stop when you're done", desc: 'Tap Stop to end the session. Your journal auto-saves. You can publish it as a public journey or keep it private.' },
 ];
 function openRecNotes(trip) {
   _recNotesTrip = trip || null;
@@ -7737,7 +7759,7 @@ function renderExportScreen() {
   if (!el || !t) return;
   const url = exportPublicUrl(t);
   const FORMATS = [
-    { icon: 'file-pdf', label: 'PDF Journey Diary', sub: 'Formatted for print or saving', pro: false, color: 'var(--rust)', action: 'window.print()' },
+    { icon: 'file-pdf', label: 'PDF Journey Diary', sub: 'Formatted for print or saving', pro: false, color: 'var(--sage)', action: 'window.print()' },
     { icon: 'file-arrow-down', label: 'GPX Track', sub: 'Import into Maps, Komoot, OsmAnd', pro: true, color: '#2E6FA8', action: 'openUpgrade()' },
     { icon: 'file-text', label: 'Markdown / Plain text', sub: 'All journal entries as text', pro: false, color: 'var(--text2)', action: 'exportAsMarkdown()' },
   ];
@@ -9188,7 +9210,7 @@ function renderUpgrade() {
   const monthly = _upgradeBilling === 'monthly';
   const FEATURES = [
     ['ph-infinity',    'var(--sage)',  'Unlimited routes',            'Plan as many as you want'],
-    ['ph-file-pdf',    'var(--rust)',  'PDF export',                  'Download journey diary'],
+    ['ph-file-pdf',    'var(--sage)',  'PDF export',                  'Download journey diary'],
     ['ph-download-simple', '#2E2E2E',  'GPX download',                'Import into any map app'],
     ['ph-wifi-slash',  'var(--bark)',  'Offline maps',                'Access your route without data'],
     ['ph-users-three', 'var(--sage)',  'Verified contributor badge',  'Profile badge + priority review'],
@@ -9482,7 +9504,7 @@ async function renderProfilePanel() {
     <span>·</span>
     <span style="color:var(--fern);cursor:pointer" onclick="exportTrip()">Export data</span>
     <span style="flex:1"></span>
-    <span style="color:var(--rust);cursor:pointer" onclick="signOut()">Sign out</span>
+    <span style="color:#C4622D;cursor:pointer" onclick="signOut()">Sign out</span>
   </div>`;
 }
 

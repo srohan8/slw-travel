@@ -171,6 +171,18 @@ function pubLoggedInUser() {
   const user = session?.user;
   return (user && (!session.expires_at || session.expires_at * 1000 > Date.now())) ? user : null;
 }
+// The viewer's own access token, if signed in and not expired — so the
+// trips fetch below authenticates as them (needed for RLS to recognise the
+// owner or an invited collaborator) instead of always hitting as anon.
+function pubAccessToken() {
+  try {
+    const raw = localStorage.getItem('sb-xhbgplwahgdmqomgyjuo-auth-token');
+    if (!raw) return null;
+    const o = JSON.parse(raw); const session = o?.currentSession || o;
+    if (session?.expires_at && session.expires_at * 1000 <= Date.now()) return null;
+    return session?.access_token || null;
+  } catch(e) { return null; }
+}
 (function applyAuthNav() {
   const user = pubLoggedInUser();
   // Breadcrumb: back to all journeys (+ My journals when logged in)
@@ -314,23 +326,44 @@ let _pubOwnerId = null;
 async function buildJourneyFromTrip(id) {
   // Try localStorage first (fast), then fall back to Supabase (works on shared links)
   let t = null;
+  let isOwnerView = false;
   _pubTripId = id;
   try {
     const trips = JSON.parse(localStorage.getItem('slw_trips') || '[]');
     // id may be the trip's real id (?trip=<id>) or its public_slug (/journey/<slug>)
     t = trips.find(x => x.id === id || x.public_slug === id) || null;
-    if (t) _pubOwnerId = pubLoggedInUser()?.id || null; // found locally → it's this device's trip
+    if (t) { _pubOwnerId = pubLoggedInUser()?.id || null; isOwnerView = true; } // found locally → it's this device's trip
   } catch(e) {}
   if (!t) {
     try {
-      const res = await fetch(`${SUPA_URL}/rest/v1/trips?id=eq.${encodeURIComponent(id)}&select=data,user_id`, {
-        headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` }
+      // Authenticate as the viewer (not just the anon key) so RLS can tell
+      // whether they're the owner or an invited collaborator — matches by
+      // id or public_slug since a /journey/<slug> link passes the slug here.
+      const token = pubAccessToken();
+      const filter = `or=(id.eq.${encodeURIComponent(id)},data->>public_slug.eq.${encodeURIComponent(id)})`;
+      const res = await fetch(`${SUPA_URL}/rest/v1/trips?${filter}&select=data,user_id`, {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${token || SUPA_KEY}` }
       });
       const rows = await res.json();
-      if (rows?.[0]?.data) { t = rows[0].data; _pubOwnerId = rows[0].user_id || null; }
+      if (rows?.[0]?.data) {
+        t = rows[0].data; _pubOwnerId = rows[0].user_id || null;
+        const viewer = pubLoggedInUser();
+        isOwnerView = !!(viewer && viewer.id === _pubOwnerId);
+      }
     } catch(e) {}
   }
   if (!t) return null;
+
+  // Enforce the publish-time "who can see it" choice. RLS already restricts
+  // who can even fetch a non-owner's row (owner or invited collaborator),
+  // but that's a separate mechanism from this visibility flag and doesn't
+  // know about it — and a trip found in this browser's own localStorage
+  // bypasses RLS entirely. "private" means only the owner, full stop;
+  // "friends"/"anyone" are fine for anyone who got this far (RLS already
+  // gated the friends case; the anyone case has no such gate yet — see the
+  // RLS follow-up task).
+  if (!isOwnerView && (t.visibility || 'anyone') === 'private') return { _blocked: true };
+
   const stops = (t.stops || []).filter(s => s.name);
   const legs = t.legs || [];
   if (stops.length < 2) return null;
@@ -386,6 +419,15 @@ async function buildJourneyFromTrip(id) {
   if (!id && location.hash) { const m = location.hash.match(/trip=([^&]+)/); if (m) id = decodeURIComponent(m[1]); }
   if (id) {
     const built = await buildJourneyFromTrip(id);
+    if (built?._blocked) {
+      document.getElementById('cover').innerHTML = `<div style="padding:100px 0;text-align:center">
+        <div style="font-family:var(--serif);font-size:22px;color:var(--text);margin-bottom:10px">This journal is private</div>
+        <div style="font-size:13.5px;color:var(--text3)">Ask the author to share it with you, or sign in if you think this is a mistake.</div>
+      </div>`;
+      const diaryEl = document.getElementById('diarySection'); if (diaryEl) diaryEl.innerHTML = '';
+      const footerEl = document.querySelector('.footer-cta'); if (footerEl) footerEl.style.display = 'none';
+      return;
+    }
     if (built) JOURNEY = built;
   }
   renderJourney();
