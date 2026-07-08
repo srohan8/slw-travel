@@ -5129,6 +5129,12 @@ async function updatePlannerMap() {
   const valid = coords.filter(Boolean);
   if (valid.length >= 2) { try { _mapInstance.fitBounds(L.latLngBounds(valid), { padding: [28, 28], maxZoom: 10 }); } catch(e) {} }
   else if (valid.length === 1) { try { _mapInstance.setView(valid[0], 7); } catch(e) {} }
+  else {
+    // No stops geocoded at all -- Leaflet never got a center/zoom, and
+    // touching the map in that state throws "Set map center and zoom
+    // first." Fall back to a default world view so it stays interactive.
+    try { _mapInstance.setView([20, 0], 2); } catch(e) {}
+  }
 }
 
 function showRouteMap(d) {
