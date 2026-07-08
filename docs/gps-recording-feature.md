@@ -81,6 +81,21 @@ Desktop: Record button is hidden. Users see a "Mobile only" tooltip if they disc
 - Queued offline, resolved on reconnect
 - Fallback: `lat, lng` as placeholder until geocoded
 
+### Short-pause suggestions ("Possible stops")
+A dwell of 3–20 minutes doesn't cross the auto-stop threshold, but isn't
+nothing either — a border check, a viewpoint, a quick coffee stop. Instead
+of silently discarding these, they're surfaced as dismissible suggestions
+(`_gps.suggestions[]`) on the Journey Detail live view — "Add" promotes one
+into a real stop through the same creation path the dwell algorithm uses;
+"Dismiss" drops it. Anything under 3 minutes is still ignored entirely.
+
+### Map trail
+The recorded GPS positions (not just the stop-to-stop line) are simplified
+with Douglas-Peucker (~18m tolerance — preserves curve shape rather than
+just reducing point count) and saved to `trip.data.gps_trail` when
+recording ends, so the journal's map draws the real path you travelled
+instead of a straight line between stops.
+
 ---
 
 ## 5. Data Model
@@ -103,6 +118,10 @@ Recorded trips use the **exact same trip format** as planned trips so they slot 
       date: "2026-07-04",
       days: 3,
       visited: true,
+      arrived_at: ISO string,
+      departed_at: ISO string,   // written on stop creation and extended while still dwelling — leg
+                                  // duration uses this, not arrived_at, so a long stay doesn't get
+                                  // counted as travel time on the next leg
       diary: "...",              // user adds on review screen or during recording
       photos: [...],             // added during or after recording
       _recorded: true            // flag for UI badge
@@ -120,7 +139,12 @@ Recorded trips use the **exact same trip format** as planned trips so they slot 
       confidence: "verified",
       _recorded: true
     }
-  ]
+  ],
+  data: {
+    gps_trail: [[lat, lon], ...]   // Douglas-Peucker-simplified breadcrumb trail, appended per
+                                    // recording session — drawn on the map instead of a straight
+                                    // stop-to-stop line when present
+  }
 }
 ```
 
@@ -245,10 +269,17 @@ Recorded trips get a `source: "recorded"` flag and a badge in the trip card:
 First time the user taps Record:
 1. Explain what's needed and why (one screen, not an OS dialog dump)
 2. Request location permission
-3. Request background location ("Allow all the time") with explanation: *"We need this to track your route when your screen is off."*
-4. Request camera (deferred — only when they tap 📷 for the first time)
+3. Request notification permission (Android 13+, via `@capacitor/local-notifications`) — needed to show the persistent tracking notification, which is what keeps the foreground service (and therefore location updates) alive once the screen locks. Best-effort: tracking still proceeds if denied.
+4. Request background location ("Allow all the time") with explanation: *"We need this to track your route when your screen is off."* Requested via a small custom native plugin (`BackgroundLocationPerms`) *after* foreground location is confirmed granted — Android silently drops a background request bundled with or issued before the foreground grant.
+5. If background location is permanently denied ("don't ask again"), offer an "Open Settings" deep-link instead of re-prompting — Android reports this via `shouldShowRequestPermissionRationale`.
+6. If background location is granted but the app isn't exempt from battery optimization, offer (non-blocking, skippable) to request the exemption — some OEMs (Xiaomi, Samsung, Oppo) kill background services more aggressively than stock Android even with a valid foreground service.
+7. Request camera (deferred — only when they tap 📷 for the first time)
 
 If background location denied: show graceful fallback — *"Recording works but will pause when your screen is off. Keep the app open for best results."*
+
+Order matters and is enforced in `gpsRequestAndStart()` (`app/index.html`):
+foreground location → notifications → background location → optional
+battery-exemption offer → start the real watcher/foreground service.
 
 ---
 

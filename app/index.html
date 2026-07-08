@@ -760,6 +760,13 @@ window.addEventListener('unhandledrejection', (e) => {
   .jd-detect-confirm{flex:1;padding:7px 0;border-radius:var(--radius-pill);border:none;background:var(--signal);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--body);}
   .jd-detect-dismiss{padding:7px 14px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--body);}
   .jd-mark-current-btn{margin:0 0 8px;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;border:1px dashed color-mix(in srgb,var(--gold) 40%,transparent);background:transparent;border-radius:var(--radius-pill);padding:6px 0;cursor:pointer;color:#7A5C10;font-size:11px;font-family:var(--body);}
+  .jd-suggest-list{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .jd-suggest-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border:0.5px dashed var(--border2);border-radius:var(--radius);padding:10px 12px;}
+  .jd-suggest-name{font-size:13px;font-weight:600;color:var(--text);}
+  .jd-suggest-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+  .jd-suggest-actions{display:flex;gap:6px;flex-shrink:0;}
+  .jd-suggest-dismiss{width:28px;height:28px;border-radius:50%;border:0.5px solid var(--border2);background:transparent;color:var(--text3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+  .jd-suggest-add{font-size:12px;padding:7px 12px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:#4A2E0A;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--body);display:inline-flex;align-items:center;gap:4px;}
   .jd-leg-edit{margin:8px 0 12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
   .jd-leg-edit-lbl{font-family:var(--mono);font-size:8.5px;color:var(--text3);letter-spacing:1px;margin-bottom:6px;}
   .jd-leg-edit-modes{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
@@ -6699,9 +6706,11 @@ function renderStopRec() {
 // Guard rule 2 (§14): every function touching the plugin or its data must check this first.
 function gpsIsNative() { return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }
 function gpsPlugin() { return window.Capacitor?.Plugins?.BackgroundGeolocation; }
+function gpsBgPermsPlugin() { return window.Capacitor?.Plugins?.BackgroundLocationPerms; }
 
 const GPS_DWELL_METERS = 500;
 const GPS_DWELL_MS = 20 * 60 * 1000; // 20 min — §4 dwell algorithm
+const GPS_SUGGEST_MS = 3 * 60 * 1000; // 3 min — short pauses below this are ignored entirely
 const GPS_CHECKPOINT_KEY = 'gpsCheckpoint';
 
 let _gps = {
@@ -6713,6 +6722,7 @@ let _gps = {
   positions: [],        // {lat,lon,speed,time}
   stops: [],            // detected/confirmed stops this session
   legs: [],              // legs between stops this session
+  suggestions: [],       // {lat,lon,time,durationMs} short pauses (3-20min) not yet promoted to a stop
   dwellStart: null,     // {lat,lon,time} candidate dwell anchor
   lastFlush: 0,
 };
@@ -6722,6 +6732,41 @@ function gpsDistanceMeters(a, b) {
   const dLat = (b.lat - a.lat) * Math.PI / 180, dLon = (b.lon - a.lon) * Math.PI / 180;
   const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+// Douglas-Peucker simplification for the persisted map trail. Deliberately
+// NOT a naive "drop a point unless >Xm from the last kept point" pass --
+// that strips points evenly regardless of curvature and flattens gentle
+// bends into straight-ish segments. Douglas-Peucker keeps the points that
+// define a curve's shape and only drops near-collinear redundancy, so a
+// curving road stays visibly curved after simplification.
+function gpsSimplifyTrail(positions, toleranceMeters = 18) {
+  if (positions.length <= 2) return positions.slice();
+  const lat0 = positions[0].lat * Math.PI / 180;
+  const mPerDegLat = 111320, mPerDegLon = 111320 * Math.cos(lat0);
+  const toXY = p => ({ x: p.lon * mPerDegLon, y: p.lat * mPerDegLat, _src: p });
+  function perpDist(pt, a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    if (len2 === 0) return Math.hypot(pt.x - a.x, pt.y - a.y);
+    let t = ((pt.x - a.x) * dx + (pt.y - a.y) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(pt.x - (a.x + t * dx), pt.y - (a.y + t * dy));
+  }
+  function dp(points, tol) {
+    if (points.length <= 2) return points;
+    let maxDist = 0, idx = 0;
+    for (let i = 1; i < points.length - 1; i++) {
+      const d = perpDist(points[i], points[0], points[points.length - 1]);
+      if (d > maxDist) { maxDist = d; idx = i; }
+    }
+    if (maxDist > tol) {
+      const left = dp(points.slice(0, idx + 1), tol);
+      const right = dp(points.slice(idx), tol);
+      return left.slice(0, -1).concat(right);
+    }
+    return [points[0], points[points.length - 1]];
+  }
+  return dp(positions.map(toXY), toleranceMeters).map(p => p._src);
 }
 function gpsModeFromSpeedKmh(kmh) {
   if (kmh < 7) return 'walk';
@@ -6746,8 +6791,16 @@ function gpsOnLocation(loc) {
   if (!_gps.dwellStart) { _gps.dwellStart = pt; }
   else {
     const d = gpsDistanceMeters(_gps.dwellStart, pt);
-    if (d > GPS_DWELL_METERS) { _gps.dwellStart = pt; }
-    else if (pt.time - _gps.dwellStart.time >= GPS_DWELL_MS) {
+    if (d > GPS_DWELL_METERS) {
+      // Moving away from the anchor. If we dwelled there long enough to be
+      // interesting but not long enough to auto-confirm as a stop, surface
+      // it as a suggestion instead of silently dropping it (Polarsteps-style).
+      const dwelledMs = pt.time - _gps.dwellStart.time;
+      if (dwelledMs >= GPS_SUGGEST_MS && dwelledMs < GPS_DWELL_MS) {
+        gpsMaybeSuggestPoint(_gps.dwellStart, dwelledMs);
+      }
+      _gps.dwellStart = pt;
+    } else if (pt.time - _gps.dwellStart.time >= GPS_DWELL_MS) {
       gpsMaybeCreateStop(_gps.dwellStart);
       _gps.dwellStart = pt;
     }
@@ -6755,12 +6808,55 @@ function gpsOnLocation(loc) {
   gpsFlushCheckpoint();
 }
 
+// Short pause (3-20 min) — not enough to auto-confirm as a stop, but worth
+// surfacing as a dismissible suggestion (§ "Possible stops"). Reverse
+// geocoding is deferred to render time since most suggestions get dismissed.
+function gpsMaybeSuggestPoint(pt, durationMs) {
+  const nearStop = _gps.stops.find(s => gpsDistanceMeters(s, pt) < 300);
+  if (nearStop) return;
+  const nearSuggestion = _gps.suggestions.find(s => gpsDistanceMeters(s, pt) < 300);
+  if (nearSuggestion) { nearSuggestion.durationMs = Math.max(nearSuggestion.durationMs, durationMs); return; }
+  _gps.suggestions.push({ lat: pt.lat, lon: pt.lon, time: pt.time, durationMs });
+  gpsFlushCheckpoint();
+  if (document.getElementById('journeyPanel')?.offsetParent) renderJourneyDetail();
+}
+
+// Promote a suggestion into a real stop, reusing the same creation path
+// stops made via the dwell threshold use (proper leg-closing, etc).
+async function gpsAddSuggestionAsStop(idx) {
+  const s = _gps.suggestions[idx]; if (!s) return;
+  _gps.suggestions.splice(idx, 1);
+  await gpsMaybeCreateStop({ lat: s.lat, lon: s.lon, time: s.time });
+}
+function gpsDismissSuggestion(idx) {
+  const s = _gps.suggestions[idx]; if (!s) return;
+  _gps.suggestions.splice(idx, 1);
+  gpsFlushCheckpoint();
+  renderJourneyDetail();
+}
+
 async function gpsMaybeCreateStop(pt) {
   const near = _gps.stops.find(s => gpsDistanceMeters(s, pt) < 300);
-  if (near) return;
+  if (near) {
+    // Same stop, still dwelling — this is the repeated 20-min-interval
+    // re-trigger from gpsOnLocation. Extend the recorded stay instead of
+    // silently discarding it, so a multi-hour/multi-day stay doesn't get
+    // frozen at its first-detected duration.
+    near.departed_at = new Date(pt.time).toISOString();
+    gpsFlushCheckpoint();
+    return;
+  }
   const name = await reverseGeocode(pt.lat, pt.lon) || `${pt.lat.toFixed(3)}, ${pt.lon.toFixed(3)}`;
-  const stop = { name, lat: pt.lat, lon: pt.lon, arrived_at: new Date(pt.time).toISOString(), visited: true, _recorded: true };
-  if (_gps.stops.length) gpsCloseLeg(_gps.stops[_gps.stops.length - 1], stop);
+  const stop = { name, lat: pt.lat, lon: pt.lon, arrived_at: new Date(pt.time).toISOString(), departed_at: new Date(pt.time).toISOString(), visited: true, _recorded: true };
+  if (_gps.stops.length) {
+    // prev.departed_at is already correct here -- it defaulted to prev's own
+    // arrived_at on creation and gets bumped forward by every subsequent
+    // near-dwell re-trigger while the user kept staying (see the `near`
+    // branch above). Do NOT overwrite it with this new stop's arrived_at --
+    // that would silently swallow the entire stay back into leg travel time,
+    // which is the exact bug this fix exists to close.
+    gpsCloseLeg(_gps.stops[_gps.stops.length - 1], stop);
+  }
   _gps.stops.push(stop);
   gpsFlushCheckpoint();
   // Refresh Journey Detail if it's the active view, so a newly-detected
@@ -6771,7 +6867,7 @@ async function gpsMaybeCreateStop(pt) {
 }
 
 function gpsCloseLeg(fromStop, toStop) {
-  const fromT = Date.parse(fromStop.arrived_at), toT = Date.parse(toStop.arrived_at);
+  const fromT = Date.parse(fromStop.departed_at || fromStop.arrived_at), toT = Date.parse(toStop.arrived_at);
   const seg = _gps.positions.filter(p => p.time >= fromT && p.time <= toT);
   let km = 0;
   for (let i = 1; i < seg.length; i++) km += gpsDistanceMeters(seg[i - 1], seg[i]) / 1000;
@@ -6798,7 +6894,7 @@ function gpsFlushCheckpoint() {
   localStorage.setItem(GPS_CHECKPOINT_KEY, JSON.stringify({
     mode: _gps.mode, plannedId: _gps.planned?.id || null,
     startedAt: _gps.startedAt, stops: _gps.stops, legs: _gps.legs,
-    positions: _gps.positions.slice(-500), savedAt: now
+    suggestions: _gps.suggestions, positions: _gps.positions.slice(-500), savedAt: now
   }));
 }
 function gpsClearCheckpoint() { localStorage.removeItem(GPS_CHECKPOINT_KEY); }
@@ -6824,9 +6920,9 @@ async function gpsEndCurrentTracking() {
   await gpsStopAll(); gpsClearCheckpoint(); _gps.mode = null; gpsSyncPill();
 }
 async function gpsStart(trip, { requireBackground = true } = {}) {
-  if (!gpsIsNative()) { alert('Live GPS recording is only available on the bysloth mobile app.'); return false; }
+  if (!gpsIsNative()) { alert('Live GPS recording is only available on the bysloth mobile app.'); return { ok: false }; }
   _gps.mode = 'gps'; _gps.planned = trip || null;
-  _gps.startedAt = Date.now(); _gps.positions = []; _gps.stops = []; _gps.legs = []; _gps.dwellStart = null; _gps.paused = false;
+  _gps.startedAt = Date.now(); _gps.positions = []; _gps.stops = []; _gps.legs = []; _gps.suggestions = []; _gps.dwellStart = null; _gps.paused = false;
   gpsFlushCheckpoint(); _gps.lastFlush = 0; gpsFlushCheckpoint();
   const watcherOpts = { requestPermissions: true, stale: false, distanceFilter: 30 };
   if (requireBackground) {
@@ -6838,15 +6934,15 @@ async function gpsStart(trip, { requireBackground = true } = {}) {
     _gps.watcherId = id;
     document.body.classList.add('recording-active');
     gpsSyncPill();
-    return true;
+    return { ok: true };
   } catch (e) {
     _gps.mode = null;
-    return false;
+    return { ok: false };
   }
 }
 function gpsStartManual(trip) {
   _gps.mode = 'manual'; _gps.planned = trip || null;
-  _gps.startedAt = Date.now(); _gps.stops = []; _gps.legs = []; _gps.paused = false;
+  _gps.startedAt = Date.now(); _gps.stops = []; _gps.legs = []; _gps.suggestions = []; _gps.paused = false;
   gpsFlushCheckpoint(); _gps.lastFlush = 0; gpsFlushCheckpoint();
   document.body.classList.add('recording-active');
   gpsSyncPill();
@@ -6866,6 +6962,17 @@ async function gpsStopAll() {
 // matched to not-yet-visited planned stops by proximity (<5km); anything that
 // doesn't match is appended as an unplanned extra. This is the "planned vs
 // actual" comparison, as opposed to Mode B which always creates a new trip.
+// Attach this session's simplified GPS trail to a trip so the map can draw
+// the real path instead of a straight stop-to-stop line. Appends (rather
+// than overwrites) so a trip recorded across multiple sessions keeps every
+// segment's trail.
+function gpsAttachTrail(t) {
+  if (!_gps.positions.length) return;
+  t.data = t.data || {};
+  const simplified = gpsSimplifyTrail(_gps.positions).map(p => [+p.lat.toFixed(5), +p.lon.toFixed(5)]);
+  t.data.gps_trail = [...(t.data.gps_trail || []), ...simplified];
+}
+
 async function gpsMergeIntoPlannedTrip() {
   const t = _gps.planned; if (!t) return;
   const stops = t.stops || [];
@@ -6876,17 +6983,21 @@ async function gpsMergeIntoPlannedTrip() {
       const g = await geocodeStop(s.name);
       if (g && gpsDistanceMeters(g, gs) < 5000) { matched = s; break; }
     }
+    const stayDays = gs.departed_at ? Math.max(1, Math.round((Date.parse(gs.departed_at) - Date.parse(gs.arrived_at)) / 864e5)) : 1;
     if (matched) {
       matched.visited = true;
       matched._recordedArrival = gs.arrived_at;
+      matched._recordedDeparture = gs.departed_at || null;
+      matched.days = stayDays;
       if (gs.diary) matched.diary = gs.diary;
       if (gs.photos?.length) matched.photos = [...(matched.photos || []), ...gs.photos];
     } else {
-      stops.push({ name: gs.name, date: gs.arrived_at.slice(0, 10), days: 1, visited: true,
+      stops.push({ name: gs.name, date: gs.arrived_at.slice(0, 10), days: stayDays, visited: true,
         diary: gs.diary || '', photos: gs.photos || [], _unplanned: true, _recorded: true });
     }
   }
   t.stops = stops;
+  gpsAttachTrail(t);
   _journeyTrip = t;
   jdPersist();
 }
@@ -6927,7 +7038,8 @@ function gpsSyncPill() {
 
 // ── [10] Enable tracking — explain screen + real permission request ─
 let _gpsPermsTrip = null;
-let _gpsPermsStep = 0; // 0 explain | 10 background denied | 20 no location at all
+let _gpsPermsStep = 0; // 0 explain | 10 background denied | 11 battery exemption offer | 20 no location at all
+let _gpsPermsCanAskAgain = true; // read by step-10 render to pick "Try again" vs "Open Settings" CTA
 
 async function openGpsPerms(trip) {
   if (!_gpsConfirmSwitch(trip)) return;
@@ -6937,28 +7049,78 @@ async function openGpsPerms(trip) {
   switchTab('gpsperms', null);
 }
 
+// Permission sequencing matters — Android enforces this order: foreground
+// location must already be granted before a background-location request
+// will do anything (a bundled/simultaneous request is silently dropped),
+// and POST_NOTIFICATIONS (Android 13+) needs to be granted for the
+// foreground service's persistent notification to actually show, which is
+// what keeps location updates alive once the screen locks.
 async function gpsRequestAndStart() {
   if (!gpsIsNative()) { alert('Live GPS recording is only available on the bysloth mobile app.'); return; }
+
+  // Phase 1 — cheap foreground-only probe: is location available at all?
   try {
-    // Phase 1 — cheap foreground-only probe: is location available at all?
     const testId = await gpsPlugin().addWatcher({ requestPermissions: true, stale: true }, () => {});
     await gpsPlugin().removeWatcher({ id: testId });
   } catch (e) {
     _gpsPermsStep = 20; renderGpsPerms(); return; // no location access at all — offer manual mode
   }
-  // Phase 2 — the real watcher, this time asking for background too.
-  const ok = await gpsStart(_gpsPermsTrip, { requireBackground: true });
-  if (ok) { _jdDismissedDetections = new Set(); openJourneyDetail(_gpsPermsTrip); return; }
-  _gpsPermsStep = 10; renderGpsPerms(); // background denied — foreground-only fallback
+
+  // Phase 2 — notification permission, needed to sustain the foreground
+  // service's persistent notification on API 33+. Best-effort: proceed
+  // even if denied, since foreground-only tracking still works without it.
+  try {
+    const { LocalNotifications } = window.Capacitor.Plugins;
+    if (LocalNotifications) await LocalNotifications.requestPermissions();
+  } catch (e) { /* non-blocking */ }
+
+  // Phase 3 — background location, via the custom native plugin. Must run
+  // after foreground is confirmed granted (phase 1), per Android's
+  // incremental-request rule.
+  let backgroundGranted = false, canAskAgain = true;
+  try {
+    const bgCheck = await gpsBgPermsPlugin()?.checkBackgroundLocation();
+    if (bgCheck?.granted) {
+      backgroundGranted = true;
+    } else {
+      const bgReq = await gpsBgPermsPlugin()?.requestBackgroundLocation();
+      backgroundGranted = !!bgReq?.granted;
+      canAskAgain = bgReq?.canAskAgain !== false;
+    }
+  } catch (e) { /* plugin unavailable — falls through to foreground-only */ }
+
+  // Phase 4 — start the real watcher.
+  const res = await gpsStart(_gpsPermsTrip, { requireBackground: backgroundGranted });
+  if (!res.ok) { _gpsPermsStep = 20; renderGpsPerms(); return; }
+
+  if (!backgroundGranted) {
+    _gpsPermsCanAskAgain = canAskAgain;
+    _gpsPermsStep = 10; renderGpsPerms(); // background denied — foreground-only fallback
+    return;
+  }
+
+  _jdDismissedDetections = new Set();
+  let ignoring = true;
+  try { ignoring = !!(await gpsBgPermsPlugin()?.isIgnoringBatteryOptimizations())?.ignoring; } catch (e) {}
+  if (!ignoring) { _gpsPermsStep = 11; renderGpsPerms(); return; } // optional, non-blocking offer
+  openJourneyDetail(_gpsPermsTrip);
 }
 async function gpsContinueForegroundOnly() {
-  const ok = await gpsStart(_gpsPermsTrip, { requireBackground: false });
-  if (ok) { _jdDismissedDetections = new Set(); openJourneyDetail(_gpsPermsTrip); }
+  const res = await gpsStart(_gpsPermsTrip, { requireBackground: false });
+  if (res.ok) { _jdDismissedDetections = new Set(); openJourneyDetail(_gpsPermsTrip); }
 }
 function gpsSkipToManual() {
   gpsStartManual(_gpsPermsTrip);
   openJourneyDetail(_gpsPermsTrip || _journeyTrip);
 }
+async function gpsOpenAppSettings() {
+  try { await gpsBgPermsPlugin()?.openAppSettings(); } catch (e) {}
+}
+async function gpsRequestBatteryExemption() {
+  try { await gpsBgPermsPlugin()?.requestIgnoreBatteryOptimizations(); } catch (e) {}
+  openJourneyDetail(_gpsPermsTrip); // fire-and-forget dialog; proceed regardless of outcome
+}
+function gpsSkipBatteryExemption() { openJourneyDetail(_gpsPermsTrip); }
 
 function renderGpsPerms() {
   const el = document.getElementById('gpsPermsPanel');
@@ -6971,8 +7133,22 @@ function renderGpsPerms() {
         <div class="strk-icon" style="background:#FFF8E6;border-color:#FFB80044"><i class="ph ph-warning" style="font-size:30px;color:var(--gold)"></i></div>
         <div class="strk-title" style="font-size:22px">Background location denied</div>
         <div class="strk-copy">Tracking works, but will pause when your screen turns off. Keep the app open for best results on long journeys.</div>
-        <button class="strk-cta" onclick="gpsContinueForegroundOnly()">Continue anyway</button>
+        ${_gpsPermsCanAskAgain
+          ? `<button class="strk-cta" onclick="gpsRequestAndStart()">Try again</button>`
+          : `<button class="strk-cta" onclick="gpsOpenAppSettings()">Open Settings to allow</button>`}
+        <button class="strk-ghost" onclick="gpsContinueForegroundOnly()">Continue anyway</button>
         <button class="strk-ghost" onclick="openJourneyDetail(_gpsPermsTrip || _journeyTrip)">Cancel</button>
+      </div>
+    </div>`;
+  } else if (_gpsPermsStep === 11) {
+    h = `<div class="gps-panel gps-light">
+      <div class="gps-hdr"><button class="gps-back" onclick="gpsSkipBatteryExemption()"><i class="ph ph-arrow-left"></i></button><span>Route tracking</span></div>
+      <div class="gps-center">
+        <div class="strk-icon" style="background:var(--bg2);border-color:var(--border)"><i class="ph ph-battery-charging" style="font-size:28px;color:var(--sage)"></i></div>
+        <div class="strk-title" style="font-size:22px">One more thing</div>
+        <div class="strk-copy">Some phones aggressively stop background apps to save battery. Exempting bysloth keeps tracking reliable on long overnight legs.</div>
+        <button class="strk-cta" onclick="gpsRequestBatteryExemption()">Allow background activity</button>
+        <button class="strk-ghost" onclick="gpsSkipBatteryExemption()">Skip</button>
       </div>
     </div>`;
   } else if (_gpsPermsStep === 20) {
@@ -7202,6 +7378,7 @@ async function gpsReviewSave() {
       date:s.date, days:s.days, visited:true, diary:s.diary, photos:s.photos, _recorded:true })),
     legs, updated_at: new Date().toISOString(), recordingStarted: true
   };
+  gpsAttachTrail(trip);
   const trips = storage.get('trips') || [];
   trips.push(trip);
   storage.set('trips', trips);
@@ -7260,7 +7437,7 @@ function renderCrashRecover() {
 function gpsResumeFromCheckpoint() {
   const cp = gpsReadCheckpoint(); if (!cp) return;
   _gps.mode = cp.mode; _gps.planned = cp.plannedId ? _tripById(cp.plannedId) : null;
-  _gps.startedAt = cp.startedAt; _gps.stops = cp.stops; _gps.legs = cp.legs; _gps.positions = cp.positions || [];
+  _gps.startedAt = cp.startedAt; _gps.stops = cp.stops; _gps.legs = cp.legs; _gps.suggestions = cp.suggestions || []; _gps.positions = cp.positions || [];
   _gps.paused = false; _gps.dwellStart = null;
   document.body.classList.add('recording-active');
   if (cp.mode === 'gps') gpsRestartWatcher();
@@ -7280,7 +7457,7 @@ async function gpsRestartWatcher() {
 function gpsReviewFromCheckpoint() {
   const cp = gpsReadCheckpoint(); if (!cp) return;
   _gps.mode = cp.mode; _gps.planned = cp.plannedId ? _tripById(cp.plannedId) : null;
-  _gps.startedAt = cp.startedAt; _gps.stops = cp.stops; _gps.legs = cp.legs; _gps.positions = cp.positions || [];
+  _gps.startedAt = cp.startedAt; _gps.stops = cp.stops; _gps.legs = cp.legs; _gps.suggestions = cp.suggestions || []; _gps.positions = cp.positions || [];
   _gpsReview = null; // force rebuild from the restored session
   switchTab('recreview', null);
 }
@@ -7454,6 +7631,41 @@ function jdPendingDetection(t) {
   return alreadyIn ? null : last;
 }
 
+// "Possible stops" — short pauses (§ suggestions feature) the dwell
+// threshold didn't confirm as real stops. Reverse geocoding is lazy: show
+// the raw coordinate first, resolve the name in the background, and
+// re-render once known (cached by rounded coordinate across renders).
+let _gpsSuggestionNames = {};
+function jdRenderSuggestions() {
+  if (!_gps.suggestions.length) return '';
+  const rows = _gps.suggestions.map((s, i) => {
+    const key = `${s.lat.toFixed(4)},${s.lon.toFixed(4)}`;
+    let name = _gpsSuggestionNames[key];
+    if (name === undefined) {
+      _gpsSuggestionNames[key] = null; // mark pending so we don't refire every render
+      reverseGeocode(s.lat, s.lon).then(n => {
+        _gpsSuggestionNames[key] = n || null;
+        if (document.getElementById('journeyPanel')?.offsetParent) renderJourneyDetail();
+      });
+    }
+    const label = name || `${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}`;
+    const mins = Math.max(1, Math.round(s.durationMs / 60000));
+    const when = new Date(s.time).toLocaleDateString('en',{month:'short',day:'numeric'}) + ', ' + new Date(s.time).toLocaleTimeString('en',{hour:'numeric',minute:'2-digit'});
+    return `<div class="jd-suggest-row">
+      <div>
+        <div class="jd-suggest-name">${label}</div>
+        <div class="jd-suggest-meta">paused ~${mins} min · ${when}</div>
+      </div>
+      <div class="jd-suggest-actions">
+        <button class="jd-suggest-dismiss" onclick="gpsDismissSuggestion(${i})" aria-label="Dismiss"><i class="ph ph-x"></i></button>
+        <button class="jd-suggest-add" onclick="gpsAddSuggestionAsStop(${i})"><i class="ph ph-plus"></i> Add</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="jd-section-lbl" style="margin-top:16px">Possible stops</div>
+    <div class="jd-suggest-list">${rows}</div>`;
+}
+
 function jdJourneyTabHTML(t, stops, legs, m) {
   const cur = t.currency || 'USD';
   const pct = m.total ? Math.round(m.visited / m.total * 100) : 0;
@@ -7568,6 +7780,15 @@ function jdJourneyTabHTML(t, stops, legs, m) {
       h += live && s.visited
         ? `<div class="jd-leg-days-edit"><input type="number" min="0" value="${s.days}" onchange="jdEditDays(${i}, this.value)"/><span>d stay</span><span class="jd-days-badge${s.daysAuto===false?' edited':''}">${s.daysAuto===false?'edited':(gps?'auto · from tracking':'manual')}</span></div>`
         : `<div class="jd-leg-days">${s.days}d stay</div>`;
+    } else if (s._recorded && s.arrived_at) {
+      // GPS-recorded stops don't carry a planner-style `.days` count — derive
+      // the stay duration from arrived_at/departed_at instead (§ departed_at fix).
+      const arrivedT = Date.parse(s.arrived_at);
+      const departedT = s.departed_at ? Date.parse(s.departed_at) : Date.now();
+      const stayMs = Math.max(0, departedT - arrivedT);
+      const stayH = Math.floor(stayMs / 36e5), stayM = Math.round((stayMs % 36e5) / 6e4);
+      const stayLbl = stayH ? `${stayH}h ${stayM}m` : `${stayM}m`;
+      h += `<div class="jd-leg-days">${(gps && isCur) ? `${stayLbl} so far` : `Stayed ${stayLbl}`}</div>`;
     }
     // Notes/photos only show while live (matching v2 exactly) -- the plain,
     // non-live Journey view leads with the Journal Saved summary card
@@ -7690,6 +7911,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
           </div>`}
     </div>`;
   }
+  if (gps) h += jdRenderSuggestions();
 
   // Separator + honesty note + elevation at bottom of legs
   h += `<div style="margin-top:28px;border-top:1px solid var(--border)"></div>`;
@@ -8081,9 +8303,12 @@ async function renderMapView() {
   mapEl.innerHTML = '';
   if (_mapViewLeafletMap) { try { _mapViewLeafletMap.remove(); } catch(e){} _mapViewLeafletMap = null; }
   _mapViewLeafletMap = L.map('mapviewMapEl', { zoomControl:false, attributionControl:false, scrollWheelZoom:false });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_mapViewLeafletMap);
-  const ll = coords.map(c => [c.lat, c.lon]);
-  L.polyline(ll, { color:'#D9973D', weight:2.5, opacity:0.8, dashArray:'5 7' }).addTo(_mapViewLeafletMap);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+  }).addTo(_mapViewLeafletMap);
+  const trail = t?.data?.gps_trail;
+  const ll = trail?.length ? trail.map(p => [p[0], p[1]]) : coords.map(c => [c.lat, c.lon]);
+  L.polyline(ll, { color:'#D9973D', weight: trail?.length ? 3 : 2.5, opacity: trail?.length ? 0.85 : 0.8, dashArray: trail?.length ? null : '5 7' }).addTo(_mapViewLeafletMap);
   coords.forEach((c, i) => {
     L.circleMarker([c.lat, c.lon], {
       radius: i===_mapViewSel ? 7 : 5, color:'#fff', weight:2,
@@ -8119,9 +8344,12 @@ async function jdInitMap(stops, legs) {
   mapEl.innerHTML = '';
   if (_jdMap) { try { _jdMap.remove(); } catch(e){} _jdMap = null; }
   _jdMap = L.map('jdMapEl', { zoomControl:true, attributionControl:false, scrollWheelZoom:false });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_jdMap);
-  const ll = coords.map(c => [c.lat, c.lon]);
-  L.polyline(ll, { color:'#D9973D', weight:2.5, opacity:0.75, dashArray:'5 7' }).addTo(_jdMap);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+  }).addTo(_jdMap);
+  const trail = _journeyTrip?.data?.gps_trail;
+  const ll = trail?.length ? trail.map(p => [p[0], p[1]]) : coords.map(c => [c.lat, c.lon]);
+  L.polyline(ll, { color:'#D9973D', weight: trail?.length ? 3 : 2.5, opacity: trail?.length ? 0.85 : 0.75, dashArray: trail?.length ? null : '5 7' }).addTo(_jdMap);
   coords.forEach((c, i) => {
     const first = i===0, last = i===coords.length-1;
     L.circleMarker([c.lat, c.lon], {
@@ -8186,8 +8414,10 @@ async function jdInitMiniMap(stops, legs) {
   if (!mapEl || coords.length < 2) return;
   if (_jdMiniMap) { try { _jdMiniMap.remove(); } catch(e){} _jdMiniMap = null; }
   _jdMiniMap = L.map('jdMiniMapEl', { zoomControl:false, attributionControl:false, scrollWheelZoom:false, dragging:false, touchZoom:false });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_jdMiniMap);
-  L.polyline(coords, { color:'#D9973D', weight:2.5, opacity:0.8, dashArray:'5 7' }).addTo(_jdMiniMap);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(_jdMiniMap);
+  const trail = _journeyTrip?.data?.gps_trail;
+  const trailLl = trail?.length ? trail.map(p => [p[0], p[1]]) : coords;
+  L.polyline(trailLl, { color:'#D9973D', weight: trail?.length ? 3 : 2.5, opacity: trail?.length ? 0.85 : 0.8, dashArray: trail?.length ? null : '5 7' }).addTo(_jdMiniMap);
   L.circleMarker(coords[0], { radius:5, color:'#fff', weight:2, fillColor:'#0A0A0A', fillOpacity:1 }).addTo(_jdMiniMap);
   L.circleMarker(coords[coords.length-1], { radius:5, color:'#fff', weight:2, fillColor:'#D9973D', fillOpacity:1 }).addTo(_jdMiniMap);
   _jdMiniMap.fitBounds(L.latLngBounds(coords).pad(0.2));
@@ -8850,9 +9080,10 @@ async function recInitStickyMap() {
   for (const s of stops) { if (!s.name) continue; const g = await stopCoords(s); if (g) coords.push({ ...s, lat:g.lat, lon:g.lon }); }
   if (!coords.length || !document.getElementById('rjStickyMap')) return;
   _recMap = L.map('rjStickyMap', { zoomControl:false, attributionControl:false, scrollWheelZoom:false });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { maxZoom:15 }).addTo(_recMap);
-  const ll = coords.map(c => [c.lat, c.lon]);
-  L.polyline(ll, { color:'#D9973D', weight:2.5, opacity:0.75, dashArray:'5 7' }).addTo(_recMap);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(_recMap);
+  const trail = _recTrip?.data?.gps_trail;
+  const ll = trail?.length ? trail.map(p => [p[0], p[1]]) : coords.map(c => [c.lat, c.lon]);
+  L.polyline(ll, { color:'#D9973D', weight: trail?.length ? 3 : 2.5, opacity: trail?.length ? 0.85 : 0.75, dashArray: trail?.length ? null : '5 7' }).addTo(_recMap);
   coords.forEach((c, i) => {
     const first=i===0, lastC=i===coords.length-1;
     L.circleMarker([c.lat,c.lon], { radius:first||lastC?6:5, color:'#fff', weight:2, fillColor:c.visited?'#3D7A3D':lastC?'#D9973D':'#94A0B0', fillOpacity:1 })
