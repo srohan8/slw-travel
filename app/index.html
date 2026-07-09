@@ -2097,7 +2097,12 @@ const AFF = {
 };
 
 // ── App state ─────────────────────────────────────────────────────
-const MODES = ['bus','train','hitchhike','ferry','walk','cycle','motorbike','taxi','flight','shared taxi'];
+// "flight" deliberately excluded — bysloth is overland-only, no flights, ever
+// (per the hero copy). It's never a mode a user actively picks; it only ever
+// appears as a GPS-speed-anomaly label (gpsModeFromSpeedKmh) or from
+// importing a real historical trip (IMPORT_MODE_MAP) — both keep their own
+// flight handling, they just don't feed from this selectable-modes list.
+const MODES = ['bus','train','hitchhike','ferry','walk','cycle','motorbike','taxi','shared taxi'];
 const MODE_ICONS = {
   bus:          'ph-bus',
   train:        'ph-train',
@@ -2116,21 +2121,30 @@ const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Wal
 // Signal · transport mode accent colors (Session-2 §8 values)
 const MODE_COLORS = {
   bus:          '#6B4F3A', // bark
-  train:        '#2E2E2E', // ink-600
+  // train previously reused ink-600 (#2E2E2E) -- the same value as --fern,
+  // the neutral/no-color-assigned token -- so it visually read as "no
+  // color" rather than a real mode accent. Forest green: distinct from
+  // every other mode, stays out of the "no blue" rule, legible on the map.
+  train:        '#3D6B4A', // forest green
   hitchhike:    '#C4622D', // rust — approved alternate accent
-  ferry:        '#3D3D3D', // ink-500 (was ocean blue)
+  // ferry previously reused ink-500 (#3D3D3D), same monotone-grey problem
+  // as train above. Teal-green reads as water without crossing into blue.
+  ferry:        '#3D5C52', // teal-green
   walk:         '#94A0B0', // text3 grey
   walking:      '#94A0B0',
   cycle:        '#9C6423', // mustard-700 (was ocean blue)
   motorbike:    '#7C4A9E', // purple — distinct from cycle/taxi's warm tones
   taxi:         '#B45309', // amber-brown
-  flight:       '#787878', // ink-300 (was slate blue)
+  flight:       '#787878', // ink-300 — kept muted/de-emphasized on purpose:
+                            // flight only ever appears as a GPS-speed
+                            // anomaly or imported historical leg, never a
+                            // mode a user picks (bysloth is overland-only)
   'shared taxi':'#B45309', // same as taxi
 };
 
 // Mode → tint (light bg for icon chip)
 const MODE_TINTS = {
-  bus:'#F4EADE', train:'rgba(46,46,46,0.08)', ferry:'#EBEBEB', hitchhike:'#FBE3D4',
+  bus:'#F4EADE', train:'#E5EEE7', ferry:'#E4EBE8', hitchhike:'#FBE3D4',
   walk:'#F2F4F6', walking:'#F2F4F6', cycle:'#FCEFDC', motorbike:'#F1E9F6',
   taxi:'#FEF3C7', flight:'#ECECEC', 'shared taxi':'#FEF3C7',
 };
@@ -5466,9 +5480,13 @@ function saveRouteToTrips() {
 // navigates itself. Mobile only; desktop keeps the named-save modal above.
 // ── Affiliate link renderers ──────────────────────────────────────
 function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowedInfoNames) {
+  // No "flight" branch here on purpose -- bysloth is overland-only, no
+  // flights, ever. A flight-labeled leg can still exist (GPS speed
+  // anomaly, or an imported historical trip), but it's never something to
+  // offer booking links for -- sources stays empty and the function
+  // returns '' below, same as any other mode with nothing to show.
   let sources = [], category = '';
-  if (mode === 'flight')                             { sources = AFF.flights;  category = 'flights'; }
-  else if (mode === 'bus' || mode === 'shared taxi') { sources = AFF.buses;    category = 'buses'; }
+  if (mode === 'bus' || mode === 'shared taxi') { sources = AFF.buses;    category = 'buses'; }
   else if (mode === 'train')                         { sources = AFF.trains;   category = 'trains'; }
   else if (mode === 'ferry')                         { sources = AFF.ferries;  category = 'ferries'; }
   else if (mode === 'hitchhike') {
@@ -8699,7 +8717,7 @@ function recToggleVisited(i) {
   recPersist(); renderRecordJournal();
 }
 // Inline editing of stop + leg fields
-const REC_MODE_LIST = ['bus','train','ferry','shared taxi','hitchhike','walking','cycle','motorbike','taxi','flight'];
+const REC_MODE_LIST = ['bus','train','ferry','shared taxi','hitchhike','walking','cycle','motorbike','taxi'];
 function recModeOptions(sel) {
   return REC_MODE_LIST.map(m => `<option value="${m}"${m===sel?' selected':''}>${MI[m]||m}</option>`).join('');
 }
