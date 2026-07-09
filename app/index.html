@@ -4779,6 +4779,65 @@ let _mapNeedsUpdate = false;
 let _plannerStops   = [];         // [{name}] built from current route suggestion
 let _plannerLegs    = [];         // [{mode}]
 
+// Shared OSRM road-geometry lookup, used by every map that draws a leg
+// between two stops (Planner preview, Journey Detail, mini-map, recording
+// map, Route Map) so land legs draw the real road, not a straight line.
+// Cached across all of them via the single _osrmMapCache above.
+const OSRM_PROFILE_BY_MODE = { bus:'driving', car:'driving', taxi:'driving', 'shared taxi':'driving',
+  hitchhike:'driving', motorbike:'driving', train:'driving', cycle:'cycling', walk:'foot', walking:'foot' };
+async function fetchOsrmGeometry(mode, lat1, lon1, lat2, lon2) {
+  const profile = OSRM_PROFILE_BY_MODE[mode] || 'driving';
+  const cKey = `${profile}:${lon1.toFixed(4)},${lat1.toFixed(4)}:${lon2.toFixed(4)},${lat2.toFixed(4)}`;
+  if (_osrmMapCache[cKey]) return _osrmMapCache[cKey];
+  try {
+    const r = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`);
+    const d = await r.json();
+    if (d.code === 'Ok' && d.routes?.[0]?.geometry?.coordinates?.length) {
+      return _osrmMapCache[cKey] = d.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+    }
+  } catch (e) {}
+  return null;
+}
+// Draws every leg between consecutive stops on a Leaflet map: OSRM road
+// geometry for land modes (placeholder straight line upgraded async), or a
+// straight/dashed line for flight/ferry legs or when OSRM has nothing.
+// Callers use this only when the trip has no real GPS trail to draw instead
+// (a single persisted gps_trail has no per-point timestamps, so it can't be
+// sliced per leg -- when present it's drawn as one whole-trip line, not via
+// this function). `coords` is [{lat,lon}] one per stop; `legs[i]` covers
+// coords[i]->coords[i+1].
+function drawRouteLegs(map, coords, legs) {
+  const lines = [];
+  for (let i = 0; i < coords.length - 1; i++) {
+    const a = coords[i], b = coords[i + 1];
+    if (a == null || b == null) continue;
+    const mode  = legs?.[i]?.mode || 'bus';
+    const color = MODE_COLORS[mode] || '#D9973D';
+    const isAir = mode === 'flight', isSea = mode === 'ferry';
+    const dash  = isAir ? '8 10' : (mode === 'walk' || mode === 'walking' || mode === 'cycle') ? '4 6' : null;
+
+    if (isAir || isSea) {
+      lines.push(L.polyline([[a.lat, a.lon], [b.lat, b.lon]], { color, weight: 2.5, opacity: 0.7, dashArray: isAir ? '8 10' : '4 8' }).addTo(map));
+      continue;
+    }
+    const placeholder = L.polyline([[a.lat, a.lon], [b.lat, b.lon]], { color, weight: 2, opacity: 0.3, dashArray: dash }).addTo(map);
+    lines.push(placeholder);
+    ((_i, _a, _b, _mode, _color, _dash) => {
+      (async () => {
+        await new Promise(res => setTimeout(res, _i * 160));
+        const latlngs = await fetchOsrmGeometry(_mode, _a.lat, _a.lon, _b.lat, _b.lon);
+        if (latlngs) {
+          const idx = lines.indexOf(placeholder);
+          if (idx >= 0) { placeholder.remove(); lines[idx] = L.polyline(latlngs, { color: _color, weight: 3, opacity: 0.82, dashArray: _dash }).addTo(map); }
+        } else {
+          try { placeholder.setStyle({ opacity: 0.7, weight: 3 }); } catch (e) {}
+        }
+      })();
+    })(i, a, b, mode, color, dash);
+  }
+  return lines;
+}
+
 async function geocodeStop(name) {
   if (!name?.trim()) return null;
   const key = name.trim().toLowerCase();
@@ -5071,46 +5130,11 @@ async function updatePlannerMap() {
   if (msgEl) msgEl.style.display = 'none';
   if (_mapNeedsUpdate) { updatePlannerMap(); return; }
 
-  // Draw leg lines — OSRM road geometry for land modes, straight dashed for air/sea
-  const _osrmProfile = { bus:'driving', car:'driving', taxi:'driving', 'shared taxi':'driving',
-    hitchhike:'driving', motorbike:'driving', train:'driving', cycle:'cycling', walk:'foot', walking:'foot' };
-  for (let i = 0; i < _plannerStops.length - 1; i++) {
-    if (!coords[i] || !coords[i + 1]) continue;
-    const mode  = _plannerLegs[i]?.mode || 'bus';
-    const color = MODE_COLORS[mode] || '#D9973D';
-    const isAir = mode === 'flight';
-    const isSea = mode === 'ferry';
-    const dash  = isAir ? '8 10' : (mode === 'walk' || mode === 'walking' || mode === 'cycle') ? '4 6' : null;
-    if (isAir || isSea) {
-      _mapLines.push(L.polyline([coords[i], coords[i + 1]], { color, weight: 2.5, opacity: 0.7, dashArray: isAir ? '8 10' : '4 8' }).addTo(_mapInstance));
-    } else {
-      const placeholder = L.polyline([coords[i], coords[i + 1]], { color, weight: 2, opacity: 0.3, dashArray: dash }).addTo(_mapInstance);
-      _mapLines.push(placeholder);
-      ((_i => {
-        (async () => {
-          const profile = _osrmProfile[mode] || 'driving';
-          const [lat1, lon1] = coords[_i], [lat2, lon2] = coords[_i + 1];
-          const cKey = `${profile}:${lon1.toFixed(4)},${lat1.toFixed(4)}:${lon2.toFixed(4)},${lat2.toFixed(4)}`;
-          let latlngs = _osrmMapCache[cKey];
-          if (!latlngs) {
-            await new Promise(res => setTimeout(res, _i * 160));
-            try {
-              const r = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`);
-              const d = await r.json();
-              if (d.code === 'Ok' && d.routes?.[0]?.geometry?.coordinates?.length)
-                latlngs = _osrmMapCache[cKey] = d.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-            } catch(e) {}
-          }
-          if (latlngs) {
-            const idx = _mapLines.indexOf(placeholder);
-            if (idx >= 0) { placeholder.remove(); _mapLines[idx] = L.polyline(latlngs, { color, weight: 3, opacity: 0.82, dashArray: dash }).addTo(_mapInstance); }
-          } else {
-            try { placeholder.setStyle({ opacity: 0.7, weight: 3 }); } catch(e) {}
-          }
-        })();
-      }))(i);
-    }
-  }
+  // Draw leg lines — OSRM road geometry for land modes, straight dashed for air/sea.
+  // Assign (not push-spread): drawRouteLegs' async placeholder-upgrade closures
+  // mutate this exact array in place, so _mapLines must be the same reference.
+  const legCoords = coords.map(c => c ? { lat: c[0], lon: c[1] } : null);
+  _mapLines = drawRouteLegs(_mapInstance, legCoords, _plannerLegs);
 
   // Numbered stop markers
   for (let i = 0; i < _plannerStops.length; i++) {
@@ -8313,8 +8337,12 @@ async function renderMapView() {
     maxZoom:19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
   }).addTo(_mapViewLeafletMap);
   const trail = t?.data?.gps_trail;
-  const ll = trail?.length ? trail.map(p => [p[0], p[1]]) : coords.map(c => [c.lat, c.lon]);
-  L.polyline(ll, { color:'#D9973D', weight: trail?.length ? 3 : 2.5, opacity: trail?.length ? 0.85 : 0.8, dashArray: trail?.length ? null : '5 7' }).addTo(_mapViewLeafletMap);
+  const ll = coords.map(c => [c.lat, c.lon]);
+  if (trail?.length) {
+    L.polyline(trail.map(p => [p[0], p[1]]), { color:'#D9973D', weight:3, opacity:0.85 }).addTo(_mapViewLeafletMap);
+  } else {
+    drawRouteLegs(_mapViewLeafletMap, coords, t?.legs);
+  }
   coords.forEach((c, i) => {
     L.circleMarker([c.lat, c.lon], {
       radius: i===_mapViewSel ? 7 : 5, color:'#fff', weight:2,
@@ -8354,8 +8382,11 @@ async function jdInitMap(stops, legs) {
     maxZoom:19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
   }).addTo(_jdMap);
   const trail = _journeyTrip?.data?.gps_trail;
-  const ll = trail?.length ? trail.map(p => [p[0], p[1]]) : coords.map(c => [c.lat, c.lon]);
-  L.polyline(ll, { color:'#D9973D', weight: trail?.length ? 3 : 2.5, opacity: trail?.length ? 0.85 : 0.75, dashArray: trail?.length ? null : '5 7' }).addTo(_jdMap);
+  if (trail?.length) {
+    L.polyline(trail.map(p => [p[0], p[1]]), { color:'#D9973D', weight:3, opacity:0.85 }).addTo(_jdMap);
+  } else {
+    drawRouteLegs(_jdMap, coords, legs);
+  }
   coords.forEach((c, i) => {
     const first = i===0, last = i===coords.length-1;
     L.circleMarker([c.lat, c.lon], {
@@ -8422,8 +8453,11 @@ async function jdInitMiniMap(stops, legs) {
   _jdMiniMap = L.map('jdMiniMapEl', { zoomControl:false, attributionControl:false, scrollWheelZoom:false, dragging:false, touchZoom:false });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(_jdMiniMap);
   const trail = _journeyTrip?.data?.gps_trail;
-  const trailLl = trail?.length ? trail.map(p => [p[0], p[1]]) : coords;
-  L.polyline(trailLl, { color:'#D9973D', weight: trail?.length ? 3 : 2.5, opacity: trail?.length ? 0.85 : 0.8, dashArray: trail?.length ? null : '5 7' }).addTo(_jdMiniMap);
+  if (trail?.length) {
+    L.polyline(trail.map(p => [p[0], p[1]]), { color:'#D9973D', weight:3, opacity:0.85 }).addTo(_jdMiniMap);
+  } else {
+    drawRouteLegs(_jdMiniMap, coords.map(c => ({ lat:c[0], lon:c[1] })), legs);
+  }
   L.circleMarker(coords[0], { radius:5, color:'#fff', weight:2, fillColor:'#0A0A0A', fillOpacity:1 }).addTo(_jdMiniMap);
   L.circleMarker(coords[coords.length-1], { radius:5, color:'#fff', weight:2, fillColor:'#D9973D', fillOpacity:1 }).addTo(_jdMiniMap);
   _jdMiniMap.fitBounds(L.latLngBounds(coords).pad(0.2));
@@ -9088,8 +9122,12 @@ async function recInitStickyMap() {
   _recMap = L.map('rjStickyMap', { zoomControl:false, attributionControl:false, scrollWheelZoom:false });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(_recMap);
   const trail = _recTrip?.data?.gps_trail;
-  const ll = trail?.length ? trail.map(p => [p[0], p[1]]) : coords.map(c => [c.lat, c.lon]);
-  L.polyline(ll, { color:'#D9973D', weight: trail?.length ? 3 : 2.5, opacity: trail?.length ? 0.85 : 0.75, dashArray: trail?.length ? null : '5 7' }).addTo(_recMap);
+  const ll = coords.map(c => [c.lat, c.lon]);
+  if (trail?.length) {
+    L.polyline(trail.map(p => [p[0], p[1]]), { color:'#D9973D', weight:3, opacity:0.85 }).addTo(_recMap);
+  } else {
+    drawRouteLegs(_recMap, coords, _recTrip?.legs);
+  }
   coords.forEach((c, i) => {
     const first=i===0, lastC=i===coords.length-1;
     L.circleMarker([c.lat,c.lon], { radius:first||lastC?6:5, color:'#fff', weight:2, fillColor:c.visited?'#3D7A3D':lastC?'#D9973D':'#94A0B0', fillOpacity:1 })
