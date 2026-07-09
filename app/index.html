@@ -1383,12 +1383,19 @@ window.addEventListener('unhandledrejection', (e) => {
   .mapview-sub{font-family:var(--mono);font-size:10px;color:rgba(245,240,232,0.55);letter-spacing:0.3px;margin-top:1px;}
   .mapview-body{flex:1;position:relative;overflow:hidden;}
   .mapview-map{position:absolute;inset:0;height:100%;}
-  .mapview-sheet{position:absolute;left:0;right:0;bottom:0;background:var(--bg);border-radius:14px 14px 0 0;padding:12px 14px 20px;}
-  .mapview-sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:0 auto 12px;}
-  .mapview-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+  .mapview-sheet{position:absolute;left:0;right:0;bottom:0;background:var(--bg);border-radius:14px 14px 0 0;padding:8px 14px 20px;display:flex;flex-direction:column;overflow:hidden;}
+  .mapview-sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:0 auto 10px;flex-shrink:0;cursor:grab;touch-action:none;}
+  .mapview-sheet-handle:active{cursor:grabbing;}
+  .mapview-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;flex-shrink:0;}
   .mapview-chip{flex-shrink:0;padding:8px 12px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);cursor:pointer;text-align:center;min-width:72px;font-size:12px;color:var(--text2);}
   .mapview-chip.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 10%,transparent);color:var(--text);font-weight:700;}
   .mapview-chip-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);margin:0 auto 4px;animation:recBlink 1s ease-in-out infinite;}
+  .mapview-stop-list{overflow-y:auto;margin-top:10px;display:flex;flex-direction:column;gap:6px;flex:1;min-height:0;}
+  .mapview-stop-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;border:0.5px solid var(--border);cursor:pointer;flex-shrink:0;}
+  .mapview-stop-row.on{border-color:var(--sage);background:color-mix(in srgb,var(--sage) 8%,transparent);}
+  .mapview-stop-row-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .mapview-stop-row-name{font-size:13px;font-weight:600;color:var(--text);}
+  .mapview-stop-row-date{font-size:11px;color:var(--text3);margin-top:1px;}
   .mapview-gps-upsell{position:absolute;top:16px;left:16px;right:16px;display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(9,16,34,0.84);border:1px solid var(--sage);border-radius:var(--radius-pill);padding:9px 14px;font-family:var(--mono);font-size:10.5px;color:var(--sage);cursor:pointer;backdrop-filter:blur(8px);}
   /* ── "How the journal works" explainer (v2 RecNotesMobile) ── */
   .recnotes-wrap{height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);}
@@ -4782,6 +4789,21 @@ const ELEV_CACHE_KEY = 'slw_elev_cache';
 let _elevCache = {};
 try { _elevCache = JSON.parse(localStorage.getItem(ELEV_CACHE_KEY) || '{}'); } catch(e) {}
 try { _geoCache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY) || '{}'); } catch(e) {}
+// One-time cleanup: geocodeStop() used to cache upstream errors (502s,
+// rate-limits) as if they were genuine "this place doesn't exist" results,
+// poisoning a name for 24h even after the service recovered. Purge any
+// existing failed entries once so a name that was wrongly blacklisted gets
+// a fresh chance -- real dead-ends just get re-cached as failed again.
+try {
+  if (localStorage.getItem('slw_geo_cache_purged_v1') !== '1') {
+    let purged = 0;
+    for (const k of Object.keys(_geoCache)) {
+      if (_geoCache[k]?.failed) { delete _geoCache[k]; purged++; }
+    }
+    if (purged) localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache));
+    localStorage.setItem('slw_geo_cache_purged_v1', '1');
+  }
+} catch(e) {}
 
 let _mapInstance    = null;
 let _mapMarkers     = [];
@@ -4895,6 +4917,15 @@ async function geocodeStop(name) {
     const url = PROXY_URL ? `${PROXY_URL}/api/geocode?q=${encodeURIComponent(name)}`
                            : `https://photon.komoot.io/api/?q=${encodeURIComponent(name)}&limit=1&lang=en`;
     const res  = await fetch(url);
+    if (!res.ok) {
+      // Upstream/proxy error (502, rate-limit, etc.) -- not a real "zero
+      // results" answer. Don't cache this as failed, or a transient hiccup
+      // poisons every future lookup for this name for a full 24h even once
+      // the service is healthy again -- exactly return null and let the
+      // next attempt retry against the network.
+      console.warn('Geocode upstream error:', name, res.status);
+      return null;
+    }
     const data = await res.json();
     const feat = data?.features?.[0];
     if (feat) {
@@ -4904,10 +4935,11 @@ async function geocodeStop(name) {
       try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch(e) {}
       return result;
     }
-    // Zero results (not a network failure) — cache briefly so a name that
-    // genuinely doesn't resolve isn't re-queried on every render. Network
-    // errors (caught below) aren't cached here since they're transient and
-    // unrelated to whether this specific name is valid.
+    // Zero results on a genuinely OK response (not an upstream error) --
+    // cache briefly so a name that genuinely doesn't resolve isn't
+    // re-queried on every render. Network errors (caught below) aren't
+    // cached here since they're transient and unrelated to whether this
+    // specific name is valid.
     _geoCache[key] = { failed: true, ts: Date.now() };
     try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch(e) {}
   } catch(e) { console.warn('Geocode failed:', name, e.message); }
@@ -8322,15 +8354,30 @@ function jdRecordingTabHTML() {
 }
 
 // ── Route Map (mobile full-screen, v2 MapViewMobile) ──────────────
+// List<->map sync: dragging the sheet up reveals a scrollable stop list.
+// Scrolling the list pans the map to the nearest visible stop; panning the
+// map (drag/pinch) selects the nearest stop and scrolls it into view in the
+// list. _mapViewSyncGuard prevents these two triggers from feeding back
+// into each other (a programmatic pan firing 'moveend', which would
+// otherwise re-trigger a list scroll, etc).
 let _mapViewTrip = null;
 let _mapViewSel = 0;
 let _mapViewLeafletMap = null;
+let _mapViewCoords = [];      // resolved {..stop, lat, lon} per visible stop, index-aligned with markers/list rows
+let _mapViewMarkers = [];     // Leaflet circleMarker refs, index-aligned with _mapViewCoords
+const MAPVIEW_SHEET_MIN = 108;
+let _mapViewSheetH = MAPVIEW_SHEET_MIN;
+let _mapViewSyncGuard = false;
+let _mapViewDrag = null;      // {startY, startH} while dragging the handle
+
 function openMapView(trip) {
   if (!trip) return;
   _mapViewTrip = trip;
   _mapViewSel = jdCurrentStopIdx(trip.stops || [], _gps.mode === 'manual');
+  _mapViewSheetH = MAPVIEW_SHEET_MIN;
   switchTab('mapview', null);
 }
+
 async function renderMapView() {
   const el = document.getElementById('mapViewPanel');
   const t = _mapViewTrip;
@@ -8354,19 +8401,26 @@ async function renderMapView() {
       <div id="mapviewMapEl" class="mapview-map"><div style="padding:2rem;text-align:center;color:rgba(245,240,232,0.5);font-size:13px">Loading map…</div></div>
       ${isGpsLive ? `<div class="gps-map-pill" style="top:16px;left:16px"><span class="gps-map-dot"></span> Live · ${_stopCityName(stops[curIdx]?.name)}</div>` : ''}
       ${isManualTracking ? `<button class="mapview-gps-upsell" onclick="openGpsPerms(_mapViewTrip)"><i class="ph ph-map-trifold"></i> No GPS · tap to enable live tracking</button>` : ''}
-      <div class="mapview-sheet">
-        <div class="mapview-sheet-handle"></div>
+      <div class="mapview-sheet" id="mapviewSheet" style="height:${_mapViewSheetH}px">
+        <div class="mapview-sheet-handle" id="mapviewHandle"></div>
         <div class="mapview-chips" id="mapviewChips">${stops.map((s,i) => `
-          <div class="mapview-chip${_mapViewSel===i?' on':''}" onclick="_mapViewSel=${i};renderMapView()">
+          <div class="mapview-chip${_mapViewSel===i?' on':''}" data-i="${i}">
             ${isTracking && i===curIdx ? `<div class="mapview-chip-dot"></div>` : ''}
             <div>${_stopCityName(s.name)||'—'}</div>
           </div>`).join('')}</div>
+        <div class="mapview-stop-list" id="mapviewStopList"></div>
       </div>
     </div>
   </div>`;
 
-  // Geocode + draw (same approach as jdInitMap, minus the legend/stop list --
-  // v2's MapViewMobile is just the map + chip strip, no per-stop metadata here).
+  document.getElementById('mapviewChips')?.querySelectorAll('.mapview-chip').forEach(chipEl => {
+    chipEl.onclick = () => mapViewSelectStop(+chipEl.dataset.i, 'chip');
+  });
+  mapViewInitDrag();
+
+  // Geocode + draw (same approach as jdInitMap, minus the legend --
+  // v2's MapViewMobile leads with the map + chip strip; the stop list only
+  // appears once the sheet is dragged open).
   const coords = [];
   for (const s of stops) {
     if (!s.name) continue;
@@ -8376,6 +8430,7 @@ async function renderMapView() {
   const mapEl = document.getElementById('mapviewMapEl');
   if (!mapEl) return; // navigated away
   if (!coords.length) { mapEl.innerHTML = '<div style="padding:2rem;text-align:center;color:rgba(245,240,232,0.5);font-size:13px">Couldn\'t map these stops.</div>'; return; }
+  _mapViewCoords = coords;
 
   mapEl.innerHTML = '';
   if (_mapViewLeafletMap) { try { _mapViewLeafletMap.remove(); } catch(e){} _mapViewLeafletMap = null; }
@@ -8390,13 +8445,115 @@ async function renderMapView() {
   } else {
     drawRouteLegs(_mapViewLeafletMap, coords, t?.legs);
   }
-  coords.forEach((c, i) => {
-    L.circleMarker([c.lat, c.lon], {
+  _mapViewMarkers = coords.map((c, i) => L.circleMarker([c.lat, c.lon], {
       radius: i===_mapViewSel ? 7 : 5, color:'#fff', weight:2,
       fillColor: isTracking && i===curIdx ? '#FF5014' : c.visited ? '#3D7A3D' : '#94A0B0', fillOpacity:1
-    }).addTo(_mapViewLeafletMap);
-  });
+    }).on('click', () => mapViewSelectStop(i, 'marker')).addTo(_mapViewLeafletMap));
   _mapViewLeafletMap.fitBounds(L.latLngBounds(ll).pad(0.25));
+
+  _mapViewLeafletMap.on('moveend', () => {
+    if (_mapViewSyncGuard || !_mapViewCoords.length) return;
+    const center = _mapViewLeafletMap.getCenter();
+    let bestIdx = 0, bestDist = Infinity;
+    _mapViewCoords.forEach((c, i) => {
+      const d = (c.lat - center.lat) ** 2 + (c.lon - center.lng) ** 2;
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
+    });
+    if (bestIdx !== _mapViewSel) mapViewSelectStop(bestIdx, 'map');
+  });
+
+  mapViewRenderStopList(stops, isTracking, curIdx);
+}
+
+// One place all stop selection flows through -- chip tap, list row tap,
+// marker tap, list scroll, and map pan -- so highlighting stays consistent
+// and the sync guard only needs to live in one spot. `source` decides which
+// side NOT to re-drive, so the two-way sync doesn't feed back into itself.
+function mapViewSelectStop(idx, source) {
+  const c = _mapViewCoords[idx]; if (!c) return;
+  _mapViewSel = idx;
+
+  document.getElementById('mapviewChips')?.querySelectorAll('.mapview-chip').forEach((el, i) => el.classList.toggle('on', i === idx));
+  document.getElementById('mapviewStopList')?.querySelectorAll('.mapview-stop-row').forEach((el, i) => el.classList.toggle('on', i === idx));
+  _mapViewMarkers.forEach((m, i) => m.setRadius(i === idx ? 7 : 5));
+
+  if (source !== 'map' && _mapViewLeafletMap) {
+    _mapViewSyncGuard = true;
+    _mapViewLeafletMap.panTo([c.lat, c.lon]);
+    setTimeout(() => { _mapViewSyncGuard = false; }, 350);
+  }
+  if (source !== 'list') {
+    document.getElementById('mapviewStopList')?.querySelectorAll('.mapview-stop-row')[idx]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+function mapViewRenderStopList(stops, isTracking, curIdx) {
+  const listEl = document.getElementById('mapviewStopList');
+  if (!listEl) return;
+  listEl.innerHTML = stops.map((s, i) => {
+    const dateLblD = parseStopDate(s.date);
+    const dateLbl = dateLblD ? dateLblD.toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
+    const dotColor = isTracking && i===curIdx ? '#FF5014' : s.visited ? '#3D7A3D' : '#94A0B0';
+    return `<div class="mapview-stop-row${_mapViewSel===i?' on':''}" data-i="${i}">
+      <span class="mapview-stop-row-dot" style="background:${dotColor}"></span>
+      <div><div class="mapview-stop-row-name">${_stopCityName(s.name)||'—'}</div>${dateLbl?`<div class="mapview-stop-row-date">${dateLbl}</div>`:''}</div>
+    </div>`;
+  }).join('');
+  listEl.querySelectorAll('.mapview-stop-row').forEach(rowEl => {
+    rowEl.onclick = () => mapViewSelectStop(+rowEl.dataset.i, 'list');
+  });
+  let scrollTimer = null;
+  listEl.onscroll = () => {
+    if (_mapViewSyncGuard) return;
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      const rows = [...listEl.querySelectorAll('.mapview-stop-row')];
+      const listTop = listEl.getBoundingClientRect().top;
+      let bestIdx = 0, bestDist = Infinity;
+      rows.forEach((r, i) => {
+        const d = Math.abs(r.getBoundingClientRect().top - listTop);
+        if (d < bestDist) { bestDist = d; bestIdx = i; }
+      });
+      if (bestIdx !== _mapViewSel) mapViewSelectStop(bestIdx, 'list');
+    }, 120);
+  };
+}
+
+// Drag the handle to resize the sheet between its collapsed (chips only)
+// and expanded (scrollable stop list visible) heights. renderMapView()
+// rebuilds #mapviewHandle/#mapviewSheet on every screen-open, so their own
+// listeners are naturally thrown away with the old DOM nodes -- but the
+// window-level mousemove/mouseup (desktop drag support) are not, so those
+// are attached exactly once via _mapViewWindowDragBound, looking up the
+// current sheet/drag-state fresh on every call instead of closing over a
+// stale element reference.
+let _mapViewWindowDragBound = false;
+function mapViewInitDrag() {
+  const handle = document.getElementById('mapviewHandle');
+  const sheet = document.getElementById('mapviewSheet');
+  if (!handle || !sheet) return;
+  const start = (clientY) => { _mapViewDrag = { startY: clientY, startH: _mapViewSheetH }; };
+  const move = (clientY) => {
+    if (!_mapViewDrag) return;
+    const sheetEl = document.getElementById('mapviewSheet');
+    if (!sheetEl) return;
+    const body = document.querySelector('.mapview-body');
+    const maxH = Math.round((body?.clientHeight || window.innerHeight) * 0.68);
+    const h = Math.max(MAPVIEW_SHEET_MIN, Math.min(maxH, _mapViewDrag.startH + (_mapViewDrag.startY - clientY)));
+    _mapViewSheetH = h;
+    sheetEl.style.height = h + 'px';
+    if (_mapViewLeafletMap) setTimeout(() => _mapViewLeafletMap.invalidateSize(), 0);
+  };
+  const end = () => { _mapViewDrag = null; };
+  handle.addEventListener('touchstart', e => start(e.touches[0].clientY), { passive: true });
+  handle.addEventListener('touchmove', e => move(e.touches[0].clientY), { passive: true });
+  handle.addEventListener('touchend', end);
+  handle.addEventListener('mousedown', e => { start(e.clientY); e.preventDefault(); });
+  if (!_mapViewWindowDragBound) {
+    _mapViewWindowDragBound = true;
+    window.addEventListener('mousemove', e => move(e.clientY));
+    window.addEventListener('mouseup', end);
+  }
 }
 
 async function jdInitMap(stops, legs) {
