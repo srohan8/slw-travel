@@ -4837,6 +4837,35 @@ function drawRouteLegs(map, coords, legs) {
   }
   return lines;
 }
+// Draws a real GPS trail (already-simplified [[lat,lon],...] in traversal
+// order) segmented per leg and colored by transport mode, instead of one
+// flat-color line for the whole trip. The persisted trail has no per-point
+// timestamps to slice by time, so segments are found geometrically: the
+// trail index nearest each stop's coordinates marks that leg's boundary.
+function drawGpsTrailByLeg(map, trail, coords, legs) {
+  if (!trail?.length) return [];
+  if (!coords?.length || coords.length < 2) {
+    return [L.polyline(trail.map(p => [p[0], p[1]]), { color:'#D9973D', weight:3, opacity:0.85 }).addTo(map)];
+  }
+  const idxForStop = coords.map(c => {
+    let bestIdx = 0, bestDist = Infinity;
+    trail.forEach((p, i) => {
+      const d = (p[0] - c.lat) ** 2 + (p[1] - c.lon) ** 2;
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
+    });
+    return bestIdx;
+  });
+  const lines = [];
+  for (let i = 0; i < coords.length - 1; i++) {
+    let from = idxForStop[i], to = idxForStop[i + 1];
+    if (to < from) [from, to] = [to, from];
+    const seg = trail.slice(from, to + 1);
+    if (seg.length < 2) continue;
+    const mode = legs?.[i]?.mode || 'bus';
+    lines.push(L.polyline(seg.map(p => [p[0], p[1]]), { color: MODE_COLORS[mode] || '#D9973D', weight:3, opacity:0.85 }).addTo(map));
+  }
+  return lines;
+}
 
 async function geocodeStop(name) {
   if (!name?.trim()) return null;
@@ -8339,7 +8368,7 @@ async function renderMapView() {
   const trail = t?.data?.gps_trail;
   const ll = coords.map(c => [c.lat, c.lon]);
   if (trail?.length) {
-    L.polyline(trail.map(p => [p[0], p[1]]), { color:'#D9973D', weight:3, opacity:0.85 }).addTo(_mapViewLeafletMap);
+    drawGpsTrailByLeg(_mapViewLeafletMap, trail, coords, t?.legs);
   } else {
     drawRouteLegs(_mapViewLeafletMap, coords, t?.legs);
   }
@@ -8383,7 +8412,7 @@ async function jdInitMap(stops, legs) {
   }).addTo(_jdMap);
   const trail = _journeyTrip?.data?.gps_trail;
   if (trail?.length) {
-    L.polyline(trail.map(p => [p[0], p[1]]), { color:'#D9973D', weight:3, opacity:0.85 }).addTo(_jdMap);
+    drawGpsTrailByLeg(_jdMap, trail, coords, legs);
   } else {
     drawRouteLegs(_jdMap, coords, legs);
   }
@@ -8453,10 +8482,11 @@ async function jdInitMiniMap(stops, legs) {
   _jdMiniMap = L.map('jdMiniMapEl', { zoomControl:false, attributionControl:false, scrollWheelZoom:false, dragging:false, touchZoom:false });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(_jdMiniMap);
   const trail = _journeyTrip?.data?.gps_trail;
+  const coordObjs = coords.map(c => ({ lat:c[0], lon:c[1] }));
   if (trail?.length) {
-    L.polyline(trail.map(p => [p[0], p[1]]), { color:'#D9973D', weight:3, opacity:0.85 }).addTo(_jdMiniMap);
+    drawGpsTrailByLeg(_jdMiniMap, trail, coordObjs, legs);
   } else {
-    drawRouteLegs(_jdMiniMap, coords.map(c => ({ lat:c[0], lon:c[1] })), legs);
+    drawRouteLegs(_jdMiniMap, coordObjs, legs);
   }
   L.circleMarker(coords[0], { radius:5, color:'#fff', weight:2, fillColor:'#0A0A0A', fillOpacity:1 }).addTo(_jdMiniMap);
   L.circleMarker(coords[coords.length-1], { radius:5, color:'#fff', weight:2, fillColor:'#D9973D', fillOpacity:1 }).addTo(_jdMiniMap);
@@ -9124,7 +9154,7 @@ async function recInitStickyMap() {
   const trail = _recTrip?.data?.gps_trail;
   const ll = coords.map(c => [c.lat, c.lon]);
   if (trail?.length) {
-    L.polyline(trail.map(p => [p[0], p[1]]), { color:'#D9973D', weight:3, opacity:0.85 }).addTo(_recMap);
+    drawGpsTrailByLeg(_recMap, trail, coords, _recTrip?.legs);
   } else {
     drawRouteLegs(_recMap, coords, _recTrip?.legs);
   }
