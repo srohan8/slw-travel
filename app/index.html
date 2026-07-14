@@ -23,6 +23,9 @@ window.onerror = (msg, src, line, col, err) => {
 window.addEventListener('unhandledrejection', (e) => {
   showFatalError(`Unhandled rejection:\n${e.reason?.message || e.reason}\n${e.reason?.stack || ''}`);
 });
+// Flags the native app so web-only styling (see the desktop top-nav
+// overrides below) can never apply there, regardless of viewport width.
+if (window.Capacitor) document.documentElement.classList.add('native-app');
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="showFatalError('CDN load failed: supabase-js (cdn.jsdelivr.net unreachable)')"></script>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
@@ -88,12 +91,46 @@ window.addEventListener('unhandledrejection', (e) => {
   .nav-utils .btn{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.22);}
   .nav-utils .btn:hover{background:rgba(255,255,255,0.14);color:var(--cream);}
   .nav-utils select{font-size:12px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);border:0.5px solid rgba(255,255,255,0.22);border-radius:var(--radius);padding:5px 8px;outline:none;font-family:inherit;cursor:pointer;}
+  /* Desktop top nav: white background on the web build only — the native
+     app keeps the dark bar. `nav:not(#bottomNav)` is already hidden on
+     mobile (see @media(max-width:640px) below), and `html.native-app` is
+     set from window.Capacitor at load, so this can't leak into the app
+     even on a wide native viewport (tablet, landscape). */
+  html:not(.native-app) nav:not(#bottomNav){background:var(--bg);box-shadow:0 2px 12px rgba(14,26,46,0.08);border-bottom:0.5px solid var(--border);}
+  html:not(.native-app) nav:not(#bottomNav) .logo{color:var(--text);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-link{color:var(--text3);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-link:hover{color:var(--text);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-link.active{color:var(--text);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-vsep{background:var(--border2);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-avatar{border-color:var(--border2);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-utils .btn{background:var(--bg2);color:var(--text2);border-color:var(--border2);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-utils .btn:hover{background:var(--bg3);color:var(--text);}
+  html:not(.native-app) nav:not(#bottomNav) .nav-utils select{background:var(--bg2);color:var(--text2);border-color:var(--border2);}
   .btn-primary{font-weight:700;background:var(--sage);color:var(--cta-text);border-color:var(--sage);box-shadow:0 2px 4px rgba(217,151,61,0.25);}
   .btn-primary:hover{background:#C07E2E;border-color:#C07E2E;transform:translateY(-1px);box-shadow:0 4px 8px rgba(217,151,61,0.35);}
   .container{max-width:860px;margin:0 auto;padding:2rem 1.25rem;}
-  .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;background:transparent;outline:none;width:320px;letter-spacing:-0.3px;transition:color .2s;}
+  /* App footer — desktop only; mobile already has the bottom nav for this. */
+  .app-footer{margin-top:32px;padding:20px 22px 0;border-top:0.5px solid var(--border);}
+  .app-footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+  .app-footer-logo{display:flex;align-items:center;gap:7px;text-decoration:none;}
+  .app-footer-logo img{height:20px;opacity:0.7;}
+  .app-footer-logo-text{font-size:14px;font-weight:500;color:var(--text2);font-family:var(--body);}
+  .app-footer-links{display:flex;flex-wrap:wrap;align-items:center;}
+  .app-footer-links a{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .2s;}
+  .app-footer-links a:hover{color:var(--text2);}
+  .app-footer-links a:not(:first-child){margin-left:16px;}
+  .app-footer-links a:not(:first-child)::before{content:'|';display:inline-block;margin-right:16px;color:var(--border2);}
+  .app-footer-copy{font-family:var(--mono);font-size:11px;color:var(--text3);}
+  @media(max-width:640px){.app-footer{display:none !important;}}
+  .trip-title{font-size:22px;font-weight:300;font-family:var(--serif);color:var(--text);border:none;background:transparent;outline:none;width:320px;letter-spacing:-0.3px;transition:color .2s, border-color .2s, background .2s;}
   .trip-title:focus{color:var(--fern);}
   .trip-title::placeholder{color:var(--text3);font-weight:300;}
+  /* Web only — reads as plain heading text otherwise, with no affordance
+     that it's actually an editable field. Mobile is untouched. */
+  @media(min-width:641px){
+    .trip-title{border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);padding:8px 12px;}
+    .trip-title:focus{border-color:var(--fern);background:var(--bg);}
+  }
   .panel{display:none;animation: fadeIn 0.3s ease;}.panel.active{display:block;}
   @keyframes fadeIn { from {opacity:0; transform: translateY(5px);} to {opacity:1; transform: translateY(0);} }
   .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.2rem;box-shadow: var(--shadow);}
@@ -483,7 +520,7 @@ window.addEventListener('unhandledrejection', (e) => {
      accent, but that's --signal in this app's actual token system --
      reserved exclusively for live/recording indicators. Using --sage
      (mustard) instead, per CLAUDE.md. */
-  .feature-strip-lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);font-weight:600;margin-bottom:10px;}
+  .feature-strip-lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);font-weight:600;margin-top:24px;margin-bottom:10px;}
   .feature-strip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:20px;}
   .feature-tile{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 4px 12px;background:var(--bg);border:0.5px solid color-mix(in srgb,var(--sage) 25%,transparent);border-radius:var(--radius-lg);cursor:pointer;font-family:var(--body);animation:tileIn 0.45s cubic-bezier(0.16,1,0.3,1) both;}
   .feature-tile-icon{width:34px;height:34px;border-radius:17px;background:color-mix(in srgb,var(--sage) 14%,transparent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -535,7 +572,7 @@ window.addEventListener('unhandledrejection', (e) => {
   .guest-banner-cta:hover{background:#E0440C;}
 
   /* ── Floating route map widget (Leaflet + OSM) ──────── */
-  #plannerMapWrap{position:fixed;right:18px;bottom:18px;z-index:900;width:360px;max-width:calc(100vw - 36px);border-radius:var(--radius-lg);border:0.5px solid var(--border);background:var(--bg);overflow:hidden;box-shadow:var(--shadow-float);display:none;transition:width .2s,height .2s,inset .2s,border-radius .2s;}
+  #plannerMapWrap{position:fixed;right:18px;bottom:18px;z-index:900;width:200px;max-width:calc(100vw - 36px);border-radius:var(--radius-lg);border:0.5px solid var(--border);background:var(--bg);overflow:hidden;box-shadow:var(--shadow-float);display:none;transition:width .2s,height .2s,inset .2s,border-radius .2s;}
   body.show-floating-map #plannerMapWrap{display:block;}
   #plannerMapWrap .pmw-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;background:var(--dusk);border-bottom:0.5px solid rgba(255,255,255,0.08);}
   #plannerMapWrap .pmw-title{font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
@@ -1510,6 +1547,7 @@ window.addEventListener('unhandledrejection', (e) => {
      this bar replaces the tab bar's slot, matching Journey Detail's treatment. */
   .rec-mobile-save-bar{display:flex !important;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:20;padding:11px 14px calc(11px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:0.5px solid var(--border);box-shadow:0 -4px 24px rgba(14,26,46,0.08);}
   .rec-mobile-cancel{padding:12px 16px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--body);flex-shrink:0;}
+  .rec-mobile-refine{width:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:12px;border-radius:var(--radius-pill);border:0.5px solid var(--border2);background:var(--bg2);color:var(--sage);font-size:16px;cursor:pointer;font-family:var(--body);}
   .rec-mobile-save{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--radius-pill);border:none;background:var(--sage);color:var(--ink-900);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body);}
   /* Share/Cancel/Save at the top of the editor duplicate the mobile fixed
      bottom bar (Cancel + Save) -- and Share isn't relevant while editing --
@@ -1710,6 +1748,7 @@ window.addEventListener('unhandledrejection', (e) => {
                 <button class="pill" onclick="toggleMode(this,'ferry')">Ferry</button>
                 <button class="pill" onclick="toggleMode(this,'shared taxi')">Shared taxi</button>
                 <button class="pill" onclick="toggleMode(this,'walking')">Walking</button>
+                <button class="pill" onclick="toggleMode(this,'cycle')">Cycle</button>
               </div>
               <div class="psc-sep"></div>
               <div class="pills" id="pacePills">
@@ -1726,7 +1765,7 @@ window.addEventListener('unhandledrejection', (e) => {
           </div>
         </div>
         <div class="psc-footer-cta">
-          <span id="planFormHint" style="font-size:12px;color:var(--text3)">Free · 3 routes a month · no card</span>
+          <span id="planFormHint" style="font-size:12px;color:var(--text3)">Free · no card</span>
           <span style="flex:1"></span>
           <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
         </div>
@@ -1770,6 +1809,7 @@ window.addEventListener('unhandledrejection', (e) => {
       <input class="trip-title" placeholder="Name your trip..." value="My overland journey" id="tripTitle"/>
       <div class="save-trip-actions">
         <button class="import-route-btn" onclick="openImportModal()" title="Import a route from GPX, Excel or CSV"><i class="ph ph-upload-simple" style="font-size:13px"></i> Import a route</button>
+        <button id="btnAIRefine" class="btn editor-top-action" style="display:none" onclick="refineWithAI()" title="Ask AI to fill in missing route details (booking sites, km, hours, costs)"><i class="ph ph-sparkle" style="font-size:13px"></i> AI Refine</button>
         <button class="btn editor-delete-btn" id="deleteTripBtn" onclick="deleteCurrentTrip()" style="display:none" title="Delete this trip"><i class="ph ph-trash" style="font-size:13px"></i><span class="editor-delete-lbl"> Delete</span></button>
         <button class="btn editor-top-action" id="shareLinkBtn" onclick="shareTripLink()" title="Copy shareable link"><i class="ph ph-share-network" style="font-size:13px"></i> Share link</button>
         <button class="btn editor-top-action" onclick="cancelEditTrip()">Cancel</button>
@@ -1809,6 +1849,7 @@ window.addEventListener('unhandledrejection', (e) => {
     <div id="budgetBar"></div>
     <div class="rec-mobile-save-bar">
       <button class="rec-mobile-cancel" onclick="cancelEditTrip()">Cancel</button>
+      <button id="btnAIRefineMobile" class="rec-mobile-refine" style="display:none" onclick="refineWithAI()" title="Ask AI to fill in missing route details"><i class="ph ph-sparkle"></i></button>
       <button class="rec-mobile-save" onclick="saveCurrentTrip()"><i class="ph ph-floppy-disk"></i> Save changes</button>
     </div>
   </div>
@@ -1910,6 +1951,7 @@ window.addEventListener('unhandledrejection', (e) => {
       <button class="admin-stab" id="adminStab_usage" onclick="switchAdminSubTab('usage')">AI usage</button>
       <button class="admin-stab" id="adminStab_aiprovider" onclick="switchAdminSubTab('aiprovider')">AI provider</button>
       <button class="admin-stab" id="adminStab_beta" onclick="switchAdminSubTab('beta')">Beta features</button>
+      <button class="admin-stab" id="adminStab_users" onclick="switchAdminSubTab('users')">Users</button>
     </div>
 
     <div id="adminContent_sites">
@@ -2106,8 +2148,36 @@ window.addEventListener('unhandledrejection', (e) => {
       </div>
     </div>
 
+    <!-- Users panel -->
+    <div id="adminContent_users" style="display:none">
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 0.75rem">Users</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.55;margin:0 0 1.25rem">Plan is a manual label — there's no billing system behind it yet, so changing it here doesn't unlock or restrict anything on its own.</p>
+        <div id="adminUsersList"></div>
+      </div>
+    </div>
+
   </div>
 </div>
+
+<!-- ── Footer (desktop only — mobile uses the bottom nav) ─────────── -->
+<footer class="app-footer">
+  <div class="app-footer-inner">
+    <a class="app-footer-logo" href="/">
+      <img src="/public/bysloth-motif-black.png" alt="bysloth"/>
+      <span class="app-footer-logo-text">bysloth</span>
+    </a>
+    <div class="app-footer-links">
+      <a href="/how-long">Time estimator</a>
+      <a href="/carbon">CO₂ calc</a>
+      <a href="/bike-on-train">Bike on train</a>
+      <a href="/blog/">Blog</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="mailto:hello@bysloth.com">Contact</a>
+    </div>
+    <span class="app-footer-copy">© 2026</span>
+  </div>
+</footer>
 
 <script>
 // ── Supabase client ───────────────────────────────────────────────
@@ -2701,6 +2771,92 @@ async function saveCurrentTrip() {
   setTimeout(() => document.getElementById('saveStatus').textContent = '', 2500);
 }
 
+// ── AI Refine ─────────────────────────────────────────────────────
+// Sends the current plan (stops + legs) to Claude and merges back the
+// enriched details: booking sites, accom notes, km, hours, costs,
+// confidence flags, etc. Works on any trip — manually typed, imported,
+// or AI-generated. Only fills in *missing* (zero/empty) values, so the
+// user's existing data is never overwritten.
+async function refineWithAI() {
+  if (!stops.some(s => s.name)) return;
+  const btn   = document.getElementById('btnAIRefine');
+  const btnMb = document.getElementById('btnAIRefineMobile');
+  const st    = document.getElementById('saveStatus');
+  [btn, btnMb].forEach(b => { if (b) b.disabled = true; });
+  if (btn) btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite"></i> Refining…';
+  if (st) st.textContent = 'Asking AI to enhance your trip…';
+
+  // Every "new leg" call site in this file defaults a fresh leg's mode to
+  // 'bus' — matching that here is what "hasn't customised it" means below.
+  const defaultMode = 'bus';
+  const stopsJson = JSON.stringify(stops.map(s => ({ name: s.name, days: s.days || 0 })));
+  const legsJson  = JSON.stringify(legs.map(l => ({
+    mode: l.mode || defaultMode, km: l.km || 0, hours: l.hours || 0, cost: l.cost || 0, notes: l.notes || ''
+  })));
+
+  const prompt = `You are an expert overland travel planner. A user has a trip plan and wants you to enhance it with practical details.
+
+Current stops: ${stopsJson}
+Current legs: ${legsJson}
+
+Return a JSON object with EXACTLY the same number of stops and legs in the same order. Fill in missing/zero values and add platform recommendations.
+
+Schema:
+{"stops":[{"name":"City, Country","days":N,"accom_sites":["Booking.com","Hostelworld"],"accom_note":"practical one-liner"}],"legs":[{"mode":"bus","km":N,"hours":N,"cost_usd":N,"notes":"practical tip","booking_sites":["Busbud"],"info_sites":[],"leg_region":"Southeast Asia","confidence":"verified","conflict":null}]}
+
+Rules:
+- Keep stop names EXACTLY as given. Add country suffix only if clearly missing (e.g. "Bangkok" → "Bangkok, Thailand").
+- km/hours/cost_usd: estimate realistically if 0; keep existing value if non-zero. km should reflect actual road/rail distance, not straight-line.
+- mode: keep exactly as given unless it is clearly wrong (e.g. "bus" for a transoceanic leg). Do NOT change mode just because a different transport exists.
+- booking_sites: choose platforms appropriate for that mode AND region:
+  • bus → Busbud, FlixBus (Europe), 12go.asia (SE Asia), RedBus (South/SE Asia), Distribuidora (LatAm), etc.
+  • train → Omio, Rail Europe, 12go.asia (Asia), IRCTC (India), etc.
+  • flight → Google Flights, Skyscanner, Kiwi.com
+  • shared taxi / hitchhike → BlaBlaCar (Europe/LatAm), or info_sites with local carpooling resources
+  • ferry → Direct operator sites (e.g. Stena Line, DFDS), Rome2Rio
+  • cycle / walk / motorbike → empty array (no booking needed)
+  • car → none (own vehicle); or rental sites (Rentalcars.com, Sixt) if context implies rental
+- info_sites: research/info sites when booking_sites is empty (e.g. Seat61 for trains, WikiVoyage)
+- confidence: "verified"=well-established/community-confirmed; "check"=exists but seasonal/irregular/border uncertain, verify first; "uncertain"=limited data, research carefully.
+- conflict: only include if leg actually passes through a conflict/advisory zone; otherwise null.
+- accom_sites: only platforms that work for that city/region.
+- Respond with ONLY the raw JSON object. No markdown, no preamble.`;
+
+  try {
+    const d = await callAI(prompt, 6000);
+
+    if (d.stops?.length === stops.length) {
+      d.stops.forEach((s, i) => {
+        stops[i].accomSites = s.accom_sites || [];
+        stops[i].accomNote  = s.accom_note  || '';
+        if (s.days && !stops[i].days) stops[i].days = s.days;
+      });
+    }
+    if (d.legs?.length === legs.length) {
+      d.legs.forEach((l, i) => {
+        if (!legs[i].km    && l.km)       legs[i].km    = l.km;
+        if (!legs[i].hours && l.hours)    legs[i].hours = l.hours;
+        if (!legs[i].cost  && l.cost_usd) legs[i].cost  = Math.round(l.cost_usd);
+        if (!legs[i].notes && l.notes)    legs[i].notes = l.notes;
+        // Always update AI-enriched metadata (booking sites, region, confidence)
+        legs[i].bookingSites = l.booking_sites || [];
+        legs[i].infoSites    = l.info_sites    || [];
+        legs[i].legRegion    = l.leg_region    || '';
+        legs[i].confidence   = l.confidence    || 'uncertain';
+        legs[i].conflict     = l.conflict      || null;
+        // Update mode only if the leg was still on the shared default (user hasn't customised it)
+        if (l.mode && legs[i].mode === defaultMode) legs[i].mode = l.mode;
+      });
+    }
+    render();
+    if (st) { st.textContent = 'AI Refine complete ✓'; setTimeout(() => st.textContent = '', 3000); }
+  } catch(err) {
+    if (st) { st.textContent = 'AI Refine failed: ' + err.message; setTimeout(() => st.textContent = '', 5000); }
+  } finally {
+    [btn, btnMb].forEach(b => { if (b) b.disabled = false; });
+    if (btn) btn.innerHTML = '<i class="ph ph-sparkle" style="font-size:13px"></i> AI Refine';
+  }
+}
 
 async function updateNavAuth() {
   const avatarWrap = document.getElementById('navAvatarWrap');
@@ -2779,8 +2935,7 @@ async function checkAndGate(action) {
   return true;
 }
 
-// ── Guest free-route cap (cleaned-up flow: 3 demo routes/month, save needs account) ──
-const GUEST_FREE_ROUTES = 3;
+// ── Guest search tracking (no cap enforced for now — just counted, save needs account) ──
 function guestRoutesUsed() {
   const m = new Date().toISOString().slice(0, 7); // YYYY-MM
   let g = storage.get('guestRoutes');
@@ -2793,19 +2948,15 @@ function bumpGuestRoutes() {
   storage.set('guestRoutes', g);
   return g;
 }
-function guestRoutesLeft() {
-  return Math.max(0, GUEST_FREE_ROUTES - guestRoutesUsed().count);
-}
-// Guest banner strip: "X of 3 free routes left · sign up to save"
+// Guest banner strip: no search cap for now — just a soft nudge to sign up and save
 function renderGuestBanner() {
   const el = document.getElementById('guestBanner');
   if (!el) return;
   if (currentUser) { el.style.display = 'none'; return; }
-  const left = guestRoutesLeft();
   el.style.display = 'flex';
   el.innerHTML = `
     <i class="ph ph-user-circle-dashed" style="font-size:15px;color:var(--moss);flex-shrink:0"></i>
-    <span><strong>${left} of ${GUEST_FREE_ROUTES} free routes</strong> left this month · sign up to save trips</span>
+    <span>Sign up to save trips and add community notes</span>
     <span style="flex:1"></span>
     <a href="#" onclick="goToAuth('planner');return false;" class="guest-banner-cta">Create free account →</a>`;
 }
@@ -3031,7 +3182,7 @@ async function callAI(prompt, maxTokens = 16000) {
   }
   const r = await fetch(url, {
     method: 'POST', headers,
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }], user_id: currentUser?.id || null })
   });
   const d = await r.json();
   if (!r.ok || d.error) {
@@ -3273,16 +3424,13 @@ function renderAdminTab() {
 let _adminSubTab = 'sites';
 let _reviewFilter = 'pending';
 
-const REVIEW_QUEUE = [
-  { id:'r1', status:'pending', kind:'price', route:'Istanbul → Kathmandu', leg:'Baku → Aktau · ferry', author:'@ferry_fiend', when:'12 min ago', guest:false,
-    text:'Cabin was $120 not $110 as of last week. Deck passage no longer sold to foreigners — cabins only. They take USD cash at the window.' },
-  { id:'r2', status:'pending', kind:'border', route:'Tbilisi → Yerevan', leg:'Sadakhlo crossing', author:'guest · maria.l', when:'40 min ago', guest:true,
-    text:'Crossed at Sadakhlo on foot 3 days ago. Georgian side fast; Armenian side took an hour and they wanted proof of onward travel. No Azerbaijan stamp questions.' },
-  { id:'r3', status:'pending', kind:'schedule', route:'Lisbon → Singapore', leg:'Moscow → Irkutsk · train', author:'@transsib_sara', when:'2 hours ago', guest:false,
-    text:'Train 002 now departs Yaroslavsky at 13:20 not 11:50. Restaurant car was attached the whole way — pleasant surprise.' },
-  { id:'r4', status:'pending', kind:'warning', route:'Cape Town → Cairo', leg:'Nairobi → Moyale · bus', author:'guest · t.okonkwo', when:'5 hours ago', guest:true,
-    text:'Road past Marsabit was washed out for two days in April. Buses were turning back. Check before committing to this leg in the rainy season.' }
-];
+// No real moderation queue is wired up yet — contributions publish
+// immediately today, and `flagged` (see supabase-schema.sql) is a separate
+// community-flag, not a pre-publish approval gate. This used to be a
+// hardcoded demo array that reset to "pending" on every reload, which made
+// Approve/Reject look broken since nothing ever actually persisted. Empty
+// until a real flagged-contributions review flow exists.
+const REVIEW_QUEUE = [];
 
 function switchAdminSubTab(tab) {
   _adminSubTab = tab;
@@ -3291,6 +3439,7 @@ function switchAdminSubTab(tab) {
   document.getElementById('adminContent_usage').style.display      = tab === 'usage'      ? '' : 'none';
   document.getElementById('adminContent_aiprovider').style.display = tab === 'aiprovider' ? '' : 'none';
   document.getElementById('adminContent_beta').style.display       = tab === 'beta'       ? '' : 'none';
+  document.getElementById('adminContent_users').style.display      = tab === 'users'      ? '' : 'none';
   document.querySelectorAll('.admin-stab').forEach(b => b.classList.remove('on'));
   const btn = document.getElementById('adminStab_' + tab);
   if (btn) btn.classList.add('on');
@@ -3298,6 +3447,7 @@ function switchAdminSubTab(tab) {
   if (tab === 'usage')      renderAdminUsage();
   if (tab === 'aiprovider') renderAdminAiProvider();
   if (tab === 'sites')      _refreshPendingBadge();
+  if (tab === 'users')      renderAdminUsers();
 }
 
 // ── Admin > Beta features — look up a user by email, toggle profiles.gps_beta.
@@ -3424,6 +3574,53 @@ async function renderAdminUsage() {
       <td>${(r.output_tokens || 0).toLocaleString()}</td>
       <td>$${(r.cost_usd || 0).toFixed(4)}</td>
     </tr>`).join('')}</tbody></table>`;
+}
+
+// ── Admin > Users — profiles + per-user AI usage (api_usage_log.user_id).
+// Usage only covers calls made after that column was added; older calls
+// have no user_id to attribute to and aren't counted per-user here (they
+// still show up in the totals on the AI usage tab).
+async function renderAdminUsers() {
+  const el = document.getElementById('adminUsersList');
+  if (!el) return;
+  el.innerHTML = '<div class="aff-empty">Loading…</div>';
+
+  const [{ data: profiles, error: profErr }, { data: usage, error: usageErr }] = await Promise.all([
+    sb.from('profiles').select('id, email, display_name, plan, is_admin, created_at').order('created_at', { ascending: false }),
+    sb.from('api_usage_log').select('user_id, input_tokens, output_tokens, cache_read_input_tokens, cache_creation_input_tokens, cost_usd').not('user_id', 'is', null),
+  ]);
+
+  if (profErr) { el.innerHTML = `<div class="aff-empty">Could not load users — ${profErr.message}</div>`; return; }
+  if (!profiles?.length) { el.innerHTML = '<div class="aff-empty">No users yet.</div>'; return; }
+
+  const byUser = {};
+  (usage || []).forEach(r => {
+    const b = byUser[r.user_id] = byUser[r.user_id] || { calls: 0, tokens: 0, cost: 0 };
+    b.calls++;
+    b.tokens += (r.input_tokens||0) + (r.output_tokens||0) + (r.cache_read_input_tokens||0) + (r.cache_creation_input_tokens||0);
+    b.cost += r.cost_usd || 0;
+  });
+
+  el.innerHTML = `<table class="aff-table"><thead><tr><th>User</th><th>Plan</th><th>AI calls</th><th>Tokens</th><th>Cost</th><th>Joined</th></tr></thead>
+    <tbody>${profiles.map(p => {
+      const u = byUser[p.id] || { calls: 0, tokens: 0, cost: 0 };
+      return `<tr>
+        <td>${p.display_name || p.email || p.id}${p.is_admin ? ' <span style="font-size:10px;color:var(--sage);font-family:var(--mono)">ADMIN</span>' : ''}</td>
+        <td><select class="inp" style="font-size:12px;padding:4px 6px" onchange="setUserPlan('${p.id}', this.value)">
+          <option value="free" ${p.plan!=='pro'?'selected':''}>Free</option>
+          <option value="pro" ${p.plan==='pro'?'selected':''}>Pro</option>
+        </select></td>
+        <td>${u.calls}</td>
+        <td>${u.tokens.toLocaleString()}</td>
+        <td>$${u.cost.toFixed(4)}</td>
+        <td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}</td>
+      </tr>`;
+    }).join('')}</tbody></table>${usageErr ? `<div class="aff-empty">Per-user usage couldn't load — ${usageErr.message}</div>` : ''}`;
+}
+
+async function setUserPlan(userId, plan) {
+  const { error } = await sb.from('profiles').update({ plan }).eq('id', userId);
+  if (error) alert('Could not update plan: ' + error.message);
 }
 
 function switchReviewFilter(f) {
@@ -4779,23 +4976,8 @@ async function planRoute() {
   }
   // ── End cache lookup ──────────────────────────────────────────────
 
-  // ── Guest free-route cap (cleaned-up flow: 3 free demo routes, save needs account) ──
+  // ── Guest search count (no cap enforced for now — just tracked for later reference) ──
   if (!currentUser) {
-    const g = guestRoutesUsed();
-    if (g.count >= GUEST_FREE_ROUTES) {
-      const lg = document.getElementById('planLandingGrid'); if (lg) lg.style.display = 'none';
-      const hl = document.getElementById('planLanding');     if (hl) hl.style.display = 'none';
-      _collapseSearchForm(from, to);
-      document.getElementById('planResult').style.display = 'block';
-      document.getElementById('planSummaryStrip').style.display = 'none';
-      document.getElementById('planResult').innerHTML = `<div class="gate-msg">
-        <div style="font-size:36px;margin-bottom:12px">🦥</div>
-        <h3>That's your ${GUEST_FREE_ROUTES} free routes this month</h3>
-        <p>Create a free account to keep planning, save trips, and share community notes.</p>
-        <a href="/auth.html?return=planner" onclick="goToAuth('planner');return false;" class="btn btn-primary" style="text-decoration:none;display:inline-block">Create free account →</a>
-      </div>`;
-      return;
-    }
     bumpGuestRoutes();
     renderGuestBanner();
   }
@@ -5217,7 +5399,7 @@ function _collapseSearchForm(from, to) {
   const planBtn2 = document.getElementById('planBtn');
   if (planBtn2) planBtn2.textContent = 'Suggest route ↗';
   const planHint = document.getElementById('planFormHint');
-  if (planHint) planHint.textContent = 'Free · 3 routes a month · no card';
+  if (planHint) planHint.textContent = 'Free · no card';
   if (lbl)  lbl.textContent    = `${from.toLowerCase()} → ${to.toLowerCase()}`;
   if (chips) {
     const modeChips = (prefModes || []).map(m => `<span class="route-hdr-chip">${m}</span>`).join('');
@@ -5257,7 +5439,7 @@ function cancelInlineEdit(e) {
   const btn = document.getElementById('planBtn');
   if (btn) btn.textContent = 'Suggest route ↗';
   const hint = document.getElementById('planFormHint');
-  if (hint) hint.textContent = 'Free · 3 routes a month · no card';
+  if (hint) hint.textContent = 'Free · no card';
 }
 
 const CONF = {
@@ -5928,9 +6110,10 @@ function renderPlanSuggestion(d, fromCache = false) {
   document.getElementById('planResult').innerHTML = h;
   _syncPlanSaveBar(true);
   setScreenUrl('/route');
-  // Route Results starts with the map collapsed to its icon -- the user
-  // taps it to open, rather than the map being open by default.
-  setMapState('pill');
+  // Mobile: map starts collapsed to its icon -- the user taps it to open
+  // (screen is too small for both the route list and an open map at once).
+  // Web: there's room, so it starts open, just narrow (200px docked width).
+  setMapState(window.innerWidth <= 640 ? 'pill' : 'docked');
   showRouteMap(d);
 }
 
@@ -6419,6 +6602,12 @@ function updateEditorMeta() {
   const del = document.getElementById('deleteTripBtn');
   const saved = currentTripId && (storage.get('trips') || []).some(t => t.id === currentTripId);
   if (del) del.style.display = saved ? '' : 'none';
+  // AI Refine only makes sense once at least one stop has a name to work with.
+  const hasNamedStop = stops.some(s => s.name);
+  const refine = document.getElementById('btnAIRefine');
+  const refineMb = document.getElementById('btnAIRefineMobile');
+  if (refine) refine.style.display = hasNamedStop ? '' : 'none';
+  if (refineMb) refineMb.style.display = hasNamedStop ? '' : 'none';
 }
 
 function renderVisitedProgress() {
@@ -7007,7 +7196,6 @@ function renderPlanLanding() {
       </div>
       ${recentHtml}
       <div style="margin-top:8px;padding-top:10px;border-top:0.5px dashed var(--border)">
-        ${!currentUser ? `<div style="font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:0.5px;margin-bottom:8px">${guestRoutesLeft()} of ${GUEST_FREE_ROUTES} free searches left this month</div>` : ''}
         <button class="btn" style="width:100%" onclick="goToMyTrips()">See my trips →</button>
       </div>
     </div>
@@ -11001,7 +11189,7 @@ init().catch(e => {
       <button onclick="document.getElementById('mobileSplash').classList.remove('show')" class="mobile-splash-cta-primary">Plan your first route <i class="ph ph-arrow-right" style="font-size:16px"></i></button>
       <a href="/auth.html" onclick="goToAuth();return false;" class="mobile-splash-cta-ghost">Sign in</a>
     </div>
-    <div style="margin-top:24px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:rgba(10,10,10,0.85);text-align:center;text-transform:uppercase">Free · 3 routes a month · no card required</div>
+    <div style="margin-top:24px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:rgba(10,10,10,0.85);text-align:center;text-transform:uppercase">Free · no card required</div>
   </div>
   <div style="border-top:0.5px solid rgba(10,10,10,0.35);padding:14px 28px;display:flex;gap:24px;position:relative;z-index:1">
     <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--ink-900);letter-spacing:-0.3px">2,140</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(10,10,10,0.85);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">legs verified</div></div>

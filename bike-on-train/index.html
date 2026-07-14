@@ -7,9 +7,9 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18271935883"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','AW-18271935883');</script>
 <title>Bike on Train &amp; Bus: Which Operators Accept Bikes? — By Sloth</title>
-<meta name="description" content="Find out which trains, buses, and ferries accept bikes. Covers Flixbus, Eurostar, DB, SNCF, Amtrak, and 25+ operators worldwide. Updated 2026."/>
+<meta name="description" content="Find out which trains, buses, and ferries accept bikes. Covers Flixbus, Eurostar, DB, SNCF, Amtrak, and 40+ operators worldwide. Updated 2026."/>
 <meta property="og:title" content="Does this train take bikes? The answer most apps don't have."/>
-<meta property="og:description" content="Bike policies for 30+ train, bus, and ferry operators worldwide. Plan your bike tour with confidence."/>
+<meta property="og:description" content="Bike policies for 40+ train, bus, and ferry operators worldwide. Plan your bike tour with confidence."/>
 <meta property="og:url" content="https://bysloth.com/bike-on-train"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <!-- PostHog -->
@@ -153,7 +153,7 @@ a:hover{text-decoration:underline}
   <div class="inner">
     <div class="kicker">Bike + transit · Updated 2026</div>
     <h1>Does this train take <em>bikes?</em></h1>
-    <p class="hero-sub">The answer most route apps don't have. Policies for 30+ trains, buses, and ferries worldwide — curated from operator T&amp;Cs and community reports.</p>
+    <p class="hero-sub">The answer most route apps don't have. Policies for 40+ trains, buses, and ferries worldwide — curated from operator T&amp;Cs and community reports.</p>
   </div>
 </div>
 
@@ -313,6 +313,25 @@ const OPERATORS = [
     notes:'Accepted on most trains with a bike ticket (CZK 50–80). Some express trains require reservation. Good regional coverage for cycling routes across Bohemia and Moravia.',
     booking:'Express: recommended', spaces:'Available', cost:'CZK 50–80', source:'cd.cz', url:'https://www.cd.cz', verified:'2026-01'
   },
+  // Norway
+  {
+    op:'Vy (trains)', region:'Norway',
+    bikes:'yes',
+    notes:'Generally fine — take your bike to the carriage marked with a bicycle symbol and buy a bike ticket on board on most lines. Advance reservation is mandatory on the scenic Bergen Line and Flåm Railway (both popular with cycle-tourers) and the Gjøvik Line, and recommended on Oslo–Gothenburg. Space depends on how many wheelchairs/strollers are also on board that trip.',
+    booking:'Bergen Line/Flåm/Gjøvik: required', spaces:'Varies by trip', cost:'Bike ticket (on board or online)', source:'vy.no', url:'https://www.vy.no', verified:'2026-07'
+  },
+  {
+    op:'Vy Buss', region:'Norway (bus)',
+    bikes:'check',
+    notes:"Only carried on a specific subset of routes (VY1, VY3, VY6, VY123, VY175, VY450) — most of Vy's long-distance network doesn't take bikes at all. Must be pre-purchased at booking, packed in a bike bag/case, max 50×60×220cm and 23kg. E-bikes not allowed. Not available on the Oslo–Gothenburg/Copenhagen/Stockholm services (operated by Vy Travel AB in Sweden).",
+    booking:'Required — pre-purchase online', spaces:'Route-dependent (limited)', cost:'Included in special-luggage pricing', source:'vybuss.com', url:'https://www.vybuss.com', verified:'2026-07'
+  },
+  {
+    op:'NOR-WAY Bussekspress', region:'Norway (bus)',
+    bikes:'check',
+    notes:"Bikes booked as their own product (not as general luggage) when you buy your ticket — space is very limited, only 1–2 bikes per bus, and availability varies by route. If the booking flow doesn't offer a bike add-on for your route, there's no space; don't count on turning up with one unbooked.",
+    booking:'Required at ticket purchase', spaces:'1–2 per bus', cost:'270 kr', source:'nor-way.no', url:'https://www.nor-way.no', verified:'2026-07'
+  },
   // UK
   {
     op:'National Rail (UK)', region:'United Kingdom',
@@ -345,12 +364,61 @@ const OPERATORS = [
     notes:'Non-folded bikes not accepted. Folded bikes in a bag may be stowed in luggage hold as standard luggage (no guarantee of space).',
     booking:'N/A', spaces:'Folded only', cost:'Free if folded', source:'nationalexpress.com', url:'https://www.nationalexpress.com', verified:'2026-01'
   },
+  {
+    op:'Megabus', region:'USA / UK',
+    bikes:'no',
+    notes:"Standard bikes exceed the luggage size limit (max 62in total dimensions, 50lb) and aren't accepted. Folding bikes or small children's bikes that fit within that allowance are fine. Enforcement is inconsistent — some report success with a boxed bike, others turned away. Don't rely on it.",
+    booking:'N/A', spaces:'Folded/small only', cost:'Included in luggage allowance', source:'megabus.com', url:'https://us.megabus.com', verified:'2026-07'
+  },
+  {
+    op:'ALSA', region:'Spain',
+    bikes:'yes',
+    notes:'Accepted under an agreement with the Red de Ciudades por la Bicicleta. Bike must be bagged (front wheel removed recommended). Max 4 bikes per coach; not available on double-decker services. E-bikes not permitted.',
+    booking:'Recommended — arrange ahead', spaces:'Max 4 per coach', cost:'€5 (short-haul) – €20 (international)', source:'alsa.com', url:'https://www.alsa.com', verified:'2026-07'
+  },
+  {
+    op:'Ecolines', region:'Baltic states + Eastern Europe',
+    bikes:'check',
+    notes:'Officially carries bikes only on specific routes (Tallinn, Tartu, Vilnius, Kaliningrad, Minsk) — not guaranteed elsewhere in their network. Bike must be dismantled (front wheel off) and bagged/boxed. E-bikes not allowed. Contact support in advance to confirm your route qualifies.',
+    booking:'Required — contact support', spaces:'Route-dependent', cost:'~€20 on supported routes', source:'ecolines.net', url:'https://ecolines.net', verified:'2026-07'
+  },
+  {
+    op:'Metro Turizm', region:'Turkey',
+    bikes:'check',
+    notes:"Company policy allows 1–2 bikes per coach (counted against a 20kg baggage limit), but enforcement varies a lot by driver/terminal — several riders report extra charges despite the stated policy. If a bus is full, staff may ask you to wait for the next departure. Confirm at the terminal, not just online.",
+    booking:'Recommended — confirm at terminal', spaces:'1–2 per coach', cost:'Within baggage allowance (variable in practice)', source:'metroturizm.com.tr', url:'https://www.metroturizm.com.tr', verified:'2026-07'
+  },
+  {
+    op:'Intercape', region:'South Africa',
+    bikes:'check',
+    notes:"Intercape's own documentation disagrees with itself: the FAQ says bicycles aren't transported, but the terms & conditions describe a boxed-bike requirement, implying they sometimes are. Given that contradiction, don't assume — call ahead (+27 21 380 4400) and get it confirmed for your specific route before relying on it.",
+    booking:'Call ahead to confirm', spaces:null, cost:'Unclear — confirm when booking', source:'intercape.co.za', url:'https://www.intercape.co.za', verified:'2026-07'
+  },
+  {
+    op:'Phương Trang / FUTA Bus Lines', region:'Vietnam',
+    bikes:'no',
+    notes:"Bicycles are not permitted onboard, full stop — no folded/bagged exception like some other Vietnamese operators. If you're touring Vietnam and need a bus that'll take a bike, look at a smaller regional operator instead, or use Vietnam Railways (baggage carriage, see above).",
+    booking:'N/A', spaces:'None', cost:'N/A', source:'futabus.vn', url:'https://futabus.vn', verified:'2026-07'
+  },
   // USA
   {
     op:'Amtrak', region:'USA',
     bikes:'check',
     notes:"Long-distance trains with a checked baggage car (Empire Builder, California Zephyr, etc.): boxed bikes accepted as checked luggage (~$30). Short-distance Amtrak trains and Acela: folding bikes in a bag only. Acela: no bikes at all. Boxing a bike takes time — allow 30+ minutes at the station.",
     booking:'Checked bags: yes', spaces:'Baggage car trains only', cost:'~$30 for boxed bike', source:'amtrak.com', url:'https://www.amtrak.com', verified:'2026-01'
+  },
+  {
+    op:'Greyhound', region:'USA (bus)',
+    bikes:'check',
+    notes:'Bikes are allowed but never free — you need a bike ticket arranged in advance, and the bike must be disassembled and packed in a box or hard case (max 8×32×60in). Not every route/terminal handles bikes equally well; e-bikes, tandems and tricycles are not accepted. Confirm with your specific terminal before travel.',
+    booking:'Bike ticket required in advance', spaces:'Route-dependent', cost:'Bulky-item fee (varies)', source:'greyhound.com', url:'https://www.greyhound.com', verified:'2026-07'
+  },
+  // Australia
+  {
+    op:'Greyhound Australia', region:'Australia (bus)',
+    bikes:'yes',
+    notes:"The most straightforward bus policy of the operators here: bikes are carried subject to available space for a flat fee. No boxing/bagging requirement mentioned. Good option for the classic east-coast or outback overland routes.",
+    booking:'Recommended — subject to space', spaces:'Subject to availability', cost:'AU$49 per bike', source:'greyhound.com.au', url:'https://www.greyhound.com.au', verified:'2026-07'
   },
   // Asia
   {
