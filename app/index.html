@@ -608,6 +608,13 @@ window.addEventListener('unhandledrejection', (e) => {
   .res-leg-card3-label{font-size:12.5px;font-weight:500;text-transform:capitalize;color:var(--text);}
   .res-leg-card3-hours{font-family:var(--mono);font-size:11px;color:var(--text3);}
   .res-leg-card3-badge{margin-left:auto;flex-shrink:0;}
+  .res-leg-card3-src{flex-shrink:0;color:var(--text3);display:inline-flex;align-items:center;font-size:13px;}
+  .res-leg-card3-src:hover{color:var(--signal);}
+  /* One-time "we just double-checked this" cue on a Brave-verified leg patch
+     -- 3 iterations, not infinite, unlike every other recBlink usage in the
+     codebase (those are ongoing live-status indicators; this is a single
+     transient confirmation). */
+  .res-leg-card3.leg-verify-pulse{animation:recBlink 0.7s ease-in-out 3;border-color:var(--signal);}
   .res-leg-card3-price{font-size:19px;font-weight:700;color:var(--text);letter-spacing:-0.3px;margin-bottom:6px;}
   .res-leg-card3-price-unit{font-size:12px;font-weight:500;color:var(--text3);}
   .res-leg-card3-desc{font-size:12.5px;line-height:1.55;color:var(--text2);}
@@ -1902,6 +1909,7 @@ window.addEventListener('unhandledrejection', (e) => {
       <button class="admin-stab" id="adminStab_review" onclick="switchAdminSubTab('review')">Review queue <span id="adminReviewBadge" style="display:none;background:var(--gold);color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px;font-family:var(--mono);font-weight:600"></span></button>
       <button class="admin-stab" id="adminStab_usage" onclick="switchAdminSubTab('usage')">AI usage</button>
       <button class="admin-stab" id="adminStab_aiprovider" onclick="switchAdminSubTab('aiprovider')">AI provider</button>
+      <button class="admin-stab" id="adminStab_beta" onclick="switchAdminSubTab('beta')">Beta features</button>
     </div>
 
     <div id="adminContent_sites">
@@ -2062,6 +2070,21 @@ window.addEventListener('unhandledrejection', (e) => {
         </div>
 
         <span id="aiProviderSaveStatus" style="font-size:12px;color:var(--fern)"></span>
+      </div>
+    </div>
+
+    <!-- Beta features panel -->
+    <div id="adminContent_beta" style="display:none">
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 0.75rem">Beta features</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.55;margin:0 0 1.25rem">Live GPS background tracking is functional but still being hardened against real-device permission edge cases. Look up a user by email to grant or revoke early access — everyone else automatically falls back to manual trip journaling.</p>
+
+        <div style="display:flex;gap:6px;margin-bottom:14px">
+          <input class="inp" id="adminBetaEmail" type="email" placeholder="user@example.com" style="flex:1" onkeydown="if(event.key==='Enter')adminLookupUser()"/>
+          <button onclick="adminLookupUser()" class="btn" style="font-size:12px;padding:8px 16px;white-space:nowrap">Look up</button>
+        </div>
+
+        <div id="adminBetaResult"></div>
       </div>
     </div>
 
@@ -2345,6 +2368,8 @@ let currentTripId  = null;
 let myTripsFilter  = 'all'; // kept for legacy references
 let appSettings    = {};
 let currentUser    = null;
+let isAdminUser    = false; // profiles.is_admin for currentUser — refreshed in updateNavAuth()
+let hasGpsBeta     = false; // profiles.gps_beta for currentUser — refreshed in updateNavAuth()
 
 // ── Init ──────────────────────────────────────────────────────────
 async function init() {
@@ -2656,11 +2681,12 @@ async function saveCurrentTrip() {
 }
 
 
-function updateNavAuth() {
+async function updateNavAuth() {
   const avatarWrap = document.getElementById('navAvatarWrap');
   const avatar     = document.getElementById('navAvatar');
   const signIn     = document.getElementById('signInBtn');
-  const gatedTabs  = ['navbtn_mytrips','navbtn_journals','navbtn_profile','navbtn_admin'];
+  const gatedTabs  = ['navbtn_mytrips','navbtn_journals','navbtn_profile'];
+  const adminBtn   = document.getElementById('navbtn_admin');
   if (currentUser) {
     const handle = currentUser.user_metadata?.display_name || currentUser.email?.split('@')[0] || 'U';
     if (avatar) { avatar.textContent = handle.slice(0,1).toUpperCase(); avatar.title = handle; }
@@ -2671,6 +2697,18 @@ function updateNavAuth() {
     if (avatarWrap) avatarWrap.style.display = 'none';
     if (signIn) signIn.style.display = 'inline-block';
     gatedTabs.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  }
+  // Admin tab: hidden unless profiles.is_admin is actually true for this
+  // user — being signed in isn't enough (that's all "gatedTabs" checks).
+  // hasGpsBeta rides along on the same query — no extra round trip.
+  isAdminUser = false;
+  hasGpsBeta = false;
+  if (adminBtn) adminBtn.style.display = 'none';
+  if (currentUser) {
+    const { data } = await sb.from('profiles').select('is_admin, gps_beta').eq('id', currentUser.id).single();
+    isAdminUser = data?.is_admin === true;
+    hasGpsBeta = data?.gps_beta === true;
+    if (adminBtn) adminBtn.style.display = isAdminUser ? '' : 'none';
   }
   updateMobileSplash();
 }
@@ -3231,12 +3269,49 @@ function switchAdminSubTab(tab) {
   document.getElementById('adminContent_review').style.display     = tab === 'review'     ? '' : 'none';
   document.getElementById('adminContent_usage').style.display      = tab === 'usage'      ? '' : 'none';
   document.getElementById('adminContent_aiprovider').style.display = tab === 'aiprovider' ? '' : 'none';
+  document.getElementById('adminContent_beta').style.display       = tab === 'beta'       ? '' : 'none';
   document.querySelectorAll('.admin-stab').forEach(b => b.classList.remove('on'));
   const btn = document.getElementById('adminStab_' + tab);
   if (btn) btn.classList.add('on');
   if (tab === 'review')     renderReviewQueue();
   if (tab === 'usage')      renderAdminUsage();
   if (tab === 'aiprovider') renderAdminAiProvider();
+}
+
+// ── Admin > Beta features — look up a user by email, toggle profiles.gps_beta.
+// Protected by the "Admins can update any profile" RLS policy
+// (supabase/migrations/20260714_gps_beta_flag.sql) -- a non-admin's update
+// attempt is silently rejected by Postgres, not just hidden by this UI.
+async function adminLookupUser() {
+  const email = document.getElementById('adminBetaEmail')?.value.trim();
+  const resultEl = document.getElementById('adminBetaResult');
+  if (!resultEl) return;
+  if (!email) { resultEl.innerHTML = ''; return; }
+  resultEl.innerHTML = `<div style="font-size:13px;color:var(--text3)">Looking up…</div>`;
+  const { data, error } = await sb.from('profiles').select('id, email, display_name, gps_beta').eq('email', email).maybeSingle();
+  if (error || !data) {
+    resultEl.innerHTML = `<div style="font-size:13px;color:var(--text3)">No user found with that email.</div>`;
+    return;
+  }
+  renderAdminBetaUser(data);
+}
+function renderAdminBetaUser(u) {
+  const resultEl = document.getElementById('adminBetaResult');
+  if (!resultEl) return;
+  resultEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius)">
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">${u.display_name || u.email}</div>
+      <div style="font-size:12px;color:var(--text3)">${u.email}</div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)">
+      GPS tracking beta
+      <input type="checkbox" ${u.gps_beta ? 'checked' : ''} onchange="adminToggleGpsBeta('${u.id}', this.checked)" style="cursor:pointer"/>
+    </label>
+  </div>`;
+}
+async function adminToggleGpsBeta(userId, enabled) {
+  const { error } = await sb.from('profiles').update({ gps_beta: enabled }).eq('id', userId);
+  if (error) { alert('Failed to update: ' + error.message); return; }
 }
 
 // ── Admin > AI provider — reads/writes admin_settings (ai_failsafe_enabled,
@@ -3837,6 +3912,10 @@ function _openJourneyLink(url) {
 }
 
 function switchTab(id, el) {
+  // Belt-and-braces: the nav link is already hidden for non-admins
+  // (updateNavAuth), but a direct URL/hash to #admin would otherwise
+  // still open the panel.
+  if (id === 'admin' && !isAdminUser) { switchTab('plan', document.getElementById('navbtn_plan')); return; }
   document.querySelectorAll('.nav-link').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const btn = el || document.getElementById('navbtn_' + id);
@@ -4286,6 +4365,7 @@ async function planRoute() {
     lastSuggestion = hit;
     document.getElementById('planResult').style.display = 'block';
     renderPlanSuggestion(hit, true);
+    verifyUncertainLegs(hit); // fire-and-forget — patches legs in place as results come in
     _collapseSearchForm(from, to);
     return;
   }
@@ -4397,6 +4477,7 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
     writeSharedCachedRoute(cacheKey, data, from, to);
     updateCacheClearBtn();
     renderPlanSuggestion(data, false);
+    verifyUncertainLegs(data); // fire-and-forget — must not block btn.disabled reset below
     updateUsageBars();
   } catch (e) {
     console.error('planRoute error:', e);
@@ -4548,6 +4629,7 @@ function _restorePendingRoute() {
     const res = document.getElementById('planResult');
     if (res) res.style.display = 'block';
     renderPlanSuggestion(suggestion, true);
+    verifyUncertainLegs(suggestion); // fire-and-forget
     switchTab('plan', document.getElementById('navbtn_plan'));
   } catch(e) {}
 }
@@ -4804,6 +4886,21 @@ try {
     localStorage.setItem('slw_geo_cache_purged_v1', '1');
   }
 } catch(e) {}
+
+// ── Brave leg-verification cache ────────────────────────────────────
+// Mirrors _geoCache's shape (localStorage-hydrated, {result,ts} entries)
+// but with a much shorter TTL -- schedules and prices go stale far faster
+// than a place existing. Unlike _geoCache's original bug, failure is only
+// ever cached on a genuine 2xx "Brave had nothing better" (server returns
+// {unchanged:true}) -- an upstream error/non-2xx writes nothing here at
+// all, so a transient failure just gets retried next time, never treated
+// as a confirmed answer.
+const VERIFY_CACHE_KEY = 'slw_verify_cache';
+let _verifyCache = {};
+try { _verifyCache = JSON.parse(localStorage.getItem(VERIFY_CACHE_KEY) || '{}'); } catch(e) {}
+const VERIFY_TTL = 6 * 60 * 60 * 1000; // 6h
+function _verifyCacheKey(from, to, mode) { return `${(from||'').toLowerCase().trim()}|${(to||'').toLowerCase().trim()}|${mode||''}`; }
+function _writeVerifyCache() { try { localStorage.setItem(VERIFY_CACHE_KEY, JSON.stringify(_verifyCache)); } catch(e) {} }
 
 let _mapInstance    = null;
 let _mapMarkers     = [];
@@ -5271,6 +5368,62 @@ function renderConflictAlert(conflict, withLinks = true) {
   return `<div class="conflict-alert ${cl.cls}"><i class="ph ${cl.icon}"></i><span>${cl.label} — ${conflict.note}</span>${links}</div>`;
 }
 
+// Extracted from renderPlanSuggestion's per-stop loop so a single leg can be
+// re-rendered and swapped in place (Brave-verified legs patch just their own
+// card via outerHTML) without rebuilding the whole Route Results list, which
+// would lose scroll position and any other unrelated in-progress UI state.
+// id="res-leg-card-${i}" is the stable anchor the patch targets.
+function _renderLegCard3(d, i) {
+  const leg = d.legs[i];
+  if (!leg) return '';
+  const showAff = appSettings.affiliate_links !== false;
+  const stop = d.stops[i];
+  const ns   = d.stops[i + 1];
+  const startCity  = leg.from || stop?.name || 'Unknown';
+  const stayCity   = ns?.name || leg.to || 'Unknown';
+  const modeColor  = MODE_COLORS[leg.mode] || 'var(--fern)';
+  const iconCls    = MODE_ICONS[leg.mode] || 'ph-path';
+  const modeTint   = MODE_TINTS[leg.mode]  || '#E0EAF2';
+  const transportCol = showAff ? renderTransportLinks(leg.mode, startCity, stayCity, leg.booking_sites, leg.leg_region, leg.info_sites) : '';
+  const stayCol    = showAff
+    ? renderAccommodationLinks(stayCity, ns?.accom_sites, ns?.accom_note)
+    : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
+  const accomNote = ns?.accom_note || ns?.accomNote || '';
+  const bookKey = `res-${i}`;
+  const bookOpen = _bookingOpen.has(bookKey);
+  // Consolidated leg card, per explicit user request -- richer than v2's
+  // literal minimal card: mode/duration/confidence header, price, a
+  // notes+distance prose line (leg.notes/leg.km, AI-generated per leg),
+  // an accommodation summary (stop.accom_note), one prominent Book CTA
+  // that reveals the transport+stay link panel, and the existing
+  // traveller-notes row underneath.
+  return `<div class="res-leg-card3" id="res-leg-card-${i}">
+        <div class="res-leg-card3-kicker">Journey</div>
+        <div class="res-leg-card3-top">
+          <span class="res-leg-card3-icon" style="background:${modeTint};color:${modeColor}"><i class="ph ${iconCls}"></i></span>
+          <span class="res-leg-card3-label">${MI[leg.mode]||leg.mode}</span>
+          ${leg.hours ? `<span class="res-leg-card3-hours">· ${leg.hours}h</span>` : ''}
+          <span class="res-leg-card3-badge">${renderConfidenceBadge(leg.confidence)}</span>
+          ${leg.source_url ? `<a class="res-leg-card3-src" href="${leg.source_url}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Source"><i class="ph ph-link"></i></a>` : ''}
+        </div>
+        ${renderConflictAlert(leg.conflict)}
+        <div class="res-leg-card3-price">from ${fmtCost(leg.cost_usd)} <span class="res-leg-card3-price-unit">ticket</span></div>
+        ${(leg.km || leg.notes) ? `<div class="res-leg-card3-desc">${leg.km?`${leg.km} km`:''}${leg.km&&leg.notes?' · ':''}${leg.notes||''}</div>` : ''}
+        ${accomNote ? `<div class="res-leg-card3-divider"></div>
+        <div class="res-leg-card3-stay"><i class="ph ph-house-line"></i> ${stayCity} — ${accomNote}</div>` : ''}
+        <div class="res-leg-card3-divider"></div>
+        ${leg.booked
+          ? `<div class="res-leg-card3-booked"><i class="ph ph-check-circle"></i> Booked${leg.bookingRef?' · '+leg.bookingRef:''}</div>`
+          : `<button class="res-leg-card3-book" onclick="event.stopPropagation();toggleBookingPanel('${bookKey}',()=>renderPlanSuggestion(lastSuggestion))"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-caret-right"></i></button>`}
+        ${!leg.booked && bookOpen ? `<div class="jd-book-options" id="${_bookOptsId(bookKey)}" onclick="event.stopPropagation()">
+          <div class="jd-book-section-lbl">Transport</div>
+          ${transportCol || '<div class="jd-book-empty">No links for this leg</div>'}
+          <div class="jd-book-section-lbl">Stay at ${stayCity}</div>
+          ${stayCol || '<div class="jd-book-empty">No links</div>'}
+        </div>` : ''}
+      </div>`;
+}
+
 function renderPlanSuggestion(d, fromCache = false) {
   const showAff = appSettings.affiliate_links !== false;
 
@@ -5354,48 +5507,10 @@ function renderPlanSuggestion(d, fromCache = false) {
       // d.legs implies), not just missing a .name — leg.from/leg.to alone
       // isn't enough to guarantee a real value either.
       const startCity  = leg.from || ps?.name || 'Unknown';
-      const iconCls    = MODE_ICONS[leg.mode] || 'ph-path';
-      const modeTint   = MODE_TINTS[leg.mode]  || '#E0EAF2';
       const stayCity   = ns?.name || leg.to || 'Unknown';
-      const transportCol = showAff ? renderTransportLinks(leg.mode, startCity, stayCity, leg.booking_sites, leg.leg_region, leg.info_sites) : '';
-      const stayCol    = showAff
-        ? renderAccommodationLinks(stayCity, ns?.accom_sites, ns?.accom_note)
-        : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
       const legKey = `${startCity}→${stayCity}`;
-      const accomNote = ns?.accom_note || ns?.accomNote || '';
-      const bookKey = `res-${i}`;
-      const bookOpen = _bookingOpen.has(bookKey);
-      // Consolidated leg card, per explicit user request -- richer than v2's
-      // literal minimal card: mode/duration/confidence header, price, a
-      // notes+distance prose line (leg.notes/leg.km, AI-generated per leg),
-      // an accommodation summary (stop.accom_note), one prominent Book CTA
-      // that reveals the transport+stay link panel, and the existing
-      // traveller-notes row underneath.
-      h += `<div class="res-leg-card3">
-        <div class="res-leg-card3-kicker">Journey</div>
-        <div class="res-leg-card3-top">
-          <span class="res-leg-card3-icon" style="background:${modeTint};color:${modeColor}"><i class="ph ${iconCls}"></i></span>
-          <span class="res-leg-card3-label">${MI[leg.mode]||leg.mode}</span>
-          ${leg.hours ? `<span class="res-leg-card3-hours">· ${leg.hours}h</span>` : ''}
-          <span class="res-leg-card3-badge">${renderConfidenceBadge(leg.confidence)}</span>
-        </div>
-        ${renderConflictAlert(leg.conflict)}
-        <div class="res-leg-card3-price">from ${fmtCost(leg.cost_usd)} <span class="res-leg-card3-price-unit">ticket</span></div>
-        ${(leg.km || leg.notes) ? `<div class="res-leg-card3-desc">${leg.km?`${leg.km} km`:''}${leg.km&&leg.notes?' · ':''}${leg.notes||''}</div>` : ''}
-        ${accomNote ? `<div class="res-leg-card3-divider"></div>
-        <div class="res-leg-card3-stay"><i class="ph ph-house-line"></i> ${stayCity} — ${accomNote}</div>` : ''}
-        <div class="res-leg-card3-divider"></div>
-        ${leg.booked
-          ? `<div class="res-leg-card3-booked"><i class="ph ph-check-circle"></i> Booked${leg.bookingRef?' · '+leg.bookingRef:''}</div>`
-          : `<button class="res-leg-card3-book" onclick="event.stopPropagation();toggleBookingPanel('${bookKey}',()=>renderPlanSuggestion(lastSuggestion))"><i class="ph ph-ticket"></i> Book this leg <i class="ph ph-caret-right"></i></button>`}
-        ${!leg.booked && bookOpen ? `<div class="jd-book-options" id="${_bookOptsId(bookKey)}" onclick="event.stopPropagation()">
-          <div class="jd-book-section-lbl">Transport</div>
-          ${transportCol || '<div class="jd-book-empty">No links for this leg</div>'}
-          <div class="jd-book-section-lbl">Stay at ${stayCity}</div>
-          ${stayCol || '<div class="jd-book-empty">No links</div>'}
-        </div>` : ''}
-      </div>
-      <div class="res-leg-contrib">${renderContribBlockForKey(legKey, i)}</div>`;
+      h += _renderLegCard3(d, i);
+      h += `<div class="res-leg-contrib">${renderContribBlockForKey(legKey, i)}</div>`;
     }
     h += `</div></div>`; // close .res-leg-body, .res-leg
   });
@@ -5406,6 +5521,82 @@ function renderPlanSuggestion(d, fromCache = false) {
   // taps it to open, rather than the map being open by default.
   setMapState('pill');
   showRouteMap(d);
+}
+
+// ── Background leg verification (Brave Answers grounding) ─────────────
+// planRoute()'s AI call sets each leg's confidence purely from the model's
+// own recall -- zero web grounding. For legs the model itself flags check/
+// uncertain, ask Brave for a real, cited answer and patch just that one
+// leg in place if it finds something meaningfully different. Silence is a
+// valid, expected outcome -- most legs won't change, and shouldn't need to.
+async function verifyUncertainLegs(d) {
+  if (!d?.legs?.length) return;
+  const targets = d.legs
+    .map((l, i) => ({ l, i }))
+    .filter(({ l }) => (l.confidence === 'check' || l.confidence === 'uncertain') && !l._verified);
+  for (const { l, i } of targets) {
+    l._verified = true; // guards against re-queue on re-render (e.g. toggleBookingPanel's renderPlanSuggestion(lastSuggestion))
+    await _verifyOneLeg(d, i, l);
+    await new Promise(r => setTimeout(r, 600)); // sequential, ~1.67 req/s -- under Brave Answers' 2 req/s cap
+  }
+}
+
+async function _verifyOneLeg(d, i, leg) {
+  const from = leg.from, to = leg.to, mode = leg.mode;
+  if (!from || !to || !mode) return;
+  const cKey = _verifyCacheKey(from, to, mode);
+  const cached = _verifyCache[cKey];
+  if (cached && (Date.now() - cached.ts) < VERIFY_TTL) {
+    if (!cached.result.unchanged) _applyLegVerification(d, i, cached.result);
+    return;
+  }
+  let result;
+  try {
+    const url = PROXY_URL ? `${PROXY_URL}/api/verify-leg` : null;
+    if (!url) return; // no proxy configured — verification is a no-op, not an error
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to, mode }),
+    });
+    if (!res.ok) return; // upstream/transient error — never cache, just skip this round
+    result = await res.json();
+  } catch (e) { return; } // network failure — same, never cache
+  _verifyCache[cKey] = { result, ts: Date.now() };
+  _writeVerifyCache();
+  if (!result.unchanged) _applyLegVerification(d, i, result);
+}
+
+function _applyLegVerification(d, i, result) {
+  if (d !== lastSuggestion) return; // user navigated away / started a new search — drop stale patch
+  const leg = d.legs[i];
+  if (!leg) return;
+  // Brave merely confirming the AI's original guess shouldn't produce a
+  // patch or a pulse — only act when something actually changed.
+  const meaningfullyDifferent =
+    (result.confidence && result.confidence !== leg.confidence) ||
+    (result.cost_usd != null && leg.cost_usd && Math.abs(result.cost_usd - leg.cost_usd) / leg.cost_usd > 0.15) ||
+    (result.notes && result.notes !== leg.notes) ||
+    (result.source_url && !leg.source_url);
+  if (!meaningfullyDifferent) return;
+
+  if (result.confidence) leg.confidence = result.confidence;
+  if (result.cost_usd != null) leg.cost_usd = result.cost_usd;
+  if (result.notes) leg.notes = result.notes;
+  if (result.source_url) leg.source_url = result.source_url;
+
+  const card = document.getElementById(`res-leg-card-${i}`);
+  if (!card) return; // Route Results isn't the active screen anymore
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = _renderLegCard3(d, i);
+  const newCard = wrapper.querySelector('.res-leg-card3');
+  if (!newCard) return;
+  card.outerHTML = newCard.outerHTML;
+  const patched = document.getElementById(`res-leg-card-${i}`);
+  if (patched) {
+    patched.classList.add('leg-verify-pulse');
+    setTimeout(() => patched.classList.remove('leg-verify-pulse'), 2200);
+  }
 }
 
 // Shared stops/legs extraction — used by adoptRoute() and buildTripFromSuggestion()
@@ -5428,7 +5619,8 @@ function suggestionToStopsLegs(d) {
     infoSites:    l.info_sites    || [],
     legRegion:    l.leg_region    || '',
     confidence:   l.confidence    || 'uncertain',
-    conflict:     l.conflict      || null
+    conflict:     l.conflict      || null,
+    sourceUrl:    l.source_url    || ''   // Brave-verified citation, if any — survives "Add to planner"
   }));
   return { stops, legs };
 }
@@ -7151,6 +7343,17 @@ let _gpsPermsStep = 0; // 0 explain | 10 background denied | 11 battery exemptio
 let _gpsPermsCanAskAgain = true; // read by step-10 render to pick "Try again" vs "Open Settings" CTA
 
 async function openGpsPerms(trip) {
+  // GPS tracking is gated to profiles.gps_beta while it's still being
+  // hardened against real-device permission edge cases (see
+  // docs/gps-recording-feature.md). Manual tracking stays available to
+  // everyone regardless — this only routes non-beta users to a fallback
+  // screen instead of the real permission flow.
+  if (!hasGpsBeta) {
+    _gpsPermsTrip = trip || null;
+    _gpsPermsStep = 30;
+    switchTab('gpsperms', null);
+    return;
+  }
   if (!_gpsConfirmSwitch(trip)) return;
   await gpsEndCurrentTracking();
   _gpsPermsTrip = trip || null;
@@ -7267,6 +7470,17 @@ function renderGpsPerms() {
         <div class="strk-icon" style="background:var(--bg2);border-color:var(--border)"><i class="ph ph-map-pin-slash" style="font-size:28px;color:var(--text3)"></i></div>
         <div class="strk-title" style="font-size:22px">Skip GPS tracking?</div>
         <div class="strk-copy">Without location, we can't auto-plot your route. You can still journal this trip yourself — add stops and legs manually as you go.</div>
+        <button class="strk-cta" onclick="gpsSkipToManual()">Journal this trip manually</button>
+        <button class="strk-ghost" onclick="openJourneyDetail(_gpsPermsTrip || _journeyTrip)">Not now</button>
+      </div>
+    </div>`;
+  } else if (_gpsPermsStep === 30) {
+    h = `<div class="gps-panel gps-light">
+      <div class="gps-hdr"><button class="gps-back" onclick="openJourneyDetail(_gpsPermsTrip || _journeyTrip)"><i class="ph ph-arrow-left"></i></button><span>Route tracking</span></div>
+      <div class="gps-center">
+        <div class="strk-icon" style="background:var(--bg2);border-color:var(--border)"><i class="ph ph-flask" style="font-size:28px;color:var(--sage)"></i></div>
+        <div class="strk-title" style="font-size:22px">Live GPS tracking is in testing</div>
+        <div class="strk-copy">We're still hardening background tracking on real devices. You can journal this trip manually in the meantime — same journal, no GPS required.</div>
         <button class="strk-cta" onclick="gpsSkipToManual()">Journal this trip manually</button>
         <button class="strk-ghost" onclick="openJourneyDetail(_gpsPermsTrip || _journeyTrip)">Not now</button>
       </div>
@@ -7965,7 +8179,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
         </div>
         ${isExpanded ? `<div class="jd-leg-card3-expand" onclick="event.stopPropagation()">
           <div class="jd-leg-card3-kicker">Journey</div>
-          <div class="jd-leg-card3-badge">${renderConfidenceBadge(leg.confidence)}</div>
+          <div class="jd-leg-card3-badge">${renderConfidenceBadge(leg.confidence)}${leg.sourceUrl ? `<a class="res-leg-card3-src" href="${leg.sourceUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Source"><i class="ph ph-link"></i></a>` : ''}</div>
           <div class="jd-leg-card3-price">${getCurrSym()}${leg.cost||0}</div>
           ${(leg.km || leg.notes) ? `<div class="jd-leg-card3-desc">${leg.km?`${leg.km} km`:''}${leg.km&&leg.notes?' · ':''}${leg.notes||''}</div>` : ''}
           ${accomNote ? `<div class="jd-leg-card3-divider"></div>

@@ -201,6 +201,52 @@ app.get('/api/geocode', async (req, res) => {
   }
 });
 
+// ── POST /api/verify-leg — ground a shaky AI-suggested leg against Brave's
+// Answers API. planRoute()'s AI call sets each leg's confidence purely from
+// model recall (no web grounding) -- for legs it already flags check/
+// uncertain, this asks Brave for a real, cited answer and lets the frontend
+// decide whether to patch the leg. No Cache-Control here: results are
+// time-sensitive (schedules/prices), caching lives client-side only, keyed
+// by leg identity not URL.
+app.post('/api/verify-leg', async (req, res) => {
+  const { from, to, mode } = req.body || {};
+  if (!from || !to || !mode) {
+    return res.status(400).json({ error: { message: 'from, to, and mode are required' } });
+  }
+  const apiKey = process.env.BRAVE_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: { message: 'Server misconfiguration: BRAVE_API_KEY missing' } });
+  }
+  const q = `${mode} from ${from} to ${to} - current schedule, price, does it still operate?`;
+  try {
+    const upstream = await fetch(
+      `https://api.search.brave.com/res/v1/answers/search?q=${encodeURIComponent(q)}`,
+      { headers: { 'Accept': 'application/json', 'X-Subscription-Token': apiKey } }
+    );
+    const data = await upstream.json();
+    if (!upstream.ok) {
+      // An upstream error is NOT the same as "Brave found nothing better" --
+      // the frontend must never cache this as a negative result, or a
+      // transient failure gets treated as a permanent "confirmed unchanged"
+      // (the exact bug class just fixed in geocodeStop()'s res.ok check).
+      return res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + (data?.error?.message || upstream.status) } });
+    }
+    const answer = data?.answer || data?.results?.[0];
+    if (!answer || !answer.text) return res.json({ unchanged: true }); // genuine, cacheable negative
+    const priceMatch = answer.text.match(/\$\s?(\d+(?:\.\d+)?)/);
+    const negativeMatch = /suspended|no longer (runs?|operates?)|discontinued|cancell?ed|does not operate/i.test(answer.text);
+    res.json({
+      unchanged: false,
+      confidence: negativeMatch ? 'uncertain' : 'check',
+      cost_usd: priceMatch ? Number(priceMatch[1]) : undefined,
+      notes: answer.text.slice(0, 280),
+      source_url: answer.url || data?.results?.[0]?.url || null,
+    });
+  } catch (err) {
+    res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + err.message } });
+  }
+});
+
 // ── Supabase usage logger ────────────────────────────────────────────────────
 // NOTE: DeepSeek figures are an approximation as of this writing (deepseek-chat,
 // standard non-cached rate) — verify against https://api-docs.deepseek.com/quick_start/pricing
