@@ -296,7 +296,7 @@ app.get('/api/brave-web-search', async (req, res) => {
       return res.status(502).json({ error: { message: 'Web-search upstream error: ' + (data?.error?.detail || data?.error?.message || upstream.status) } });
     }
     const results = (data?.web?.results || []).map(r => ({ title: r.title, url: r.url, description: r.description }));
-    res.json({ results });
+    res.json({ results, _debugKeys: Object.keys(data || {}), _debugRaw: results.length ? undefined : JSON.stringify(data).slice(0, 800) });
   } catch (err) {
     res.status(502).json({ error: { message: 'Web-search upstream error: ' + err.message } });
   }
