@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Booking link compare — prototype (not part of the app)</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root { --ink:#0A0A0A; --sage:#D9973D; --border:#00000022; --bg2:#F1EFE8; }
+  * { box-sizing:border-box; }
+  body { font-family:system-ui,-apple-system,sans-serif; margin:0; padding:24px; background:#fff; color:var(--ink); }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:#666; font-size:13px; margin:0 0 20px; }
+  .banner { background:#FFF6ED; border:1px solid var(--sage); border-radius:8px; padding:10px 14px; font-size:12.5px; margin-bottom:20px; }
+  .form { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:24px; }
+  .field { display:flex; flex-direction:column; gap:4px; }
+  .field label { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; }
+  .field input, .field select { padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; min-width:140px; }
+  button { padding:9px 18px; border-radius:6px; border:none; background:var(--ink); color:#fff; font-size:13px; cursor:pointer; }
+  button:hover { opacity:0.85; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .col { border:1px solid var(--border); border-radius:10px; padding:16px; min-height:200px; }
+  .col h2 { font-size:13px; margin:0 0 4px; text-transform:uppercase; letter-spacing:0.5px; }
+  .col .hint { font-size:11.5px; color:#888; margin:0 0 14px; }
+  .result { border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+  .result .title { font-size:13.5px; font-weight:600; margin:0 0 3px; }
+  .result .title a { color:var(--ink); text-decoration:none; }
+  .result .title a:hover { text-decoration:underline; }
+  .result .url { font-size:11px; color:#0a7d3d; margin:0 0 4px; word-break:break-all; }
+  .result .desc { font-size:12px; color:#555; line-height:1.4; margin:0; }
+  .result .tag { display:inline-block; font-size:10px; background:var(--bg2); border-radius:4px; padding:1px 6px; margin-bottom:5px; color:#666; }
+  .empty { color:#999; font-size:12.5px; padding:20px 0; text-align:center; }
+  .err { color:#b3261e; font-size:12.5px; }
+  .loading { color:#888; font-size:12.5px; }
+</style>
+</head>
+<body>
+
+<h1>Booking link compare</h1>
+<p class="sub">Standalone prototype — not linked from the live app, not indexed. Compares the app's current curated booking-site fallback against live Brave Web Search results, for evaluating thin-coverage corridors (Iran, Central Asia, etc).</p>
+<div class="banner">Left = exact copy of the app's <code>DEFAULT_SITES</code> region-filter logic (app/index.html). Right = live <code>/api/brave-web-search</code> proxy call. Nothing here writes back to the app or affects production data.</div>
+
+<div class="form">
+  <div class="field"><label>Origin city</label><input id="origin" value="Tehran"></div>
+  <div class="field"><label>Destination city</label><input id="dest" value="Van"></div>
+  <div class="field"><label>Mode</label>
+    <select id="mode">
+      <option value="buses">Bus</option>
+      <option value="trains">Train</option>
+      <option value="ferries">Ferry</option>
+    </select>
+  </div>
+  <div class="field"><label>Region tag (as the AI would set legRegion)</label>
+    <select id="region">
+      <option>Middle East</option>
+      <option>Central Asia</option>
+      <option>Europe</option>
+      <option>South Asia</option>
+      <option>Southeast Asia</option>
+      <option>East Asia</option>
+      <option>North America</option>
+      <option>Latin America</option>
+      <option>East Africa</option>
+      <option>Oceania</option>
+    </select>
+  </div>
+  <button onclick="runCompare()">Compare →</button>
+</div>
+
+<div class="cols">
+  <div class="col">
+    <h2>Current app (curated DEFAULT_SITES)</h2>
+    <p class="hint">What renderTransportLinks() would actually show today.</p>
+    <div id="prodResults"><div class="empty">Run a compare above</div></div>
+  </div>
+  <div class="col">
+    <h2>Live Brave Web Search</h2>
+    <p class="hint">Raw results for "&lt;mode&gt; &lt;origin&gt; to &lt;dest&gt; ticket booking"</p>
+    <div id="braveResults"><div class="empty">Run a compare above</div></div>
+  </div>
+</div>
+
+<script>
+const PROXY_URL = 'https://slw-travel-proxy-production.up.railway.app';
+
+// Exact copy of app/index.html's DEFAULT_SITES (buses/trains/ferries only —
+// accommodation/info omitted, out of scope for this comparison).
+const DEFAULT_SITES = [
+  { name:'Busbud', category:'buses', regions:['North America','Latin America','Europe','Middle East','Southeast Asia'], urlTemplate:'https://www.busbud.com/en/bus-{origin}-{dest}' },
+  { name:'Bookaway', category:'buses', regions:['Southeast Asia','Central Asia','South Asia','Middle East','East Asia','Latin America','East Africa'], urlTemplate:'https://www.bookaway.com/search?srcName={origin}&dstName={dest}' },
+  { name:'12Go', category:'buses', regions:['Southeast Asia','Central Asia','South Asia','East Asia'], urlTemplate:'https://12go.asia/en/travel/{origin}/{dest}' },
+  { name:'FlixBus', category:'buses', regions:['Europe','North America'], urlTemplate:'https://shop.flixbus.com/search?departureCity={origin}&arrivalCity={dest}' },
+  { name:'GetByBus', category:'buses', regions:['Europe'], urlTemplate:'https://getbybus.com/en/bus/{origin}/{dest}' },
+  { name:'Omio', category:'buses', regions:['Europe'], urlTemplate:'https://www.omio.com/app/search-results?origin={origin}&destination={dest}' },
+  { name:'Omio', category:'trains', regions:['Europe'], urlTemplate:'https://www.omio.com/app/search-results?origin={origin}&destination={dest}&transportType=train' },
+  { name:'Rail Europe', category:'trains', regions:['Europe'], urlTemplate:'https://www.raileurope.com/en/search#from={origin}&to={dest}' },
+  { name:'Trainline', category:'trains', regions:['Europe'], urlTemplate:'https://www.thetrainline.com/search/{origin}/{dest}' },
+  { name:'Eurostar', category:'trains', regions:['Europe'], urlTemplate:'https://www.eurostar.com/uk-en/search#origin={origin}&destination={dest}' },
+  { name:'SNCF Connect', category:'trains', regions:['Europe'], urlTemplate:'https://www.sncf-connect.com/en-en/app/search/result?originCode={origin}&destinationCode={dest}' },
+  { name:'Deutsche Bahn', category:'trains', regions:['Europe'], urlTemplate:'https://www.bahn.de/buchung/fahrplan/suche#sts=true&so={origin}&zo={dest}' },
+  { name:'OBB', category:'trains', regions:['Europe'], urlTemplate:'https://fahrplan.oebb.at/bin/query.exe/en?S={origin}&Z={dest}' },
+  { name:'MAV', category:'trains', regions:['Europe'], urlTemplate:'https://jegy.mav.hu/search?from={origin}&to={dest}' },
+  { name:'Obilet', category:'buses', regions:['Middle East'], urlTemplate:'https://www.obilet.com/seferler/{origin}-{dest}' },
+  { name:'Metro Turizm', category:'buses', regions:['Middle East'], urlTemplate:'https://www.metroturizm.com.tr/en/route/{origin}/{dest}' },
+  { name:'TCDD', category:'trains', regions:['Middle East'], urlTemplate:'https://bilet.tcdd.gov.tr/home?sehirden={origin}&sehire={dest}' },
+  { name:'RAJA Trains', category:'trains', regions:['Middle East'], urlTemplate:'https://www.raja.ir/fa/trains?origin={origin}&destination={dest}' },
+  { name:'1stQuest', category:'buses', regions:['Middle East'], urlTemplate:'https://www.1stquest.ir/bus/{origin}/{dest}' },
+  { name:'RedBus', category:'buses', regions:['South Asia'], urlTemplate:'https://www.redbus.in/bus-tickets/{origin}-to-{dest}' },
+  { name:'Cleartrip', category:'buses', regions:['South Asia'], urlTemplate:'https://www.cleartrip.com/bus/{origin}-to-{dest}/' },
+  { name:'IRCTC', category:'trains', regions:['South Asia'], urlTemplate:'https://www.irctc.co.in/nget/train-search?fromStation={origin}&toStation={dest}' },
+  { name:'Pakistan Railways', category:'trains', regions:['South Asia'], urlTemplate:'https://www.pakrail.gov.pk/train_schedule?from={origin}&to={dest}' },
+  { name:'Baolau', category:'buses', regions:['Southeast Asia'], urlTemplate:'https://www.baolau.com/search/result?from={origin}&to={dest}' },
+  { name:'Easybook', category:'buses', regions:['Southeast Asia'], urlTemplate:'https://www.easybook.com/en-sg/bus/{origin}/{dest}' },
+  { name:'Recorrido', category:'buses', regions:['Latin America'], urlTemplate:'https://www.recorrido.cl/es/bus/{origin}/{dest}' },
+  { name:'BlaBlaCar', category:'buses', regions:['Europe','Latin America','South Asia','Middle East'], urlTemplate:'https://www.blablacar.com/search?source={origin}&destination={dest}' },
+  { name:'Direct Ferries', category:'ferries', regions:['Europe','Southeast Asia','Oceania','Middle East'], urlTemplate:'https://www.directferries.com/ferry_{origin}_{dest}.htm' },
+];
+
+// Exact copy of renderTransportLinks()'s region-gate logic (app/index.html) —
+// no allowedNames branch here since this prototype has no AI response to draw
+// recommended names from; it's testing the pure regional fallback path.
+function currentAppSites(category, region) {
+  let sources = DEFAULT_SITES.filter(s => s.category === category);
+  sources = sources.filter(s => !s.regions.length || s.regions.includes(region));
+  return sources;
+}
+
+async function runCompare() {
+  const origin = document.getElementById('origin').value.trim();
+  const dest = document.getElementById('dest').value.trim();
+  const mode = document.getElementById('mode').value;
+  const region = document.getElementById('region').value;
+  if (!origin || !dest) return;
+
+  const prodEl = document.getElementById('prodResults');
+  const sites = currentAppSites(mode, region);
+  prodEl.innerHTML = sites.length
+    ? sites.map(s => `<div class="result">
+        <span class="tag">tagged: ${s.regions.join(', ') || 'global'}</span>
+        <div class="title"><a href="${s.urlTemplate.replace('{origin}', encodeURIComponent(origin)).replace('{dest}', encodeURIComponent(dest))}" target="_blank" rel="noopener">${s.name}</a></div>
+        <div class="url">${s.urlTemplate}</div>
+      </div>`).join('')
+    : `<div class="empty">No curated site matches "${region}" for ${mode} — app would fall back to info/research sites or a Google search stub.</div>`;
+
+  const braveEl = document.getElementById('braveResults');
+  braveEl.innerHTML = '<div class="loading">Searching…</div>';
+  const q = `${mode.replace(/s$/,'')} ${origin} to ${dest} ticket booking`;
+  try {
+    const res = await fetch(`${PROXY_URL}/api/brave-web-search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!res.ok) { braveEl.innerHTML = `<div class="err">${data?.error?.message || 'Search failed'}</div>`; return; }
+    braveEl.innerHTML = data.results?.length
+      ? data.results.map(r => `<div class="result">
+          <div class="title"><a href="${r.url}" target="_blank" rel="noopener">${r.title || r.url}</a></div>
+          <div class="url">${r.url}</div>
+          <div class="desc">${r.description || ''}</div>
+        </div>`).join('')
+      : '<div class="empty">No results</div>';
+  } catch (e) {
+    braveEl.innerHTML = `<div class="err">${e.message}</div>`;
+  }
+}
+</script>
+</body>
+</html>

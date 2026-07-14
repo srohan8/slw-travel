@@ -201,6 +201,110 @@ app.get('/api/geocode', async (req, res) => {
   }
 });
 
+// ── POST /api/verify-leg — ground a shaky AI-suggested leg against Brave's
+// Answers API. planRoute()'s AI call sets each leg's confidence purely from
+// model recall (no web grounding) -- for legs it already flags check/
+// uncertain, this asks Brave for a real, cited answer and lets the frontend
+// decide whether to patch the leg. No Cache-Control here: results are
+// time-sensitive (schedules/prices), caching lives client-side only, keyed
+// by leg identity not URL.
+app.post('/api/verify-leg', async (req, res) => {
+  const { from, to, mode } = req.body || {};
+  if (!from || !to || !mode) {
+    return res.status(400).json({ error: { message: 'from, to, and mode are required' } });
+  }
+  const apiKey = process.env.BRAVE_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: { message: 'Server misconfiguration: BRAVE_API_KEY missing' } });
+  }
+  const q = `${mode} from ${from} to ${to} - current schedule, price, does it still operate? Answer briefly with a source.`;
+  try {
+    // Brave Answers is an OpenAI-compatible chat-completions endpoint, not a
+    // plain GET search -- POST with messages/model, citations come back
+    // embedded as <citation>{...}</citation> tags inside the message content.
+    const upstream = await fetch('https://api.search.brave.com/res/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-subscription-token': apiKey },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: q }],
+        model: 'brave',
+        stream: false,
+        extra_body: { enable_citations: true },
+      }),
+    });
+    const raw = await upstream.text();
+    let data;
+    try { data = JSON.parse(raw); } catch (e) {
+      // Non-JSON upstream body (HTML error page, etc.) -- treat exactly like
+      // a non-2xx: a real failure, never a cacheable "nothing better found".
+      return res.status(502).json({ error: { message: 'Verify-leg upstream returned non-JSON: ' + raw.slice(0, 200) } });
+    }
+    if (!upstream.ok) {
+      // An upstream error is NOT the same as "Brave found nothing better" --
+      // the frontend must never cache this as a negative result, or a
+      // transient failure gets treated as a permanent "confirmed unchanged"
+      // (the exact bug class just fixed in geocodeStop()'s res.ok check).
+      return res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + (data?.error?.detail || data?.error?.message || upstream.status) } });
+    }
+    const content = data?.choices?.[0]?.message?.content || '';
+    if (!content.trim()) return res.json({ unchanged: true }); // genuine, cacheable negative
+
+    const citations = [...content.matchAll(/<citation>([\s\S]*?)<\/citation>/g)]
+      .map(m => { try { return JSON.parse(m[1]); } catch (e) { return null; } })
+      .filter(Boolean);
+    const text = content.replace(/<citation>[\s\S]*?<\/citation>/g, '').replace(/<usage>[\s\S]*?<\/usage>/g, '').trim();
+    if (!text) return res.json({ unchanged: true });
+
+    const priceMatch = text.match(/\$\s?(\d+(?:\.\d+)?)/);
+    const negativeMatch = /suspended|no longer (runs?|operates?)|discontinued|cancell?ed|does not operate/i.test(text);
+    res.json({
+      unchanged: false,
+      confidence: negativeMatch ? 'uncertain' : 'check',
+      cost_usd: priceMatch ? Number(priceMatch[1]) : undefined,
+      notes: text.slice(0, 280),
+      source_url: citations[0]?.url || null,
+    });
+  } catch (err) {
+    res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + err.message } });
+  }
+});
+
+// ── GET /api/brave-web-search — raw Brave Web Search results (prototype only).
+// Distinct from /api/verify-leg (Brave Answers, a synthesized/cited response)
+// -- this returns the plain search-result list, for the booking-link-compare
+// prototype (prototype/booking-link-compare.html) to eyeball against the
+// app's curated DEFAULT_SITES fallback on thin-coverage corridors (Iran,
+// Central Asia, etc). Not called from the main app.
+app.get('/api/brave-web-search', async (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.status(400).json({ error: { message: 'q query param required' } });
+  // Search and Answers are separate Brave subscriptions/keys -- confirmed
+  // after Answers itself needed a distinct plan (OPTION_NOT_IN_PLAN, see
+  // /api/verify-leg's history). Don't reuse BRAVE_API_KEY here.
+  const apiKey = process.env.BRAVE_SEARCH_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: { message: 'Server misconfiguration: BRAVE_SEARCH_API_KEY missing' } });
+  }
+  try {
+    const upstream = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(q)}&count=8`,
+      { headers: { 'Accept': 'application/json', 'X-Subscription-Token': apiKey } }
+    );
+    const raw = await upstream.text();
+    let data;
+    try { data = JSON.parse(raw); } catch (e) {
+      return res.status(502).json({ error: { message: 'Web-search upstream returned non-JSON: ' + raw.slice(0, 200) } });
+    }
+    if (!upstream.ok) {
+      return res.status(502).json({ error: { message: 'Web-search upstream error: ' + (data?.error?.detail || data?.error?.message || upstream.status) } });
+    }
+    const results = (data?.web?.results || []).map(r => ({ title: r.title, url: r.url, description: r.description }));
+    res.json({ results });
+  } catch (err) {
+    res.status(502).json({ error: { message: 'Web-search upstream error: ' + err.message } });
+  }
+});
+
 // ── Supabase usage logger ────────────────────────────────────────────────────
 // NOTE: DeepSeek figures are an approximation as of this writing (deepseek-chat,
 // standard non-cached rate) — verify against https://api-docs.deepseek.com/quick_start/pricing
