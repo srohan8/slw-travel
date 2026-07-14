@@ -55,6 +55,33 @@ Desktop: Record button is hidden. Users see a "Mobile only" tooltip if they disc
 
 ---
 
+## 3.5. Rollout gating — `profiles.gps_beta`
+
+The permission-sequencing engine (§11) is functional but still being
+hardened against real-device edge cases across OEMs/Android versions.
+Rather than a general tier/pricing system, access is controlled by a
+single admin-togglable boolean:
+
+- `profiles.gps_beta` (migration `supabase/migrations/20260714_gps_beta_flag.sql`),
+  mirroring `profiles.is_admin`'s exact shape and RLS pattern.
+- Refreshed into the global `hasGpsBeta` alongside `isAdminUser` in
+  `updateNavAuth()` (`app/index.html`) — one query, no extra round trip.
+- `openGpsPerms()` gates on it: non-beta users are routed straight to a
+  new permission-flow step (30) explaining tracking is in testing, with a
+  CTA into manual journaling — never the real permission sequence.
+- **Manual tracking is never gated.** `gpsStartManualFromJourney()` /
+  `gpsSkipToManual()` are completely independent of `openGpsPerms()` and
+  stay available to every user regardless of `gps_beta`.
+- Toggled per-user from **Admin > Beta features** (look up by email, flip
+  a checkbox) — protected by a Postgres RLS policy (admins can update any
+  profile), not just UI-level hiding.
+
+No general feature-flag framework was built on top of this — if more
+beta flags are needed later, add more boolean columns following this
+same pattern rather than generalizing prematurely.
+
+---
+
 ## 4. Core Logic — Stop & Leg Detection
 
 ### Stop detection (dwell algorithm)
@@ -265,6 +292,10 @@ Recorded trips get a `source: "recorded"` flag and a badge in the trip card:
 ---
 
 ## 11. Permissions UX
+
+Gated behind `profiles.gps_beta` first — see §3.5. Everything below only
+runs for a beta-enabled user; everyone else lands on the manual-tracking
+fallback screen instead.
 
 First time the user taps Record:
 1. Explain what's needed and why (one screen, not an OS dialog dump)
