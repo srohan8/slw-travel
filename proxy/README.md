@@ -22,6 +22,7 @@ that can't live in client-side code (Anthropic, DeepSeek).
 | `/api/ai` | POST | Forwards to Anthropic (or DeepSeek, if forced/failed-over — see below). Body: `{messages, system?, max_tokens?}`. |
 | `/api/elevation` | GET | Proxies Open-Topo-Data SRTM90m. Query: `?locations=lat,lon\|lat,lon\|...`. |
 | `/api/geocode` | GET | Proxies Komoot Photon. Query: `?q=<place name>`. |
+| `/api/verify-leg` | POST | Grounds a shaky AI-suggested leg (confidence `check`/`uncertain`) against Brave's Answers API. Body: `{from, to, mode}`. Returns `{unchanged:true}` or `{unchanged:false, confidence?, cost_usd?, notes?, source_url?}`. |
 
 ## Env vars
 
@@ -33,6 +34,10 @@ DEEPSEEK_API_KEY=...         # optional — only needed if the failsafe/force-pr
 ANTHROPIC_MODEL=...          # optional override, default claude-sonnet-4-6
 ANTHROPIC_MODEL_FALLBACK=... # optional override, default claude-haiku-4-5-20251001
 DEEPSEEK_MODEL=...           # optional override, default deepseek-chat
+BRAVE_API_KEY=...            # optional — only needed for /api/verify-leg (route-leg verification).
+                              # Without it, verifyUncertainLegs() in app/index.html gets a 500 from
+                              # every call and silently no-ops — route suggestions still work exactly
+                              # as before, just without the background double-check.
 ```
 
 ## AI provider failsafe
