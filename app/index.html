@@ -1986,6 +1986,24 @@ window.addEventListener('unhandledrejection', (e) => {
       <div id="adminSiteList"></div>
     </div>
 
+    <!-- Bulk seed sweep (§6) — admin-triggered one-time Brave sweep, country-priority booking sites -->
+    <div class="card" style="margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0">Bulk seed sweep</h3>
+        <span id="bsPendingBadge" style="display:none;background:var(--sage);color:var(--cream);font-size:10px;padding:1px 6px;border-radius:99px;font-family:var(--mono);font-weight:600"></span>
+      </div>
+      <div class="hint" style="margin-bottom:10px">One-time Brave Web Search sweep per country × category to populate country-specific booking sites (see plan §6). Every result lands in a review queue below — nothing is auto-promoted.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button onclick="runBulkSeedPass('transport')" id="bsPass1Btn" class="btn btn-primary" style="font-size:12px;padding:7px 14px">Run bulk seed — Pass 1 (transport)</button>
+        <button onclick="runBulkSeedPass('accommodation')" id="bsPass2Btn" class="btn" style="font-size:12px;padding:7px 14px;border:0.5px solid var(--border);background:none;color:var(--text2)" disabled>Run bulk seed — Pass 2 (accommodation)</button>
+        <button onclick="openSeedReviewModal()" style="font-size:12px;padding:7px 14px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">Review pending results</button>
+      </div>
+      <div id="bsProgress" style="display:none;max-height:180px;overflow-y:auto;font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 10px"></div>
+    </div>
+
+    <!-- Seed review modal (§6/§10) -->
+    <div id="seedReviewModal" style="display:none"></div>
+
     <!-- Route cache -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -2132,12 +2150,13 @@ const AFF = {
 // appears as a GPS-speed-anomaly label (gpsModeFromSpeedKmh) or from
 // importing a real historical trip (IMPORT_MODE_MAP) — both keep their own
 // flight handling, they just don't feed from this selectable-modes list.
-const MODES = ['bus','train','hitchhike','ferry','walk','cycle','motorbike','taxi','shared taxi'];
+const MODES = ['bus','train','hitchhike','ferry','ship','walk','cycle','motorbike','taxi','shared taxi'];
 const MODE_ICONS = {
   bus:          'ph-bus',
   train:        'ph-train',
   hitchhike:    'ph-thumbs-up',
   ferry:        'ph-boat',
+  ship:         'ph-boat',
   walk:         'ph-person-simple-walk',
   walking:      'ph-person-simple-walk',
   cycle:        'ph-bicycle',
@@ -2146,7 +2165,7 @@ const MODE_ICONS = {
   flight:       'ph-airplane',
   'shared taxi':'ph-van',
 };
-const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',walk:'Walk',walking:'Walk',cycle:'Cycle',motorbike:'Motorbike',taxi:'Taxi',flight:'Flight','shared taxi':'Carpool'};
+const MI    = {bus:'Bus',train:'Train',hitchhike:'Hitch',ferry:'Ferry',ship:'Ship',walk:'Walk',walking:'Walk',cycle:'Cycle',motorbike:'Motorbike',taxi:'Taxi',flight:'Flight','shared taxi':'Carpool'};
 // Signal · transport mode accent colors (left border + icon chips)
 // Signal · transport mode accent colors (Session-2 §8 values)
 const MODE_COLORS = {
@@ -2160,6 +2179,7 @@ const MODE_COLORS = {
   // ferry previously reused ink-500 (#3D3D3D), same monotone-grey problem
   // as train above. Teal-green reads as water without crossing into blue.
   ferry:        '#3D5C52', // teal-green
+  ship:         '#2D4A52', // deeper teal — distinct from ferry, still reads as water
   walk:         '#94A0B0', // text3 grey
   walking:      '#94A0B0',
   cycle:        '#9C6423', // mustard-700 (was ocean blue)
@@ -2174,7 +2194,7 @@ const MODE_COLORS = {
 
 // Mode → tint (light bg for icon chip)
 const MODE_TINTS = {
-  bus:'#F4EADE', train:'#E5EEE7', ferry:'#E4EBE8', hitchhike:'#FBE3D4',
+  bus:'#F4EADE', train:'#E5EEE7', ferry:'#E4EBE8', ship:'#E4EBE8', hitchhike:'#FBE3D4',
   walk:'#F2F4F6', walking:'#F2F4F6', cycle:'#FCEFDC', motorbike:'#F1E9F6',
   taxi:'#FEF3C7', flight:'#ECECEC', 'shared taxi':'#FEF3C7',
 };
@@ -2440,6 +2460,7 @@ async function init() {
   repairMalformedTrips();
 
   loadCustomSitesIntoAFF();
+  _syncSitesFromSupabase(); // fire-and-forget background read-through sync (§4)
   render();
   renderPlanLanding();
   renderGuestBanner();
@@ -3276,6 +3297,7 @@ function switchAdminSubTab(tab) {
   if (tab === 'review')     renderReviewQueue();
   if (tab === 'usage')      renderAdminUsage();
   if (tab === 'aiprovider') renderAdminAiProvider();
+  if (tab === 'sites')      _refreshPendingBadge();
 }
 
 // ── Admin > Beta features — look up a user by email, toggle profiles.gps_beta.
@@ -3482,11 +3504,60 @@ function renderReviewQueue() {
   }).join('');
 }
 
+// ── Country → region reference (ISO-3166-1 alpha-2, matches Photon's
+// properties.countrycode) — scoped to countries the app's overland routes
+// actually touch, not all 195 nations. Values match the AI's leg_region
+// 10-value vocabulary exactly (Southeast Asia/Central Asia/South Asia/
+// East Asia/Europe/Middle East/Africa/North America/Latin America/Oceania).
+// Reused by the bulk-seed sweep (§6) to enumerate countries.
+const COUNTRY_REGION_MAP = {
+  // Europe
+  AL:'Europe', AT:'Europe', BA:'Europe', BE:'Europe', BG:'Europe', CH:'Europe',
+  CZ:'Europe', DE:'Europe', DK:'Europe', EE:'Europe', ES:'Europe', FI:'Europe',
+  FR:'Europe', GB:'Europe', GR:'Europe', HR:'Europe', HU:'Europe', IE:'Europe',
+  IS:'Europe', IT:'Europe', LT:'Europe', LU:'Europe', LV:'Europe', MD:'Europe',
+  ME:'Europe', MK:'Europe', NL:'Europe', NO:'Europe', PL:'Europe', PT:'Europe',
+  RO:'Europe', RS:'Europe', SE:'Europe', SI:'Europe', SK:'Europe', UA:'Europe',
+  XK:'Europe',
+  // Middle East (incl. Turkey, Caucasus, Iran)
+  AE:'Middle East', AM:'Middle East', AZ:'Middle East', GE:'Middle East',
+  IL:'Middle East', IQ:'Middle East', IR:'Middle East', JO:'Middle East',
+  KW:'Middle East', LB:'Middle East', OM:'Middle East', QA:'Middle East',
+  SA:'Middle East', SY:'Middle East', TR:'Middle East', YE:'Middle East',
+  // Central Asia
+  KG:'Central Asia', KZ:'Central Asia', TJ:'Central Asia', TM:'Central Asia',
+  UZ:'Central Asia', AF:'Central Asia',
+  // South Asia
+  BD:'South Asia', BT:'South Asia', IN:'South Asia', LK:'South Asia',
+  NP:'South Asia', PK:'South Asia',
+  // East Asia
+  CN:'East Asia', HK:'East Asia', JP:'East Asia', KR:'East Asia',
+  MN:'East Asia', TW:'East Asia',
+  // Southeast Asia
+  ID:'Southeast Asia', KH:'Southeast Asia', LA:'Southeast Asia',
+  MM:'Southeast Asia', MY:'Southeast Asia', PH:'Southeast Asia',
+  SG:'Southeast Asia', TH:'Southeast Asia', TL:'Southeast Asia',
+  VN:'Southeast Asia',
+  // Africa
+  DZ:'Africa', EG:'Africa', ET:'Africa', KE:'Africa', MA:'Africa',
+  MZ:'Africa', NA:'Africa', RW:'Africa', SN:'Africa', TN:'Africa',
+  TZ:'Africa', UG:'Africa', ZA:'Africa', ZM:'Africa', ZW:'Africa',
+  // North America
+  CA:'North America', MX:'North America', US:'North America',
+  // Latin America
+  AR:'Latin America', BO:'Latin America', BR:'Latin America',
+  CL:'Latin America', CO:'Latin America', CR:'Latin America',
+  EC:'Latin America', GT:'Latin America', PE:'Latin America',
+  PY:'Latin America', UY:'Latin America',
+  // Oceania
+  AU:'Oceania', FJ:'Oceania', NZ:'Oceania',
+};
+
 // ── Booking sites (unified — built-ins + custom, all editable) ───
 const DEFAULT_SITES = [
   // ── Global / multi-region buses ──
   { id:'_bi_busbud',   name:'Busbud',         category:'buses',  regions:['North America','Latin America','Europe','Middle East','Southeast Asia'],                  urlTemplate:'https://www.busbud.com/en/bus-{origin}-{dest}',                                                           affId:'', enabled:true, _builtin:true },
-  { id:'_bi_bookaway', name:'Bookaway',        category:'buses',  regions:['Southeast Asia','Central Asia','South Asia','Middle East','East Asia','Latin America','East Africa'],urlTemplate:'https://www.bookaway.com/search?srcName={origin}&dstName={dest}',                                         affId:'', enabled:true, _builtin:true },
+  { id:'_bi_bookaway', name:'Bookaway',        category:'buses',  regions:['Southeast Asia','Central Asia','South Asia','Middle East','East Asia','Latin America','Africa'],urlTemplate:'https://www.bookaway.com/search?srcName={origin}&dstName={dest}',                                         affId:'', enabled:true, _builtin:true, countries:[] },
   { id:'_bi_12go',     name:'12Go',            category:'buses',  regions:['Southeast Asia','Central Asia','South Asia','East Asia'],                                urlTemplate:'https://12go.asia/en/travel/{origin}/{dest}',                                                             affId:'', enabled:true, _builtin:true },
   // ── Europe buses & trains ──
   { id:'_bi_flixbus',  name:'FlixBus',         category:'buses',  regions:['Europe','North America'],                                                                urlTemplate:'https://shop.flixbus.com/search?departureCity={origin}&arrivalCity={dest}',                               affId:'', enabled:true, _builtin:true },
@@ -3727,6 +3798,29 @@ function extractSiteTemplate() {
   previewSiteUrl();
 }
 
+// Write one booking_sites row to Supabase (admin_settings-style client-side
+// is_admin RLS — see supabase/migrations/20260714_booking_sites.sql). A
+// failed write surfaces an error toast rather than silently keeping the
+// local-only change, per the plan's explicit decision — silent fallback
+// would recreate the exact "admin edits never reach real users" bug this
+// whole feature exists to fix.
+async function _upsertSiteToSupabase(s) {
+  try {
+    const { error } = await sb.from('booking_sites').upsert({
+      id: s.id, name: s.name, category: s.category, url_template: s.urlTemplate || '',
+      aff_id: s.affId || '', regions: s.regions || [], countries: s.countries || [],
+      enabled: s.enabled !== false, builtin: !!s._builtin, source: s.source || 'admin',
+      admin_edited: s.admin_edited !== false, updated_at: new Date().toISOString(),
+    });
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.error('Supabase booking_sites upsert failed:', e.message);
+    showToast?.('Could not sync this booking site to the server — your change is only saved on this device. ' + e.message, 'error');
+    return false;
+  }
+}
+
 function saveSite() {
   const name     = document.getElementById('sf_name').value.trim();
   const category = document.getElementById('sf_cat').value;
@@ -3739,16 +3833,23 @@ function saveSite() {
   if (!urlTpl) { alert('URL template is required.'); return; }
 
   const sites = _readAllSites();
+  let saved;
   if (editId) {
     const idx = sites.findIndex(s => s.id === editId);
-    if (idx > -1) sites[idx] = { ...sites[idx], name, category, urlTemplate: urlTpl, affId, regions, enabled: true };
+    // Any manual save — editing a bulk-seeded row or a fresh manual one —
+    // counts as "an admin looked at this," so admin_edited flips to true
+    // even if no fields actually changed (deliberate "I reviewed it" signal).
+    if (idx > -1) sites[idx] = { ...sites[idx], name, category, urlTemplate: urlTpl, affId, regions, enabled: true, admin_edited: true };
+    saved = sites[idx];
   } else {
-    sites.push({ id: Date.now().toString(), name, category, urlTemplate: urlTpl, affId, regions, enabled: true, _builtin: false });
+    saved = { id: Date.now().toString(), name, category, urlTemplate: urlTpl, affId, regions, countries: [], enabled: true, _builtin: false, source: 'admin', admin_edited: true };
+    sites.push(saved);
   }
   _writeAllSites(sites);
   loadCustomSitesIntoAFF();
   hideSiteForm();
   renderAdminSiteList();
+  _upsertSiteToSupabase(saved);
 }
 
 function toggleSiteEnabled(id) {
@@ -3758,6 +3859,32 @@ function toggleSiteEnabled(id) {
   _writeAllSites(sites);
   loadCustomSitesIntoAFF();
   renderAdminSiteList();
+  // Enable/disable only — does NOT touch admin_edited, per plan §4:
+  // flipping a toggle isn't "editing" the listing the way saveSite() is.
+  if (s) _upsertSiteToSupabase(s);
+}
+
+// Background read-through sync (§4) — DEFAULT_SITES/localStorage stay the
+// offline/first-run fallback; this runs once on app load and rewrites the
+// slw_all_sites cache from the Supabase source of truth so admin edits
+// made on another device actually reach this session. Existing call sites
+// (_readAllSites, loadCustomSitesIntoAFF, renderAdminSiteList) are
+// unchanged — they keep reading the synchronously-available cache.
+async function _syncSitesFromSupabase() {
+  try {
+    const { data, error } = await sb.from('booking_sites').select('*');
+    if (error || !data) return;
+    const translated = data.map(r => ({
+      id: r.id, name: r.name, category: r.category, urlTemplate: r.url_template,
+      affId: r.aff_id || '', regions: r.regions || [], countries: r.countries || [],
+      enabled: r.enabled !== false, _builtin: !!r.builtin, source: r.source || 'admin',
+      admin_edited: r.admin_edited !== false,
+    }));
+    if (translated.length) {
+      _writeAllSites(translated);
+      loadCustomSitesIntoAFF();
+    }
+  } catch (e) { console.warn('Supabase booking_sites sync failed:', e.message); }
 }
 
 function deleteSite(id) {
@@ -3779,8 +3906,13 @@ function deleteSite(id) {
 function renderAdminSiteList() {
   const el = document.getElementById('adminSiteList');
   if (!el) return;
-  const sites = _readAllSites();
-  const catLabel = { buses:'Bus/Taxi', trains:'Train', ferries:'Ferry', accommodation:'Stay', info:'Info/Research' };
+  let sites = _readAllSites();
+  const catLabel = { buses:'Bus/Taxi', trains:'Train', ferries:'Ferry', ships:'Ship', accommodation:'Stay', info:'Info/Research' };
+
+  // "NEW" badge sort — bulk-seed/reactive promotions land with
+  // admin_edited:false; surface those first so a fresh batch of ~200+
+  // promoted sites is actually triageable rather than buried alphabetically.
+  sites = [...sites].sort((a, b) => (a.admin_edited === false ? 0 : 1) - (b.admin_edited === false ? 0 : 1));
 
   let h = `<table class="aff-table"><thead><tr>
     <th>Site</th><th>Category</th><th>Regions</th><th>URL template</th><th>Aff. ID</th><th>On</th><th></th>
@@ -3791,6 +3923,9 @@ function renderAdminSiteList() {
     const needsUrl  = !s.urlTemplate;
     const badge = isBuiltin
       ? ` <span style="font-size:10px;color:var(--text3);border:0.5px solid var(--border);border-radius:3px;padding:1px 5px;vertical-align:middle">built-in</span>`
+      : '';
+    const newBadge = s.admin_edited === false
+      ? ` <span style="font-size:10px;color:var(--cream);background:var(--sage);border-radius:3px;padding:1px 5px;vertical-align:middle;font-weight:700">NEW</span>`
       : '';
     const urlWarn = needsUrl
       ? ` <span style="font-size:10px;color:var(--warn,#e67e22);border:0.5px solid currentColor;border-radius:3px;padding:1px 5px;vertical-align:middle">⚠ URL needed</span>`
@@ -3806,7 +3941,7 @@ function renderAdminSiteList() {
       ? s.regions.map(r => `<span style="display:inline-block;font-size:10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:3px;padding:1px 5px;margin:1px 2px 1px 0;white-space:nowrap">${r}</span>`).join('')
       : `<span style="font-size:11px;color:var(--text3)">global</span>`;
     h += `<tr style="${rowOpacity}">
-      <td style="font-weight:500">${s.name}${badge}${urlWarn}</td>
+      <td style="font-weight:500">${s.name}${newBadge}${badge}${urlWarn}</td>
       <td><span class="aff-cat">${catLabel[s.category] || s.category}</span></td>
       <td style="max-width:160px">${regionPills}</td>
       <td style="font-size:11px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.urlTemplate}">${s.urlTemplate || '—'}</td>
@@ -3821,6 +3956,278 @@ function renderAdminSiteList() {
 
   h += `</tbody></table>`;
   el.innerHTML = h;
+}
+
+// ── Bulk seed sweep (§6) ────────────────────────────────────────────
+// Admin-triggered, sequential, ~150ms spacing (mirrors verifyUncertainLegs's
+// for...of + await + await new Promise(r=>setTimeout(r,150)) shape — Brave
+// Web Search's real capacity is 50 req/s, so 150ms is a wide margin, not
+// the conservative 600ms borrowed from the different Brave Answers product).
+// Raw results are never held in-memory-only — every hit is INSERTed into
+// booking_sites_pending immediately so nothing is lost if the admin
+// navigates away mid-sweep (same table the reactive trigger writes to).
+const _SEED_QUERY_TEMPLATES = {
+  buses:  c => `${c} long-distance bus booking`,
+  trains: c => `${c} intercity train booking`,
+  ferries: c => `${c} ferry booking international`,
+  ships:  c => `${c} freighter passenger ship booking`,
+  accommodation: c => `${c} hotels hostels booking`,
+};
+// Small manual exclusion list — landlocked countries skip ferry/ship queries
+// entirely rather than burning Brave calls on a category that can't apply.
+const _LANDLOCKED_COUNTRIES = new Set([
+  'AT','CH','CZ','HU','LU','MD','MK','RS','SK','XK', // Europe
+  'AM','AZ','GE',                                     // Caucasus (Caspian excluded — treated as landlocked for ferry/ship purposes)
+  'AF','KG','KZ','TJ','TM','UZ',                       // Central Asia
+  'BT','NP',                                           // South Asia
+  'MN',                                                // East Asia
+  'LA',                                                // Southeast Asia
+  'ZM','ZW','UG','RW',                                 // Africa
+  'PY','BO',                                           // Latin America
+]);
+
+let _bulkSeedPass1EverRun = false; // simplest Pass-2 gate: Pass 1 must have run at least once this session
+
+function _seedCountryName(code) {
+  // Best-effort human-readable name for the query string — the app doesn't
+  // carry a full ISO code → name table, so fall back to the code itself
+  // (Brave still returns usable results for "IR long-distance bus booking").
+  try {
+    if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
+      return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) || code;
+    }
+  } catch {}
+  return code;
+}
+
+function _bulkSeedQueryCount(pass) {
+  const countries = Object.keys(COUNTRY_REGION_MAP);
+  if (pass === 'accommodation') return countries.length; // one query/country
+  let n = 0;
+  countries.forEach(c => {
+    n += 2; // bus + train always
+    if (!_LANDLOCKED_COUNTRIES.has(c)) n += 2; // + ferry + ship
+  });
+  return n;
+}
+
+function _bsLog(msg) {
+  const el = document.getElementById('bsProgress');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML += `<div>${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+async function runBulkSeedPass(pass) {
+  const queryCount = _bulkSeedQueryCount(pass);
+  const label = pass === 'accommodation' ? 'Pass 2 (accommodation)' : 'Pass 1 (transport)';
+  if (!confirm(`Run bulk seed — ${label}?\n\nThis will fire ${queryCount} Brave Web Search queries (~${Math.ceil(queryCount * 150 / 1000)}s at ~150ms spacing), one per country/category. Results land in the review queue below — nothing is promoted automatically.`)) {
+    return;
+  }
+  const btn1 = document.getElementById('bsPass1Btn'), btn2 = document.getElementById('bsPass2Btn');
+  if (btn1) btn1.disabled = true;
+  if (btn2) btn2.disabled = true;
+  document.getElementById('bsProgress').innerHTML = '';
+  document.getElementById('bsProgress').style.display = 'block';
+  _bsLog(`Starting ${label} — ${queryCount} queries…`);
+
+  const countries = Object.keys(COUNTRY_REGION_MAP);
+  let queued = 0, failed = 0;
+  for (const code of countries) {
+    const categories = pass === 'accommodation'
+      ? ['accommodation']
+      : ['buses', 'trains', ..._LANDLOCKED_COUNTRIES.has(code) ? [] : ['ferries', 'ships']];
+    const countryName = _seedCountryName(code);
+    for (const category of categories) {
+      const q = _SEED_QUERY_TEMPLATES[category](countryName);
+      try {
+        const res = await fetch(`${PROXY_URL}/api/brave-web-search?q=${encodeURIComponent(q)}`);
+        if (!res.ok) { failed++; _bsLog(`⚠ ${code} ${category}… request failed`); }
+        else {
+          const { results } = await res.json();
+          if (results?.length) {
+            const qres = await fetch(`${PROXY_URL}/api/queue-seed-result`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ country_code: code, category, results, trigger_source: 'bulk_seed' }),
+            });
+            if (qres.ok) { queued += results.length; _bsLog(`${code} ${category}… found ${results.length} candidate${results.length===1?'':'s'}`); }
+            else { failed++; _bsLog(`⚠ ${code} ${category}… found results but failed to queue`); }
+          } else {
+            _bsLog(`${code} ${category}… no results`);
+          }
+        }
+      } catch (e) {
+        failed++; _bsLog(`⚠ ${code} ${category}… ${e.message}`);
+      }
+      await new Promise(r => setTimeout(r, 150)); // ~6-7 req/s, wide margin under Brave's 50 qps cap
+    }
+  }
+  _bsLog(`Done. ${queued} candidate${queued===1?'':'s'} queued for review${failed ? `, ${failed} query error${failed===1?'':'s'}` : ''}.`);
+  if (pass !== 'accommodation') _bulkSeedPass1EverRun = true;
+  if (btn1) btn1.disabled = false;
+  if (btn2) btn2.disabled = !_bulkSeedPass1EverRun;
+  _refreshPendingBadge();
+}
+
+// ── Review queue (§6 bulk sweep + §10 reactive trigger, same modal) ────
+let _seedPendingCache = [];
+
+async function _fetchPendingSeeds() {
+  try {
+    const { data, error } = await sb.from('booking_sites_pending').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    console.error('Fetch booking_sites_pending failed:', e.message);
+    return [];
+  }
+}
+
+async function _refreshPendingBadge() {
+  const rows = await _fetchPendingSeeds();
+  const badge = document.getElementById('bsPendingBadge');
+  const pass2Btn = document.getElementById('bsPass2Btn');
+  if (badge) {
+    if (rows.length) { badge.style.display = 'inline-block'; badge.textContent = `${rows.length} pending`; }
+    else badge.style.display = 'none';
+  }
+  // Simple Pass-2 gate: enabled once Pass 1 has run at least once this
+  // session AND there's nothing left over from an unreviewed transport
+  // sweep sitting in the queue (keeps admins from starting accommodation
+  // before transport results actually got looked at).
+  if (pass2Btn) {
+    const transportPending = rows.some(r => ['buses','trains','ferries','ships'].includes(r.category));
+    pass2Btn.disabled = !_bulkSeedPass1EverRun || transportPending;
+  }
+}
+
+// Lightweight pre-sort heuristics — flag only, never auto-promote.
+function _seedHeuristic(url) {
+  const u = (url || '').toLowerCase();
+  if (/flight|skyscanner|kayak\.com\/flights|expedia\.com\/flights/.test(u)) return { flag: 'flight', label: 'looks flight-only — bysloth is overland-only', color: 'var(--danger-text,#c0392b)' };
+  if (/book|ticket|\.com\/search|reservation|reserve/.test(u)) return { flag: 'good', label: 'looks like a booking site', color: 'var(--fern)' };
+  return { flag: 'unknown', label: '', color: 'var(--text3)' };
+}
+
+async function openSeedReviewModal() {
+  _seedPendingCache = await _fetchPendingSeeds();
+  _renderSeedReviewModal();
+}
+
+function closeSeedReviewModal() {
+  const m = document.getElementById('seedReviewModal');
+  if (m) { m.style.display = 'none'; m.innerHTML = ''; }
+}
+
+function _renderSeedReviewModal() {
+  const m = document.getElementById('seedReviewModal');
+  if (!m) return;
+  // Reactive rows first ("unattended, verify carefully"), then bulk_seed —
+  // reused for both trigger sources per the plan, single review surface.
+  const rows = [..._seedPendingCache].sort((a, b) => {
+    const rank = r => r.trigger_source === 'reactive_new_country' ? 0 : 1;
+    return rank(a) - rank(b);
+  });
+
+  if (!rows.length) {
+    m.style.display = 'block';
+    m.innerHTML = `<div class="sr-overlay" onclick="if(event.target===this)closeSeedReviewModal()">
+      <div class="sr-card">
+        <div class="sr-hdr"><div class="sr-title">Review pending seed results</div><button class="sr-x" onclick="closeSeedReviewModal()">×</button></div>
+        <div class="sr-body"><div style="padding:16px 0;text-align:center;color:var(--text3);font-size:13px">Nothing pending — the queue is empty.</div></div>
+      </div>
+    </div>`;
+    return;
+  }
+
+  m.style.display = 'block';
+  m.innerHTML = `<div class="sr-overlay" onclick="if(event.target===this)closeSeedReviewModal()">
+    <div class="sr-card" style="max-width:640px;width:92vw;max-height:82vh;overflow-y:auto">
+      <div class="sr-hdr">
+        <div class="sr-title">Review pending seed results (${rows.length})</div>
+        <button class="sr-x" onclick="closeSeedReviewModal()">×</button>
+      </div>
+      <div class="sr-body">
+        ${rows.map(r => _renderSeedRow(r)).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function _renderSeedRow(r) {
+  const h = _seedHeuristic(r.url);
+  const isReactive = r.trigger_source === 'reactive_new_country';
+  const srcBadge = isReactive
+    ? `<span style="font-size:10px;color:#fff;background:var(--signal);border-radius:3px;padding:1px 6px;font-weight:700">New country — unattended, verify carefully</span>`
+    : `<span style="font-size:10px;color:var(--text3);border:0.5px solid var(--border);border-radius:3px;padding:1px 6px">bulk sweep</span>`;
+  const rowId = `seedrow_${r.id}`;
+  return `<div id="${rowId}" style="border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;background:var(--bg2)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+      <div style="font-size:12px;color:var(--text3)"><b>${r.country_code}</b> · ${r.category}</div>
+      ${srcBadge}
+    </div>
+    <div style="font-weight:600;font-size:13px;margin-bottom:2px">${(r.title || r.url).replace(/</g,'&lt;')}</div>
+    <a href="${r.url}" target="_blank" rel="noopener" style="font-size:11px;color:var(--fern);word-break:break-all">${r.url}</a>
+    ${h.label ? `<div style="font-size:11px;color:${h.color};margin-top:4px">⚑ ${h.label}</div>` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+      <input class="inp" id="${rowId}_name" placeholder="Site name" value="${(r.title || '').replace(/"/g,'&quot;')}" style="font-size:12px;padding:6px 8px"/>
+      <select class="inp" id="${rowId}_cat" style="font-size:12px;padding:6px 8px">
+        <option value="buses" ${r.category==='buses'?'selected':''}>Bus / Shared taxi</option>
+        <option value="trains" ${r.category==='trains'?'selected':''}>Train</option>
+        <option value="ferries" ${r.category==='ferries'?'selected':''}>Ferry</option>
+        <option value="ships" ${r.category==='ships'?'selected':''}>Ship</option>
+        <option value="accommodation" ${r.category==='accommodation'?'selected':''}>Accommodation</option>
+        <option value="info" ${r.category==='info'?'selected':''}>Information / research</option>
+      </select>
+    </div>
+    <div style="margin-top:6px">
+      <input class="inp" id="${rowId}_url" placeholder="URL template — e.g. https://example.com/search?from={origin}&to={dest}" value="${r.url.replace(/"/g,'&quot;')}" style="font-size:12px;padding:6px 8px;width:100%"/>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="btn btn-primary" style="font-size:11px;padding:6px 12px" onclick="approveSeedRow(${r.id})">Approve</button>
+      <button style="font-size:11px;padding:6px 12px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit" onclick="rejectSeedRow(${r.id})">Reject</button>
+    </div>
+  </div>`;
+}
+
+async function approveSeedRow(id) {
+  const r = _seedPendingCache.find(x => x.id === id);
+  if (!r) return;
+  const rowId = `seedrow_${id}`;
+  const name     = document.getElementById(`${rowId}_name`)?.value.trim() || r.title || r.url;
+  const category = document.getElementById(`${rowId}_cat`)?.value || r.category;
+  const urlTpl   = document.getElementById(`${rowId}_url`)?.value.trim() || r.url;
+
+  const site = {
+    id: 'seed_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name, category, urlTemplate: urlTpl, affId: '',
+    regions: [], countries: [r.country_code],
+    enabled: true, _builtin: false,
+    source: r.trigger_source === 'reactive_new_country' ? 'reactive_new_country' : 'bulk_seed',
+    admin_edited: false, // promotion path, not a from-scratch admin composition — keeps the "NEW" badge
+  };
+  const sites = _readAllSites();
+  sites.push(site);
+  _writeAllSites(sites);
+  loadCustomSitesIntoAFF();
+  const ok = await _upsertSiteToSupabase(site);
+  if (ok) await _resolveSeedRow(id);
+  renderAdminSiteList();
+  _renderSeedReviewModal();
+}
+
+async function rejectSeedRow(id) {
+  await _resolveSeedRow(id);
+  _renderSeedReviewModal();
+}
+
+async function _resolveSeedRow(id) {
+  try {
+    await sb.from('booking_sites_pending').delete().eq('id', id);
+  } catch (e) { console.error('Delete booking_sites_pending row failed:', e.message); }
+  _seedPendingCache = _seedPendingCache.filter(r => r.id !== id);
+  _refreshPendingBadge();
 }
 
 // ── Tab switching ─────────────────────────────────────────────────
@@ -4103,7 +4510,7 @@ async function parseXLSX(file) {
   return rows.map(r => { const o={}; Object.keys(r).forEach(k=>o[k.toLowerCase().trim()]=r[k]); return o; });
 }
 // Rows (one leg each: From,To,Date,Mode,Cost) → trip {stops,legs}
-const IMPORT_MODE_MAP = { train:'train', rail:'train', bus:'bus', coach:'bus', ferry:'ferry', boat:'ferry', taxi:'taxi', 'shared taxi':'shared taxi', car:'taxi', walk:'walking', walking:'walking', hike:'walking', cycle:'cycle', bike:'cycle', motorbike:'motorbike', motorcycle:'motorbike', scooter:'motorbike', moped:'motorbike', hitch:'hitchhike', hitchhike:'hitchhike', flight:'flight', plane:'flight' };
+const IMPORT_MODE_MAP = { train:'train', rail:'train', bus:'bus', coach:'bus', ferry:'ferry', boat:'ferry', ship:'ship', freighter:'ship', cargoship:'ship', taxi:'taxi', 'shared taxi':'shared taxi', car:'taxi', walk:'walking', walking:'walking', hike:'walking', cycle:'cycle', bike:'cycle', motorbike:'motorbike', motorcycle:'motorbike', scooter:'motorbike', moped:'motorbike', hitch:'hitchhike', hitchhike:'hitchhike', flight:'flight', plane:'flight' };
 function importParseRows(rows) {
   if (!rows || !rows.length) throw new Error('No rows found in the file.');
   const stops = [], legs = [];
@@ -4366,6 +4773,7 @@ async function planRoute() {
     document.getElementById('planResult').style.display = 'block';
     renderPlanSuggestion(hit, true);
     verifyUncertainLegs(hit); // fire-and-forget — patches legs in place as results come in
+    resolveLegCountries(hit); // fire-and-forget — writes leg.legCountry in place
     _collapseSearchForm(from, to);
     return;
   }
@@ -4478,6 +4886,7 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
     updateCacheClearBtn();
     renderPlanSuggestion(data, false);
     verifyUncertainLegs(data); // fire-and-forget — must not block btn.disabled reset below
+    resolveLegCountries(data); // fire-and-forget — writes leg.legCountry in place
     updateUsageBars();
   } catch (e) {
     console.error('planRoute error:', e);
@@ -4630,6 +5039,7 @@ function _restorePendingRoute() {
     if (res) res.style.display = 'block';
     renderPlanSuggestion(suggestion, true);
     verifyUncertainLegs(suggestion); // fire-and-forget
+    resolveLegCountries(suggestion); // fire-and-forget — writes leg.legCountry in place
     switchTab('plan', document.getElementById('navbtn_plan'));
   } catch(e) {}
 }
@@ -5027,7 +5437,8 @@ async function geocodeStop(name) {
     const feat = data?.features?.[0];
     if (feat) {
       const [lon, lat] = feat.geometry.coordinates;
-      const result = { lat, lon, ts: Date.now() };
+      const countryCode = feat.properties?.countrycode ? String(feat.properties.countrycode).toUpperCase() : null;
+      const result = { lat, lon, countryCode, ts: Date.now() };
       _geoCache[key] = result;
       try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(_geoCache)); } catch(e) {}
       return result;
@@ -5384,9 +5795,9 @@ function _renderLegCard3(d, i) {
   const modeColor  = MODE_COLORS[leg.mode] || 'var(--fern)';
   const iconCls    = MODE_ICONS[leg.mode] || 'ph-path';
   const modeTint   = MODE_TINTS[leg.mode]  || '#E0EAF2';
-  const transportCol = showAff ? renderTransportLinks(leg.mode, startCity, stayCity, leg.booking_sites, leg.leg_region, leg.info_sites) : '';
+  const transportCol = showAff ? renderTransportLinks(leg.mode, startCity, stayCity, leg.booking_sites, leg.leg_region, leg.info_sites, leg.legCountry) : '';
   const stayCol    = showAff
-    ? renderAccommodationLinks(stayCity, ns?.accom_sites, ns?.accom_note)
+    ? renderAccommodationLinks(stayCity, ns?.accom_sites, ns?.accom_note, leg.leg_region, leg.legCountry)
     : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
   const accomNote = ns?.accom_note || ns?.accomNote || '';
   const bookKey = `res-${i}`;
@@ -5523,6 +5934,71 @@ function renderPlanSuggestion(d, fromCache = false) {
   showRouteMap(d);
 }
 
+// ── Resolve each leg's origin country (§2) ─────────────────────────────
+// Runs once per route render, same trigger point as verifyUncertainLegs.
+// Writes leg.legCountry (ISO-2, from Photon's countrycode via geocodeStop's
+// cache) directly onto the leg object before _renderLegCard3 runs, so the
+// render path (renderTransportLinks/renderAccommodationLinks) stays
+// synchronous. Cross-border legs match on ORIGIN country, per plan.
+async function resolveLegCountries(d) {
+  if (!d?.legs?.length) return;
+  for (const leg of d.legs) {
+    if (leg.legCountry !== undefined) continue; // already resolved this pass
+    try {
+      const g = await geocodeStop(leg.from);
+      leg.legCountry = g?.countryCode || null;
+    } catch { leg.legCountry = null; }
+    if (leg.legCountry) _maybeTriggerReactiveSeed(leg.legCountry, leg.mode);
+  }
+}
+
+// ── Reactive first-time-country trigger (§10) ──────────────────────────
+// Fires a non-blocking, race-guarded, capped Brave sweep the first time any
+// route touches a country+category combo not yet in seeded_countries. Must
+// never delay or block leg-card rendering (regular traveler session, not
+// an admin one) — every await here happens after leg.legCountry is already
+// set, and callers never await this function's return.
+const _SEED_QUERY_TPL = {
+  buses: c => `${c} long-distance bus booking`,
+  trains: c => `${c} intercity train booking`,
+  ferries: c => `${c} ferry booking international`,
+  ships: c => `${c} freighter passenger ship booking`,
+  accommodation: c => `${c} hotels hostels booking`,
+};
+const _MODE_TO_SEED_CATEGORY = { bus:'buses', 'shared taxi':'buses', train:'trains', ferry:'ferries', ship:'ships' };
+const _REACTIVE_DAILY_CAP = 15;
+async function _maybeTriggerReactiveSeed(countryCode, mode) {
+  const category = _MODE_TO_SEED_CATEGORY[mode];
+  if (!category || !sb) return;
+  try {
+    // Cost guard: cap reactive triggers/day across all sessions.
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await sb.from('seeded_countries').select('*', { count: 'exact', head: true }).gte('seeded_at', since);
+    if ((count || 0) >= _REACTIVE_DAILY_CAP) return;
+
+    // Race guard: insert-first-wins. Only the session whose insert actually
+    // lands proceeds with the Brave call; a concurrent session sees a
+    // conflict (or the row already exists) and quietly skips.
+    const { data: inserted, error } = await sb.from('seeded_countries')
+      .insert({ country_code: countryCode, category })
+      .select();
+    if (error || !inserted?.length) return; // already claimed by another session, or write failed
+
+    const countryName = countryCode; // best-effort — Photon country codes aren't human names; good enough for a search query
+    const q = _SEED_QUERY_TPL[category]?.(countryName);
+    if (!q) return;
+    const res = await fetch(`${PROXY_URL}/api/brave-web-search?q=${encodeURIComponent(q)}`);
+    if (!res.ok) return;
+    const { results } = await res.json();
+    if (!results?.length) return;
+    await fetch(`${PROXY_URL}/api/queue-seed-result`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ country_code: countryCode, category, results, trigger_source: 'reactive_new_country' }),
+    });
+  } catch (e) { console.warn('Reactive seed trigger failed:', e.message); }
+}
+
 // ── Background leg verification (Brave Answers grounding) ─────────────
 // planRoute()'s AI call sets each leg's confidence purely from the model's
 // own recall -- zero web grounding. For legs the model itself flags check/
@@ -5618,6 +6094,7 @@ function suggestionToStopsLegs(d) {
     bookingSites: l.booking_sites || [],
     infoSites:    l.info_sites    || [],
     legRegion:    l.leg_region    || '',
+    legCountry:   l.legCountry    || null,
     confidence:   l.confidence    || 'uncertain',
     conflict:     l.conflict      || null,
     sourceUrl:    l.source_url    || ''   // Brave-verified citation, if any — survives "Add to planner"
@@ -5703,7 +6180,7 @@ function saveRouteToTrips() {
 // a toast confirms ("Saved as '...' / Opening My Trips…"), then it
 // navigates itself. Mobile only; desktop keeps the named-save modal above.
 // ── Affiliate link renderers ──────────────────────────────────────
-function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowedInfoNames) {
+function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowedInfoNames, legCountry) {
   // No "flight" branch here on purpose -- bysloth is overland-only, no
   // flights, ever. A flight-labeled leg can still exist (GPS speed
   // anomaly, or an imported historical trip), but it's never something to
@@ -5713,6 +6190,7 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
   if (mode === 'bus' || mode === 'shared taxi') { sources = AFF.buses;    category = 'buses'; }
   else if (mode === 'train')                         { sources = AFF.trains;   category = 'trains'; }
   else if (mode === 'ferry')                         { sources = AFF.ferries;  category = 'ferries'; }
+  else if (mode === 'ship')                          { sources = AFF.ships || []; category = 'ships'; }
   else if (mode === 'hitchhike') {
     const hw = (city) => `https://hitchwiki.org/en/${encodeURIComponent(city)}`;
     return `<div class="search-links">
@@ -5735,10 +6213,18 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
     }));
     sources = [...matched, ...fallbacks];
     // sources is now guaranteed non-empty if AI gave any names
-  } else if (legRegion) {
-    // No AI recommendation — use region tags as fallback filter.
-    // sites with regions:[] are global; others only show when region matches.
-    sources = sources.filter(s => !s.regions.length || s.regions.includes(legRegion));
+  } else if (legCountry || legRegion) {
+    // No AI recommendation — country match beats region match (§7).
+    // sites with regions:[]/countries:[] are global; others only show when
+    // country or region matches. Country match wins outright when present.
+    let countryMatches = legCountry ? sources.filter(s => s.countries?.includes(legCountry)) : [];
+    if (countryMatches.length) {
+      sources = countryMatches;
+    } else if (legRegion) {
+      sources = sources.filter(s => !s.regions.length || s.regions.includes(legRegion));
+    } else {
+      sources = [];
+    }
   }
 
   if (!sources.length) {
@@ -5754,9 +6240,13 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
         buildUrl: (o, d) => `https://www.google.com/search?q=${encodeURIComponent(n + ' ' + o + ' to ' + d)}`
       }));
       infoSrc = [...matched, ...fallbacks];
-    } else if (legRegion) {
-      const regional = infoSrc.filter(s => !s.regions.length || s.regions.includes(legRegion));
-      if (regional.length) infoSrc = regional;
+    } else if (legCountry || legRegion) {
+      let countryInfo = legCountry ? infoSrc.filter(s => s.countries?.includes(legCountry)) : [];
+      if (countryInfo.length) infoSrc = countryInfo;
+      else if (legRegion) {
+        const regional = infoSrc.filter(s => !s.regions.length || s.regions.includes(legRegion));
+        if (regional.length) infoSrc = regional;
+      }
     }
     if (!infoSrc.length) return '';
     return `<div class="search-links">
@@ -5773,7 +6263,7 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
 }
 
 
-function renderAccommodationLinks(city, suggestedNames, accomNote) {
+function renderAccommodationLinks(city, suggestedNames, accomNote, cityRegion, cityCountry) {
   let sources = AFF.accommodation || [];
   if (!sources.length) return '<div style="font-size:12px;color:var(--text3);padding:2px 0">No accommodation sites configured.</div>';
   if (suggestedNames?.length) {
@@ -5784,6 +6274,17 @@ function renderAccommodationLinks(city, suggestedNames, accomNote) {
       buildUrl: (c) => `https://www.google.com/search?q=${encodeURIComponent(n + ' ' + c + ' accommodation')}`
     }));
     sources = matched.length ? [...matched, ...fallbacks] : sources; // fallback to all if AI gave nothing we know
+  } else if (cityCountry || cityRegion) {
+    // Country-first/region-fallback (§7), mirrored from renderTransportLinks.
+    // Most accommodation sites carry regions:[]/countries:[] (global), so
+    // this only narrows once a genuinely tagged site exists to prefer.
+    let countryMatches = cityCountry ? sources.filter(s => s.countries?.includes(cityCountry)) : [];
+    if (countryMatches.length) {
+      sources = countryMatches;
+    } else if (cityRegion) {
+      const regional = sources.filter(s => !s.regions.length || s.regions.includes(cityRegion));
+      if (regional.length) sources = regional;
+    }
   }
   const sid = `stay|${city}`;
   sources.forEach(s => trackAffShown(s.name, 'accommodation', sid));
@@ -6025,7 +6526,7 @@ function renderLeg(i) {
   const bookOpen   = _bookingOpen.has(bookKey);
 
   const transportLinks = showAff && fromCity && toCity
-    ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites||[], leg.legRegion||'', leg.infoSites||[])
+    ? renderTransportLinks(leg.mode, fromCity, toCity, leg.bookingSites||[], leg.legRegion||'', leg.infoSites||[], leg.legCountry||null)
     : '';
   const contribs = renderContribBlock(i);
 
@@ -8156,8 +8657,8 @@ function jdJourneyTabHTML(t, stops, legs, m) {
       const modeColor  = MODE_COLORS[leg.mode] || 'var(--fern)';
       const iconCls    = MODE_ICONS[leg.mode]  || 'ph-path';
       const modeTint   = MODE_TINTS[leg.mode]  || '#E4EAF2';
-      const transportLinks = showAff ? renderTransportLinks(leg.mode, s.name, stayCity, leg.bookingSites, leg.legRegion, leg.infoSites) : '';
-      const stayCol = showAff ? renderAccommodationLinks(stayCity, stops[i+1]?.accomSites, stops[i+1]?.accomNote) : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
+      const transportLinks = showAff ? renderTransportLinks(leg.mode, s.name, stayCity, leg.bookingSites, leg.legRegion, leg.infoSites, leg.legCountry) : '';
+      const stayCol = showAff ? renderAccommodationLinks(stayCity, stops[i+1]?.accomSites, stops[i+1]?.accomNote, leg.legRegion, leg.legCountry) : '<div style="font-size:12px;color:var(--text3)">Affiliate links disabled.</div>';
       const isExpanded = _jdEditLeg === i;
       const isEditingThis = live && isExpanded;
       const cardBorder = gps && isCur ? '1px solid color-mix(in srgb,var(--signal) 35%,transparent)'

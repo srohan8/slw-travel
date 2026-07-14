@@ -65,7 +65,7 @@ async function getAiProviderSettings() {
 
 // ── POST /api/ai — forward to Anthropic, with optional DeepSeek failsafe ─────
 app.post('/api/ai', async (req, res) => {
-  const { max_tokens, messages, system } = req.body || {};
+  const { max_tokens, messages, system, user_id } = req.body || {};
   if (!messages?.length) {
     return res.status(400).json({ error: { message: 'messages array is required' } });
   }
@@ -151,7 +151,7 @@ app.post('/api/ai', async (req, res) => {
 
     // Log usage to Supabase (fire-and-forget — don't block the response)
     if (r.ok && data.usage) {
-      logUsageToSupabase(data.model, data.usage, usedProvider.startsWith('deepseek') ? 'deepseek' : 'claude')
+      logUsageToSupabase(data.model, data.usage, usedProvider.startsWith('deepseek') ? 'deepseek' : 'claude', user_id || null)
         .catch(e => console.warn('Usage log failed:', e.message));
     }
   } catch (err) {
@@ -217,33 +217,138 @@ app.post('/api/verify-leg', async (req, res) => {
   if (!apiKey) {
     return res.status(500).json({ error: { message: 'Server misconfiguration: BRAVE_API_KEY missing' } });
   }
-  const q = `${mode} from ${from} to ${to} - current schedule, price, does it still operate?`;
+  const q = `${mode} from ${from} to ${to} - current schedule, price, does it still operate? Answer briefly with a source.`;
   try {
-    const upstream = await fetch(
-      `https://api.search.brave.com/res/v1/answers/search?q=${encodeURIComponent(q)}`,
-      { headers: { 'Accept': 'application/json', 'X-Subscription-Token': apiKey } }
-    );
-    const data = await upstream.json();
+    // Brave Answers is an OpenAI-compatible chat-completions endpoint, not a
+    // plain GET search -- POST with messages/model, citations come back
+    // embedded as <citation>{...}</citation> tags inside the message content.
+    const upstream = await fetch('https://api.search.brave.com/res/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-subscription-token': apiKey },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: q }],
+        model: 'brave',
+        stream: false,
+        extra_body: { enable_citations: true },
+      }),
+    });
+    const raw = await upstream.text();
+    let data;
+    try { data = JSON.parse(raw); } catch (e) {
+      // Non-JSON upstream body (HTML error page, etc.) -- treat exactly like
+      // a non-2xx: a real failure, never a cacheable "nothing better found".
+      return res.status(502).json({ error: { message: 'Verify-leg upstream returned non-JSON: ' + raw.slice(0, 200) } });
+    }
     if (!upstream.ok) {
       // An upstream error is NOT the same as "Brave found nothing better" --
       // the frontend must never cache this as a negative result, or a
       // transient failure gets treated as a permanent "confirmed unchanged"
       // (the exact bug class just fixed in geocodeStop()'s res.ok check).
-      return res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + (data?.error?.message || upstream.status) } });
+      return res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + (data?.error?.detail || data?.error?.message || upstream.status) } });
     }
-    const answer = data?.answer || data?.results?.[0];
-    if (!answer || !answer.text) return res.json({ unchanged: true }); // genuine, cacheable negative
-    const priceMatch = answer.text.match(/\$\s?(\d+(?:\.\d+)?)/);
-    const negativeMatch = /suspended|no longer (runs?|operates?)|discontinued|cancell?ed|does not operate/i.test(answer.text);
+    const content = data?.choices?.[0]?.message?.content || '';
+    if (!content.trim()) return res.json({ unchanged: true }); // genuine, cacheable negative
+
+    const citations = [...content.matchAll(/<citation>([\s\S]*?)<\/citation>/g)]
+      .map(m => { try { return JSON.parse(m[1]); } catch (e) { return null; } })
+      .filter(Boolean);
+    const text = content.replace(/<citation>[\s\S]*?<\/citation>/g, '').replace(/<usage>[\s\S]*?<\/usage>/g, '').trim();
+    if (!text) return res.json({ unchanged: true });
+
+    const priceMatch = text.match(/\$\s?(\d+(?:\.\d+)?)/);
+    const negativeMatch = /suspended|no longer (runs?|operates?)|discontinued|cancell?ed|does not operate/i.test(text);
     res.json({
       unchanged: false,
       confidence: negativeMatch ? 'uncertain' : 'check',
       cost_usd: priceMatch ? Number(priceMatch[1]) : undefined,
-      notes: answer.text.slice(0, 280),
-      source_url: answer.url || data?.results?.[0]?.url || null,
+      notes: text.slice(0, 280),
+      source_url: citations[0]?.url || null,
     });
   } catch (err) {
     res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + err.message } });
+  }
+});
+
+// ── GET /api/brave-web-search — raw Brave Web Search results (prototype only).
+// Distinct from /api/verify-leg (Brave Answers, a synthesized/cited response)
+// -- this returns the plain search-result list, for the booking-link-compare
+// prototype (prototype/booking-link-compare.html) to eyeball against the
+// app's curated DEFAULT_SITES fallback on thin-coverage corridors (Iran,
+// Central Asia, etc). Not called from the main app.
+app.get('/api/brave-web-search', async (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.status(400).json({ error: { message: 'q query param required' } });
+  // Search and Answers are separate Brave subscriptions/keys -- confirmed
+  // after Answers itself needed a distinct plan (OPTION_NOT_IN_PLAN, see
+  // /api/verify-leg's history). Don't reuse BRAVE_API_KEY here.
+  const apiKey = process.env.BRAVE_SEARCH_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: { message: 'Server misconfiguration: BRAVE_SEARCH_API_KEY missing' } });
+  }
+  try {
+    const upstream = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(q)}&count=8`,
+      { headers: { 'Accept': 'application/json', 'X-Subscription-Token': apiKey } }
+    );
+    const raw = await upstream.text();
+    let data;
+    try { data = JSON.parse(raw); } catch (e) {
+      return res.status(502).json({ error: { message: 'Web-search upstream returned non-JSON: ' + raw.slice(0, 200) } });
+    }
+    if (!upstream.ok) {
+      return res.status(502).json({ error: { message: 'Web-search upstream error: ' + (data?.error?.detail || data?.error?.message || upstream.status) } });
+    }
+    const results = (data?.web?.results || []).map(r => ({ title: r.title, url: r.url, description: r.description }));
+    res.json({ results });
+  } catch (err) {
+    res.status(502).json({ error: { message: 'Web-search upstream error: ' + err.message } });
+  }
+});
+
+// ── POST /api/queue-seed-result — write raw Brave results into
+// booking_sites_pending using the service key (mirrors /api/verify-leg's
+// validation/error-shape conventions). Needed because the reactive
+// first-time-country trigger (app/index.html's _maybeTriggerReactiveSeed)
+// fires from a regular, non-admin user's browser session — that session
+// can't satisfy booking_sites_pending's is_admin-gated insert RLS directly,
+// so this one write path goes through the service key server-side instead.
+// The admin-triggered bulk sweep also flows through here for consistency,
+// so admins have one single review surface instead of two.
+app.post('/api/queue-seed-result', async (req, res) => {
+  const { country_code, category, results, trigger_source } = req.body || {};
+  if (!country_code || !category || !Array.isArray(results) || !results.length) {
+    return res.status(400).json({ error: { message: 'country_code, category, and a non-empty results array are required' } });
+  }
+  const source = trigger_source === 'reactive_new_country' ? 'reactive_new_country' : 'bulk_seed';
+  const sbUrl = process.env.SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_KEY;
+  if (!sbUrl || !sbKey) {
+    return res.status(500).json({ error: { message: 'Server misconfiguration: SUPABASE_URL/SUPABASE_SERVICE_KEY missing' } });
+  }
+  const rows = results.slice(0, 20).map(r => ({
+    country_code, category,
+    title: r.title || '', url: r.url || '', description: r.description || '',
+    trigger_source: source,
+  })).filter(r => r.url);
+  if (!rows.length) return res.status(400).json({ error: { message: 'No results had a usable url' } });
+  try {
+    const upstream = await fetch(`${sbUrl}/rest/v1/booking_sites_pending`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: sbKey,
+        Authorization: `Bearer ${sbKey}`,
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(rows),
+    });
+    if (!upstream.ok) {
+      const raw = await upstream.text();
+      return res.status(502).json({ error: { message: 'Queue-seed-result upstream error: ' + raw.slice(0, 200) } });
+    }
+    res.json({ ok: true, queued: rows.length });
+  } catch (err) {
+    res.status(502).json({ error: { message: 'Queue-seed-result upstream error: ' + err.message } });
   }
 });
 
@@ -256,10 +361,13 @@ const PRICES_PER_MTOK = {
   deepseek: { input: 0.28, output: 0.42, cache_read: 0,   cache_write: 0    },
 };
 
-async function logUsageToSupabase(model, usage, provider = 'claude') {
+async function logUsageToSupabase(model, usage, provider = 'claude', userId = null) {
   const sbUrl = process.env.SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_KEY;
-  if (!sbUrl || !sbKey) return; // env vars not set — skip silently
+  if (!sbUrl || !sbKey) {
+    console.warn('logUsageToSupabase: SUPABASE_URL/SUPABASE_SERVICE_KEY not set — usage not logged');
+    return;
+  }
 
   const prices = PRICES_PER_MTOK[provider] || PRICES_PER_MTOK.claude;
   const cost = (
@@ -279,6 +387,7 @@ async function logUsageToSupabase(model, usage, provider = 'claude') {
     },
     body: JSON.stringify({
       model,
+      user_id: userId,
       input_tokens:                usage.input_tokens                || 0,
       output_tokens:               usage.output_tokens               || 0,
       cache_read_input_tokens:     usage.cache_read_input_tokens     || 0,
