@@ -23,6 +23,7 @@ that can't live in client-side code (Anthropic, DeepSeek).
 | `/api/elevation` | GET | Proxies Open-Topo-Data SRTM90m. Query: `?locations=lat,lon\|lat,lon\|...`. |
 | `/api/geocode` | GET | Proxies Komoot Photon. Query: `?q=<place name>`. |
 | `/api/verify-leg` | POST | Grounds a shaky AI-suggested leg (confidence `check`/`uncertain`) against Brave's Answers API. Body: `{from, to, mode}`. Returns `{unchanged:true}` or `{unchanged:false, confidence?, cost_usd?, notes?, source_url?}`. |
+| `/api/brave-web-search` | GET | Raw Brave Web Search passthrough. Query: `?q=<search terms>`. Returns `{results: [{title, url, description}]}`. Only used by `prototype/booking-link-compare.html` — not called from the main app. |
 
 ## Env vars
 
@@ -34,10 +35,17 @@ DEEPSEEK_API_KEY=...         # optional — only needed if the failsafe/force-pr
 ANTHROPIC_MODEL=...          # optional override, default claude-sonnet-4-6
 ANTHROPIC_MODEL_FALLBACK=... # optional override, default claude-haiku-4-5-20251001
 DEEPSEEK_MODEL=...           # optional override, default deepseek-chat
-BRAVE_API_KEY=...            # optional — only needed for /api/verify-leg (route-leg verification).
-                              # Without it, verifyUncertainLegs() in app/index.html gets a 500 from
-                              # every call and silently no-ops — route suggestions still work exactly
-                              # as before, just without the background double-check.
+BRAVE_API_KEY=...            # optional — only needed for /api/verify-leg (route-leg verification,
+                              # Brave's Answers product). Without it, verifyUncertainLegs() in
+                              # app/index.html gets a 500 from every call and silently no-ops — route
+                              # suggestions still work exactly as before, just without the background
+                              # double-check.
+BRAVE_SEARCH_API_KEY=...     # optional — only needed for /api/brave-web-search (the booking-link
+                              # comparison prototype). NOT the same key/subscription as BRAVE_API_KEY
+                              # above — Brave Search and Brave Answers are billed and provisioned as
+                              # separate products, confirmed the hard way (Answers 400'd with
+                              # OPTION_NOT_IN_PLAN when only the Search plan was active). Get this from
+                              # a distinct API key on Brave's dashboard, not by reusing BRAVE_API_KEY.
 ```
 
 ## AI provider failsafe

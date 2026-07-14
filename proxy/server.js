@@ -278,9 +278,12 @@ app.post('/api/verify-leg', async (req, res) => {
 app.get('/api/brave-web-search', async (req, res) => {
   const { q } = req.query;
   if (!q) return res.status(400).json({ error: { message: 'q query param required' } });
-  const apiKey = process.env.BRAVE_API_KEY;
+  // Search and Answers are separate Brave subscriptions/keys -- confirmed
+  // after Answers itself needed a distinct plan (OPTION_NOT_IN_PLAN, see
+  // /api/verify-leg's history). Don't reuse BRAVE_API_KEY here.
+  const apiKey = process.env.BRAVE_SEARCH_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: { message: 'Server misconfiguration: BRAVE_API_KEY missing' } });
+    return res.status(500).json({ error: { message: 'Server misconfiguration: BRAVE_SEARCH_API_KEY missing' } });
   }
   try {
     const upstream = await fetch(
@@ -296,7 +299,7 @@ app.get('/api/brave-web-search', async (req, res) => {
       return res.status(502).json({ error: { message: 'Web-search upstream error: ' + (data?.error?.detail || data?.error?.message || upstream.status) } });
     }
     const results = (data?.web?.results || []).map(r => ({ title: r.title, url: r.url, description: r.description }));
-    res.json({ results, _debugKeys: Object.keys(data || {}), _debugRaw: results.length ? undefined : JSON.stringify(data).slice(0, 800) });
+    res.json({ results });
   } catch (err) {
     res.status(502).json({ error: { message: 'Web-search upstream error: ' + err.message } });
   }
