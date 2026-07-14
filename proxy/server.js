@@ -244,7 +244,7 @@ app.post('/api/verify-leg', async (req, res) => {
       // the frontend must never cache this as a negative result, or a
       // transient failure gets treated as a permanent "confirmed unchanged"
       // (the exact bug class just fixed in geocodeStop()'s res.ok check).
-      return res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + (data?.error?.message || upstream.status) } });
+      return res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + upstream.status + ' ' + raw.slice(0, 300) } });
     }
     const content = data?.choices?.[0]?.message?.content || '';
     if (!content.trim()) return res.json({ unchanged: true }); // genuine, cacheable negative
