@@ -566,7 +566,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
   .guest-banner-cta:hover{background:#E0440C;}
 
   /* ── Floating route map widget (Leaflet + OSM) ──────── */
-  #plannerMapWrap{position:fixed;right:18px;bottom:18px;z-index:900;width:360px;max-width:calc(100vw - 36px);border-radius:var(--radius-lg);border:0.5px solid var(--border);background:var(--bg);overflow:hidden;box-shadow:var(--shadow-float);display:none;transition:width .2s,height .2s,inset .2s,border-radius .2s;}
+  #plannerMapWrap{position:fixed;right:18px;bottom:18px;z-index:900;width:200px;max-width:calc(100vw - 36px);border-radius:var(--radius-lg);border:0.5px solid var(--border);background:var(--bg);overflow:hidden;box-shadow:var(--shadow-float);display:none;transition:width .2s,height .2s,inset .2s,border-radius .2s;}
   body.show-floating-map #plannerMapWrap{display:block;}
   #plannerMapWrap .pmw-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;background:var(--dusk);border-bottom:0.5px solid rgba(255,255,255,0.08);}
   #plannerMapWrap .pmw-title{font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
@@ -5481,9 +5481,10 @@ function renderPlanSuggestion(d, fromCache = false) {
   document.getElementById('planResult').innerHTML = h;
   _syncPlanSaveBar(true);
   setScreenUrl('/route');
-  // Route Results starts with the map collapsed to its icon -- the user
-  // taps it to open, rather than the map being open by default.
-  setMapState('pill');
+  // Mobile: map starts collapsed to its icon -- the user taps it to open
+  // (screen is too small for both the route list and an open map at once).
+  // Web: there's room, so it starts open, just narrow (200px docked width).
+  setMapState(window.innerWidth <= 640 ? 'pill' : 'docked');
   showRouteMap(d);
 }
 
