@@ -1738,7 +1738,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
           </div>
         </div>
         <div class="psc-footer-cta">
-          <span id="planFormHint" style="font-size:12px;color:var(--text3)">Free · 3 routes a month · no card</span>
+          <span id="planFormHint" style="font-size:12px;color:var(--text3)">Free · no card</span>
           <span style="flex:1"></span>
           <button class="btn btn-primary" id="planBtn" onclick="planRoute()">Suggest route ↗</button>
         </div>
@@ -2853,8 +2853,7 @@ async function checkAndGate(action) {
   return true;
 }
 
-// ── Guest free-route cap (cleaned-up flow: 3 demo routes/month, save needs account) ──
-const GUEST_FREE_ROUTES = 3;
+// ── Guest search tracking (no cap enforced for now — just counted, save needs account) ──
 function guestRoutesUsed() {
   const m = new Date().toISOString().slice(0, 7); // YYYY-MM
   let g = storage.get('guestRoutes');
@@ -2867,19 +2866,15 @@ function bumpGuestRoutes() {
   storage.set('guestRoutes', g);
   return g;
 }
-function guestRoutesLeft() {
-  return Math.max(0, GUEST_FREE_ROUTES - guestRoutesUsed().count);
-}
-// Guest banner strip: "X of 3 free routes left · sign up to save"
+// Guest banner strip: no search cap for now — just a soft nudge to sign up and save
 function renderGuestBanner() {
   const el = document.getElementById('guestBanner');
   if (!el) return;
   if (currentUser) { el.style.display = 'none'; return; }
-  const left = guestRoutesLeft();
   el.style.display = 'flex';
   el.innerHTML = `
     <i class="ph ph-user-circle-dashed" style="font-size:15px;color:var(--moss);flex-shrink:0"></i>
-    <span><strong>${left} of ${GUEST_FREE_ROUTES} free routes</strong> left this month · sign up to save trips</span>
+    <span>Sign up to save trips and add community notes</span>
     <span style="flex:1"></span>
     <a href="#" onclick="goToAuth('planner');return false;" class="guest-banner-cta">Create free account →</a>`;
 }
@@ -4474,23 +4469,8 @@ async function planRoute() {
   }
   // ── End cache lookup ──────────────────────────────────────────────
 
-  // ── Guest free-route cap (cleaned-up flow: 3 free demo routes, save needs account) ──
+  // ── Guest search count (no cap enforced for now — just tracked for later reference) ──
   if (!currentUser) {
-    const g = guestRoutesUsed();
-    if (g.count >= GUEST_FREE_ROUTES) {
-      const lg = document.getElementById('planLandingGrid'); if (lg) lg.style.display = 'none';
-      const hl = document.getElementById('planLanding');     if (hl) hl.style.display = 'none';
-      _collapseSearchForm(from, to);
-      document.getElementById('planResult').style.display = 'block';
-      document.getElementById('planSummaryStrip').style.display = 'none';
-      document.getElementById('planResult').innerHTML = `<div class="gate-msg">
-        <div style="font-size:36px;margin-bottom:12px">🦥</div>
-        <h3>That's your ${GUEST_FREE_ROUTES} free routes this month</h3>
-        <p>Create a free account to keep planning, save trips, and share community notes.</p>
-        <a href="/auth.html?return=planner" onclick="goToAuth('planner');return false;" class="btn btn-primary" style="text-decoration:none;display:inline-block">Create free account →</a>
-      </div>`;
-      return;
-    }
     bumpGuestRoutes();
     renderGuestBanner();
   }
@@ -4908,7 +4888,7 @@ function _collapseSearchForm(from, to) {
   const planBtn2 = document.getElementById('planBtn');
   if (planBtn2) planBtn2.textContent = 'Suggest route ↗';
   const planHint = document.getElementById('planFormHint');
-  if (planHint) planHint.textContent = 'Free · 3 routes a month · no card';
+  if (planHint) planHint.textContent = 'Free · no card';
   if (lbl)  lbl.textContent    = `${from.toLowerCase()} → ${to.toLowerCase()}`;
   if (chips) {
     const modeChips = (prefModes || []).map(m => `<span class="route-hdr-chip">${m}</span>`).join('');
@@ -4948,7 +4928,7 @@ function cancelInlineEdit(e) {
   const btn = document.getElementById('planBtn');
   if (btn) btn.textContent = 'Suggest route ↗';
   const hint = document.getElementById('planFormHint');
-  if (hint) hint.textContent = 'Free · 3 routes a month · no card';
+  if (hint) hint.textContent = 'Free · no card';
 }
 
 const CONF = {
@@ -6415,7 +6395,6 @@ function renderPlanLanding() {
       </div>
       ${recentHtml}
       <div style="margin-top:8px;padding-top:10px;border-top:0.5px dashed var(--border)">
-        ${!currentUser ? `<div style="font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:0.5px;margin-bottom:8px">${guestRoutesLeft()} of ${GUEST_FREE_ROUTES} free searches left this month</div>` : ''}
         <button class="btn" style="width:100%" onclick="goToMyTrips()">See my trips →</button>
       </div>
     </div>
@@ -10023,7 +10002,7 @@ init().catch(e => {
       <button onclick="document.getElementById('mobileSplash').classList.remove('show')" class="mobile-splash-cta-primary">Plan your first route <i class="ph ph-arrow-right" style="font-size:16px"></i></button>
       <a href="/auth.html" onclick="goToAuth();return false;" class="mobile-splash-cta-ghost">Sign in</a>
     </div>
-    <div style="margin-top:24px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:rgba(10,10,10,0.85);text-align:center;text-transform:uppercase">Free · 3 routes a month · no card required</div>
+    <div style="margin-top:24px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:rgba(10,10,10,0.85);text-align:center;text-transform:uppercase">Free · no card required</div>
   </div>
   <div style="border-top:0.5px solid rgba(10,10,10,0.35);padding:14px 28px;display:flex;gap:24px;position:relative;z-index:1">
     <div><div style="font-family:var(--body);font-size:18px;font-weight:700;color:var(--ink-900);letter-spacing:-0.3px">2,140</div><div style="font-family:var(--mono);font-size:8.5px;color:rgba(10,10,10,0.85);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">legs verified</div></div>
