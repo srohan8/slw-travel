@@ -217,13 +217,28 @@ app.post('/api/verify-leg', async (req, res) => {
   if (!apiKey) {
     return res.status(500).json({ error: { message: 'Server misconfiguration: BRAVE_API_KEY missing' } });
   }
-  const q = `${mode} from ${from} to ${to} - current schedule, price, does it still operate?`;
+  const q = `${mode} from ${from} to ${to} - current schedule, price, does it still operate? Answer briefly with a source.`;
   try {
-    const upstream = await fetch(
-      `https://api.search.brave.com/res/v1/answers/search?q=${encodeURIComponent(q)}`,
-      { headers: { 'Accept': 'application/json', 'X-Subscription-Token': apiKey } }
-    );
-    const data = await upstream.json();
+    // Brave Answers is an OpenAI-compatible chat-completions endpoint, not a
+    // plain GET search -- POST with messages/model, citations come back
+    // embedded as <citation>{...}</citation> tags inside the message content.
+    const upstream = await fetch('https://api.search.brave.com/res/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-subscription-token': apiKey },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: q }],
+        model: 'brave',
+        stream: false,
+        extra_body: { enable_citations: true },
+      }),
+    });
+    const raw = await upstream.text();
+    let data;
+    try { data = JSON.parse(raw); } catch (e) {
+      // Non-JSON upstream body (HTML error page, etc.) -- treat exactly like
+      // a non-2xx: a real failure, never a cacheable "nothing better found".
+      return res.status(502).json({ error: { message: 'Verify-leg upstream returned non-JSON: ' + raw.slice(0, 200) } });
+    }
     if (!upstream.ok) {
       // An upstream error is NOT the same as "Brave found nothing better" --
       // the frontend must never cache this as a negative result, or a
@@ -231,16 +246,23 @@ app.post('/api/verify-leg', async (req, res) => {
       // (the exact bug class just fixed in geocodeStop()'s res.ok check).
       return res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + (data?.error?.message || upstream.status) } });
     }
-    const answer = data?.answer || data?.results?.[0];
-    if (!answer || !answer.text) return res.json({ unchanged: true }); // genuine, cacheable negative
-    const priceMatch = answer.text.match(/\$\s?(\d+(?:\.\d+)?)/);
-    const negativeMatch = /suspended|no longer (runs?|operates?)|discontinued|cancell?ed|does not operate/i.test(answer.text);
+    const content = data?.choices?.[0]?.message?.content || '';
+    if (!content.trim()) return res.json({ unchanged: true }); // genuine, cacheable negative
+
+    const citations = [...content.matchAll(/<citation>([\s\S]*?)<\/citation>/g)]
+      .map(m => { try { return JSON.parse(m[1]); } catch (e) { return null; } })
+      .filter(Boolean);
+    const text = content.replace(/<citation>[\s\S]*?<\/citation>/g, '').replace(/<usage>[\s\S]*?<\/usage>/g, '').trim();
+    if (!text) return res.json({ unchanged: true });
+
+    const priceMatch = text.match(/\$\s?(\d+(?:\.\d+)?)/);
+    const negativeMatch = /suspended|no longer (runs?|operates?)|discontinued|cancell?ed|does not operate/i.test(text);
     res.json({
       unchanged: false,
       confidence: negativeMatch ? 'uncertain' : 'check',
       cost_usd: priceMatch ? Number(priceMatch[1]) : undefined,
-      notes: answer.text.slice(0, 280),
-      source_url: answer.url || data?.results?.[0]?.url || null,
+      notes: text.slice(0, 280),
+      source_url: citations[0]?.url || null,
     });
   } catch (err) {
     res.status(502).json({ error: { message: 'Verify-leg upstream error: ' + err.message } });
