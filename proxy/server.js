@@ -269,6 +269,39 @@ app.post('/api/verify-leg', async (req, res) => {
   }
 });
 
+// ── GET /api/brave-web-search — raw Brave Web Search results (prototype only).
+// Distinct from /api/verify-leg (Brave Answers, a synthesized/cited response)
+// -- this returns the plain search-result list, for the booking-link-compare
+// prototype (prototype/booking-link-compare.html) to eyeball against the
+// app's curated DEFAULT_SITES fallback on thin-coverage corridors (Iran,
+// Central Asia, etc). Not called from the main app.
+app.get('/api/brave-web-search', async (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.status(400).json({ error: { message: 'q query param required' } });
+  const apiKey = process.env.BRAVE_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: { message: 'Server misconfiguration: BRAVE_API_KEY missing' } });
+  }
+  try {
+    const upstream = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(q)}&count=8`,
+      { headers: { 'Accept': 'application/json', 'X-Subscription-Token': apiKey } }
+    );
+    const raw = await upstream.text();
+    let data;
+    try { data = JSON.parse(raw); } catch (e) {
+      return res.status(502).json({ error: { message: 'Web-search upstream returned non-JSON: ' + raw.slice(0, 200) } });
+    }
+    if (!upstream.ok) {
+      return res.status(502).json({ error: { message: 'Web-search upstream error: ' + (data?.error?.detail || data?.error?.message || upstream.status) } });
+    }
+    const results = (data?.web?.results || []).map(r => ({ title: r.title, url: r.url, description: r.description }));
+    res.json({ results });
+  } catch (err) {
+    res.status(502).json({ error: { message: 'Web-search upstream error: ' + err.message } });
+  }
+});
+
 // ── Supabase usage logger ────────────────────────────────────────────────────
 // NOTE: DeepSeek figures are an approximation as of this writing (deepseek-chat,
 // standard non-cached rate) — verify against https://api-docs.deepseek.com/quick_start/pricing
