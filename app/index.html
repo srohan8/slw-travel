@@ -1756,11 +1756,14 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
                 <button class="pill" onclick="togglePace(this,'moderate')">Moderate</button>
                 <button class="pill" onclick="togglePace(this,'fast')">Fast</button>
               </div>
+              <div class="psc-sep"></div>
+              <input type="number" min="1" class="psc-budget" id="pDays" placeholder="Days (optional)" style="max-width:130px" title="Target trip length"/>
             </div>
             <div class="psc-inputs-row">
               <div class="psc-sep" style="visibility:hidden"></div>
               <input class="psc-budget" id="pBudget" placeholder="Budget e.g. $500" style="max-width:130px"/>
               <input class="psc-budget" id="pVia" placeholder="Via (optional)" style="max-width:150px"/>
+              <input type="date" class="psc-budget" id="pStartDate" placeholder="Start date" style="max-width:150px" title="Start date (optional)"/>
             </div>
           </div>
         </div>
@@ -1973,8 +1976,8 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
             <input class="inp" id="sf_name" placeholder="e.g. Bookaway"/>
           </div>
           <div>
-            <div class="lbl" style="margin-bottom:4px">Category</div>
-            <select class="inp" id="sf_cat">
+            <div class="lbl" style="margin-bottom:4px">Category <span style="font-weight:400;color:var(--text3)">(ctrl/cmd-click for multiple)</span></div>
+            <select class="inp" id="sf_cat" multiple size="5" onchange="_syncExtractDateFields()">
               <option value="buses">Bus / Shared taxi</option>
               <option value="trains">Train</option>
               <option value="ferries">Ferry</option>
@@ -1995,12 +1998,22 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
                 style="width:130px;font-size:12px;padding:6px 8px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit"/>
               <input id="sf_ex_dest" type="text" placeholder="Dest city used"
                 style="width:130px;font-size:12px;padding:6px 8px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit"/>
+              <span id="sf_ex_date_wrap">
+                <input id="sf_ex_date" type="date" title="Optional — the date used in the example URL, if any"
+                  style="width:140px;font-size:12px;padding:6px 8px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit"/>
+              </span>
+              <span id="sf_ex_daterange_wrap" style="display:none;gap:6px">
+                <input id="sf_ex_checkin" type="date" title="Optional — the check-in date used in the example URL, if any"
+                  style="width:140px;font-size:12px;padding:6px 8px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit"/>
+                <input id="sf_ex_checkout" type="date" title="Optional — the check-out date used in the example URL, if any"
+                  style="width:140px;font-size:12px;padding:6px 8px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit"/>
+              </span>
               <button onclick="extractSiteTemplate()" class="btn" style="font-size:11px;padding:6px 12px;white-space:nowrap">Extract →</button>
             </div>
             <div id="sf_extract_msg" style="font-size:11px;margin-top:5px;min-height:14px"></div>
           </div>
           <input class="inp" id="sf_url" placeholder="https://example.com/search?from={origin}&to={dest}" oninput="previewSiteUrl()"/>
-          <div class="hint">Placeholders: <code>{origin}</code> <code>{dest}</code> <code>{month}</code> — URL-encoded automatically. For accommodation, <code>{origin}</code> = city name.</div>
+          <div class="hint">Placeholders: <code>{origin}</code> <code>{dest}</code> <code>{month}</code> — URL-encoded automatically. For accommodation, <code>{origin}</code> = city name; use <code>{checkin}</code>/<code>{checkout}</code> instead of <code>{month}</code> if the site needs separate check-in/check-out dates.</div>
         </div>
         <div style="margin-bottom:12px">
           <div class="lbl" style="margin-bottom:4px">Affiliate ID / tag <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
@@ -2011,6 +2024,11 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
           <div class="lbl" style="margin-bottom:4px">Regions covered <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
           <input class="inp" id="sf_regions" placeholder="e.g. Southeast Asia, Central Asia, Europe"/>
           <div class="hint">Comma-separated. Used to build a regional directory over time. Leave blank if global.</div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="lbl" style="margin-bottom:4px">Countries covered <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
+          <input class="inp" id="sf_countries" placeholder="e.g. TH, VN, LA"/>
+          <div class="hint">Comma-separated ISO-2 country codes. Used to prefer country-specific sites over regional ones. Leave blank if global.</div>
         </div>
         <div id="sf_preview" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius)">
           <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Example URL</div>
@@ -3257,10 +3275,10 @@ function _writeCache(obj) {
   localStorage.setItem('slw_' + CACHE_KEY, JSON.stringify(obj));
 }
 
-function buildCacheKey(from, to, via, budget, pace, modes) {
+function buildCacheKey(from, to, via, budget, pace, modes, targetDays) {
   const norm = s => (s || '').toLowerCase().trim();
   return [norm(from), norm(to), norm(via), norm(budget), norm(pace),
-          [...modes].map(m => norm(m)).sort().join(',')].join('|');
+          [...modes].map(m => norm(m)).sort().join(','), norm(targetDays)].join('|');
 }
 
 function getCachedRoute(key) {
@@ -3844,13 +3862,22 @@ function restoreDefaultSites() {
 }
 
 // Build a buildUrl function from a URL template string
-// Placeholders: {origin}, {dest}, {month}
+// Placeholders: {origin}, {dest}, {month}, {checkin}, {checkout}
+// Extra 4th arg is an optional options object: { checkin, checkout } — used
+// by accommodation templates that need separate check-in/check-out dates
+// instead of (or alongside) the single {month} placeholder. Existing callers
+// that only pass (o, d, m) are unaffected — checkin/checkout simply stay
+// unreplaced (empty string) if the template contains those placeholders but
+// no opts were supplied.
 function _buildUrlFn(template, affId) {
-  return (o, d, m) => {
+  return (o, d, m, opts) => {
+    opts = opts || {};
     let url = template
-      .replace('{origin}', encodeURIComponent(o || ''))
-      .replace('{dest}',   encodeURIComponent(d || ''))
-      .replace('{month}',  encodeURIComponent(m || ''));
+      .replace('{origin}',   encodeURIComponent(o || ''))
+      .replace('{dest}',     encodeURIComponent(d || ''))
+      .replace('{month}',    encodeURIComponent(m || ''))
+      .replace('{checkin}',  encodeURIComponent(opts.checkin  || ''))
+      .replace('{checkout}', encodeURIComponent(opts.checkout || ''));
     if (affId) url += (url.includes('?') ? '&' : '?') + 'affid=' + encodeURIComponent(affId);
     return url;
   };
@@ -3860,9 +3887,19 @@ function _buildUrlFn(template, affId) {
 function loadCustomSitesIntoAFF() {
   AFF.buses = []; AFF.trains = []; AFF.ferries = []; AFF.accommodation = []; AFF.info = [];
   _readAllSites().filter(s => s.enabled !== false && s.urlTemplate).forEach(s => {
-    if (!AFF[s.category]) AFF[s.category] = [];
-    AFF[s.category].push({ name: s.name, regions: s.regions || [], buildUrl: _buildUrlFn(s.urlTemplate, s.affId) });
+    const cats = (s.categories && s.categories.length) ? s.categories : [s.category];
+    cats.forEach(cat => {
+      if (!AFF[cat]) AFF[cat] = [];
+      AFF[cat].push({ name: s.name, regions: s.regions || [], countries: s.countries || [], buildUrl: _buildUrlFn(s.urlTemplate, s.affId) });
+    });
   });
+}
+
+// Set the (possibly multi-) selection on the sf_cat <select multiple>
+function _setSfCatSelection(cats) {
+  const sel = document.getElementById('sf_cat');
+  const wanted = new Set((cats && cats.length ? cats : ['buses']));
+  Array.from(sel.options).forEach(o => { o.selected = wanted.has(o.value); });
 }
 
 function showAddSiteForm(editId, prefill) {
@@ -3871,12 +3908,16 @@ function showAddSiteForm(editId, prefill) {
   document.getElementById('sf_url').value     = '';
   document.getElementById('sf_aff').value     = '';
   document.getElementById('sf_regions').value = '';
-  document.getElementById('sf_cat').value     = 'buses';
+  document.getElementById('sf_countries').value = '';
+  _setSfCatSelection(['buses']);
   document.getElementById('sf_editId').value  = '';
   // Reset extraction helper
   document.getElementById('sf_example_url').value = '';
   document.getElementById('sf_ex_origin').value   = '';
   document.getElementById('sf_ex_dest').value     = '';
+  document.getElementById('sf_ex_date').value     = '';
+  document.getElementById('sf_ex_checkin').value  = '';
+  document.getElementById('sf_ex_checkout').value = '';
   document.getElementById('sf_extract_msg').textContent = '';
   document.getElementById('sf_extract_msg').style.color = '';
 
@@ -3888,17 +3929,19 @@ function showAddSiteForm(editId, prefill) {
       document.getElementById('sf_url').value     = s.urlTemplate;
       document.getElementById('sf_aff').value     = s.affId || '';
       document.getElementById('sf_regions').value = (s.regions || []).join(', ');
-      document.getElementById('sf_cat').value     = s.category;
+      document.getElementById('sf_countries').value = (s.countries || []).join(', ');
+      _setSfCatSelection(s.categories && s.categories.length ? s.categories : [s.category]);
       document.getElementById('sf_editId').value  = s.id;
     }
   } else if (prefill) {
     // Pre-fill from AI suggestion (name + category known, URL still needed)
     if (prefill.name)     document.getElementById('sf_name').value    = prefill.name;
-    if (prefill.category) document.getElementById('sf_cat').value     = prefill.category;
+    if (prefill.category) _setSfCatSelection([prefill.category]);
     if (prefill.regions)  document.getElementById('sf_regions').value = prefill.regions.join(', ');
   }
   form.style.display = 'block';
   document.getElementById('sf_name').focus();
+  _syncExtractDateFields();
   previewSiteUrl();
 }
 
@@ -3906,9 +3949,13 @@ function hideSiteForm() {
   document.getElementById('siteForm').style.display   = 'none';
   document.getElementById('sf_preview').style.display = 'none';
   document.getElementById('sf_regions').value         = '';
+  document.getElementById('sf_countries').value       = '';
   document.getElementById('sf_example_url').value     = '';
   document.getElementById('sf_ex_origin').value       = '';
   document.getElementById('sf_ex_dest').value         = '';
+  document.getElementById('sf_ex_date').value         = '';
+  document.getElementById('sf_ex_checkin').value      = '';
+  document.getElementById('sf_ex_checkout').value     = '';
   document.getElementById('sf_extract_msg').textContent = '';
   document.getElementById('sf_extract_msg').style.color = '';
 }
@@ -3934,10 +3981,93 @@ function previewSiteUrl() {
   box.style.display = 'block';
 }
 
+// Generate encoding variants for a city name — ordered from most specific to least
+function _cityVariants(city) {
+  const lc = city.toLowerCase();
+  return [
+    city,                              // as-typed
+    city.replace(/\s+/g, '-'),         // With-Hyphens
+    city.replace(/\s+/g, '+'),         // With+Plus
+    city.replace(/\s+/g, '_'),         // With_Underscores
+    city.replace(/\s+/g, '%20'),       // URL%20Encoded
+    city.replace(/\s+/g, ''),         // NoSpaces
+    lc,
+    lc.replace(/\s+/g, '-'),
+    lc.replace(/\s+/g, '+'),
+    lc.replace(/\s+/g, '_'),
+    lc.replace(/\s+/g, '%20'),
+    lc.replace(/\s+/g, ''),
+  ];
+}
+
+// Date-segment encodings a real search URL might use, most specific first.
+// `date` is YYYY-MM-DD (from an <input type="date">).
+function _dateVariants(date) {
+  const [y, mo, d] = date.split('-');
+  return [
+    date,                    // 2025-06-15
+    `${y}-${mo}`,            // 2025-06
+    `${y}/${mo}/${d}`,       // 2025/06/15
+    `${y}${mo}${d}`,         // 20250615
+    `${d}-${mo}-${y}`,       // 15-06-2025
+    `${mo}-${d}-${y}`,       // 06-15-2025
+    `${d}/${mo}/${y}`,       // 15/06/2025
+    `${mo}/${d}/${y}`,       // 06/15/2025
+  ];
+}
+
+// Shared core string-matching logic behind the "Extract from a real search
+// URL" tool — used by both the manual site form (extractSiteTemplate) and
+// the bulk-seed review row's "Auto-extract" button. Takes a raw URL plus the
+// origin/dest city strings used in it, and either a single `date` (=>
+// {month}, for transport/info categories) or `checkin`/`checkout` dates (=>
+// {checkin}/{checkout}, for accommodation). Returns the derived template
+// plus which pieces were successfully matched, so callers can render their
+// own success/warning messaging.
+function _deriveUrlTemplate(rawUrl, origin, dest, dateOpts) {
+  dateOpts = dateOpts || {};
+  let tpl = rawUrl;
+  let originFound = false, destFound = false;
+  if (origin) {
+    for (const v of _cityVariants(origin)) {
+      if (tpl.includes(v)) { tpl = tpl.split(v).join('{origin}'); originFound = true; break; }
+    }
+  }
+  if (dest) {
+    for (const v of _cityVariants(dest)) {
+      if (tpl.includes(v)) { tpl = tpl.split(v).join('{dest}'); destFound = true; break; }
+    }
+  }
+
+  let dateFound = false, checkinFound = false, checkoutFound = false;
+  if (dateOpts.checkin || dateOpts.checkout) {
+    if (dateOpts.checkin) {
+      for (const v of _dateVariants(dateOpts.checkin)) {
+        if (tpl.includes(v)) { tpl = tpl.split(v).join('{checkin}'); checkinFound = true; break; }
+      }
+    }
+    if (dateOpts.checkout) {
+      for (const v of _dateVariants(dateOpts.checkout)) {
+        if (tpl.includes(v)) { tpl = tpl.split(v).join('{checkout}'); checkoutFound = true; break; }
+      }
+    }
+  } else if (dateOpts.date) {
+    for (const v of _dateVariants(dateOpts.date)) {
+      if (tpl.includes(v)) { tpl = tpl.split(v).join('{month}'); dateFound = true; break; }
+    }
+  }
+
+  return { tpl, originFound, destFound, dateFound, checkinFound, checkoutFound };
+}
+
 function extractSiteTemplate() {
   const exUrl    = document.getElementById('sf_example_url').value.trim();
   const exOrigin = document.getElementById('sf_ex_origin').value.trim();
   const exDest   = document.getElementById('sf_ex_dest').value.trim();
+  const isAccom  = Array.from(document.getElementById('sf_cat')?.selectedOptions || []).some(o => o.value === 'accommodation');
+  const exDate     = !isAccom ? (document.getElementById('sf_ex_date')?.value.trim() || '') : '';
+  const exCheckin  = isAccom ? (document.getElementById('sf_ex_checkin')?.value.trim() || '') : '';
+  const exCheckout = isAccom ? (document.getElementById('sf_ex_checkout')?.value.trim() || '') : '';
   const msgEl    = document.getElementById('sf_extract_msg');
 
   if (!exUrl || !exOrigin || !exDest) {
@@ -3946,53 +4076,43 @@ function extractSiteTemplate() {
     return;
   }
 
-  // Generate encoding variants for a city name — ordered from most specific to least
-  function variants(city) {
-    const lc = city.toLowerCase();
-    return [
-      city,                              // as-typed
-      city.replace(/\s+/g, '-'),         // With-Hyphens
-      city.replace(/\s+/g, '+'),         // With+Plus
-      city.replace(/\s+/g, '_'),         // With_Underscores
-      city.replace(/\s+/g, '%20'),       // URL%20Encoded
-      city.replace(/\s+/g, ''),         // NoSpaces
-      lc,
-      lc.replace(/\s+/g, '-'),
-      lc.replace(/\s+/g, '+'),
-      lc.replace(/\s+/g, '_'),
-      lc.replace(/\s+/g, '%20'),
-      lc.replace(/\s+/g, ''),
-    ];
-  }
-
-  let tpl = exUrl;
-  let originFound = false, destFound = false;
-  for (const v of variants(exOrigin)) {
-    if (tpl.includes(v)) { tpl = tpl.split(v).join('{origin}'); originFound = true; break; }
-  }
-  for (const v of variants(exDest)) {
-    if (tpl.includes(v)) { tpl = tpl.split(v).join('{dest}'); destFound = true; break; }
-  }
+  const derived = _deriveUrlTemplate(exUrl, exOrigin, exDest, isAccom ? { checkin: exCheckin, checkout: exCheckout } : { date: exDate });
+  const tpl = derived.tpl, originFound = derived.originFound, destFound = derived.destFound,
+        dateFound = derived.dateFound, checkinFound = derived.checkinFound, checkoutFound = derived.checkoutFound;
 
   if (!originFound && !destFound) {
     msgEl.style.color = 'var(--danger-text, #c0392b)';
-    msgEl.textContent = '⚠ Could not find either city in the URL \u2014 check the names match exactly what\u2019s in the URL.';
+    msgEl.textContent = '\u26a0 Could not find either city in the URL \u2014 check the names match exactly what\u2019s in the URL.';
     return;
   }
 
   const warns = [];
   if (!originFound) warns.push('origin not found');
   if (!destFound)   warns.push('destination not found');
+  if (exDate && !dateFound)         warns.push('date not found');
+  if (exCheckin && !checkinFound)   warns.push('check-in date not found');
+  if (exCheckout && !checkoutFound) warns.push('check-out date not found');
   if (warns.length) {
     msgEl.style.color = 'var(--warn, #e67e22)';
-    msgEl.textContent = '⚠ Partially extracted — ' + warns.join(', ') + '. Edit the template manually.';
+    msgEl.textContent = '\u26a0 Partially extracted \u2014 ' + warns.join(', ') + '. Edit the template manually.';
   } else {
     msgEl.style.color = 'var(--green, #27ae60)';
-    msgEl.textContent = '✓ Template extracted!';
+    msgEl.textContent = '\u2713 Template extracted!' + ((dateFound || checkinFound || checkoutFound) ? ' (date placeholder included)' : '');
   }
 
   document.getElementById('sf_url').value = tpl;
   previewSiteUrl();
+}
+
+// Toggle the manual form's extract-helper date inputs — accommodation
+// categories need separate check-in/check-out dates ({checkin}/{checkout}),
+// everything else keeps the single date ({month}).
+function _syncExtractDateFields() {
+  const isAccom = Array.from(document.getElementById('sf_cat')?.selectedOptions || []).some(o => o.value === 'accommodation');
+  const single = document.getElementById('sf_ex_date_wrap');
+  const range  = document.getElementById('sf_ex_daterange_wrap');
+  if (single) single.style.display = isAccom ? 'none' : '';
+  if (range)  range.style.display  = isAccom ? '' : 'none';
 }
 
 // Write one booking_sites row to Supabase (admin_settings-style client-side
@@ -4004,7 +4124,7 @@ function extractSiteTemplate() {
 async function _upsertSiteToSupabase(s) {
   try {
     const { error } = await sb.from('booking_sites').upsert({
-      id: s.id, name: s.name, category: s.category, url_template: s.urlTemplate || '',
+      id: s.id, name: s.name, category: s.category, categories: s.categories && s.categories.length ? s.categories : [s.category], url_template: s.urlTemplate || '',
       aff_id: s.affId || '', regions: s.regions || [], countries: s.countries || [],
       enabled: s.enabled !== false, builtin: !!s._builtin, source: s.source || 'admin',
       admin_edited: s.admin_edited !== false, updated_at: new Date().toISOString(),
@@ -4019,15 +4139,19 @@ async function _upsertSiteToSupabase(s) {
 }
 
 function saveSite() {
-  const name     = document.getElementById('sf_name').value.trim();
-  const category = document.getElementById('sf_cat').value;
+  const name       = document.getElementById('sf_name').value.trim();
+  const catSelect  = document.getElementById('sf_cat');
+  const categories = Array.from(catSelect.selectedOptions).map(o => o.value);
+  const category   = categories[0] || 'buses'; // legacy singular field, kept for backward compat
   const urlTpl   = document.getElementById('sf_url').value.trim();
   const affId    = document.getElementById('sf_aff').value.trim();
   const regions  = document.getElementById('sf_regions').value.split(',').map(r => r.trim()).filter(Boolean);
+  const countries = document.getElementById('sf_countries').value.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
   const editId   = document.getElementById('sf_editId').value;
 
   if (!name)   { alert('Site name is required.'); return; }
   if (!urlTpl) { alert('URL template is required.'); return; }
+  if (!categories.length) { alert('Pick at least one category.'); return; }
 
   const sites = _readAllSites();
   let saved;
@@ -4036,10 +4160,10 @@ function saveSite() {
     // Any manual save — editing a bulk-seeded row or a fresh manual one —
     // counts as "an admin looked at this," so admin_edited flips to true
     // even if no fields actually changed (deliberate "I reviewed it" signal).
-    if (idx > -1) sites[idx] = { ...sites[idx], name, category, urlTemplate: urlTpl, affId, regions, enabled: true, admin_edited: true };
+    if (idx > -1) sites[idx] = { ...sites[idx], name, category, categories, urlTemplate: urlTpl, affId, regions, countries, enabled: true, admin_edited: true };
     saved = sites[idx];
   } else {
-    saved = { id: Date.now().toString(), name, category, urlTemplate: urlTpl, affId, regions, countries: [], enabled: true, _builtin: false, source: 'admin', admin_edited: true };
+    saved = { id: Date.now().toString(), name, category, categories, urlTemplate: urlTpl, affId, regions, countries, enabled: true, _builtin: false, source: 'admin', admin_edited: true };
     sites.push(saved);
   }
   _writeAllSites(sites);
@@ -4072,7 +4196,7 @@ async function _syncSitesFromSupabase() {
     const { data, error } = await sb.from('booking_sites').select('*');
     if (error || !data) return;
     const translated = data.map(r => ({
-      id: r.id, name: r.name, category: r.category, urlTemplate: r.url_template,
+      id: r.id, name: r.name, category: r.category, categories: (r.categories && r.categories.length) ? r.categories : [r.category], urlTemplate: r.url_template,
       affId: r.aff_id || '', regions: r.regions || [], countries: r.countries || [],
       enabled: r.enabled !== false, _builtin: !!r.builtin, source: r.source || 'admin',
       admin_edited: r.admin_edited !== false,
@@ -4100,24 +4224,74 @@ function deleteSite(id) {
   renderAdminSiteList();
 }
 
+// Admin site-table sort state (§1) — module-level so it survives re-renders
+// triggered by toggle/edit/delete, but resets on page reload (not persisted).
+let _adminSiteSortKey = null;   // null = default "NEW first" order
+let _adminSiteSortDir = 'asc';  // 'asc' | 'desc'
+
+function _adminSiteSortValue(s, key) {
+  switch (key) {
+    case 'name':       return (s.name || '').toLowerCase();
+    case 'category':   return (s.categories?.length ? s.categories : [s.category]).filter(Boolean).join(',').toLowerCase();
+    case 'regions':    return (s.regions || []).join(',').toLowerCase();
+    case 'countries':  return (s.countries || []).join(',').toLowerCase();
+    case 'urlTemplate':return (s.urlTemplate || '').toLowerCase();
+    case 'affId':      return (s.affId || '').toLowerCase();
+    case 'enabled':    return s.enabled !== false ? 1 : 0;
+    default:           return '';
+  }
+}
+
+function sortAdminSiteList(key) {
+  if (_adminSiteSortKey === key) {
+    _adminSiteSortDir = _adminSiteSortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    _adminSiteSortKey = key;
+    _adminSiteSortDir = 'asc';
+  }
+  renderAdminSiteList();
+}
+
 function renderAdminSiteList() {
   const el = document.getElementById('adminSiteList');
   if (!el) return;
   let sites = _readAllSites();
   const catLabel = { buses:'Bus/Taxi', trains:'Train', ferries:'Ferry', ships:'Ship', accommodation:'Stay', info:'Info/Research' };
 
-  // "NEW" badge sort — bulk-seed/reactive promotions land with
-  // admin_edited:false; surface those first so a fresh batch of ~200+
-  // promoted sites is actually triageable rather than buried alphabetically.
-  sites = [...sites].sort((a, b) => (a.admin_edited === false ? 0 : 1) - (b.admin_edited === false ? 0 : 1));
+  if (_adminSiteSortKey) {
+    const key = _adminSiteSortKey, dir = _adminSiteSortDir === 'asc' ? 1 : -1;
+    sites = [...sites].sort((a, b) => {
+      const av = _adminSiteSortValue(a, key), bv = _adminSiteSortValue(b, key);
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+  } else {
+    // Default: "NEW" badge sort — bulk-seed/reactive promotions land with
+    // admin_edited:false; surface those first so a fresh batch of ~200+
+    // promoted sites is actually triageable rather than buried alphabetically.
+    sites = [...sites].sort((a, b) => (a.admin_edited === false ? 0 : 1) - (b.admin_edited === false ? 0 : 1));
+  }
 
+  const cols = [
+    { key: 'name',        label: 'Site' },
+    { key: 'category',    label: 'Category' },
+    { key: 'regions',     label: 'Regions' },
+    { key: 'countries',   label: 'Countries' },
+    { key: 'urlTemplate', label: 'URL Template' },
+    { key: 'affId',       label: 'Aff. ID' },
+    { key: 'enabled',     label: 'On' },
+  ];
+  const arrow = k => _adminSiteSortKey === k ? (_adminSiteSortDir === 'asc' ? ' ▲' : ' ▼') : '';
   let h = `<table class="aff-table"><thead><tr>
-    <th>Site</th><th>Category</th><th>Regions</th><th>URL template</th><th>Aff. ID</th><th>On</th><th></th>
+    ${cols.map(c => `<th style="cursor:pointer;user-select:none" onclick="sortAdminSiteList('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow(c.key)}</th>`).join('')}
+    <th></th>
   </tr></thead><tbody>`;
 
   sites.forEach(s => {
     const isBuiltin = !!s._builtin;
     const needsUrl  = !s.urlTemplate;
+    const cats = (s.categories && s.categories.length) ? s.categories : [s.category].filter(Boolean);
     const badge = isBuiltin
       ? ` <span style="font-size:10px;color:var(--text3);border:0.5px solid var(--border);border-radius:3px;padding:1px 5px;vertical-align:middle">built-in</span>`
       : '';
@@ -4137,16 +4311,29 @@ function renderAdminSiteList() {
     const regionPills = (s.regions && s.regions.length)
       ? s.regions.map(r => `<span style="display:inline-block;font-size:10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:3px;padding:1px 5px;margin:1px 2px 1px 0;white-space:nowrap">${r}</span>`).join('')
       : `<span style="font-size:11px;color:var(--text3)">global</span>`;
+    const countryPills = (s.countries && s.countries.length)
+      ? s.countries.map(c => `<span style="display:inline-block;font-size:10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:3px;padding:1px 5px;margin:1px 2px 1px 0;white-space:nowrap">${c}</span>`).join('')
+      : `<span style="font-size:11px;color:var(--text3)">—</span>`;
+    const catPills = cats.length
+      ? cats.map(c => `<span class="aff-cat" style="margin:1px 2px 1px 0;display:inline-block">${catLabel[c] || c}</span>`).join('')
+      : `<span class="aff-cat">—</span>`;
     h += `<tr style="${rowOpacity}">
       <td style="font-weight:500">${s.name}${newBadge}${badge}${urlWarn}</td>
-      <td><span class="aff-cat">${catLabel[s.category] || s.category}</span></td>
+      <td style="max-width:140px">${catPills}</td>
       <td style="max-width:160px">${regionPills}</td>
+      <td style="max-width:140px">${countryPills}</td>
       <td style="font-size:11px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.urlTemplate}">${s.urlTemplate || '—'}</td>
       <td style="font-size:12px;color:var(--text3)">${s.affId || '—'}</td>
       <td><input type="checkbox" ${s.enabled !== false ? 'checked' : ''} onchange="toggleSiteEnabled('${s.id}')" style="cursor:pointer"/></td>
       <td style="white-space:nowrap">
         <button onclick="showAddSiteForm('${s.id}')" style="${editStyle}">Edit</button>
+        <button onclick="recheckSiteWithBrave('${s.id}')" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--sage);font-family:inherit;padding:0 8px 0 0" title="Re-check with Brave">Re-check</button>
         ${disableBtn}
+      </td>
+    </tr>
+    <tr id="recheck_row_${s.id}" style="display:none">
+      <td colspan="${cols.length + 1}" style="background:var(--bg2);padding:10px 12px;border-top:none">
+        <div id="recheck_panel_${s.id}" style="font-size:12px;color:var(--text3)">—</div>
       </td>
     </tr>`;
   });
@@ -4170,6 +4357,19 @@ const _SEED_QUERY_TEMPLATES = {
   ships:  c => `${c} freighter passenger ship booking`,
   accommodation: c => `${c} hotels hostels booking`,
 };
+
+// Shared query-string builder (§5) — used by both the bulk sweep above and
+// the per-site "Re-check with Brave" action, so the query phrasing stays in
+// one place. `countryOrRegion` may be an ISO-2 country code (preferred —
+// gets fed through _seedCountryName for a human-readable name) or a raw
+// region string (used as-is). Falls back to the category name alone if
+// neither is available.
+function _buildSeedQuery(category, countryOrRegion) {
+  const tpl = _SEED_QUERY_TEMPLATES[category] || (c => `${c} ${category} booking`);
+  if (!countryOrRegion) return tpl('overland travel').replace('overland travel', '').trim();
+  const label = /^[A-Z]{2}$/.test(countryOrRegion) ? _seedCountryName(countryOrRegion) : countryOrRegion;
+  return tpl(label);
+}
 // Small manual exclusion list — landlocked countries skip ferry/ship queries
 // entirely rather than burning Brave calls on a category that can't apply.
 const _LANDLOCKED_COUNTRIES = new Set([
@@ -4235,9 +4435,8 @@ async function runBulkSeedPass(pass) {
     const categories = pass === 'accommodation'
       ? ['accommodation']
       : ['buses', 'trains', ..._LANDLOCKED_COUNTRIES.has(code) ? [] : ['ferries', 'ships']];
-    const countryName = _seedCountryName(code);
     for (const category of categories) {
-      const q = _SEED_QUERY_TEMPLATES[category](countryName);
+      const q = _buildSeedQuery(category, code);
       try {
         const res = await fetch(`${PROXY_URL}/api/brave-web-search?q=${encodeURIComponent(q)}`);
         if (!res.ok) { failed++; _bsLog(`⚠ ${code} ${category}… request failed`); }
@@ -4265,6 +4464,51 @@ async function runBulkSeedPass(pass) {
   if (btn1) btn1.disabled = false;
   if (btn2) btn2.disabled = !_bulkSeedPass1EverRun;
   _refreshPendingBadge();
+}
+
+// ── Per-site "Re-check with Brave" (§5) ────────────────────────────────
+// Reuses _buildSeedQuery (shared with the bulk sweep above) so the query
+// phrasing stays identical, but this is display-only: results are shown
+// inline for the admin to visually compare against the site's existing
+// url_template, and nothing is written to booking_sites_pending or
+// booking_sites. The URL is never auto-updated.
+async function recheckSiteWithBrave(id) {
+  const sites = _readAllSites();
+  const s = sites.find(x => x.id === id);
+  if (!s) return;
+  const row   = document.getElementById(`recheck_row_${id}`);
+  const panel = document.getElementById(`recheck_panel_${id}`);
+  if (!row || !panel) return;
+
+  // Toggle closed if already open
+  if (row.style.display !== 'none') { row.style.display = 'none'; return; }
+
+  const cats = (s.categories && s.categories.length) ? s.categories : [s.category];
+  const category = cats[0];
+  const countryOrRegion = s.countries?.[0] || s.regions?.[0] || '';
+  const q = _buildSeedQuery(category, countryOrRegion);
+
+  row.style.display = '';
+  panel.textContent = `Searching Brave for "${q}"…`;
+
+  try {
+    const res = await fetch(`${PROXY_URL}/api/brave-web-search?q=${encodeURIComponent(q)}`);
+    if (!res.ok) { panel.textContent = `⚠ Brave search request failed (${res.status}).`; return; }
+    const { results } = await res.json();
+    if (!results?.length) { panel.textContent = `No results for "${q}".`; return; }
+    const top = results.slice(0, 3);
+    panel.innerHTML = `
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Query: "${q}" — top ${top.length} result${top.length===1?'':'s'}. Compare against this site's URL template above; nothing here is applied automatically.</div>
+      ${top.map(r => `
+        <div style="padding:6px 0;border-top:0.5px solid var(--border)">
+          <a href="${r.url}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;color:var(--fern);text-decoration:none">${r.title || r.url}</a>
+          <div style="font-size:11px;color:var(--text3);word-break:break-all">${r.url}</div>
+          ${r.description ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">${r.description}</div>` : ''}
+        </div>`).join('')}
+    `;
+  } catch (e) {
+    panel.textContent = `⚠ ${e.message}`;
+  }
 }
 
 // ── Review queue (§6 bulk sweep + §10 reactive trigger, same modal) ────
@@ -4369,7 +4613,7 @@ function _renderSeedRow(r) {
     ${h.label ? `<div style="font-size:11px;color:${h.color};margin-top:4px">⚑ ${h.label}</div>` : ''}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
       <input class="inp" id="${rowId}_name" placeholder="Site name" value="${(r.title || '').replace(/"/g,'&quot;')}" style="font-size:12px;padding:6px 8px"/>
-      <select class="inp" id="${rowId}_cat" style="font-size:12px;padding:6px 8px">
+      <select class="inp" id="${rowId}_cat" style="font-size:12px;padding:6px 8px" onchange="_syncSeedRowDateFields('${rowId}')">
         <option value="buses" ${r.category==='buses'?'selected':''}>Bus / Shared taxi</option>
         <option value="trains" ${r.category==='trains'?'selected':''}>Train</option>
         <option value="ferries" ${r.category==='ferries'?'selected':''}>Ferry</option>
@@ -4378,6 +4622,26 @@ function _renderSeedRow(r) {
         <option value="info" ${r.category==='info'?'selected':''}>Information / research</option>
       </select>
     </div>
+    <!-- Extraction helper — raw Brave result URLs are almost never already
+         templated (see approveSeedRow), so admin fills in the origin/dest
+         used in the URL and clicks Auto-extract to derive {origin}/{dest}/
+         {month} (or {checkin}/{checkout} for accommodation) via the same
+         _deriveUrlTemplate() the manual site form uses. -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+      <input class="inp" id="${rowId}_origin" placeholder="Origin city used in URL" style="font-size:12px;padding:6px 8px"/>
+      <input class="inp" id="${rowId}_dest" placeholder="Dest city used in URL" style="font-size:12px;padding:6px 8px"/>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;margin-top:6px">
+      <span id="${rowId}_date_wrap" style="${r.category==='accommodation'?'display:none':''}">
+        <input id="${rowId}_date" type="date" title="Optional — the date used in the URL, if any" class="inp" style="font-size:12px;padding:6px 8px"/>
+      </span>
+      <span id="${rowId}_daterange_wrap" style="${r.category==='accommodation'?'display:flex':'display:none'};gap:6px">
+        <input id="${rowId}_checkin" type="date" title="Check-in date used in the URL, if any" class="inp" style="font-size:12px;padding:6px 8px"/>
+        <input id="${rowId}_checkout" type="date" title="Check-out date used in the URL, if any" class="inp" style="font-size:12px;padding:6px 8px"/>
+      </span>
+      <button onclick="autoExtractSeedRow(${r.id})" class="btn" style="font-size:11px;padding:6px 12px;white-space:nowrap">Auto-extract</button>
+    </div>
+    <div id="${rowId}_extract_msg" style="font-size:11px;margin-top:4px;min-height:14px"></div>
     <div style="margin-top:6px">
       <input class="inp" id="${rowId}_url" placeholder="URL template — e.g. https://example.com/search?from={origin}&to={dest}" value="${r.url.replace(/"/g,'&quot;')}" style="font-size:12px;padding:6px 8px;width:100%"/>
     </div>
@@ -4386,6 +4650,65 @@ function _renderSeedRow(r) {
       <button style="font-size:11px;padding:6px 12px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit" onclick="rejectSeedRow(${r.id})">Reject</button>
     </div>
   </div>`;
+}
+
+// Toggle a seed row's single-date vs check-in/check-out fields based on its
+// current category select value (mirrors _syncExtractDateFields for the
+// manual form).
+function _syncSeedRowDateFields(rowId) {
+  const cat = document.getElementById(`${rowId}_cat`)?.value;
+  const isAccom = cat === 'accommodation';
+  const single = document.getElementById(`${rowId}_date_wrap`);
+  const range  = document.getElementById(`${rowId}_daterange_wrap`);
+  if (single) single.style.display = isAccom ? 'none' : '';
+  if (range)  range.style.display  = isAccom ? 'flex' : 'none';
+}
+
+// "Auto-extract" button on a bulk-seed review row — runs the same core
+// matching logic as the manual form's extractSiteTemplate() (via the shared
+// _deriveUrlTemplate helper) against the row's origin/dest/date inputs, and
+// replaces the row's URL input with the derived template. Still editable
+// afterward; approveSeedRow() just reads whatever's in that input at
+// approve time.
+function autoExtractSeedRow(id) {
+  const rowId  = `seedrow_${id}`;
+  const urlEl  = document.getElementById(`${rowId}_url`);
+  const msgEl  = document.getElementById(`${rowId}_extract_msg`);
+  const origin = document.getElementById(`${rowId}_origin`)?.value.trim() || '';
+  const dest   = document.getElementById(`${rowId}_dest`)?.value.trim() || '';
+  const isAccom = document.getElementById(`${rowId}_cat`)?.value === 'accommodation';
+  const date     = !isAccom ? (document.getElementById(`${rowId}_date`)?.value.trim() || '') : '';
+  const checkin  = isAccom ? (document.getElementById(`${rowId}_checkin`)?.value.trim() || '') : '';
+  const checkout = isAccom ? (document.getElementById(`${rowId}_checkout`)?.value.trim() || '') : '';
+
+  if (!urlEl || !urlEl.value.trim() || !origin || !dest) {
+    if (msgEl) { msgEl.style.color = 'var(--text3)'; msgEl.textContent = 'Enter the origin and dest city used in the URL first.'; }
+    return;
+  }
+
+  const derived = _deriveUrlTemplate(urlEl.value.trim(), origin, dest, isAccom ? { checkin, checkout } : { date });
+
+  if (!derived.originFound && !derived.destFound) {
+    if (msgEl) { msgEl.style.color = 'var(--danger-text, #c0392b)'; msgEl.textContent = '⚠ Could not find either city in the URL — check the names match exactly.'; }
+    return;
+  }
+
+  const warns = [];
+  if (!derived.originFound) warns.push('origin not found');
+  if (!derived.destFound)   warns.push('destination not found');
+  if (date && !derived.dateFound)             warns.push('date not found');
+  if (checkin && !derived.checkinFound)       warns.push('check-in date not found');
+  if (checkout && !derived.checkoutFound)     warns.push('check-out date not found');
+  if (msgEl) {
+    if (warns.length) {
+      msgEl.style.color = 'var(--warn, #e67e22)';
+      msgEl.textContent = '⚠ Partially extracted — ' + warns.join(', ') + '. Edit the template manually.';
+    } else {
+      msgEl.style.color = 'var(--green, #27ae60)';
+      msgEl.textContent = '✓ Template extracted!';
+    }
+  }
+  urlEl.value = derived.tpl;
 }
 
 async function approveSeedRow(id) {
@@ -4957,11 +5280,13 @@ async function planRoute() {
 
   const via    = document.getElementById('pVia').value.trim();
   const budget = document.getElementById('pBudget').value.trim();
+  const startDate = document.getElementById('pStartDate')?.value.trim() || '';
+  const targetDays = document.getElementById('pDays')?.value.trim() || '';
 
   // ── Cache lookup (local, then shared) — checked before the guest quota
   // gate below, so a cache hit never costs a guest one of their free
   // searches: it costs nothing, local or shared. ─────────────────────
-  const cacheKey = buildCacheKey(from, to, via, budget, pace, prefModes);
+  const cacheKey = buildCacheKey(from, to, via, budget, pace, prefModes, targetDays);
   let hit = getCachedRoute(cacheKey) || findSubsetRoute(from, to, pace, prefModes);
   if (!hit) hit = await getSharedCachedRoute(cacheKey);
   if (hit) {
@@ -5001,9 +5326,12 @@ async function planRoute() {
 
   try {
     // Build site hint for AI so it knows what options exist
-    const affSites = _readAllSites().filter(s => s.enabled !== false && s.category !== 'accommodation');
+    const affSites = _readAllSites().filter(s => s.enabled !== false && !(s.categories?.includes('accommodation') || s.category === 'accommodation'));
     const sitesByMode = {};
-    affSites.forEach(s => { (sitesByMode[s.category] = sitesByMode[s.category] || []).push(s.name); });
+    affSites.forEach(s => {
+      const cats = (s.categories && s.categories.length) ? s.categories : [s.category];
+      cats.filter(c => c !== 'accommodation').forEach(c => { (sitesByMode[c] = sitesByMode[c] || []).push(s.name); });
+    });
     const siteHint = Object.entries(sitesByMode).map(([cat, names]) => `${cat}: ${[...new Set(names)].join(', ')}`).join('; ');
 
     const hitchOnly  = prefModes.length === 1 && prefModes[0] === 'hitchhike';
@@ -5018,10 +5346,11 @@ async function planRoute() {
       moderate: 'Moderate pace: 2–3 days per stop, balance of direct connections and interesting detours, reasonable total trip length.',
       fast:     'Fast travel: 1–2 days per stop, most direct connections only, minimal detours, keep stop count low and legs efficient.',
     }[pace] || '';
-    const accomSites = _readAllSites().filter(s => s.enabled !== false && s.category === 'accommodation').map(s => s.name);
+    const daysHint = targetDays ? ` Target trip length: ~${targetDays} days.` : '';
+    const accomSites = _readAllSites().filter(s => s.enabled !== false && (s.categories?.includes('accommodation') || s.category === 'accommodation')).map(s => s.name);
     const accomHint  = accomSites.join(', ');
     const data = await callAI(`You are an expert overland travel planner. Suggest a practical overland route from ${from} to ${to}${via ? ' via ' + via : ''}.
-${paceGuide} Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}${hitchNote ? '\n' + hitchNote : ''}
+${paceGuide}${daysHint} Preferred transport: ${prefModes.join(', ') || 'any'}.${budget ? ' Budget: ' + budget + '.' : ''}${hitchNote ? '\n' + hitchNote : ''}
 Available transport booking sites (${siteHint}; for shared taxi/carpooling also consider BlaBlaCar in Europe/LatAm/South Asia). For each leg include:
 - "booking_sites":["Name"] — only sites that actually operate on that route/region
 - "leg_region" — world region (Southeast Asia/Central Asia/South Asia/East Asia/Europe/Middle East/Africa/North America/Latin America/Oceania)
@@ -6081,14 +6410,23 @@ function renderPlanSuggestion(d, fromCache = false) {
   // the leg card to the next stop nested underneath -- not one row per
   // leg with a "City — City" title, which had no per-stop numbering.
   h += `<div class="res-route-kicker">Route · ${d.stops.length} stop${d.stops.length===1?'':'s'}</div>`;
+  // Optional per-stop dates — only computed/shown when the planner's Start
+  // date field has a value; otherwise stopDates is null and nothing renders,
+  // matching today's no-date behavior exactly.
+  const _planStartDate = document.getElementById('pStartDate')?.value.trim() || '';
+  const stopDates = _planStartDate ? computeStopDates(d.stops, _planStartDate) : null;
   d.stops.forEach((stop, i) => {
     const leg = d.legs[i];
     const isLastStop = i === d.stops.length - 1;
     const modeColor = leg ? (MODE_COLORS[leg.mode] || 'var(--fern)') : (i>0 ? (MODE_COLORS[d.legs[i-1]?.mode] || 'var(--fern)') : 'var(--border2)');
+    const stopDate = stopDates ? stopDates[i] : null;
+    const dateBadge = stopDate
+      ? `<span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:6px">${recFmtDate(stopDate)}${stop.days ? ' · ' + stop.days + 'd stay' : ''}</span>`
+      : '';
     h += `<div class="res-leg">
       <div class="res-leg-gutter"><div class="res-leg-num" style="background:${modeColor}">${i+1}</div>${!isLastStop?`<div class="res-leg-connector" style="background:${modeColor}"></div>`:''}</div>
       <div class="res-leg-body">
-      <span class="res-leg-name">${stop.name || 'Unknown'}</span>`;
+      <span class="res-leg-name">${stop.name || 'Unknown'}</span>${dateBadge}`;
     if (leg) {
       const ps         = stop;
       const ns         = d.stops[i + 1];
@@ -6258,8 +6596,11 @@ function _applyLegVerification(d, i, result) {
   }
 }
 
-// Shared stops/legs extraction — used by adoptRoute() and buildTripFromSuggestion()
-function suggestionToStopsLegs(d) {
+// Shared stops/legs extraction — used by adoptRoute() and buildTripFromSuggestion().
+// `startDate` (YYYY-MM-DD, optional) seeds stops[0].date; the rest chain
+// forward via the existing fillDatesForward() date math (same logic
+// autoFillDates() uses in the trip editor) — no date math is reimplemented here.
+function suggestionToStopsLegs(d, startDate) {
   const stops = [];
   if (d.stops?.length) {
     d.stops.forEach(s => stops.push({ name: s.name, date: '', days: s.days || 0, accomSites: s.accom_sites || [], accomNote: s.accom_note || '' }));
@@ -6269,6 +6610,10 @@ function suggestionToStopsLegs(d) {
     // shorter but valid stop list beats one with a literal "undefined" name
     // that then gets saved into the trip.
     [d.legs[0]?.from, ...d.legs.map(l => l.to)].filter(Boolean).forEach(c => stops.push({ name: c, date: '', days: 0 }));
+  }
+  if (startDate && stops.length) {
+    stops[0].date = startDate;
+    fillDatesForward(stops, 0);
   }
   const legs = (d.legs || []).map(l => ({
     mode: l.mode, cost: convertCost(l.cost_usd || 0), km: l.km || 0,
@@ -6291,7 +6636,8 @@ function adoptRoute() {
   const d = lastSuggestion; editingLegModes.clear();
   currentTripId = null;   // always creates a new trip on next save
   expandedLegs.clear();
-  ({ stops, legs } = suggestionToStopsLegs(d));
+  const _startDate = document.getElementById('pStartDate')?.value.trim() || '';
+  ({ stops, legs } = suggestionToStopsLegs(d, _startDate));
   switchTab('record', document.getElementById('navbtn_record'));
   render();
 }
@@ -6304,7 +6650,8 @@ function suggestionRouteName(d) {
   return f && t ? `${f} → ${t}` : (f || t || 'My overland route');
 }
 function buildTripFromSuggestion(d, name) {
-  const { stops, legs } = suggestionToStopsLegs(d);
+  const _startDate = document.getElementById('pStartDate')?.value.trim() || '';
+  const { stops, legs } = suggestionToStopsLegs(d, _startDate);
   return { id: newTripId(), title: name, currency: document.getElementById('currSel').value,
     budget: '', notes: d.summary || '', stops, legs, updated_at: new Date().toISOString() };
 }
@@ -6523,6 +6870,28 @@ function parseStopDate(dateStr, timeSuffix) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+// Non-mutating variant of fillDatesForward() for Route Results, which
+// renders straight from the AI suggestion (plain {name,days} stops, no
+// `.date`/`_autoFilled` fields yet) rather than the trip editor's stops
+// array. Returns an array of YYYY-MM-DD strings aligned to `stops`, or null
+// if startDateStr is invalid/empty.
+function computeStopDates(stops, startDateStr) {
+  if (!startDateStr || !stops?.length) return null;
+  const dates = [];
+  let cur = startDateStr;
+  for (let i = 0; i < stops.length; i++) {
+    // UTC throughout -- mixing local-time parsing with toISOString()'s UTC
+    // output silently freezes the date in timezones ahead of UTC (the local
+    // day hasn't rolled over yet when converted back to a UTC date string).
+    const d = new Date(cur + 'T00:00:00Z');
+    if (isNaN(d.getTime())) return null;
+    dates.push(cur);
+    d.setUTCDate(d.getUTCDate() + (stops[i].days || 1));
+    cur = d.toISOString().slice(0, 10);
+  }
+  return dates;
+}
+
 // ── Record tab ────────────────────────────────────────────────────
 function getLeg(i) {
   return legs[i] || { mode: 'bus', cost: 0, km: 0, hours: 0, notes: '', booked: false, bookingRef: '', bookingUrl: '' };
@@ -6534,17 +6903,25 @@ const RATES = { USD:1, EUR:0.92, GBP:0.79, INR:84, AUD:1.55, CAD:1.37, JPY:156, 
 function convertCost(usd) { return Math.round((+usd || 0) * (RATES[getCurr()] || 1)); }
 function fmtCost(usd)     { return getCurrSym() + convertCost(usd); }
 
-function autoFillDates(fromIdx) {
-  for (let i = fromIdx + 1; i < stops.length; i++) {
-    const prev = stops[i - 1];
+// Shared forward date-chaining math — used by autoFillDates() (mutates the
+// global `stops`) and by the planner (suggestionToStopsLegs) which needs the
+// same chaining applied to a freshly-built, not-yet-global stops array.
+function fillDatesForward(stopsArr, fromIdx) {
+  for (let i = fromIdx + 1; i < stopsArr.length; i++) {
+    const prev = stopsArr[i - 1];
     if (!prev.date) break;
-    if (stops[i]._autoFilled !== false) { // don't overwrite manually entered dates
-      const d = new Date(prev.date + 'T00:00');
-      d.setDate(d.getDate() + (prev.days || 1));
-      stops[i].date = d.toISOString().slice(0, 10);
-      stops[i]._autoFilled = true;
+    if (stopsArr[i]._autoFilled !== false) { // don't overwrite manually entered dates
+      // UTC throughout -- see computeStopDates for why local-time parsing +
+      // toISOString() silently freezes the date in timezones ahead of UTC.
+      const d = new Date(prev.date + 'T00:00:00Z');
+      d.setUTCDate(d.getUTCDate() + (prev.days || 1));
+      stopsArr[i].date = d.toISOString().slice(0, 10);
+      stopsArr[i]._autoFilled = true;
     }
   }
+}
+function autoFillDates(fromIdx) {
+  fillDatesForward(stops, fromIdx);
   renderTl(); updateSum();
 }
 
@@ -8422,7 +8799,7 @@ function renderCrashRecover() {
     : `Last checkpoint: ${Math.round((Date.now() - (cp.savedAt||Date.now()))/60000)} min ago`;
 
   el.innerHTML = `<div class="gps-panel gps-light">
-    <div class="gps-hdr"><img src="/public/bysloth-motif-mustard.png" alt="" style="height:24px;width:auto;flex-shrink:0"><span>bysloth</span></div>
+    <div class="gps-hdr">${gpsIsNative() ? `<img src="/public/bysloth-motif-mustard.png" alt="" style="height:24px;width:auto;flex-shrink:0"><span>bysloth</span>` : ''}</div>
     <div class="gps-center">
       <div class="strk-icon" style="background:#FFF8E6;border-color:#FFB80044"><i class="ph ph-lightning" style="font-size:32px;color:var(--gold)"></i></div>
       <div class="strk-title">Tracking was interrupted.</div>
