@@ -2070,6 +2070,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
         <button onclick="openSeedReviewModal()" style="font-size:12px;padding:7px 14px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">Review pending results</button>
         <button onclick="autoTriagePendingSeeds()" id="bsAutoTriageBtn" style="font-size:12px;padding:7px 14px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">Auto-triage pending (<span id="bsAutoTriageCount">0</span>)</button>
       </div>
+      <div id="bsProgressCounter" style="display:none;font-family:var(--mono);font-size:11px;color:var(--sage);margin-bottom:4px;font-weight:600"></div>
       <div id="bsProgress" style="display:none;max-height:180px;overflow-y:auto;font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 10px"></div>
     </div>
 
@@ -5136,9 +5137,25 @@ async function autoTriagePendingSeeds() {
   if (btn) btn.disabled = true;
   const progEl = document.getElementById('bsProgress');
   if (progEl) { progEl.innerHTML = ''; progEl.style.display = 'block'; }
+  const counterEl = document.getElementById('bsProgressCounter');
+  if (counterEl) counterEl.style.display = 'block';
   _bsLog(`Starting auto-triage — ${rows.length} row${rows.length===1?'':'s'}…`);
 
   let approved = 0, rejected = 0, manual = 0;
+  const _triageStart = Date.now();
+  // Updates on EVERY row, not just approved/rejected ones -- a run with a
+  // long stretch of "manual" (heuristic-unmatched) rows previously produced
+  // zero visible output for that whole stretch, which is indistinguishable
+  // from actually being hung. This is the one honest signal that the loop
+  // is still alive regardless of what any individual row does.
+  const updateCounter = i => {
+    if (!counterEl) return;
+    const elapsedS = (Date.now() - _triageStart) / 1000;
+    const perRowS = i > 0 ? elapsedS / i : 0.15; // 150ms floor before the first row completes
+    const etaS = Math.round(perRowS * (rows.length - i));
+    const etaTxt = etaS > 90 ? `~${Math.round(etaS/60)} min left` : `~${etaS}s left`;
+    counterEl.textContent = `${i} / ${rows.length} processed — ${approved} approved, ${rejected} rejected, ${manual} manual (${etaTxt})`;
+  };
   // Read/write the local site list ONCE, not per-row -- with 2000+ pending
   // rows, re-reading + re-serializing + rebuilding AFF from scratch on
   // every single approval was O(n^2) (each iteration re-writes the whole,
@@ -5150,7 +5167,7 @@ async function autoTriagePendingSeeds() {
   let sinceFlush = 0;
   const flush = () => { _writeAllSites(sites); loadCustomSitesIntoAFF(); sinceFlush = 0; };
 
-  for (const r of rows) {
+  for (const [i, r] of rows.entries()) {
     const h = _seedHeuristic(r.url);
     if (h.flag === 'flight') {
       try {
@@ -5187,10 +5204,12 @@ async function autoTriagePendingSeeds() {
     } else {
       manual++;
     }
+    updateCounter(i + 1);
     await new Promise(res => setTimeout(res, 150));
   }
   if (sinceFlush > 0) flush();
 
+  if (counterEl) counterEl.style.display = 'none';
   _bsLog(`Done. ${approved} auto-approved, ${rejected} auto-rejected, ${manual} left for manual review.`);
   if (btn) btn.disabled = false;
   renderAdminSiteList();
