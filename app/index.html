@@ -4390,7 +4390,13 @@ const _LANDLOCKED_COUNTRIES = new Set([
   'PY','BO',                                           // Latin America
 ]);
 
-let _bulkSeedPass1EverRun = false; // simplest Pass-2 gate: Pass 1 must have run at least once this session
+// Pass-2 gate: Pass 1 must have run at least once, ever. Derived from
+// booking_sites (see _checkPass1EverRun) rather than localStorage --
+// "has Pass 1 run" is a fact about the database, not the browser, so a
+// client-side flag would go stale across devices/browsers/cleared storage.
+// This in-memory var is just a per-page-load cache of that DB check, not a
+// separate source of truth.
+let _bulkSeedPass1EverRun = false;
 
 function _seedCountryName(code) {
   // Best-effort human-readable name for the query string — the app doesn't
@@ -4558,14 +4564,34 @@ async function _refreshPendingBadge() {
   }
   const triageCount = document.getElementById('bsAutoTriageCount');
   if (triageCount) triageCount.textContent = rows.length;
-  // Simple Pass-2 gate: enabled once Pass 1 has run at least once this
-  // session AND there's nothing left over from an unreviewed transport
-  // sweep sitting in the queue (keeps admins from starting accommodation
-  // before transport results actually got looked at).
+  // Simple Pass-2 gate: enabled once Pass 1 has run at least once, ever
+  // (checked against real DB state -- see _checkPass1EverRun, not a
+  // browser-local flag, since "has Pass 1 run" is a fact about the data,
+  // not the device) AND there's nothing left over from an unreviewed
+  // transport sweep sitting in the queue (keeps admins from starting
+  // accommodation before transport results actually got looked at).
+  if (!_bulkSeedPass1EverRun) await _checkPass1EverRun();
   if (pass2Btn) {
     const transportPending = rows.some(r => ['buses','trains','ferries','ships'].includes(r.category));
     pass2Btn.disabled = !_bulkSeedPass1EverRun || transportPending;
   }
+}
+
+// Derives "has Pass 1 ever run" from booking_sites directly rather than a
+// client-side flag, so it's correct regardless of which browser/device an
+// admin is on. _bulkSeedPass1EverRun caches the answer for the rest of this
+// page load only, once it comes back true -- once true it never needs
+// re-checking within a session (a transport sweep can't un-happen), and a
+// fresh load re-derives it again rather than trusting stale local state.
+async function _checkPass1EverRun() {
+  try {
+    const { data, error } = await sb.from('booking_sites')
+      .select('id')
+      .in('category', ['buses', 'trains', 'ferries', 'ships'])
+      .in('source', ['bulk_seed', 'reactive_new_country'])
+      .limit(1);
+    if (!error && data && data.length) _bulkSeedPass1EverRun = true;
+  } catch (e) { console.error('Pass-1 check failed:', e.message); }
 }
 
 // Lightweight pre-sort heuristics — flag only, never auto-promote.
