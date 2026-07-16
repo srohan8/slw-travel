@@ -4300,6 +4300,30 @@ function _adminSiteMatchesFilter(s, needle) {
   return haystack.includes(needle);
 }
 
+// Category multi-select filter (independent of the text filter and sort) --
+// a category header click sorts; a small dropdown toggle next to it lets
+// the admin narrow to one or more categories at once (e.g. "Ship" + "Stay"
+// together), which a single-value sort/text-filter can't express cleanly.
+let _adminSiteCategoryFilter = new Set();
+let _adminCategoryDropdownOpen = false;
+function toggleAdminCategoryDropdown(ev) {
+  ev.stopPropagation();
+  _adminCategoryDropdownOpen = !_adminCategoryDropdownOpen;
+  renderAdminSiteList();
+}
+function toggleAdminSiteCategoryFilter(cat, ev) {
+  ev.stopPropagation();
+  if (_adminSiteCategoryFilter.has(cat)) _adminSiteCategoryFilter.delete(cat);
+  else _adminSiteCategoryFilter.add(cat);
+  renderAdminSiteList();
+}
+function clearAdminCategoryFilter(ev) {
+  if (ev) ev.stopPropagation();
+  _adminSiteCategoryFilter.clear();
+  _adminCategoryDropdownOpen = false;
+  renderAdminSiteList();
+}
+
 function sortAdminSiteList(key) {
   if (_adminSiteSortKey === key) {
     _adminSiteSortDir = _adminSiteSortDir === 'asc' ? 'desc' : 'asc';
@@ -4318,6 +4342,13 @@ function renderAdminSiteList() {
 
   const needle = _adminSiteFilterText.trim().toLowerCase();
   if (needle) sites = sites.filter(s => _adminSiteMatchesFilter(s, needle));
+
+  if (_adminSiteCategoryFilter.size) {
+    sites = sites.filter(s => {
+      const cats = (s.categories && s.categories.length) ? s.categories : [s.category].filter(Boolean);
+      return cats.some(c => _adminSiteCategoryFilter.has(c));
+    });
+  }
 
   if (_adminSiteSortKey) {
     const key = _adminSiteSortKey, dir = _adminSiteSortDir === 'asc' ? 1 : -1;
@@ -4351,8 +4382,25 @@ function renderAdminSiteList() {
       value="${_adminSiteFilterText.replace(/"/g, '&quot;')}" oninput="setAdminSiteFilter(this.value)"
       style="font-size:12px"/>
   </div>`;
+  const catFilterActive = _adminSiteCategoryFilter.size > 0;
+  const catDropdown = _adminCategoryDropdownOpen ? `
+    <div onclick="event.stopPropagation()" style="position:absolute;top:100%;left:0;z-index:20;margin-top:4px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-float,0 4px 12px rgba(0,0,0,.12));padding:8px;min-width:150px;text-transform:none;font-weight:400;letter-spacing:normal">
+      ${Object.entries(catLabel).map(([key, label]) => `
+        <label style="display:flex;align-items:center;gap:6px;padding:3px 4px;font-size:12px;color:var(--text);cursor:pointer;white-space:nowrap">
+          <input type="checkbox" ${_adminSiteCategoryFilter.has(key) ? 'checked' : ''} onclick="toggleAdminSiteCategoryFilter('${key}', event)"/>
+          ${label}
+        </label>`).join('')}
+      ${catFilterActive ? `<div style="border-top:0.5px solid var(--border);margin-top:4px;padding-top:4px"><button onclick="clearAdminCategoryFilter(event)" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--text3);text-decoration:underline;font-family:inherit;padding:0">Clear</button></div>` : ''}
+    </div>` : '';
   h += `<div style="overflow-x:auto"><table class="aff-table" style="min-width:900px"><thead><tr>
-    ${cols.map(c => `<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="sortAdminSiteList('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow(c.key)}</th>`).join('')}
+    ${cols.map(c => {
+      if (c.key !== 'category') return `<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="sortAdminSiteList('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow(c.key)}</th>`;
+      return `<th style="position:relative;white-space:nowrap">
+        <span style="cursor:pointer;user-select:none" onclick="sortAdminSiteList('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow(c.key)}</span>
+        <span onclick="toggleAdminCategoryDropdown(event)" style="cursor:pointer;user-select:none;margin-left:3px;color:${catFilterActive ? 'var(--sage)' : 'var(--text3)'}" title="Filter by category">▾${catFilterActive ? ` (${_adminSiteCategoryFilter.size})` : ''}</span>
+        ${catDropdown}
+      </th>`;
+    }).join('')}
     <th></th>
   </tr></thead><tbody>`;
 
