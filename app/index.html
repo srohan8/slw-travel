@@ -3501,6 +3501,12 @@ function switchAdminSubTab(tab) {
   if (tab === 'aiprovider') renderAdminAiProvider();
   if (tab === 'sourcing')   _refreshPendingBadge();
   if (tab === 'users')      renderAdminUsers();
+  // Stash the sub-tab in the hash so a real browser refresh (not just SPA
+  // navigation) lands back on it -- query params are already used for
+  // other things here (?seed=1, ?from=X), and setScreenUrl()'s path+search
+  // composition doesn't carry a hash through, so this is a plain direct
+  // replaceState rather than routing through that shared helper.
+  history.replaceState(null, '', location.pathname + location.search + '#' + tab);
 }
 
 // ── Admin > Beta features — look up a user by email, toggle profiles.gps_beta.
@@ -5218,7 +5224,15 @@ function routeFromPath(path) {
     switchTab('journals', nav('journals')); return;
   }
   if (seg === 'profile') { switchTab('profile', nav('profile')); return; }
-  if (seg === 'admin')   { switchTab('admin',   nav('admin'));   return; }
+  if (seg === 'admin') {
+    // Capture the sub-tab hash before switchTab('admin', ...) clears it --
+    // its internal setScreenUrl() call does a replaceState with no hash.
+    const savedSub = location.hash.replace('#', '');
+    switchTab('admin', nav('admin'));
+    const validSubs = ['sites', 'review', 'sourcing', 'usage', 'aiprovider', 'beta', 'users'];
+    if (validSubs.includes(savedSub)) switchAdminSubTab(savedSub);
+    return;
+  }
 }
 
 // Clean path for the current screen (tab id → URL path).
