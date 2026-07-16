@@ -109,6 +109,11 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
   .btn-primary{font-weight:700;background:var(--sage);color:var(--cta-text);border-color:var(--sage);box-shadow:0 2px 4px rgba(217,151,61,0.25);}
   .btn-primary:hover{background:#C07E2E;border-color:#C07E2E;transform:translateY(-1px);box-shadow:0 4px 8px rgba(217,151,61,0.35);}
   .container{max-width:860px;margin:0 auto;padding:2rem 1.25rem;}
+  /* Admin's booking-sites table (Site/Category/Regions/Countries/URL/
+     Aff.ID/On/Shown/Added + actions) needs real width -- 860px wraps it
+     into an unreadable mess. Scoped to admin only via :has() so no other
+     page's layout is affected. */
+  .container:has(#admin.active){max-width:1400px;}
   /* App footer — desktop only; mobile already has the bottom nav for this. */
   .app-footer{margin-top:32px;padding:20px 22px 0;border-top:0.5px solid var(--border);}
   .app-footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
@@ -1952,6 +1957,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
       <button class="admin-stab on" id="adminStab_sites" onclick="switchAdminSubTab('sites')">Booking sites</button>
       <button class="admin-stab" id="adminStab_review" onclick="switchAdminSubTab('review')">Review queue <span id="adminReviewBadge" style="display:none;background:var(--gold);color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px;font-family:var(--mono);font-weight:600"></span></button>
       <button class="admin-stab" id="adminStab_usage" onclick="switchAdminSubTab('usage')">AI usage</button>
+      <button class="admin-stab" id="adminStab_sourcing" onclick="switchAdminSubTab('sourcing')">Sourcing</button>
       <button class="admin-stab" id="adminStab_aiprovider" onclick="switchAdminSubTab('aiprovider')">AI provider</button>
       <button class="admin-stab" id="adminStab_beta" onclick="switchAdminSubTab('beta')">Beta features</button>
       <button class="admin-stab" id="adminStab_users" onclick="switchAdminSubTab('users')">Users</button>
@@ -2045,7 +2051,12 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
 
       <div id="adminSiteList"></div>
     </div>
+    </div><!-- /adminContent_sites -->
 
+    <!-- Sourcing panel — bulk-seed sweep, route cache, and local impression
+         stats. Split out from Booking sites so the main table isn't buried
+         under sourcing/maintenance tools an admin only touches occasionally. -->
+    <div id="adminContent_sourcing" style="display:none">
     <!-- Bulk seed sweep (§6) — admin-triggered one-time Brave sweep, country-priority booking sites -->
     <div class="card" style="margin-bottom:1rem">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -2084,7 +2095,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
       </div>
       <div id="adminAffTable"></div>
     </div>
-    </div><!-- /adminContent_sites -->
+    </div><!-- /adminContent_sourcing -->
 
     <!-- Review queue panel -->
     <div id="adminContent_review" style="display:none">
@@ -3463,6 +3474,7 @@ const REVIEW_QUEUE = [];
 function switchAdminSubTab(tab) {
   _adminSubTab = tab;
   document.getElementById('adminContent_sites').style.display      = tab === 'sites'      ? '' : 'none';
+  document.getElementById('adminContent_sourcing').style.display   = tab === 'sourcing'   ? '' : 'none';
   document.getElementById('adminContent_review').style.display     = tab === 'review'     ? '' : 'none';
   document.getElementById('adminContent_usage').style.display      = tab === 'usage'      ? '' : 'none';
   document.getElementById('adminContent_aiprovider').style.display = tab === 'aiprovider' ? '' : 'none';
@@ -3474,7 +3486,7 @@ function switchAdminSubTab(tab) {
   if (tab === 'review')     renderReviewQueue();
   if (tab === 'usage')      renderAdminUsage();
   if (tab === 'aiprovider') renderAdminAiProvider();
-  if (tab === 'sites')      _refreshPendingBadge();
+  if (tab === 'sourcing')   _refreshPendingBadge();
   if (tab === 'users')      renderAdminUsers();
 }
 
@@ -4338,8 +4350,8 @@ function renderAdminSiteList() {
       value="${_adminSiteFilterText.replace(/"/g, '&quot;')}" oninput="setAdminSiteFilter(this.value)"
       style="font-size:12px"/>
   </div>`;
-  h += `<table class="aff-table"><thead><tr>
-    ${cols.map(c => `<th style="cursor:pointer;user-select:none" onclick="sortAdminSiteList('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow(c.key)}</th>`).join('')}
+  h += `<div style="overflow-x:auto"><table class="aff-table" style="min-width:900px"><thead><tr>
+    ${cols.map(c => `<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="sortAdminSiteList('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow(c.key)}</th>`).join('')}
     <th></th>
   </tr></thead><tbody>`;
 
@@ -4373,7 +4385,7 @@ function renderAdminSiteList() {
       ? cats.map(c => `<span class="aff-cat" style="margin:1px 2px 1px 0;display:inline-block">${catLabel[c] || c}</span>`).join('')
       : `<span class="aff-cat">—</span>`;
     h += `<tr style="${rowOpacity}">
-      <td style="font-weight:500">${s.name}${newBadge}${badge}${urlWarn}</td>
+      <td style="font-weight:500;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(s.name||'').replace(/"/g,'&quot;')}">${s.name}${newBadge}${badge}${urlWarn}</td>
       <td style="max-width:140px">${catPills}</td>
       <td style="max-width:160px">${regionPills}</td>
       <td style="max-width:140px">${countryPills}</td>
@@ -4395,7 +4407,7 @@ function renderAdminSiteList() {
     </tr>`;
   });
 
-  h += `</tbody></table>`;
+  h += `</tbody></table></div>`;
   const hadFocus = document.activeElement && document.activeElement.id === 'adminSiteFilterInput';
   const caret = hadFocus ? document.activeElement.selectionStart : null;
   el.innerHTML = h;
@@ -4570,17 +4582,39 @@ async function recheckSiteWithBrave(id) {
     if (!results?.length) { panel.textContent = `No results for "${q}".`; return; }
     const top = results.slice(0, 3);
     panel.innerHTML = `
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Query: "${q}" — top ${top.length} result${top.length===1?'':'s'}. Compare against this site's URL template above; nothing here is applied automatically.</div>
-      ${top.map(r => `
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Query: "${q}" — top ${top.length} result${top.length===1?'':'s'}. Compare against this site's URL template above.</div>
+      ${top.map((r, i) => `
         <div style="padding:6px 0;border-top:0.5px solid var(--border)">
           <a href="${r.url}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;color:var(--fern);text-decoration:none">${r.title || r.url}</a>
           <div style="font-size:11px;color:var(--text3);word-break:break-all">${r.url}</div>
           ${r.description ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">${r.description}</div>` : ''}
+          <button onclick="_useRecheckResult('${id}', ${i})" style="margin-top:5px;font-size:11px;padding:4px 10px;background:none;border:0.5px solid var(--sage);border-radius:var(--radius);cursor:pointer;color:var(--sage);font-family:inherit">Use this URL →</button>
         </div>`).join('')}
     `;
+    _recheckResultsCache[id] = top;
   } catch (e) {
     panel.textContent = `⚠ ${e.message}`;
   }
+}
+
+// Raw Brave results from the last recheckSiteWithBrave() call, keyed by
+// site id, so "Use this URL" can hand a real URL to the extractor without
+// re-fetching or serializing it through an onclick attribute.
+let _recheckResultsCache = {};
+
+// Opens this site's edit form with the chosen recheck result pre-filled
+// into the "Extract from a real search URL" tool -- turns the previously
+// dead-end comparison panel into something actionable: admin types
+// origin/dest, clicks Extract, gets a real template instead of just
+// eyeballing a URL with no way to act on it.
+function _useRecheckResult(siteId, resultIdx) {
+  const r = _recheckResultsCache[siteId]?.[resultIdx];
+  if (!r) return;
+  showAddSiteForm(siteId);
+  const exampleUrl = document.getElementById('sf_example_url');
+  if (exampleUrl) exampleUrl.value = r.url;
+  const origin = document.getElementById('sf_ex_origin');
+  if (origin) { origin.focus(); origin.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 }
 
 // ── Review queue (§6 bulk sweep + §10 reactive trigger, same modal) ────
