@@ -3963,9 +3963,10 @@ function showAddSiteForm(editId, prefill) {
     }
   } else if (prefill) {
     // Pre-fill from AI suggestion (name + category known, URL still needed)
-    if (prefill.name)     document.getElementById('sf_name').value    = prefill.name;
-    if (prefill.category) _setSfCatSelection([prefill.category]);
-    if (prefill.regions)  document.getElementById('sf_regions').value = prefill.regions.join(', ');
+    if (prefill.name)      document.getElementById('sf_name').value      = prefill.name;
+    if (prefill.category)  _setSfCatSelection([prefill.category]);
+    if (prefill.regions)   document.getElementById('sf_regions').value   = prefill.regions.join(', ');
+    if (prefill.countries) document.getElementById('sf_countries').value = prefill.countries.join(', ');
   }
   form.style.display = 'block';
   document.getElementById('sf_name').focus();
@@ -4551,11 +4552,12 @@ async function runBulkSeedPass(pass) {
 }
 
 // ── Per-site "Re-check with Brave" (§5) ────────────────────────────────
-// Reuses _buildSeedQuery (shared with the bulk sweep above) so the query
-// phrasing stays identical, but this is display-only: results are shown
-// inline for the admin to visually compare against the site's existing
-// url_template, and nothing is written to booking_sites_pending or
-// booking_sites. The URL is never auto-updated.
+// Runs two queries: a site-specific one (does this site itself still look
+// right?) shown as the primary result, and the same generic category/
+// country query the bulk sweep uses, shown as a secondary "other sites for
+// this country" section for discovery. Display-only: nothing is written to
+// booking_sites_pending or booking_sites, and the URL is never auto-updated
+// -- the admin acts via "Use this URL" / "+ Add as new site" below.
 async function recheckSiteWithBrave(id) {
   const sites = _readAllSites();
   const s = sites.find(x => x.id === id);
@@ -4570,35 +4572,51 @@ async function recheckSiteWithBrave(id) {
   const cats = (s.categories && s.categories.length) ? s.categories : [s.category];
   const category = cats[0];
   const countryOrRegion = s.countries?.[0] || s.regions?.[0] || '';
-  const q = _buildSeedQuery(category, countryOrRegion);
+  const siteQ  = `${s.name} ${category === 'accommodation' ? 'booking' : 'booking website'}`;
+  const otherQ = _buildSeedQuery(category, countryOrRegion);
 
   row.style.display = '';
-  panel.textContent = `Searching Brave for "${q}"…`;
+  panel.textContent = `Searching Brave for "${s.name}"…`;
 
-  try {
+  const fetchTop = async q => {
     const res = await fetch(`${PROXY_URL}/api/brave-web-search?q=${encodeURIComponent(q)}`);
-    if (!res.ok) { panel.textContent = `⚠ Brave search request failed (${res.status}).`; return; }
+    if (!res.ok) throw new Error(`Brave search failed (${res.status})`);
     const { results } = await res.json();
-    if (!results?.length) { panel.textContent = `No results for "${q}".`; return; }
-    const top = results.slice(0, 3);
-    panel.innerHTML = `
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Query: "${q}" — top ${top.length} result${top.length===1?'':'s'}. Compare against this site's URL template above.</div>
+    return (results || []).slice(0, 3);
+  };
+
+  const renderSection = (label, hint, q, sectionKey, top) => {
+    if (!top.length) return `<div style="font-size:11px;color:var(--text3);margin-top:8px">${label}: no results for "${q}".</div>`;
+    return `<div style="margin-top:10px">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">${label}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${hint} Query: "${q}"</div>
       ${top.map((r, i) => `
         <div style="padding:6px 0;border-top:0.5px solid var(--border)">
           <a href="${r.url}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;color:var(--fern);text-decoration:none">${r.title || r.url}</a>
           <div style="font-size:11px;color:var(--text3);word-break:break-all">${r.url}</div>
           ${r.description ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">${r.description}</div>` : ''}
-          <button onclick="_useRecheckResult('${id}', ${i})" style="margin-top:5px;font-size:11px;padding:4px 10px;background:none;border:0.5px solid var(--sage);border-radius:var(--radius);cursor:pointer;color:var(--sage);font-family:inherit">Use this URL →</button>
+          <div style="display:flex;gap:6px;margin-top:5px">
+            <button onclick="_useRecheckResult('${id}', '${sectionKey}', ${i})" style="font-size:11px;padding:4px 10px;background:none;border:0.5px solid var(--sage);border-radius:var(--radius);cursor:pointer;color:var(--sage);font-family:inherit" title="Update this site's own URL template">Use this URL →</button>
+            <button onclick="_addRecheckResultAsNewSite('${id}', '${sectionKey}', ${i})" style="font-size:11px;padding:4px 10px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit" title="This looks like a different provider, not a URL fix for this site">+ Add as new site</button>
+          </div>
         </div>`).join('')}
-    `;
-    _recheckResultsCache[id] = top;
+    </div>`;
+  };
+
+  try {
+    const [siteTop, otherTop] = await Promise.all([fetchTop(siteQ), fetchTop(otherQ)]);
+    panel.innerHTML =
+      renderSection(`About ${s.name}`, 'Does this site still look right? Compare against its URL template above.', siteQ, 'site', siteTop) +
+      renderSection(`Other sites for this country/region`, 'Discovery only -- may surface different providers, not a fix for this site.', otherQ, 'other', otherTop);
+    _recheckResultsCache[id] = { site: siteTop, other: otherTop };
   } catch (e) {
     panel.textContent = `⚠ ${e.message}`;
   }
 }
 
 // Raw Brave results from the last recheckSiteWithBrave() call, keyed by
-// site id, so "Use this URL" can hand a real URL to the extractor without
+// site id then by section ('site' | 'other'), so "Use this URL" can hand a
+// real URL to the extractor without
 // re-fetching or serializing it through an onclick attribute.
 let _recheckResultsCache = {};
 
@@ -4607,10 +4625,95 @@ let _recheckResultsCache = {};
 // dead-end comparison panel into something actionable: admin types
 // origin/dest, clicks Extract, gets a real template instead of just
 // eyeballing a URL with no way to act on it.
-function _useRecheckResult(siteId, resultIdx) {
-  const r = _recheckResultsCache[siteId]?.[resultIdx];
+function _useRecheckResult(siteId, sectionKey, resultIdx) {
+  const r = _recheckResultsCache[siteId]?.[sectionKey]?.[resultIdx];
   if (!r) return;
   showAddSiteForm(siteId);
+  const exampleUrl = document.getElementById('sf_example_url');
+  if (exampleUrl) exampleUrl.value = r.url;
+  const origin = document.getElementById('sf_ex_origin');
+  if (origin) { origin.focus(); origin.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+function _hostnameOf(url) {
+  try { return new URL(url).hostname.replace(/^www\./, '').toLowerCase(); } catch (e) { return ''; }
+}
+
+// Root/registrable domain (last two labels) -- "shop.flixbus.com" and
+// "www.flixbus.com" are the same real-world site, but a plain hostname
+// comparison treats them as different. Naive (doesn't special-case
+// two-part TLDs like .co.uk), but this only feeds a soft duplicate-warning
+// heuristic where the admin sees the actual URL and can judge for
+// themselves -- not worth a full public-suffix-list dependency for that.
+function _rootDomainOf(url) {
+  const h = _hostnameOf(url);
+  const parts = h.split('.');
+  return parts.length > 2 ? parts.slice(-2).join('.') : h;
+}
+
+// A re-check result can turn out to be a genuinely different provider
+// (e.g. re-checking Busbud surfaces FlixBus/Greyhound), not a URL fix for
+// the site being re-checked. This opens a blank Add-site form for it --
+// but checks for an existing duplicate first (by domain, the reliable
+// signal, and by name as a softer heuristic) so re-checking the same
+// country/category repeatedly doesn't silently pile up duplicate entries
+// for sites already in the list.
+function _addRecheckResultAsNewSite(siteId, sectionKey, resultIdx) {
+  const r = _recheckResultsCache[siteId]?.[sectionKey]?.[resultIdx];
+  if (!r) return;
+  const s = _readAllSites().find(x => x.id === siteId);
+  const sites = _readAllSites();
+  const newHost = _hostnameOf(r.url);
+  const newRoot = _rootDomainOf(r.url);
+  const candidateName = (r.title || newHost || r.url).split(/[|–—-]/)[0].trim();
+
+  const domainMatch = newRoot && sites.find(x => _rootDomainOf(x.urlTemplate) === newRoot);
+  // Word-overlap, not raw substring -- a plain "b.includes(a)" check flags
+  // a false positive the moment any existing site has a short generic name
+  // (e.g. an existing "TICKETS" entry would "match" almost any candidate
+  // title, since "tickets" is a common word in search-result titles, not
+  // a real signal of it being the same site). Domain-generic words (bus,
+  // ticket, booking, online, ...) get filtered too -- these show up in
+  // nearly every real site's title in this app's domain, so overlapping
+  // on them alone is noise, not a signal (confirmed by an actual
+  // false-positive: "Affordable Bus Tickets and Bus Schedules" vs.
+  // "Expreso Paraguay - Bus, Tickets and online bookings" matched purely
+  // on "bus"/"tickets"/"and" before this filter existed).
+  const _GENERIC_WORDS = new Set(['and','the','for','to','in','on','of','with','your','a','an',
+    'bus','buses','train','trains','ferry','ferries','ship','ships','taxi','shared',
+    'ticket','tickets','book','books','booking','bookings','online','travel','travels',
+    'schedule','schedules','service','services','site','website','official','app',
+    'search','find','buy','purchase','info','information',
+    'now','open','from','to','fast','free','best','new','top','direct','affordable',
+    'convenient','reliable','trusted','quality','secure','easy','quick','great']);
+  const _words = str => new Set(str.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+    .filter(w => w.length > 2 && !_GENERIC_WORDS.has(w)));
+  const nameMatch = !domainMatch && candidateName && sites.find(x => {
+    if (x.name.toLowerCase() === candidateName.toLowerCase()) return true;
+    const a = _words(x.name), b = _words(candidateName);
+    // Single-word overlap is deliberately not enough on its own -- one
+    // shared distinctive-looking word (a marketing adjective the blocklist
+    // above missed, a common place name, etc.) isn't a reliable "same
+    // site" signal. Require at least 2 shared distinctive words. Real
+    // single-word brand-name duplicates (e.g. "FlixBus") are still caught
+    // by domainMatch above, which is the more reliable signal anyway.
+    if (a.size < 2 || b.size < 2) return false;
+    const overlap = [...a].filter(w => b.has(w)).length;
+    return overlap >= 2 && overlap / Math.min(a.size, b.size) >= 0.6;
+  });
+  const existing = domainMatch || nameMatch;
+  if (existing) {
+    const reason = domainMatch ? `same domain (${newHost})` : `similar name`;
+    if (!confirm(`"${existing.name}" already exists in the list (${reason}) -- ${existing.urlTemplate || 'no URL template yet'}.\n\nAdd "${candidateName}" as a separate new site anyway?`)) return;
+  }
+
+  const cats = (s?.categories && s.categories.length) ? s.categories : [s?.category].filter(Boolean);
+  showAddSiteForm(undefined, {
+    name: candidateName,
+    category: cats[0] || 'buses',
+    countries: s?.countries?.length ? s.countries : [],
+    regions: (!s?.countries?.length && s?.regions?.length) ? s.regions : [],
+  });
   const exampleUrl = document.getElementById('sf_example_url');
   if (exampleUrl) exampleUrl.value = r.url;
   const origin = document.getElementById('sf_ex_origin');
@@ -4920,6 +5023,17 @@ async function autoTriagePendingSeeds() {
   _bsLog(`Starting auto-triage — ${rows.length} row${rows.length===1?'':'s'}…`);
 
   let approved = 0, rejected = 0, manual = 0;
+  // Read/write the local site list ONCE, not per-row -- with 2000+ pending
+  // rows, re-reading + re-serializing + rebuilding AFF from scratch on
+  // every single approval was O(n^2) (each iteration re-writes the whole,
+  // ever-growing array to localStorage), which is what made this look
+  // "stuck" rather than just slow. Persist in batches instead: progress
+  // isn't lost if the tab closes mid-run, but the per-row cost stays flat.
+  let sites = _readAllSites();
+  const BATCH = 25;
+  let sinceFlush = 0;
+  const flush = () => { _writeAllSites(sites); loadCustomSitesIntoAFF(); sinceFlush = 0; };
+
   for (const r of rows) {
     const h = _seedHeuristic(r.url);
     if (h.flag === 'flight') {
@@ -4940,12 +5054,11 @@ async function autoTriagePendingSeeds() {
         admin_edited: false, // automated approval — keeps the "NEW" badge until an admin reviews it
       };
       try {
-        const sites = _readAllSites();
-        sites.push(site);
-        _writeAllSites(sites);
-        loadCustomSitesIntoAFF();
         const ok = await _upsertSiteToSupabase(site);
         if (ok) {
+          sites.push(site);
+          sinceFlush++;
+          if (sinceFlush >= BATCH) flush();
           await sb.from('booking_sites_pending').delete().eq('id', r.id);
           approved++;
           _bsLog(`✓ ${r.country_code} ${r.category} — auto-approved: ${site.name}`);
@@ -4960,6 +5073,7 @@ async function autoTriagePendingSeeds() {
     }
     await new Promise(res => setTimeout(res, 150));
   }
+  if (sinceFlush > 0) flush();
 
   _bsLog(`Done. ${approved} auto-approved, ${rejected} auto-rejected, ${manual} left for manual review.`);
   if (btn) btn.disabled = false;
