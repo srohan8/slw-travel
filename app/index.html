@@ -2076,6 +2076,19 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
     <!-- Seed review modal (§6/§10) -->
     <div id="seedReviewModal" style="display:none"></div>
 
+    <!-- Bulk remove by ID -- for cleaning up a batch of auto-triaged junk
+         entries (spam/forum-thread/wrong-entity results) identified outside
+         this session, without hand-clicking Remove on each row. -->
+    <div class="card" style="margin-bottom:1rem">
+      <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 4px">Bulk remove by ID</h3>
+      <div class="hint" style="margin-bottom:8px">Paste site IDs (comma or newline separated) to delete them from the server. Only takes effect when run from a real logged-in admin session -- RLS silently blocks the delete otherwise.</div>
+      <textarea id="bulkRemoveIds" rows="3" placeholder="seed_mrnfp9bjvw74, seed_mrnfpqw318z2, ..." style="width:100%;font-size:12px;padding:8px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:var(--mono);resize:vertical"></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+        <button onclick="bulkRemoveSitesById()" class="btn" style="font-size:12px;padding:7px 14px">Remove these sites</button>
+        <span id="bulkRemoveResult" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+    </div>
+
     <!-- Route cache -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -4238,7 +4251,7 @@ async function _syncSitesFromSupabase() {
   } catch (e) { console.warn('Supabase booking_sites sync failed:', e.message); }
 }
 
-function deleteSite(id) {
+async function deleteSite(id) {
   const sites = _readAllSites();
   const s = sites.find(x => x.id === id);
   if (!s) return;
@@ -4246,12 +4259,61 @@ function deleteSite(id) {
     // Disable rather than hard-delete so it can be restored
     s.enabled = false;
     _writeAllSites(sites);
+    await _upsertSiteToSupabase(s); // was previously local-only -- a disabled builtin never synced
   } else {
     if (!confirm('Remove this booking site?')) return;
     _writeAllSites(sites.filter(x => x.id !== id));
+    // Was previously local-only -- the row stayed in Supabase and would
+    // silently reappear on the next _syncSitesFromSupabase() read-through.
+    try {
+      const { error } = await sb.from('booking_sites').delete().eq('id', id);
+      if (error) throw error;
+    } catch (e) {
+      console.error('Supabase booking_sites delete failed:', e.message);
+      showToast?.('Removed locally, but could not delete from the server — it may reappear on next sync. ' + e.message, 'error');
+    }
   }
   loadCustomSitesIntoAFF();
   renderAdminSiteList();
+}
+
+// Bulk-remove by pasted ID list -- for cleaning up a batch of auto-triaged
+// junk entries (spam/forum-thread/wrong-entity results the heuristic
+// approved) identified outside this admin session, without hand-clicking
+// Remove on each row. Runs from whichever session triggers it, so it
+// only actually deletes anything when that session is a real authenticated
+// admin -- RLS silently no-ops the delete otherwise (confirmed the hard
+// way: an unauthenticated client got a "successful" 204 with zero rows
+// actually removed).
+async function bulkRemoveSitesById() {
+  const raw = document.getElementById('bulkRemoveIds')?.value || '';
+  const ids = raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
+  const resultEl = document.getElementById('bulkRemoveResult');
+  if (!ids.length) { if (resultEl) resultEl.textContent = 'Paste at least one site ID.'; return; }
+  if (!confirm(`Remove ${ids.length} site${ids.length===1?'':'s'} by ID? This deletes from the server, not just this browser.`)) return;
+
+  if (resultEl) resultEl.textContent = 'Removing…';
+  try {
+    const { error, data } = await sb.from('booking_sites').delete().in('id', ids).select('id');
+    if (error) throw error;
+    // Only clear locally what the server actually confirmed removed --
+    // optimistically clearing the full requested list would hide an RLS
+    // no-op (0 rows actually deleted) behind a locally-empty row that
+    // reappears the moment _syncSitesFromSupabase() next runs.
+    const removedIds = new Set((data || []).map(r => r.id));
+    const removedCount = removedIds.size;
+    _writeAllSites(_readAllSites().filter(s => !removedIds.has(s.id)));
+    loadCustomSitesIntoAFF();
+    renderAdminSiteList();
+    if (resultEl) {
+      resultEl.textContent = removedCount === ids.length
+        ? `Removed ${removedCount} site${removedCount===1?'':'s'}.`
+        : `Removed ${removedCount} of ${ids.length} -- the rest weren't found (already removed?) or this session isn't authenticated as an admin (RLS silently blocks the delete instead of erroring).`;
+    }
+    document.getElementById('bulkRemoveIds').value = '';
+  } catch (e) {
+    if (resultEl) resultEl.textContent = `⚠ ${e.message}`;
+  }
 }
 
 // Admin site-table sort state (§1) — module-level so it survives re-renders
