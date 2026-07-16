@@ -3391,6 +3391,15 @@ function trackAffShown(siteName, category, searchId) {
     stats[siteName].searches.push(searchId);
   }
   _writeAffStats(stats);
+
+  // Cross-user shown-count signal (Supabase-backed, additive to the
+  // localStorage stat above) — fire-and-forget, never awaited, so this can
+  // never slow down or block rendering booking links for a real user.
+  const site = _readAllSites().find(s => s.name === siteName);
+  if (site && site.id) {
+    sb.rpc('increment_site_shown_count', { site_id: site.id })
+      .catch(e => console.warn('increment_site_shown_count failed:', e.message));
+  }
 }
 
 function clearAffStats() {
@@ -4206,7 +4215,8 @@ async function _syncSitesFromSupabase() {
       id: r.id, name: r.name, category: r.category, categories: (r.categories && r.categories.length) ? r.categories : [r.category], urlTemplate: r.url_template,
       affId: r.aff_id || '', regions: r.regions || [], countries: r.countries || [],
       enabled: r.enabled !== false, _builtin: !!r.builtin, source: r.source || 'admin',
-      admin_edited: r.admin_edited !== false,
+      admin_edited: r.admin_edited !== false, shownCount: r.shown_count || 0,
+      createdAt: r.created_at || null,
     }));
     if (translated.length) {
       _writeAllSites(translated);
@@ -4245,8 +4255,36 @@ function _adminSiteSortValue(s, key) {
     case 'urlTemplate':return (s.urlTemplate || '').toLowerCase();
     case 'affId':      return (s.affId || '').toLowerCase();
     case 'enabled':    return s.enabled !== false ? 1 : 0;
+    case 'shown':      return s.shownCount || 0;
+    // Sites synced before shown_count/created_at existed, or still local-
+    // only (never synced from Supabase), have no createdAt -- treat as
+    // oldest (0) so real timestamps always sort after them consistently,
+    // rather than floating unpredictably depending on sort direction.
+    case 'added':      return s.createdAt ? new Date(s.createdAt).getTime() : 0;
     default:           return '';
   }
+}
+
+// Admin site-table filter state (§3) — module-level text filter, applied
+// before sorting. Live-filters as the admin types (input event, light
+// debounce since the seed sweep can promote 100s of rows at once).
+let _adminSiteFilterText = '';
+let _adminSiteFilterTimer = null;
+function setAdminSiteFilter(text) {
+  clearTimeout(_adminSiteFilterTimer);
+  _adminSiteFilterTimer = setTimeout(() => {
+    _adminSiteFilterText = text;
+    renderAdminSiteList();
+  }, 150);
+}
+function _adminSiteMatchesFilter(s, needle) {
+  if (!needle) return true;
+  const cats = (s.categories && s.categories.length) ? s.categories : [s.category].filter(Boolean);
+  const haystack = [
+    s.name || '', s.urlTemplate || '', cats.join(' '),
+    (s.countries || []).join(' '), (s.regions || []).join(' '),
+  ].join(' ').toLowerCase();
+  return haystack.includes(needle);
 }
 
 function sortAdminSiteList(key) {
@@ -4264,6 +4302,9 @@ function renderAdminSiteList() {
   if (!el) return;
   let sites = _readAllSites();
   const catLabel = { buses:'Bus/Taxi', trains:'Train', ferries:'Ferry', ships:'Ship', accommodation:'Stay', info:'Info/Research' };
+
+  const needle = _adminSiteFilterText.trim().toLowerCase();
+  if (needle) sites = sites.filter(s => _adminSiteMatchesFilter(s, needle));
 
   if (_adminSiteSortKey) {
     const key = _adminSiteSortKey, dir = _adminSiteSortDir === 'asc' ? 1 : -1;
@@ -4288,9 +4329,16 @@ function renderAdminSiteList() {
     { key: 'urlTemplate', label: 'URL Template' },
     { key: 'affId',       label: 'Aff. ID' },
     { key: 'enabled',     label: 'On' },
+    { key: 'shown',       label: 'Shown' },
+    { key: 'added',       label: 'Added' },
   ];
   const arrow = k => _adminSiteSortKey === k ? (_adminSiteSortDir === 'asc' ? ' ▲' : ' ▼') : '';
-  let h = `<table class="aff-table"><thead><tr>
+  let h = `<div style="margin-bottom:8px">
+    <input type="text" id="adminSiteFilterInput" class="inp" placeholder="Filter by name, URL, category, country…"
+      value="${_adminSiteFilterText.replace(/"/g, '&quot;')}" oninput="setAdminSiteFilter(this.value)"
+      style="font-size:12px"/>
+  </div>`;
+  h += `<table class="aff-table"><thead><tr>
     ${cols.map(c => `<th style="cursor:pointer;user-select:none" onclick="sortAdminSiteList('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow(c.key)}</th>`).join('')}
     <th></th>
   </tr></thead><tbody>`;
@@ -4332,6 +4380,8 @@ function renderAdminSiteList() {
       <td style="font-size:11px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.urlTemplate}">${s.urlTemplate || '—'}</td>
       <td style="font-size:12px;color:var(--text3)">${s.affId || '—'}</td>
       <td><input type="checkbox" ${s.enabled !== false ? 'checked' : ''} onchange="toggleSiteEnabled('${s.id}')" style="cursor:pointer"/></td>
+      <td style="font-size:12px;color:var(--text3);text-align:right">${s.shownCount || 0}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:nowrap" title="${s.createdAt ? new Date(s.createdAt).toLocaleString() : ''}">${s.createdAt ? _timeAgo(s.createdAt) : '—'}</td>
       <td style="white-space:nowrap">
         <button onclick="showAddSiteForm('${s.id}')" style="${editStyle}">Edit</button>
         <button onclick="recheckSiteWithBrave('${s.id}')" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--sage);font-family:inherit;padding:0 8px 0 0" title="Re-check with Brave">Re-check</button>
@@ -4346,7 +4396,16 @@ function renderAdminSiteList() {
   });
 
   h += `</tbody></table>`;
+  const hadFocus = document.activeElement && document.activeElement.id === 'adminSiteFilterInput';
+  const caret = hadFocus ? document.activeElement.selectionStart : null;
   el.innerHTML = h;
+  if (hadFocus) {
+    const input = document.getElementById('adminSiteFilterInput');
+    if (input) {
+      input.focus();
+      if (caret != null) input.setSelectionRange(caret, caret);
+    }
+  }
 }
 
 // ── Bulk seed sweep (§6) ────────────────────────────────────────────
