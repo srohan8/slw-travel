@@ -4908,10 +4908,45 @@ async function _checkPass1EverRun() {
 }
 
 // Lightweight pre-sort heuristics — flag only, never auto-promote.
-function _seedHeuristic(url) {
-  const u = (url || '').toLowerCase();
-  if (/flight|skyscanner|kayak\.com\/flights|expedia\.com\/flights/.test(u)) return { flag: 'flight', label: 'looks flight-only — bysloth is overland-only', color: 'var(--danger-text,#c0392b)' };
-  if (/book|ticket|\.com\/search|reservation|reserve/.test(u)) return { flag: 'good', label: 'looks like a booking site', color: 'var(--fern)' };
+// Known content/social/UGC platforms that are essentially never a real
+// booking operator's own site -- checked against the hostname specifically
+// (not a text-keyword match) so it can't misfire the way the old
+// title/URL-substring checks did. Safe to auto-reject unconditionally.
+const _SEED_NON_OPERATOR_HOSTS = [
+  'reddit.com', 'facebook.com', 'twitter.com', 'x.com', 'instagram.com',
+  'tiktok.com', 'pinterest.com', 'youtube.com', 'quora.com', 'medium.com',
+  'blogspot.com', 'linkedin.com',
+];
+function _seedHostOf(url) {
+  try { return new URL(url).hostname.replace(/^www\./, '').toLowerCase(); } catch (e) { return ''; }
+}
+// url is the primary signal (a real operator's own domain), but title
+// catches real sites the URL alone misses -- e.g. busbud.com, omio.com,
+// directferries.com don't contain "book"/"ticket" anywhere in the domain,
+// but a search-result title like "AFerry — Compare and Book Ferries"
+// does. Confirmed against real bulk-sweep data: checking url alone left
+// 100% of 2636 real (mostly legitimate) results unclassified. Deliberately
+// title-only, not description -- description is prose summary text and
+// pulled in real false positives when included (a news article or blog
+// post about cargo-ship travel uses the same "travel"/"book a trip"
+// language as an actual booking page without being one; confirmed with a
+// PDF brochure, a personal travel blog, and a magazine article all
+// wrongly flagged "good" once description was in the mix).
+function _seedHeuristic(url, title) {
+  const host = _seedHostOf(url);
+  if (_SEED_NON_OPERATOR_HOSTS.some(h => host === h || host.endsWith('.' + h))) {
+    return { flag: 'flight', label: 'content/social platform, not an operator site', color: 'var(--danger-text,#c0392b)' };
+  }
+  const text = `${url || ''} ${title || ''}`.toLowerCase();
+  // "flight" alone isn't enough to reject -- a real multi-modal aggregator
+  // (Omio is a good example, already a builtin site in this app) compares
+  // flights alongside real bus/train/ferry options in its own titles, and
+  // rejecting on a bare "flight" match wrongly threw those out. Only
+  // reject when the text is flight-exclusive (no overland-mode mention).
+  const flightOnly = /flight|skyscanner|kayak\.com\/flights|expedia\.com\/flights/.test(text)
+    && !/bus|train|ferry|coach|rail/.test(text);
+  if (flightOnly) return { flag: 'flight', label: 'looks flight-only — bysloth is overland-only', color: 'var(--danger-text,#c0392b)' };
+  if (/book|ticket|\.com\/search|reservation|reserve/.test(text)) return { flag: 'good', label: 'looks like a booking site', color: 'var(--fern)' };
   return { flag: 'unknown', label: '', color: 'var(--text3)' };
 }
 
@@ -4961,7 +4996,7 @@ function _renderSeedReviewModal() {
 }
 
 function _renderSeedRow(r) {
-  const h = _seedHeuristic(r.url);
+  const h = _seedHeuristic(r.url, r.title);
   const isReactive = r.trigger_source === 'reactive_new_country';
   const srcBadge = isReactive
     ? `<span style="font-size:10px;color:#fff;background:var(--signal);border-radius:3px;padding:1px 6px;font-weight:700">New country — unattended, verify carefully</span>`
@@ -5168,7 +5203,7 @@ async function autoTriagePendingSeeds() {
   const flush = () => { _writeAllSites(sites); loadCustomSitesIntoAFF(); sinceFlush = 0; };
 
   for (const [i, r] of rows.entries()) {
-    const h = _seedHeuristic(r.url);
+    const h = _seedHeuristic(r.url, r.title);
     if (h.flag === 'flight') {
       try {
         await sb.from('booking_sites_pending').delete().eq('id', r.id);
