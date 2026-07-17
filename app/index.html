@@ -4004,6 +4004,7 @@ function showAddSiteForm(editId, prefill) {
   // site shouldn't linger when opening a different one.
   document.getElementById('sf_coverage_msg').textContent = '';
   document.getElementById('sf_coverage_results').innerHTML = '';
+  _coverageResultsCache = [];
   document.getElementById('sf_extract_msg').textContent = '';
   document.getElementById('sf_extract_msg').style.color = '';
 
@@ -4747,15 +4748,38 @@ async function searchSiteCoverage() {
         <button onclick="_applyDetectedCountries()" class="btn" style="font-size:11px;padding:6px 12px">Apply checked countries →</button>
       </div>` : `<div style="font-size:11px;color:var(--text3);margin-top:8px">No country names detected in the result text — read the results below and enter countries manually.</div>`;
 
-    resultsEl.innerHTML = detectedHtml + top.map(r => `
+    _coverageResultsCache = top;
+    resultsEl.innerHTML = detectedHtml + top.map((r, i) => `
       <div style="padding:8px 0;border-top:0.5px solid var(--border)">
         <a href="${r.url}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;color:var(--fern);text-decoration:none">${r.title || r.url}</a>
         <div style="font-size:11px;color:var(--text3);word-break:break-all">${r.url}</div>
         ${r.description ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">${r.description}</div>` : ''}
+        <button onclick="_useCoverageResult(${i})" style="font-size:11px;padding:4px 10px;margin-top:5px;background:none;border:0.5px solid var(--sage);border-radius:var(--radius);cursor:pointer;color:var(--sage);font-family:inherit" title="Use this URL in the extractor above">Use as example URL →</button>
       </div>`).join('');
   } catch (e) {
     msgEl.textContent = `⚠ ${e.message}`;
   }
+}
+
+// Raw Brave results from the last searchSiteCoverage() call -- lets "Use as
+// example URL" hand a real URL to the extractor without re-fetching or
+// serializing it through an onclick attribute. Distinct from
+// _recheckResultsCache (that one's keyed by already-saved site id; this
+// form-level tool has no site id yet while adding a new site).
+let _coverageResultsCache = [];
+
+// Fills the "Extract from a real search URL" tool with a chosen coverage-
+// search result -- unlike _useRecheckResult(), does NOT call
+// showAddSiteForm() (we're already inside the open form; re-opening it
+// would wipe out everything the admin has typed so far, including this
+// very results panel).
+function _useCoverageResult(idx) {
+  const r = _coverageResultsCache[idx];
+  if (!r) return;
+  const exampleUrl = document.getElementById('sf_example_url');
+  if (exampleUrl) exampleUrl.value = r.url;
+  const origin = document.getElementById('sf_ex_origin');
+  if (origin) { origin.focus(); origin.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 }
 
 // Merges the checked chips from searchSiteCoverage() into the form's
