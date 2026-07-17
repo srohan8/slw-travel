@@ -2048,6 +2048,11 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
           <div class="hint">Comma-separated ISO-2 country codes. Used to prefer country-specific sites over regional ones. Leave blank if global.</div>
         </div>
         <div style="margin-bottom:12px">
+          <div class="lbl" style="margin-bottom:4px">Countries NOT covered <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
+          <input class="inp" id="sf_excluded_countries" placeholder="e.g. XK, AL"/>
+          <div class="hint">Comma-separated ISO-2 country codes. For a site tagged with a broad region (e.g. Europe) that doesn't actually serve every country in it — this site is hidden for these countries even though the region matches.</div>
+        </div>
+        <div style="margin-bottom:12px">
           <div class="lbl" style="margin-bottom:4px">Per-country URL overrides <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
           <textarea class="inp" id="sf_country_urls" rows="3" placeholder="UY=https://directferries.com/uruguay.htm&#10;FJ=https://directferries.com/fiji.htm" style="font-family:var(--mono);font-size:12px"></textarea>
           <div class="hint">One <code>CODE=url</code> per line. Used instead of the URL template above when the leg's country matches — for operators whose URL differs per country rather than following one search pattern.</div>
@@ -3989,7 +3994,7 @@ function loadCustomSitesIntoAFF() {
       // of implying a working per-corridor search link. Fallback/stub links
       // built inline elsewhere (Google-search fallbacks) have no `templated`
       // property at all, which is treated the same as `true` (normal label).
-      AFF[cat].push({ name: s.name, regions: s.regions || [], countries: s.countries || [], templated: /\{origin\}|\{dest\}/.test(s.urlTemplate || ''), buildUrl: _buildUrlFn(s.urlTemplate, s.affId, s.countryUrlOverrides) });
+      AFF[cat].push({ name: s.name, regions: s.regions || [], countries: s.countries || [], excludedCountries: s.excludedCountries || [], templated: /\{origin\}|\{dest\}/.test(s.urlTemplate || ''), buildUrl: _buildUrlFn(s.urlTemplate, s.affId, s.countryUrlOverrides) });
     });
   });
 }
@@ -4031,6 +4036,7 @@ function showAddSiteForm(editId, prefill) {
   document.getElementById('sf_aff').value     = '';
   document.getElementById('sf_regions').value = '';
   document.getElementById('sf_countries').value = '';
+  document.getElementById('sf_excluded_countries').value = '';
   document.getElementById('sf_country_urls').value = '';
   _setSfCatSelection(['buses']);
   document.getElementById('sf_editId').value  = '';
@@ -4061,6 +4067,7 @@ function showAddSiteForm(editId, prefill) {
       document.getElementById('sf_aff').value     = s.affId || '';
       document.getElementById('sf_regions').value = (s.regions || []).join(', ');
       document.getElementById('sf_countries').value = (s.countries || []).join(', ');
+      document.getElementById('sf_excluded_countries').value = (s.excludedCountries || []).join(', ');
       document.getElementById('sf_country_urls').value = Object.entries(s.countryUrlOverrides || {}).map(([c, u]) => `${c}=${u}`).join('\n');
       _setSfCatSelection(s.categories && s.categories.length ? s.categories : [s.category]);
       document.getElementById('sf_editId').value  = s.id;
@@ -4322,6 +4329,7 @@ async function _upsertSiteToSupabase(s) {
     const { error } = await sb.from('booking_sites').upsert({
       id: s.id, name: s.name, category: s.category, categories: s.categories && s.categories.length ? s.categories : [s.category], url_template: s.urlTemplate || '',
       aff_id: s.affId || '', regions: s.regions || [], countries: s.countries || [],
+      excluded_countries: s.excludedCountries || [],
       country_url_overrides: s.countryUrlOverrides || {},
       enabled: s.enabled !== false, builtin: !!s._builtin, source: s.source || 'admin',
       admin_edited: s.admin_edited !== false, updated_at: new Date().toISOString(),
@@ -4344,6 +4352,7 @@ function saveSite() {
   const affId    = document.getElementById('sf_aff').value.trim();
   const regions  = document.getElementById('sf_regions').value.split(',').map(r => r.trim()).filter(Boolean);
   const countries = document.getElementById('sf_countries').value.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
+  const excludedCountries = document.getElementById('sf_excluded_countries').value.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
   const countryUrlOverrides = {};
   document.getElementById('sf_country_urls').value.split('\n').forEach(line => {
     const idx = line.indexOf('=');
@@ -4365,10 +4374,10 @@ function saveSite() {
     // Any manual save — editing a bulk-seeded row or a fresh manual one —
     // counts as "an admin looked at this," so admin_edited flips to true
     // even if no fields actually changed (deliberate "I reviewed it" signal).
-    if (idx > -1) sites[idx] = { ...sites[idx], name, category, categories, urlTemplate: urlTpl, affId, regions, countries, countryUrlOverrides, enabled: true, admin_edited: true };
+    if (idx > -1) sites[idx] = { ...sites[idx], name, category, categories, urlTemplate: urlTpl, affId, regions, countries, excludedCountries, countryUrlOverrides, enabled: true, admin_edited: true };
     saved = sites[idx];
   } else {
-    saved = { id: Date.now().toString(), name, category, categories, urlTemplate: urlTpl, affId, regions, countries, countryUrlOverrides, enabled: true, _builtin: false, source: 'admin', admin_edited: true };
+    saved = { id: Date.now().toString(), name, category, categories, urlTemplate: urlTpl, affId, regions, countries, excludedCountries, countryUrlOverrides, enabled: true, _builtin: false, source: 'admin', admin_edited: true };
     sites.push(saved);
   }
   _writeAllSites(sites);
@@ -4403,6 +4412,7 @@ async function _syncSitesFromSupabase() {
     const translated = data.map(r => ({
       id: r.id, name: r.name, category: r.category, categories: (r.categories && r.categories.length) ? r.categories : [r.category], urlTemplate: r.url_template,
       affId: r.aff_id || '', regions: r.regions || [], countries: r.countries || [],
+      excludedCountries: r.excluded_countries || [],
       countryUrlOverrides: r.country_url_overrides || {},
       enabled: r.enabled !== false, _builtin: !!r.builtin, source: r.source || 'admin',
       admin_edited: r.admin_edited !== false, shownCount: r.shown_count || 0,
@@ -5260,6 +5270,72 @@ function _addRecheckResultAsNewSite(siteId, sectionKey, resultIdx) {
   if (exampleUrl) exampleUrl.value = r.url;
   const origin = document.getElementById('sf_ex_origin');
   if (origin) { origin.focus(); origin.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+// Mode -> booking_sites category, same mapping renderTransportLinks uses.
+const _MODE_TO_CATEGORY = { bus: 'buses', 'shared taxi': 'buses', train: 'trains', ferry: 'ferries', ship: 'ships' };
+
+// Raw Brave results from the last openLegWebSearch() call, keyed by leg
+// index, so "+ Add as new site" can hand a real result to the Add Site form
+// without re-fetching or serializing it through an onclick attribute.
+let _legWebSearchCache = {};
+
+// Admin-only tool on a leg card itself (Journey Detail / Route Results) --
+// searches using this leg's REAL origin/dest cities and mode, not a generic
+// example route, so the results are directly relevant to the actual gap the
+// admin just noticed (e.g. no real coverage for a Prizren -> Shkoder bus).
+async function openLegWebSearch(idx, mode, orig, dest, legCountry) {
+  const panel = document.getElementById(`legws_panel_${idx}`);
+  if (!panel) return;
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+
+  const modeLabel = (MI[mode] || mode).toLowerCase();
+  const q = `${modeLabel} tickets ${orig} to ${dest}`;
+  panel.style.display = 'block';
+  panel.innerHTML = `<div style="font-size:11px;color:var(--text3)">Searching Brave for "${q}"…</div>`;
+
+  try {
+    const res = await fetch(`${PROXY_URL}/api/brave-web-search?q=${encodeURIComponent(q)}`);
+    if (!res.ok) throw new Error(`Brave search failed (${res.status})`);
+    const { results } = await res.json();
+    const top = (results || []).slice(0, 5);
+    _legWebSearchCache[idx] = { top, orig, dest, mode, legCountry };
+    if (!top.length) { panel.innerHTML = `<div style="font-size:11px;color:var(--text3)">No results for "${q}".</div>`; return; }
+    panel.innerHTML = `<div style="font-size:11px;color:var(--text3);margin-bottom:6px">Query: "${q}"</div>` + top.map((r, i) => `
+      <div style="padding:6px 0;border-top:0.5px solid var(--border)">
+        <a href="${r.url}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;color:var(--fern);text-decoration:none">${r.title || r.url}</a>
+        <div style="font-size:11px;color:var(--text3);word-break:break-all">${r.url}</div>
+        ${r.description ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">${r.description}</div>` : ''}
+        <button onclick="_addLegSearchResultAsNewSite(${idx}, ${i})" style="font-size:11px;padding:4px 10px;margin-top:5px;background:none;border:0.5px solid var(--sage);border-radius:var(--radius);cursor:pointer;color:var(--sage);font-family:inherit">+ Add as new site</button>
+      </div>`).join('');
+  } catch (e) {
+    panel.innerHTML = `<div style="font-size:11px;color:var(--danger-text,#c0392b)">⚠ ${e.message}</div>`;
+  }
+}
+
+// Jumps straight to Admin > Booking sites with the Add Site form open and
+// pre-filled from a leg-search result -- including the REAL origin/dest
+// city names (unlike the generic-example-route recheck flow, this already
+// knows the actual leg cities), so Extract is one click away with no typing.
+function _addLegSearchResultAsNewSite(idx, resultIdx) {
+  const cached = _legWebSearchCache[idx];
+  const r = cached?.top?.[resultIdx];
+  if (!r) return;
+  const candidateName = (r.title || _hostnameOf(r.url) || r.url).split(/[|–—-]/)[0].trim();
+  const category = _MODE_TO_CATEGORY[cached.mode] || 'buses';
+
+  switchTab('admin', document.getElementById('navbtn_admin'));
+  switchAdminSubTab('sites');
+  showAddSiteForm(undefined, {
+    name: candidateName,
+    category,
+    countries: cached.legCountry ? [cached.legCountry] : [],
+  });
+  document.getElementById('sf_example_url').value = r.url;
+  document.getElementById('sf_ex_origin').value = cached.orig;
+  document.getElementById('sf_ex_dest').value = cached.dest;
+  previewSiteUrl();
+  document.getElementById('siteForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── Review queue (§6 bulk sweep + §10 reactive trigger, same modal) ────
@@ -7438,6 +7514,8 @@ function _renderLegCard3(d, i) {
         ${!leg.booked && bookOpen ? `<div class="jd-book-options" id="${_bookOptsId(bookKey)}" onclick="event.stopPropagation()">
           <div class="jd-book-section-lbl">Transport</div>
           ${transportCol || '<div class="jd-book-empty">No links for this leg</div>'}
+          ${isAdminUser ? `<button onclick="openLegWebSearch(${i}, '${leg.mode}', '${startCity.replace(/'/g,"\\'")}', '${stayCity.replace(/'/g,"\\'")}', '${leg.legCountry||''}')" style="font-size:11px;padding:3px 8px;margin:4px 0;background:none;border:0.5px solid var(--sage);border-radius:var(--radius);cursor:pointer;color:var(--sage);font-family:inherit">🔎 Search web for options</button>
+          <div id="legws_panel_${i}" style="display:none;margin-bottom:8px"></div>` : ''}
           <div class="jd-book-section-lbl">Stay at ${stayCity}</div>
           ${stayCol || '<div class="jd-book-empty">No links</div>'}
         </div>` : ''}
@@ -7830,6 +7908,17 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
   }
   if (!sources.length) return '';
 
+  // Admin-set exclusion always wins, even over an AI recommendation below --
+  // a site tagged with a broad region (e.g. Europe) can still be marked as
+  // NOT actually covering a specific country in it (e.g. a Balkan bus site
+  // that doesn't serve Kosovo). The AI has no visibility into that curated
+  // exclusion, so it must be applied unconditionally up front, not just in
+  // the region-fallback branch. Deliberately doesn't early-return on empty
+  // here -- falling through to the existing "no sources -> info fallback"
+  // handling further down is exactly the right behavior, same as any other
+  // leg with no bookable platform.
+  if (legCountry) sources = sources.filter(s => !s.excludedCountries?.includes(legCountry));
+
   if (allowedNames && allowedNames.length) {
     // AI explicitly recommended these sites — trust it, skip region gate.
     // Matched: use their proper URL template. Unmatched: Google search fallback.
@@ -7894,6 +7983,9 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
 function renderAccommodationLinks(city, suggestedNames, accomNote, cityRegion, cityCountry) {
   let sources = AFF.accommodation || [];
   if (!sources.length) return '<div style="font-size:12px;color:var(--text3);padding:2px 0">No accommodation sites configured.</div>';
+  // Admin-set exclusion always wins, same reasoning as renderTransportLinks.
+  if (cityCountry) sources = sources.filter(s => !s.excludedCountries?.includes(cityCountry));
+  if (!sources.length) return '<div style="font-size:12px;color:var(--text3);padding:2px 0">No accommodation sites configured for this country.</div>';
   if (suggestedNames?.length) {
     const matched   = sources.filter(s => suggestedNames.includes(s.name));
     const unmatched = suggestedNames.filter(n => !matched.find(s => s.name === n));
