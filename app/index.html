@@ -4979,17 +4979,32 @@ function _seedHeuristic(url, title) {
   const flightOnly = /flight|skyscanner|kayak\.com\/flights|expedia\.com\/flights/.test(text)
     && !/bus|train|ferry|coach|rail/.test(text);
   if (flightOnly) return { flag: 'flight', label: 'looks flight-only — bysloth is overland-only', color: 'var(--danger-text,#c0392b)' };
-  if (/book|ticket|\.com\/search|reservation|reserve/.test(text)) return { flag: 'good', label: 'looks like a booking site', color: 'var(--fern)' };
+  // Computed before the book/ticket check below on purpose -- a guide
+  // article like "How to Book Bus Tickets in Southeast Asia" contains
+  // "book"/"ticket" too, and without this gate it was matching that check
+  // first and getting misflagged as the operator's own site (real operators
+  // don't title themselves "THE BEST 10 Ferries" or "How to Travel by
+  // Train" -- those are content/comparison pages).
+  const looksInformational = /\bbest\b|\btop \d+\b|\bguide\b|how to|things to know|\bexplained\b|comprehensive|\btips\b|\bwhat\b|\bwhy\b|\bcomplete\b/.test(text);
+  if (!looksInformational && /book|ticket|\.com\/search|reservation|reserve/.test(text)) return { flag: 'good', label: 'looks like a booking site', color: 'var(--fern)' };
   // Ferry/train/ship operator homepages rarely say "book" in their own
   // title (e.g. "Home - Interislander - Cook Strait Ferries"), unlike bus
   // sites which often do -- left almost all real ferry/rail/ship operators
-  // stuck in manual review. Catch mode-brand titles too, but exclude
-  // listicle/guide-style titles (real operators don't title themselves
-  // "THE BEST 10 Ferries" or "How to Travel by Train") since those are
-  // content/comparison pages, not the operator itself.
-  const looksInformational = /\bbest\b|\btop \d+\b|\bguide\b|how to|things to know|\bexplained\b|comprehensive|\btips\b|\bwhat\b|\bwhy\b|\bcomplete\b/.test(text);
+  // stuck in manual review. Catch mode-brand titles too.
   if (!looksInformational && /\bferry\b|\bferries\b|\brailway\b|\brail\b|\btrain\b|\btrains\b|cargo ship|freighter/.test(text)) {
     return { flag: 'good', label: 'looks like a ferry/rail/ship operator site', color: 'var(--fern)' };
+  }
+  // Everything caught by looksInformational above was excluded from "good"
+  // on purpose (it's not the operator's own site), but a lot of it is a
+  // genuine reusable resource in its own right -- a "How to book bus
+  // tickets in Southeast Asia"-style guide is exactly what the `info`
+  // category (Caravanistan, Seat61, Rome2rio) is for. Never auto-approved
+  // (autoTriagePendingSeeds only acts on 'flight'/'good') -- this is purely
+  // a pre-sort hint so the admin sees it flagged as "info" during manual
+  // review instead of unmarked, and can approve it with category:'info'
+  // in one pass instead of having to recognize it cold.
+  if (looksInformational) {
+    return { flag: 'info', label: 'looks like an info/guide article — consider category: info', color: 'var(--sage)' };
   }
   return { flag: 'unknown', label: '', color: 'var(--text3)' };
 }
