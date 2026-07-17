@@ -2058,10 +2058,17 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
           </div>
         </div>
         <div id="sf_preview" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius)">
-          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Example URL</div>
-          <a id="sf_preview_url" href="#" target="_blank" rel="noopener"
-             style="font-size:12px;color:var(--fern);word-break:break-all;text-decoration:none;line-height:1.5"></a>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Example URL</div>
+            <a id="sf_preview_open" href="#" target="_blank" rel="noopener" style="font-size:11px;color:var(--sage);text-decoration:none" title="Open this example URL in a new tab">Open ↗</a>
+          </div>
+          <textarea id="sf_preview_url" rows="2" oninput="_previewUrlEdited()"
+             style="width:100%;font-size:12px;font-family:var(--mono);color:var(--fern);border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);padding:6px 8px;resize:vertical;line-height:1.5;box-sizing:border-box"></textarea>
           <div id="sf_preview_using" style="font-size:11px;color:var(--text3);margin-top:4px">Using: origin = <em>Tbilisi</em>, dest = <em>Kathmandu</em>, month = <em>2025-06</em></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            <button onclick="_updatePreviewIntoTemplate()" class="btn" style="font-size:11px;padding:5px 10px">Update template from this →</button>
+            <span id="sf_preview_edit_msg" style="font-size:11px;color:var(--text3)"></span>
+          </div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-primary" style="font-size:13px;padding:7px 16px" onclick="saveSite()">Save site</button>
@@ -4061,10 +4068,12 @@ function hideSiteForm() {
 }
 
 function previewSiteUrl() {
-  const tpl   = document.getElementById('sf_url').value.trim();
-  const affId = document.getElementById('sf_aff').value.trim();
-  const box   = document.getElementById('sf_preview');
-  const link  = document.getElementById('sf_preview_url');
+  const tpl    = document.getElementById('sf_url').value.trim();
+  const affId  = document.getElementById('sf_aff').value.trim();
+  const box    = document.getElementById('sf_preview');
+  const field  = document.getElementById('sf_preview_url');
+  const openLink = document.getElementById('sf_preview_open');
+  document.getElementById('sf_preview_edit_msg').textContent = '';
   if (!tpl) { box.style.display = 'none'; return; }
 
   const o = encodeURIComponent('Tbilisi');
@@ -4085,13 +4094,52 @@ function previewSiteUrl() {
     .replaceAll('{checkout}', co);
   if (affId) url += (url.includes('?') ? '&' : '?') + 'affid=' + encodeURIComponent(affId);
 
-  link.textContent = url;
-  link.href = url;
+  field.value = url;
+  openLink.href = url;
   const usesCheckinCheckout = tpl.includes('{checkin}') || tpl.includes('{checkout}');
   document.getElementById('sf_preview_using').innerHTML = usesCheckinCheckout
     ? 'Using: origin = <em>Tbilisi</em>, check-in = <em>2025-06-15</em>, check-out = <em>2025-06-18</em>'
     : 'Using: origin = <em>Tbilisi</em>, dest = <em>Kathmandu</em>, month = <em>2025-06</em>';
   box.style.display = 'block';
+}
+
+// Fires on every keystroke in the (now-editable) example-URL preview box --
+// just a hint that the edit hasn't reached the real template yet, since
+// typing here doesn't touch sf_url until "Update template" is clicked.
+function _previewUrlEdited() {
+  document.getElementById('sf_preview_edit_msg').textContent = 'Edited — click "Update template" to apply.';
+}
+
+// Reverse of the substitution in previewSiteUrl() -- takes the (possibly
+// hand-edited) example URL and turns the known example values back into
+// {origin}/{dest}/{month}/{checkin}/{checkout} placeholders, then writes the
+// result into sf_url (the real template) and re-renders the preview from
+// it. Longest/most-specific literals first: '2025-06' is a prefix of both
+// '2025-06-15' and '2025-06-18', so checkin/checkout must be reversed
+// before month or they'd get partially clobbered. Any part of the edited
+// text that ISN'T one of the known example values (i.e. a genuine manual
+// edit -- added a query param, fixed a path segment, etc.) is preserved
+// as-is and becomes a fixed, non-placeholder part of the saved template --
+// that's the whole point of allowing direct edits here.
+function _updatePreviewIntoTemplate() {
+  const affId = document.getElementById('sf_aff').value.trim();
+  let val = document.getElementById('sf_preview_url').value;
+
+  if (affId) {
+    const enc = encodeURIComponent(affId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    val = val.replace(new RegExp(`[?&]affid=${enc}$`), '');
+  }
+
+  val = val
+    .replaceAll('2025-06-15', '{checkin}')
+    .replaceAll('2025-06-18', '{checkout}')
+    .replaceAll('2025-06',    '{month}')
+    .replaceAll('Tbilisi',    '{origin}')
+    .replaceAll('Kathmandu',  '{dest}');
+
+  document.getElementById('sf_url').value = val;
+  previewSiteUrl();
+  document.getElementById('sf_preview_edit_msg').textContent = '✓ Template updated.';
 }
 
 // Generate encoding variants for a city name — ordered from most specific to least
