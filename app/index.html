@@ -3431,7 +3431,13 @@ function trackAffShown(siteName, category, searchId) {
   // never slow down or block rendering booking links for a real user.
   const site = _readAllSites().find(s => s.name === siteName);
   if (site && site.id) {
-    sb.rpc('increment_site_shown_count', { site_id: site.id })
+    // sb.rpc(...) returns a PostgREST query builder that only implements
+    // .then() (a bare thenable, not a real Promise) -- calling .catch()
+    // directly on it throws synchronously ("...catch is not a function"),
+    // which was propagating up through renderTransportLinks and crashing
+    // the whole planRoute() call. Promise.resolve(...) wraps it in a real
+    // Promise first so .catch() is safe to chain.
+    Promise.resolve(sb.rpc('increment_site_shown_count', { site_id: site.id }))
       .catch(e => console.warn('increment_site_shown_count failed:', e.message));
   }
 }
