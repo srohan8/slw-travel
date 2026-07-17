@@ -1968,7 +1968,9 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
     <div class="card" style="margin-bottom:1rem">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0">Booking sites</h3>
-        <div style="display:flex;gap:6px">
+        <div style="display:flex;gap:6px;align-items:center">
+          <span id="recheckAllMsg" style="font-size:11px;color:var(--text3)"></span>
+          <button onclick="recheckAllUneditedSites()" title="Recheck every site an admin has never opened and saved — skips anything you've already reviewed" style="font-size:12px;padding:6px 14px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">🔎 Recheck unedited sites</button>
           <button onclick="restoreDefaultSites()" style="font-size:12px;padding:6px 14px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">↺ Restore defaults</button>
           <button onclick="showAddSiteForm()" id="addSiteBtn" class="btn btn-primary" style="font-size:12px;padding:6px 14px">+ Add site</button>
         </div>
@@ -5010,7 +5012,7 @@ async function runBulkSeedPass(pass) {
 // this country" section for discovery. Display-only: nothing is written to
 // booking_sites_pending or booking_sites, and the URL is never auto-updated
 // -- the admin acts via "Use this URL" / "+ Add as new site" below.
-async function recheckSiteWithBrave(id) {
+async function recheckSiteWithBrave(id, force) {
   const sites = _readAllSites();
   const s = sites.find(x => x.id === id);
   if (!s) return;
@@ -5018,8 +5020,10 @@ async function recheckSiteWithBrave(id) {
   const panel = document.getElementById(`recheck_panel_${id}`);
   if (!row || !panel) return;
 
-  // Toggle closed if already open
-  if (row.style.display !== 'none') { row.style.display = 'none'; return; }
+  // Toggle closed if already open -- skipped when force is set (bulk recheck
+  // re-running over a site whose row is still open from a prior pass should
+  // re-query it, not just close the panel).
+  if (!force && row.style.display !== 'none') { row.style.display = 'none'; return; }
 
   const cats = (s.categories && s.categories.length) ? s.categories : [s.category];
   const category = cats[0];
@@ -5072,6 +5076,33 @@ async function recheckSiteWithBrave(id) {
   } catch (e) {
     panel.textContent = `⚠ ${e.message}`;
   }
+}
+
+// Bulk-triggered recheck (admin-initiated only, never automatic/scheduled)
+// over every site an admin has never actually opened and saved --
+// admin_edited === false covers both bulk-seed auto-approvals and reactive
+// first-time-country approvals (see the "NEW" badge in renderAdminSiteList),
+// which is exactly the set that's never had a human look at its URL
+// template. Skips anything already reviewed -- re-rechecking a site the
+// admin deliberately configured isn't this feature's job.
+async function recheckAllUneditedSites() {
+  const sites = _readAllSites().filter(s => s.admin_edited === false);
+  const msgEl = document.getElementById('recheckAllMsg');
+  if (!sites.length) { msgEl.textContent = 'No unedited sites to recheck.'; return; }
+
+  // recheckSiteWithBrave() fires 2 Brave queries per site (siteQ + otherQ)
+  const queryCount = sites.length * 2;
+  if (!confirm(`Recheck ${sites.length} never-edited ${sites.length === 1 ? 'site' : 'sites'} — fires ${queryCount} Brave queries (~${Math.ceil(queryCount * 150 / 1000)}s at ~150ms spacing). Results land in each site's row below for review — nothing is applied automatically. Continue?`)) {
+    return;
+  }
+
+  for (const [i, s] of sites.entries()) {
+    msgEl.textContent = `Rechecking ${s.name} — ${i + 1}/${sites.length}…`;
+    document.getElementById(`recheck_row_${s.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    await recheckSiteWithBrave(s.id, /* force */ true);
+    if (i < sites.length - 1) await new Promise(r => setTimeout(r, 150));
+  }
+  msgEl.textContent = `Done — rechecked ${sites.length} ${sites.length === 1 ? 'site' : 'sites'}. Review the results in each row below.`;
 }
 
 // Raw Brave results from the last recheckSiteWithBrave() call, keyed by
