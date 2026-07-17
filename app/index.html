@@ -2026,6 +2026,14 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
           <input class="inp" id="sf_aff" placeholder="e.g. slwtravel or ref=slw" oninput="previewSiteUrl()"/>
           <div class="hint">Appended as <code>&affid={value}</code> — or paste the full affiliate param if your network uses a different key</div>
         </div>
+        <div id="sf_coverage_row" style="margin-bottom:12px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius)">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px">🔎 Search this company's coverage (Brave) — uses Site name + the domain in URL template above</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button onclick="searchSiteCoverage()" class="btn" style="font-size:11px;padding:6px 12px;white-space:nowrap">Search coverage →</button>
+            <span id="sf_coverage_msg" style="font-size:11px;color:var(--text3)"></span>
+          </div>
+          <div id="sf_coverage_results" style="margin-top:8px"></div>
+        </div>
         <div style="margin-bottom:12px">
           <div class="lbl" style="margin-bottom:4px">Regions covered <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
           <input class="inp" id="sf_regions" placeholder="e.g. Southeast Asia, Central Asia, Europe"/>
@@ -3987,6 +3995,10 @@ function showAddSiteForm(editId, prefill) {
   document.getElementById('sf_ex_date').value     = '';
   document.getElementById('sf_ex_checkin').value  = '';
   document.getElementById('sf_ex_checkout').value = '';
+  // Reset coverage-search panel — stale results from a previously edited
+  // site shouldn't linger when opening a different one.
+  document.getElementById('sf_coverage_msg').textContent = '';
+  document.getElementById('sf_coverage_results').innerHTML = '';
   document.getElementById('sf_extract_msg').textContent = '';
   document.getElementById('sf_extract_msg').style.color = '';
 
@@ -4638,6 +4650,113 @@ function _seedCountryName(code) {
     }
   } catch {}
   return code;
+}
+
+// Reverse of _seedCountryName() -- { "united states": "US", ... } built once
+// per call from COUNTRY_REGION_MAP's own key set via Intl.DisplayNames, no
+// separate hardcoded name table needed.
+function _countryNameToCode() {
+  const map = {};
+  Object.keys(COUNTRY_REGION_MAP).forEach(code => {
+    const name = _seedCountryName(code);
+    if (name && name !== code) map[name.toLowerCase()] = code;
+  });
+  return map;
+}
+
+// Whole-word country-name scan over Brave result text -- longest names
+// first so "United Arab Emirates" isn't shadowed by a shorter substring
+// match ordering quirk. Detection only, never auto-applied (see
+// _applyDetectedCountries) -- title/description text is noisy enough that
+// a false-positive country mention is easy (e.g. a result comparing routes
+// "from Thailand to Vietnam" for an operator that doesn't actually serve
+// Vietnam), so this is a starting point for admin review, not a fact.
+function _detectCountriesInText(text) {
+  const lower = text.toLowerCase();
+  const nameToCode = _countryNameToCode();
+  const names = Object.keys(nameToCode).sort((a, b) => b.length - a.length);
+  const found = new Set();
+  names.forEach(name => {
+    const re = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+    if (re.test(lower)) found.add(nameToCode[name]);
+  });
+  return [...found];
+}
+
+// Site-form "Search coverage" tool (distinct from recheckSiteWithBrave,
+// which operates on an already-saved site row from the admin list) -- runs
+// from Site name + the domain typed into URL template above, usable while
+// adding a brand-new site before it's ever been saved. One broad query by
+// design (not a per-country loop like the bulk-seed sweep) -- fast/cheap,
+// trades off catching genuinely per-country URL differences (see
+// country_url_overrides, filled in manually for those cases).
+async function searchSiteCoverage() {
+  const name = document.getElementById('sf_name').value.trim();
+  const urlTpl = document.getElementById('sf_url').value.trim();
+  const domainMatch = urlTpl.match(/^https?:\/\/(?:www\.)?([^/]+)/i);
+  const domain = domainMatch ? domainMatch[1] : '';
+  const msgEl = document.getElementById('sf_coverage_msg');
+  const resultsEl = document.getElementById('sf_coverage_results');
+  resultsEl.innerHTML = '';
+
+  if (!name) {
+    msgEl.textContent = 'Enter a site name first.';
+    return;
+  }
+
+  const q = domain ? `${name} ${domain} countries` : `${name} countries covered`;
+  msgEl.textContent = `Searching Brave for "${q}"…`;
+
+  try {
+    const res = await fetch(`${PROXY_URL}/api/brave-web-search?q=${encodeURIComponent(q)}`);
+    if (!res.ok) throw new Error(`Brave search failed (${res.status})`);
+    const { results } = await res.json();
+    const top = (results || []).slice(0, 5);
+    msgEl.textContent = top.length ? `Query: "${q}"` : `No results for "${q}".`;
+
+    const combinedText = top.map(r => `${r.title || ''} ${r.description || ''}`).join(' ');
+    const detected = _detectCountriesInText(combinedText);
+
+    const detectedHtml = detected.length ? `
+      <div style="margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--radius)">
+        <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Countries mentioned in results — review before applying</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+          ${detected.map(code => `
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;padding:3px 8px;border:0.5px solid var(--border);border-radius:12px;cursor:pointer">
+              <input type="checkbox" class="sf_coverage_chk" value="${code}" checked style="margin:0"/> ${_seedCountryName(code)} (${code})
+            </label>`).join('')}
+        </div>
+        <button onclick="_applyDetectedCountries()" class="btn" style="font-size:11px;padding:6px 12px">Apply checked countries →</button>
+      </div>` : `<div style="font-size:11px;color:var(--text3);margin-top:8px">No country names detected in the result text — read the results below and enter countries manually.</div>`;
+
+    resultsEl.innerHTML = detectedHtml + top.map(r => `
+      <div style="padding:8px 0;border-top:0.5px solid var(--border)">
+        <a href="${r.url}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;color:var(--fern);text-decoration:none">${r.title || r.url}</a>
+        <div style="font-size:11px;color:var(--text3);word-break:break-all">${r.url}</div>
+        ${r.description ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">${r.description}</div>` : ''}
+      </div>`).join('');
+  } catch (e) {
+    msgEl.textContent = `⚠ ${e.message}`;
+  }
+}
+
+// Merges the checked chips from searchSiteCoverage() into the form's
+// existing Countries/Regions fields (union, not replace) -- explicit
+// button click only, never fired automatically off the search itself.
+function _applyDetectedCountries() {
+  const checked = Array.from(document.querySelectorAll('.sf_coverage_chk:checked')).map(c => c.value);
+  if (!checked.length) return;
+
+  const countriesEl = document.getElementById('sf_countries');
+  const existingCountries = countriesEl.value.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
+  countriesEl.value = [...new Set([...existingCountries, ...checked])].join(', ');
+
+  const regionsEl = document.getElementById('sf_regions');
+  const existingRegions = regionsEl.value.split(',').map(r => r.trim()).filter(Boolean);
+  const newRegions = checked.map(c => COUNTRY_REGION_MAP[c]).filter(Boolean);
+  regionsEl.value = [...new Set([...existingRegions, ...newRegions])].join(', ');
+
+  document.getElementById('sf_coverage_msg').textContent = `Applied ${checked.length} countr${checked.length === 1 ? 'y' : 'ies'}.`;
 }
 
 function _bulkSeedQueryCount(pass) {
