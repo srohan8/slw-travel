@@ -2036,6 +2036,11 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
           <input class="inp" id="sf_countries" placeholder="e.g. TH, VN, LA"/>
           <div class="hint">Comma-separated ISO-2 country codes. Used to prefer country-specific sites over regional ones. Leave blank if global.</div>
         </div>
+        <div style="margin-bottom:12px">
+          <div class="lbl" style="margin-bottom:4px">Per-country URL overrides <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
+          <textarea class="inp" id="sf_country_urls" rows="3" placeholder="UY=https://directferries.com/uruguay.htm&#10;FJ=https://directferries.com/fiji.htm" style="font-family:var(--mono);font-size:12px"></textarea>
+          <div class="hint">One <code>CODE=url</code> per line. Used instead of the URL template above when the leg's country matches — for operators whose URL differs per country rather than following one search pattern.</div>
+        </div>
         <div id="sf_preview" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius)">
           <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Example URL</div>
           <a id="sf_preview_url" href="#" target="_blank" rel="noopener"
@@ -3915,10 +3920,15 @@ function restoreDefaultSites() {
 // that only pass (o, d, m) are unaffected — checkin/checkout simply stay
 // unreplaced (empty string) if the template contains those placeholders but
 // no opts were supplied.
-function _buildUrlFn(template, affId) {
+function _buildUrlFn(template, affId, countryUrlOverrides) {
   return (o, d, m, opts) => {
     opts = opts || {};
-    let url = template
+    // Per-country override wins outright when the leg's country has one —
+    // for operators whose URL genuinely differs per country (e.g.
+    // directferries.com/uruguay.htm vs /fiji.htm) rather than following one
+    // {origin}/{dest} search pattern the template alone can represent.
+    const base = (opts.country && countryUrlOverrides && countryUrlOverrides[opts.country]) || template;
+    let url = base
       .replace('{origin}',   encodeURIComponent(o || ''))
       .replace('{dest}',     encodeURIComponent(d || ''))
       .replace('{month}',    encodeURIComponent(m || ''))
@@ -3942,7 +3952,7 @@ function loadCustomSitesIntoAFF() {
       // of implying a working per-corridor search link. Fallback/stub links
       // built inline elsewhere (Google-search fallbacks) have no `templated`
       // property at all, which is treated the same as `true` (normal label).
-      AFF[cat].push({ name: s.name, regions: s.regions || [], countries: s.countries || [], templated: /\{origin\}|\{dest\}/.test(s.urlTemplate || ''), buildUrl: _buildUrlFn(s.urlTemplate, s.affId) });
+      AFF[cat].push({ name: s.name, regions: s.regions || [], countries: s.countries || [], templated: /\{origin\}|\{dest\}/.test(s.urlTemplate || ''), buildUrl: _buildUrlFn(s.urlTemplate, s.affId, s.countryUrlOverrides) });
     });
   });
 }
@@ -3961,6 +3971,7 @@ function showAddSiteForm(editId, prefill) {
   document.getElementById('sf_aff').value     = '';
   document.getElementById('sf_regions').value = '';
   document.getElementById('sf_countries').value = '';
+  document.getElementById('sf_country_urls').value = '';
   _setSfCatSelection(['buses']);
   document.getElementById('sf_editId').value  = '';
   // Reset extraction helper
@@ -3982,6 +3993,7 @@ function showAddSiteForm(editId, prefill) {
       document.getElementById('sf_aff').value     = s.affId || '';
       document.getElementById('sf_regions').value = (s.regions || []).join(', ');
       document.getElementById('sf_countries').value = (s.countries || []).join(', ');
+      document.getElementById('sf_country_urls').value = Object.entries(s.countryUrlOverrides || {}).map(([c, u]) => `${c}=${u}`).join('\n');
       _setSfCatSelection(s.categories && s.categories.length ? s.categories : [s.category]);
       document.getElementById('sf_editId').value  = s.id;
     }
@@ -4179,6 +4191,7 @@ async function _upsertSiteToSupabase(s) {
     const { error } = await sb.from('booking_sites').upsert({
       id: s.id, name: s.name, category: s.category, categories: s.categories && s.categories.length ? s.categories : [s.category], url_template: s.urlTemplate || '',
       aff_id: s.affId || '', regions: s.regions || [], countries: s.countries || [],
+      country_url_overrides: s.countryUrlOverrides || {},
       enabled: s.enabled !== false, builtin: !!s._builtin, source: s.source || 'admin',
       admin_edited: s.admin_edited !== false, updated_at: new Date().toISOString(),
     });
@@ -4200,6 +4213,14 @@ function saveSite() {
   const affId    = document.getElementById('sf_aff').value.trim();
   const regions  = document.getElementById('sf_regions').value.split(',').map(r => r.trim()).filter(Boolean);
   const countries = document.getElementById('sf_countries').value.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
+  const countryUrlOverrides = {};
+  document.getElementById('sf_country_urls').value.split('\n').forEach(line => {
+    const idx = line.indexOf('=');
+    if (idx < 1) return;
+    const code = line.slice(0, idx).trim().toUpperCase();
+    const url  = line.slice(idx + 1).trim();
+    if (code && url) countryUrlOverrides[code] = url;
+  });
   const editId   = document.getElementById('sf_editId').value;
 
   if (!name)   { alert('Site name is required.'); return; }
@@ -4213,10 +4234,10 @@ function saveSite() {
     // Any manual save — editing a bulk-seeded row or a fresh manual one —
     // counts as "an admin looked at this," so admin_edited flips to true
     // even if no fields actually changed (deliberate "I reviewed it" signal).
-    if (idx > -1) sites[idx] = { ...sites[idx], name, category, categories, urlTemplate: urlTpl, affId, regions, countries, enabled: true, admin_edited: true };
+    if (idx > -1) sites[idx] = { ...sites[idx], name, category, categories, urlTemplate: urlTpl, affId, regions, countries, countryUrlOverrides, enabled: true, admin_edited: true };
     saved = sites[idx];
   } else {
-    saved = { id: Date.now().toString(), name, category, categories, urlTemplate: urlTpl, affId, regions, countries, enabled: true, _builtin: false, source: 'admin', admin_edited: true };
+    saved = { id: Date.now().toString(), name, category, categories, urlTemplate: urlTpl, affId, regions, countries, countryUrlOverrides, enabled: true, _builtin: false, source: 'admin', admin_edited: true };
     sites.push(saved);
   }
   _writeAllSites(sites);
@@ -4251,6 +4272,7 @@ async function _syncSitesFromSupabase() {
     const translated = data.map(r => ({
       id: r.id, name: r.name, category: r.category, categories: (r.categories && r.categories.length) ? r.categories : [r.category], urlTemplate: r.url_template,
       affId: r.aff_id || '', regions: r.regions || [], countries: r.countries || [],
+      countryUrlOverrides: r.country_url_overrides || {},
       enabled: r.enabled !== false, _builtin: !!r.builtin, source: r.source || 'admin',
       admin_edited: r.admin_edited !== false, shownCount: r.shown_count || 0,
       createdAt: r.created_at || null,
@@ -7427,14 +7449,14 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
     if (!infoSrc.length) return '';
     return `<div class="search-links">
       <span class="search-links-label" style="color:var(--text3)">Research this leg</span>
-      ${infoSrc.map(s => `<a class="search-link" style="opacity:0.8" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.name}${s.templated === false ? ' · Visit site' : ''} ↗</a>`).join('')}
+      ${infoSrc.map(s => `<a class="search-link" style="opacity:0.8" href="${s.buildUrl(orig, dest, null, {country: legCountry})}" target="_blank" rel="noopener">${s.name}${s.templated === false ? ' · Visit site' : ''} ↗</a>`).join('')}
     </div>`;
   }
   const sid = `${orig}|${dest}|${pace}|${[...prefModes].sort().join(',')}`;
   sources.forEach(s => trackAffShown(s.name, category, sid));
   return `<div class="search-links">
     <span class="search-links-label">Book this leg on</span>
-    ${sources.map(s => `<a class="search-link" href="${s.buildUrl(orig, dest)}" target="_blank" rel="noopener">${s.templated === false ? s.name + ' · Visit site' : s.name}</a>`).join('')}
+    ${sources.map(s => `<a class="search-link" href="${s.buildUrl(orig, dest, null, {country: legCountry})}" target="_blank" rel="noopener">${s.templated === false ? s.name + ' · Visit site' : s.name}</a>`).join('')}
   </div>`;
 }
 
@@ -7466,7 +7488,7 @@ function renderAccommodationLinks(city, suggestedNames, accomNote, cityRegion, c
   sources.forEach(s => trackAffShown(s.name, 'accommodation', sid));
   const noteHtml = accomNote ? `<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:5px">${accomNote}</div>` : '';
   return `${noteHtml}<div class="search-links" style="margin-top:0;padding-top:0;border-top:none">
-    ${sources.map(s => `<a class="search-link" href="${s.buildUrl(city)}" target="_blank" rel="noopener">${s.templated === false ? s.name + ' · Visit site' : s.name}</a>`).join('')}
+    ${sources.map(s => `<a class="search-link" href="${s.buildUrl(city, null, null, {country: cityCountry})}" target="_blank" rel="noopener">${s.templated === false ? s.name + ' · Visit site' : s.name}</a>`).join('')}
   </div>`;
 }
 
