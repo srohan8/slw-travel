@@ -2069,10 +2069,14 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
         <button onclick="runBulkSeedPass('accommodation')" id="bsPass2Btn" class="btn" style="font-size:12px;padding:7px 14px;border:0.5px solid var(--border);background:none;color:var(--text2)" disabled>Run bulk seed — Pass 2 (accommodation)</button>
         <button onclick="openSeedReviewModal()" style="font-size:12px;padding:7px 14px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">Review pending results</button>
         <button onclick="autoTriagePendingSeeds()" id="bsAutoTriageBtn" style="font-size:12px;padding:7px 14px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">Auto-triage pending (<span id="bsAutoTriageCount">0</span>)</button>
+        <button onclick="openRejectedSeedsModal()" style="font-size:12px;padding:7px 14px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">View rejected</button>
       </div>
       <div id="bsProgressCounter" style="display:none;font-family:var(--mono);font-size:11px;color:var(--sage);margin-bottom:4px;font-weight:600"></div>
       <div id="bsProgress" style="display:none;max-height:180px;overflow-y:auto;font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 10px"></div>
     </div>
+
+    <!-- Rejected seeds modal -->
+    <div id="rejectedSeedsModal" style="display:none"></div>
 
     <!-- Seed review modal (§6/§10) -->
     <div id="seedReviewModal" style="display:none"></div>
@@ -4852,6 +4856,7 @@ async function _fetchPendingSeeds() {
     while (true) {
       const { data, error } = await sb.from('booking_sites_pending')
         .select('*')
+        .eq('rejected', false)
         .order('created_at', { ascending: false })
         .range(offset, offset + pageSize - 1);
       if (error) throw error;
@@ -5118,6 +5123,24 @@ async function approveSeedRow(id) {
   const category = document.getElementById(`${rowId}_cat`)?.value || r.category;
   const urlTpl   = document.getElementById(`${rowId}_url`)?.value.trim() || r.url;
 
+  const sites = _readAllSites();
+  const newRoot = _rootDomainOf(urlTpl);
+  const existing = newRoot && sites.find(s => _rootDomainOf(s.urlTemplate) === newRoot);
+  if (existing) {
+    const proceed = confirm(`"${existing.name}" already exists for this domain (${newRoot}) -- ${existing.urlTemplate || 'no URL template yet'}.\n\nOK = merge ${r.country_code || 'this country'} into that existing site instead of creating a duplicate.\nCancel = create a separate new site anyway (e.g. if this is genuinely a different operator on the same domain).`);
+    if (proceed) {
+      if (!existing.countries) existing.countries = [];
+      if (r.country_code && !existing.countries.includes(r.country_code)) existing.countries.push(r.country_code);
+      _writeAllSites(sites);
+      loadCustomSitesIntoAFF();
+      const ok = await _upsertSiteToSupabase(existing);
+      if (ok) await _resolveSeedRow(id);
+      renderAdminSiteList();
+      _renderSeedReviewModal();
+      return;
+    }
+  }
+
   const site = {
     id: 'seed_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     name, category, urlTemplate: urlTpl, affId: '',
@@ -5126,7 +5149,6 @@ async function approveSeedRow(id) {
     source: r.trigger_source === 'reactive_new_country' ? 'reactive_new_country' : 'bulk_seed',
     admin_edited: false, // promotion path, not a from-scratch admin composition — keeps the "NEW" badge
   };
-  const sites = _readAllSites();
   sites.push(site);
   _writeAllSites(sites);
   loadCustomSitesIntoAFF();
@@ -5137,7 +5159,7 @@ async function approveSeedRow(id) {
 }
 
 async function rejectSeedRow(id) {
-  await _resolveSeedRow(id);
+  await _rejectSeedRowPersisted(id, 'manual review');
   _renderSeedReviewModal();
 }
 
@@ -5147,6 +5169,76 @@ async function _resolveSeedRow(id) {
   } catch (e) { console.error('Delete booking_sites_pending row failed:', e.message); }
   _seedPendingCache = _seedPendingCache.filter(r => r.id !== id);
   _refreshPendingBadge();
+}
+
+// Reject is a soft-delete (status flag), not a hard DELETE like the
+// approve-success path -- a bulk pass can reject dozens of rows at once
+// with no other record of what happened, so this keeps them queryable
+// via _fetchRejectedSeeds() instead of vanishing outright.
+async function _rejectSeedRowPersisted(id, reason) {
+  try {
+    await sb.from('booking_sites_pending').update({ rejected: true, rejected_reason: reason || null }).eq('id', id);
+  } catch (e) { console.error('Reject booking_sites_pending row failed:', e.message); }
+  _seedPendingCache = _seedPendingCache.filter(r => r.id !== id);
+  _refreshPendingBadge();
+}
+
+async function openRejectedSeedsModal() {
+  const rows = await _fetchRejectedSeeds();
+  const m = document.getElementById('rejectedSeedsModal');
+  if (!m) return;
+  m.style.display = 'block';
+  if (!rows.length) {
+    m.innerHTML = `<div class="sr-overlay" onclick="if(event.target===this)closeRejectedSeedsModal()">
+      <div class="sr-card"><div class="sr-hdr"><div class="sr-title">Rejected results</div><button class="sr-x" onclick="closeRejectedSeedsModal()">×</button></div>
+      <div class="sr-body"><div style="padding:16px 0;text-align:center;color:var(--text3);font-size:13px">Nothing rejected yet.</div></div></div></div>`;
+    return;
+  }
+  m.innerHTML = `<div class="sr-overlay" onclick="if(event.target===this)closeRejectedSeedsModal()">
+    <div class="sr-card" style="max-width:640px;width:92vw;max-height:82vh;overflow-y:auto">
+      <div class="sr-hdr"><div class="sr-title">Rejected results (${rows.length})</div><button class="sr-x" onclick="closeRejectedSeedsModal()">×</button></div>
+      <div class="sr-body">
+        ${rows.map(r => `<div style="border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;background:var(--bg2)">
+          <div style="font-size:12px;color:var(--text3)"><b>${r.country_code}</b> · ${r.category} · ${r.rejected_reason || 'unspecified'}</div>
+          <div style="font-weight:600;font-size:13px;margin:2px 0">${(r.title || r.url).replace(/</g,'&lt;')}</div>
+          <a href="${r.url}" target="_blank" rel="noopener" style="font-size:11px;color:var(--fern);word-break:break-all">${r.url}</a>
+          <div style="margin-top:6px"><button onclick="restoreRejectedSeed(${r.id})" style="font-size:11px;padding:4px 10px;background:none;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);font-family:inherit">Restore to pending</button></div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+function closeRejectedSeedsModal() {
+  const m = document.getElementById('rejectedSeedsModal');
+  if (m) m.style.display = 'none';
+}
+async function restoreRejectedSeed(id) {
+  try {
+    await sb.from('booking_sites_pending').update({ rejected: false, rejected_reason: null }).eq('id', id);
+    await _refreshPendingBadge();
+    openRejectedSeedsModal();
+  } catch (e) { console.error('Restore rejected seed failed:', e.message); }
+}
+
+async function _fetchRejectedSeeds() {
+  const pageSize = 1000; let offset = 0; const all = [];
+  try {
+    while (true) {
+      const { data, error } = await sb.from('booking_sites_pending')
+        .select('*').eq('rejected', true)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + pageSize - 1);
+      if (error) throw error;
+      const page = data || [];
+      all.push(...page);
+      if (page.length < pageSize) break;
+      offset += pageSize;
+    }
+    return all;
+  } catch (e) {
+    console.error('Fetch rejected booking_sites_pending failed:', e.message);
+    return all;
+  }
 }
 
 // Bulk automated triage over the full pending queue, using the same
@@ -5206,13 +5298,46 @@ async function autoTriagePendingSeeds() {
     const h = _seedHeuristic(r.url, r.title);
     if (h.flag === 'flight') {
       try {
-        await sb.from('booking_sites_pending').delete().eq('id', r.id);
+        await sb.from('booking_sites_pending').update({ rejected: true, rejected_reason: h.label || 'auto-triage' }).eq('id', r.id);
         rejected++;
-        _bsLog(`⨯ ${r.country_code} ${r.category} — rejected (flight-only): ${r.title || r.url}`);
+        _bsLog(`⨯ ${r.country_code} ${r.category} — rejected (${h.label || 'flight-only'}): ${r.title || r.url}`);
       } catch (e) {
         _bsLog(`⚠ ${r.country_code} ${r.category} — reject failed: ${e.message}`);
       }
     } else if (h.flag === 'good') {
+      // Same operator found for a different country almost always means
+      // the same site, not a new one -- e.g. busbud.com/en/country/nz and
+      // busbud.com/en/country/au are the same domain across two per-
+      // country sweep queries. Merge the country into an existing match
+      // instead of creating a near-duplicate record. Checks `sites`, which
+      // already includes anything approved earlier in this same run, so
+      // duplicates within one pass are caught too, not just pre-existing
+      // ones. Prefers a builtin match (the curated canonical entry, often
+      // with a better {origin}/{dest} route template than a country
+      // landing page) over a prior auto-approved match.
+      const newRoot = _rootDomainOf(r.url);
+      const existing = newRoot && (
+        sites.find(s => s._builtin && _rootDomainOf(s.urlTemplate) === newRoot) ||
+        sites.find(s => !s._builtin && _rootDomainOf(s.urlTemplate) === newRoot)
+      );
+      if (existing) {
+        try {
+          if (!existing.countries) existing.countries = [];
+          if (r.country_code && !existing.countries.includes(r.country_code)) {
+            existing.countries.push(r.country_code);
+            const ok = await _upsertSiteToSupabase(existing);
+            if (!ok) { _bsLog(`⚠ ${r.country_code} ${r.category} — merge write failed: ${existing.name}`); updateCounter(i + 1); await new Promise(res => setTimeout(res, 150)); continue; }
+          }
+          await sb.from('booking_sites_pending').delete().eq('id', r.id);
+          approved++;
+          _bsLog(`✓ ${r.country_code} ${r.category} — merged into existing "${existing.name}" (${newRoot})`);
+        } catch (e) {
+          _bsLog(`⚠ ${r.country_code} ${r.category} — merge failed: ${e.message}`);
+        }
+        updateCounter(i + 1);
+        await new Promise(res => setTimeout(res, 150));
+        continue;
+      }
       const site = {
         id: 'seed_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
         name: r.title || r.url, category: r.category, urlTemplate: r.url, affId: '',
