@@ -5024,7 +5024,15 @@ async function recheckSiteWithBrave(id) {
   const cats = (s.categories && s.categories.length) ? s.categories : [s.category];
   const category = cats[0];
   const countryOrRegion = s.countries?.[0] || s.regions?.[0] || '';
-  const siteQ  = `${s.name} ${category === 'accommodation' ? 'booking' : 'booking website'}`;
+  // A bare "{name} booking" query mostly surfaces the operator's marketing
+  // homepage, not an actual deep search-results URL with real params to
+  // extract from -- adding the same example route/date the rest of this
+  // form already uses (Tbilisi/Kathmandu, 2025-06-15/18) biases Brave
+  // toward transactional booking-flow pages instead, and occasionally
+  // surfaces a real cached search URL for that route.
+  const siteQ = category === 'accommodation'
+    ? `${s.name} booking Tbilisi hotels check-in 2025-06-15`
+    : `${s.name} booking Tbilisi to Kathmandu`;
   const otherQ = _buildSeedQuery(category, countryOrRegion);
 
   row.style.display = '';
