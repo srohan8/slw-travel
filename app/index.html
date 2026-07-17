@@ -4141,9 +4141,16 @@ function extractSiteTemplate() {
   const exCheckout = isAccom ? (document.getElementById('sf_ex_checkout')?.value.trim() || '') : '';
   const msgEl    = document.getElementById('sf_extract_msg');
 
-  if (!exUrl || !exOrigin || !exDest) {
+  // Accommodation search URLs (Booking.com, Airbnb, ...) carry only one
+  // city -- {origin} -- with no destination concept at all (see the
+  // "Placeholders" hint below the URL field), so dest is legitimately
+  // blank there. Requiring it unconditionally silently no-op'd the whole
+  // extractor for every accommodation site.
+  if (!exUrl || !exOrigin || (!isAccom && !exDest)) {
     msgEl.style.color = 'var(--text3)';
-    msgEl.textContent = 'Paste the example URL and both city names first.';
+    msgEl.textContent = isAccom
+      ? 'Paste the example URL and the city name first.'
+      : 'Paste the example URL and both city names first.';
     return;
   }
 
@@ -4151,15 +4158,17 @@ function extractSiteTemplate() {
   const tpl = derived.tpl, originFound = derived.originFound, destFound = derived.destFound,
         dateFound = derived.dateFound, checkinFound = derived.checkinFound, checkoutFound = derived.checkoutFound;
 
-  if (!originFound && !destFound) {
+  if (!originFound && (isAccom || !destFound)) {
     msgEl.style.color = 'var(--danger-text, #c0392b)';
-    msgEl.textContent = '\u26a0 Could not find either city in the URL \u2014 check the names match exactly what\u2019s in the URL.';
+    msgEl.textContent = isAccom
+      ? '\u26a0 Could not find the city in the URL \u2014 check the name matches exactly what\u2019s in the URL.'
+      : '\u26a0 Could not find either city in the URL \u2014 check the names match exactly what\u2019s in the URL.';
     return;
   }
 
   const warns = [];
   if (!originFound) warns.push('origin not found');
-  if (!destFound)   warns.push('destination not found');
+  if (!isAccom && !destFound) warns.push('destination not found');
   if (exDate && !dateFound)         warns.push('date not found');
   if (exCheckin && !checkinFound)   warns.push('check-in date not found');
   if (exCheckout && !checkoutFound) warns.push('check-out date not found');
