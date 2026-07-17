@@ -1985,13 +1985,14 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
           </div>
           <div>
             <div class="lbl" style="margin-bottom:4px">Category <span style="font-weight:400;color:var(--text3)">(ctrl/cmd-click for multiple)</span></div>
-            <select class="inp" id="sf_cat" multiple size="5" onchange="_syncExtractDateFields()">
+            <select class="inp" id="sf_cat" multiple size="5" onchange="_syncExtractDateFields();_checkCatUrlWarning()">
               <option value="buses">Bus / Shared taxi</option>
               <option value="trains">Train</option>
               <option value="ferries">Ferry</option>
               <option value="accommodation">Accommodation</option>
               <option value="info">Information / research</option>
             </select>
+            <div id="sf_cat_warning" style="display:none;font-size:11px;color:var(--danger-text,#c0392b);margin-top:5px;line-height:1.5"></div>
           </div>
         </div>
         <div style="margin-bottom:10px">
@@ -3998,6 +3999,29 @@ function _setSfCatSelection(cats) {
   const sel = document.getElementById('sf_cat');
   const wanted = new Set((cats && cats.length ? cats : ['buses']));
   Array.from(sel.options).forEach(o => { o.selected = wanted.has(o.value); });
+  _checkCatUrlWarning();
+}
+
+// url_template is one URL per site record -- checking multiple transport-
+// mode categories together only makes sense if the exact same URL genuinely
+// works for all of them. When it doesn't (e.g. Omio needs a different URL
+// per mode: /app/search-results vs /app/search-results&transportType=train),
+// the established pattern is separate single-category records, not one
+// multi-category one -- see _bi_omio_b/_bi_omio_t in DEFAULT_SITES. This is
+// a nudge, not a hard block -- some companies genuinely do share one URL
+// across modes, so saving with multiple checked is still allowed.
+function _checkCatUrlWarning() {
+  const warnEl = document.getElementById('sf_cat_warning');
+  if (!warnEl) return;
+  const selected = Array.from(document.getElementById('sf_cat')?.selectedOptions || []).map(o => o.value);
+  const transportModes = ['buses', 'trains', 'ferries'];
+  const selectedModes = selected.filter(c => transportModes.includes(c));
+  if (selectedModes.length > 1) {
+    warnEl.style.display = 'block';
+    warnEl.textContent = `⚠ Multiple transport modes selected — only combine these if the exact same URL works for all of them. If this company needs a different URL per mode (like Omio), add a separate single-category site record for each instead.`;
+  } else {
+    warnEl.style.display = 'none';
+  }
 }
 
 function showAddSiteForm(editId, prefill) {
@@ -4699,6 +4723,30 @@ function _buildSeedQuery(category, countryOrRegion) {
   const label = /^[A-Z]{2}$/.test(countryOrRegion) ? _seedCountryName(countryOrRegion) : countryOrRegion;
   return tpl(label);
 }
+
+// A plausible real example route per region -- used only to bias a Brave
+// recheck query toward a real transactional result, not literal cities the
+// app assumes are connected by this operator specifically. A single fixed
+// global pair doesn't work here (confirmed live: "Tbilisi to Kathmandu" --
+// Georgia to Nepal, not a real train route -- returned an irrelevant
+// flight-comparison result for Eurostar, a Europe-only train site), so this
+// picks a real, well-known route within the site's own region instead.
+const _REGION_EXAMPLE_ROUTE = {
+  'Europe':         { origin: 'Paris',       dest: 'Berlin' },
+  'Middle East':    { origin: 'Istanbul',    dest: 'Tehran' },
+  'Central Asia':   { origin: 'Almaty',      dest: 'Tashkent' },
+  'South Asia':     { origin: 'Delhi',       dest: 'Kathmandu' },
+  'East Asia':      { origin: 'Tokyo',       dest: 'Osaka' },
+  'Southeast Asia': { origin: 'Bangkok',     dest: 'Hanoi' },
+  'Africa':         { origin: 'Nairobi',     dest: 'Kampala' },
+  'Latin America':  { origin: 'Buenos Aires', dest: 'Santiago' },
+  'Oceania':        { origin: 'Sydney',      dest: 'Melbourne' },
+  'North America':  { origin: 'New York',    dest: 'Boston' },
+};
+function _exampleRouteForSite(s) {
+  const region = s.regions?.[0] || (s.countries?.[0] && COUNTRY_REGION_MAP[s.countries[0]]) || 'Europe';
+  return _REGION_EXAMPLE_ROUTE[region] || _REGION_EXAMPLE_ROUTE['Europe'];
+}
 // Small manual exclusion list — landlocked countries skip ferry/ship queries
 // entirely rather than burning Brave calls on a category that can't apply.
 const _LANDLOCKED_COUNTRIES = new Set([
@@ -5030,13 +5078,16 @@ async function recheckSiteWithBrave(id, force) {
   const countryOrRegion = s.countries?.[0] || s.regions?.[0] || '';
   // A bare "{name} booking" query mostly surfaces the operator's marketing
   // homepage, not an actual deep search-results URL with real params to
-  // extract from -- adding the same example route/date the rest of this
-  // form already uses (Tbilisi/Kathmandu, 2025-06-15/18) biases Brave
-  // toward transactional booking-flow pages instead, and occasionally
-  // surfaces a real cached search URL for that route.
+  // extract from -- adding an example route/date biases Brave toward
+  // transactional booking-flow pages instead. Must be a *plausible* route
+  // for the site's own region, though -- a fixed global example (Tbilisi to
+  // Kathmandu, i.e. Georgia to Nepal) returned a flight-comparison result
+  // for a Europe train site (Eurostar) since that "route" isn't a real
+  // thing anyone searches. Picks a real route in the site's own region.
+  const { origin: exOrigin, dest: exDest } = _exampleRouteForSite(s);
   const siteQ = category === 'accommodation'
-    ? `${s.name} booking Tbilisi hotels check-in 2025-06-15`
-    : `${s.name} booking Tbilisi to Kathmandu 2025-06-15`;
+    ? `${s.name} booking ${exOrigin} hotels check-in 2025-06-15`
+    : `${s.name} booking ${exOrigin} to ${exDest} 2025-06-15`;
   const otherQ = _buildSeedQuery(category, countryOrRegion);
 
   row.style.display = '';
