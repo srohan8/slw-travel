@@ -2048,6 +2048,14 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
           <div class="lbl" style="margin-bottom:4px">Per-country URL overrides <span style="font-weight:400;color:var(--text3)">(optional)</span></div>
           <textarea class="inp" id="sf_country_urls" rows="3" placeholder="UY=https://directferries.com/uruguay.htm&#10;FJ=https://directferries.com/fiji.htm" style="font-family:var(--mono);font-size:12px"></textarea>
           <div class="hint">One <code>CODE=url</code> per line. Used instead of the URL template above when the leg's country matches — for operators whose URL differs per country rather than following one search pattern.</div>
+          <div style="margin-top:8px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius)">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">🔎 Discover a per-country URL for each country in "Countries covered" above — one Brave query per country, only accepts a result on the same domain as URL template</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button onclick="discoverCountryUrls()" class="btn" style="font-size:11px;padding:6px 12px;white-space:nowrap">Discover per-country URLs →</button>
+              <span id="sf_discover_msg" style="font-size:11px;color:var(--text3)"></span>
+            </div>
+            <div id="sf_discover_results" style="margin-top:8px"></div>
+          </div>
         </div>
         <div id="sf_preview" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius)">
           <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Example URL</div>
@@ -4005,6 +4013,9 @@ function showAddSiteForm(editId, prefill) {
   document.getElementById('sf_coverage_msg').textContent = '';
   document.getElementById('sf_coverage_results').innerHTML = '';
   _coverageResultsCache = [];
+  document.getElementById('sf_discover_msg').textContent = '';
+  document.getElementById('sf_discover_results').innerHTML = '';
+  _discoveredCountryUrlsCache = {};
   document.getElementById('sf_extract_msg').textContent = '';
   document.getElementById('sf_extract_msg').style.color = '';
 
@@ -4780,6 +4791,80 @@ function _useCoverageResult(idx) {
   if (exampleUrl) exampleUrl.value = r.url;
   const origin = document.getElementById('sf_ex_origin');
   if (origin) { origin.focus(); origin.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+// Per-country URL auto-discovery -- one Brave query per country in
+// "Countries covered" (reuses _buildSeedQuery, same category-aware query
+// shape the bulk-seed sweep uses), keeping only same-root-domain results so
+// a country query can't accidentally suggest a different company's URL as
+// this site's override. Sequential with the same ~150ms spacing used
+// elsewhere (bulk-seed sweep, verifyUncertainLegs) -- never auto-applied,
+// each country's candidate needs an explicit "Add" click.
+let _discoveredCountryUrlsCache = {};
+
+async function discoverCountryUrls() {
+  const name = document.getElementById('sf_name').value.trim();
+  const urlTpl = document.getElementById('sf_url').value.trim();
+  const templateDomain = urlTpl ? _rootDomainOf(urlTpl) : '';
+  const codes = document.getElementById('sf_countries').value.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
+  const cats = Array.from(document.getElementById('sf_cat')?.selectedOptions || []).map(o => o.value);
+  const category = cats[0] || 'buses';
+  const msgEl = document.getElementById('sf_discover_msg');
+  const resultsEl = document.getElementById('sf_discover_results');
+  resultsEl.innerHTML = '';
+
+  if (!name) { msgEl.textContent = 'Enter a site name first.'; return; }
+  if (!templateDomain) { msgEl.textContent = 'Add a URL template first — results are only kept if they match its domain.'; return; }
+  if (!codes.length) { msgEl.textContent = 'Add countries to "Countries covered" above first (or use Search coverage).'; return; }
+
+  if (!confirm(`Discover per-country URLs — fires ${codes.length} Brave ${codes.length === 1 ? 'query' : 'queries'} (~${Math.ceil(codes.length * 150 / 1000)}s at ~150ms spacing), one per country. Continue?`)) {
+    return;
+  }
+
+  _discoveredCountryUrlsCache = {};
+  const rows = [];
+
+  for (const [i, code] of codes.entries()) {
+    msgEl.textContent = `Checking ${_seedCountryName(code)} (${code}) — ${i + 1}/${codes.length}…`;
+    try {
+      const q = _buildSeedQuery(category, code);
+      const res = await fetch(`${PROXY_URL}/api/brave-web-search?q=${encodeURIComponent(q)}`);
+      if (!res.ok) throw new Error(`Brave search failed (${res.status})`);
+      const { results } = await res.json();
+      const match = (results || []).find(r => _rootDomainOf(r.url) === templateDomain);
+      if (match) _discoveredCountryUrlsCache[code] = match.url;
+      rows.push({ code, match, q });
+    } catch (e) {
+      rows.push({ code, error: e.message });
+    }
+    if (i < codes.length - 1) await new Promise(r => setTimeout(r, 150));
+  }
+
+  msgEl.textContent = `Checked ${codes.length} ${codes.length === 1 ? 'country' : 'countries'}.`;
+  resultsEl.innerHTML = rows.map(row => {
+    if (row.error) return `<div style="padding:6px 0;border-top:0.5px solid var(--border);font-size:11px;color:var(--danger-text,#c0392b)">${_seedCountryName(row.code)} (${row.code}) — ⚠ ${row.error}</div>`;
+    if (!row.match) return `<div style="padding:6px 0;border-top:0.5px solid var(--border);font-size:11px;color:var(--text3)">${_seedCountryName(row.code)} (${row.code}) — no ${templateDomain} result found for "${row.q}"; will use the generic template.</div>`;
+    return `<div style="padding:6px 0;border-top:0.5px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--text)">${_seedCountryName(row.code)} (${row.code})</div>
+      <a href="${row.match.url}" target="_blank" rel="noopener" style="font-size:11px;color:var(--fern);word-break:break-all">${row.match.url}</a>
+      <div><button onclick="_addDiscoveredCountryUrl('${row.code}')" style="font-size:11px;padding:4px 10px;margin-top:4px;background:none;border:0.5px solid var(--sage);border-radius:var(--radius);cursor:pointer;color:var(--sage);font-family:inherit">+ Add to overrides</button></div>
+    </div>`;
+  }).join('');
+}
+
+// Adds/replaces one country's discovered URL as a CODE=url line in the
+// Per-country URL overrides textarea -- explicit per-country click, not a
+// bulk-apply-all, so the admin can skip any candidate that looks wrong.
+function _addDiscoveredCountryUrl(code) {
+  const url = _discoveredCountryUrlsCache[code];
+  if (!url) return;
+  const el = document.getElementById('sf_country_urls');
+  const lines = el.value.split('\n').filter(Boolean).filter(line => {
+    const idx = line.indexOf('=');
+    return idx < 1 || line.slice(0, idx).trim().toUpperCase() !== code;
+  });
+  lines.push(`${code}=${url}`);
+  el.value = lines.join('\n');
 }
 
 // Merges the checked chips from searchSiteCoverage() into the form's
