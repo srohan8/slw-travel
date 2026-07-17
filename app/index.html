@@ -5290,7 +5290,10 @@ async function openLegWebSearch(idx, mode, orig, dest, legCountry) {
   if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
 
   const modeLabel = (MI[mode] || mode).toLowerCase();
-  const q = `${modeLabel} tickets ${orig} to ${dest}`;
+  // Same reasoning as recheckSiteWithBrave's siteQ -- a bare route query
+  // without a date leans toward marketing/info pages over an actual dated
+  // search-results URL.
+  const q = `${modeLabel} tickets ${orig} to ${dest} 2025-06-15`;
   panel.style.display = 'block';
   panel.innerHTML = `<div style="font-size:11px;color:var(--text3)">Searching Brave for "${q}"…</div>`;
 
