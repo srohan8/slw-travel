@@ -67,7 +67,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
     --mono:'JetBrains Mono','Courier New',monospace;
   }
   html{color-scheme:light;}
-  body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh;transition:background 0.3s ease;}
+  body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh;transition:background 0.3s ease;display:flex;flex-direction:column;}
   nav{display:flex;justify-content:space-between;align-items:center;padding:12px 22px;border-bottom:none;background:var(--dusk);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(14,26,46,0.18);}
   .logo{font-family:var(--body);font-size:20px;font-weight:500;color:var(--cream);text-decoration:none;letter-spacing:-0.6px;display:flex;align-items:center;gap:8px;}
   .logo em{font-style:normal;color:var(--sage);}
@@ -115,7 +115,7 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
      page's layout is affected. */
   .container:has(#admin.active){max-width:1400px;}
   /* App footer — desktop only; mobile already has the bottom nav for this. */
-  .app-footer{margin-top:32px;padding:20px 22px 0;border-top:0.5px solid var(--border);}
+  .app-footer{margin-top:auto;padding:20px 22px 0;border-top:0.5px solid var(--border);flex-shrink:0;}
   .app-footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
   .app-footer-logo{display:flex;align-items:center;gap:7px;text-decoration:none;}
   .app-footer-logo img{height:20px;opacity:0.7;}
