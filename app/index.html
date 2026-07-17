@@ -2602,7 +2602,7 @@ async function init() {
   // Crash recovery (§13.4) — an un-cleared GPS checkpoint from a prior session
   // means recording never got a clean "stop", so this takes over routing for this boot.
   if (gpsReadCheckpoint() && !_gps.mode) switchTab('crashrecover', null);
-  else routeFromPath(entryPath);
+  else routeFromPath(entryPath, _entryHash);
   window.addEventListener('popstate', () => routeFromPath());
 
   // ── Auto-fill + auto-trigger from URL params (?from=X&to=Y&via=Z) ──
@@ -5412,7 +5412,7 @@ async function autoTriagePendingSeeds() {
 
 // ── Tab switching ─────────────────────────────────────────────────
 // Route the app from a clean URL path (used on cold load and on back/forward).
-function routeFromPath(path) {
+function routeFromPath(path, entryHash) {
   const parts = (path || location.pathname).replace(/\/+$/, '').split('/').filter(Boolean);
   const seg = parts[0] || '';
   const findTrip = id => (storage.get('trips') || []).find(t => t.id === id);
@@ -5437,9 +5437,12 @@ function routeFromPath(path) {
   }
   if (seg === 'profile') { switchTab('profile', nav('profile')); return; }
   if (seg === 'admin') {
-    // Capture the sub-tab hash before switchTab('admin', ...) clears it --
-    // its internal setScreenUrl() call does a replaceState with no hash.
-    const savedSub = location.hash.replace('#', '');
+    // Use the caller-supplied entry hash when given (boot calls this with
+    // _entryHash, captured before renderPlanLanding()'s unconditional
+    // setScreenUrl('/planner') wipes location.hash via a replaceState that
+    // carries no hash) -- falling back to a live read only covers popstate
+    // navigation, where nothing has cleared the hash in between.
+    const savedSub = (entryHash !== undefined ? entryHash : location.hash.replace('#', ''));
     switchTab('admin', nav('admin'));
     const validSubs = ['sites', 'review', 'sourcing', 'usage', 'aiprovider', 'beta', 'users'];
     if (validSubs.includes(savedSub)) switchAdminSubTab(savedSub);
