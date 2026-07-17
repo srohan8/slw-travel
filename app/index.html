@@ -6798,6 +6798,19 @@ function setMapState(next) {
   if (!wrap) return;
   wrap.classList.remove('pmw-expanded', 'pmw-pill');
   document.body.classList.remove('pmw-expanded-on');
+  if (next !== 'docked') {
+    // pmwOnResize() sets an inline width (and the map's inline height)
+    // while docked, which outranks the pmw-pill/pmw-expanded class rules
+    // by specificity -- left uncleared, minimizing after ever resizing the
+    // docked map squeezed the pill into an oval (stale wide inline width +
+    // the pill class's fixed 52px height) instead of a circle. Only clear
+    // when leaving docked -- a docked resize should still persist across
+    // pill/expand/re-dock cycles, just not leak into the other two states.
+    wrap.style.width = '';
+    wrap.style.transition = '';
+    const mapEl = document.getElementById('plannerMap');
+    if (mapEl) mapEl.style.height = '';
+  }
   if (next === 'expanded') {
     wrap.classList.add('pmw-expanded');
     document.body.classList.add('pmw-expanded-on');
