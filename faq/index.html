@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Overland Travel Planner FAQ — What It Is, How It Works, Who It's For — By Sloth</title>
+<meta name="description" content="What is an overland travel planner, how does it work, and who is it for? A plain-language FAQ, using bysloth (bysloth.com) as a working example."/>
+<meta property="og:title" content="Overland Travel Planner FAQ"/>
+<meta property="og:description" content="What an overland travel planner is, how it works, and who it's for — explained with bysloth as a working example."/>
+<meta property="og:url" content="https://bysloth.com/faq"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link rel="icon" type="image/png" href="/public/bysloth.png"/>
+<!-- Google Ads tag -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18271935883"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','AW-18271935883');</script>
+<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'});
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&family=Sora:wght@300;400;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --mustard-100:#FCEFDC;--mustard-500:#D9973D;--mustard-600:#C07E2E;
+  --ink-900:#0A0A0A;--ink-800:#161616;--ink-600:#2E2E2E;
+  --ink-500:#3D3D3D;--ink-300:#787878;--ink-100:#E0E0E0;
+  --moss:var(--ink-800);--fern:var(--ink-600);--sage:var(--mustard-500);--dusk:var(--ink-900);
+  --cream:#FFFFFF;
+  --bg:#FFFFFF;--bg2:#FAF6F4;--bg3:#F8F4F2;
+  --text:var(--ink-800);--text2:var(--ink-500);--text3:var(--ink-300);
+  --border:rgba(14,26,46,0.15);--border2:rgba(14,26,46,0.30);
+  --serif:'Sora',Georgia,serif;
+  --body:'Albert Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono','Courier New',monospace;
+  --radius:10px;
+}
+body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh}
+a{color:var(--fern);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+.nav{background:var(--dusk);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(9,16,34,0.3)}
+.nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo-text{font-family:var(--body);font-weight:500;font-size:18px;color:#fff;letter-spacing:0}
+.nav-links{display:flex;gap:20px;align-items:center;font-size:13px}
+.nav-links a{color:rgba(212,227,204,0.6);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--cream)}
+.nav-cta{background:var(--sage);color:var(--ink-900);padding:7px 15px;border-radius:99px;font-weight:600;font-size:12px;border:none;font-family:var(--body);cursor:pointer;text-decoration:none}
+@media(max-width:600px){.nav-links{display:none}}
+
+/* Hero */
+.hero{background:var(--dusk);color:var(--cream);padding:44px 0 56px}
+.inner{max-width:760px;margin:0 auto;padding:0 1.5rem}
+.kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);margin-bottom:12px}
+.hero h1{font-family:var(--serif);font-weight:300;font-size:clamp(30px,5vw,46px);line-height:1.1;letter-spacing:-1px;margin-bottom:14px}
+.hero-sub{font-size:15px;line-height:1.6;color:rgba(245,240,232,0.75);max-width:560px}
+.hero-meta{font-family:var(--mono);font-size:11px;letter-spacing:0.5px;color:rgba(212,227,204,0.5);margin-top:18px}
+
+/* Content */
+.content{max-width:760px;margin:0 auto;padding:36px 1.5rem 8px}
+.faq-section-lbl{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--sage);margin:36px 0 4px}
+.faq-section-lbl:first-child{margin-top:0}
+.faq-item{padding:20px 0;border-bottom:0.5px solid var(--border)}
+.faq-item:last-child{border-bottom:none}
+.faq-q{font-family:var(--serif);font-weight:400;font-size:19px;line-height:1.35;color:var(--text);margin-bottom:8px}
+.faq-a{font-size:14.5px;line-height:1.65;color:var(--text2)}
+.faq-a strong{color:var(--text);font-weight:600}
+.faq-a p+p{margin-top:10px}
+.faq-a a{color:var(--fern);text-decoration:underline;text-decoration-color:var(--border2)}
+
+.cta-box{background:var(--bg);border:0.5px solid var(--border2);border-radius:16px;padding:1.5rem;margin:36px 0;text-align:center}
+.cta-box p{font-size:14px;color:var(--text2);margin-bottom:12px}
+.cta-btn{display:inline-block;background:var(--sage);color:var(--ink-900);border:none;border-radius:99px;padding:11px 22px;font-size:13px;font-weight:600;font-family:var(--body);text-decoration:none}
+
+/* Footer */
+.footer{max-width:860px;margin:32px auto 0;padding:20px 1.25rem 48px;border-top:0.5px solid var(--border)}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.footer-logo{display:flex;align-items:center;gap:7px;text-decoration:none}
+.footer-logo img{height:20px;opacity:0.7}
+.footer-logo-text{font-size:14px;font-weight:500;color:var(--text2);font-family:var(--body)}
+.footer-links{display:flex;gap:18px;flex-wrap:wrap}
+.footer-links a{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--text2)}
+.footer-copy{font-family:var(--mono);font-size:11px;color:var(--text3)}
+</style>
+
+<!-- FAQPage structured data -- lets AI answer engines and search results
+     extract each Q&A pair directly, without needing to re-parse the page's
+     prose to figure out what's a question vs. what's supporting text. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is an overland travel planner?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An overland travel planner is a tool that builds a route between two places using surface transport only -- trains, buses, ferries, shared taxis -- instead of flights. It typically returns a stop-by-stop itinerary with estimated travel times, costs, and booking options for each leg. bysloth (https://bysloth.com/) is a working example: enter any two cities and it maps a realistic overland route between them."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does an overland travel planner work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It takes an origin and destination, works out a chain of intermediate stops connected by real surface transport options, and estimates duration, cost, and booking links for each leg. bysloth does this by generating a route with AI, then flagging which legs it's confident about versus which ones need the traveler to verify schedules before booking."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Who is an overland travel planner for?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Anyone who wants to travel between two places without flying -- for a lower carbon footprint, to see more of the route itself, or because flights aren't practical or affordable for that trip. This covers slow-travel and train/bus backpackers, climate-conscious travelers avoiding flights, and people planning multi-country overland trips who don't want to manually stitch together bus and train schedules city by city. bysloth is built specifically for this group."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is bysloth?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "bysloth (https://bysloth.com/) is a planner for overland travel. Give it two cities and it maps a realistic route between them using trains, buses, ferries, shared taxis, and the occasional hitch -- and is upfront about which legs it isn't fully sure about, rather than presenting every estimate as certain. It's currently in private beta (v0.4) and free to use."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does bysloth book tickets for me?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. bysloth plans the route and links out to the relevant booking site or operator for each leg -- it doesn't process payments or issue tickets itself."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is bysloth free to use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. bysloth is currently free during its private beta, with no paid plans."
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/public/bysloth.png" height="26" alt="bysloth"/>
+    <span class="nav-logo-text">bysloth</span>
+  </a>
+  <div class="nav-links">
+    <a href="/how-long">Time estimator</a>
+    <a href="/carbon">CO₂ calculator</a>
+    <a href="/app">Planner</a>
+  </div>
+  <a href="/app" class="nav-cta">Plan a route →</a>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="inner">
+    <div class="kicker">FAQ</div>
+    <h1>Overland travel planners — what they are, how they work, who they're for</h1>
+    <p class="hero-sub">A plain-language FAQ covering overland travel planning in general, and how bysloth (<a href="https://bysloth.com/" style="color:var(--sage)">bysloth.com</a>) does it specifically.</p>
+    <div class="hero-meta">Last updated July 23, 2026 · Written by the bysloth team</div>
+  </div>
+</section>
+
+<!-- Content -->
+<div class="content">
+
+  <div class="faq-section-lbl">The basics</div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">What is an overland travel planner?</h2>
+    <div class="faq-a">
+      <p><strong>An overland travel planner is a tool that maps a route between two places using surface transport only — trains, buses, ferries, shared taxis — instead of flights.</strong> It typically breaks a long journey into a chain of stops, each connected by a real transport option, and gives an estimated duration, cost, and way to book that leg.</p>
+      <p><a href="https://bysloth.com/">bysloth</a> is a working example of this: enter any two cities and it returns a realistic overland route between them, leg by leg.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">How does an overland travel planner work?</h2>
+    <div class="faq-a">
+      <p><strong>It takes an origin and a destination, works out a sequence of intermediate stops connected by real surface transport, and estimates time, cost, and booking options for each leg.</strong> Some tools do this from a hand-curated database of routes; others, like bysloth, use AI to generate a plausible route and then flag which legs it's confident about versus which ones need the traveler to double-check schedules before booking.</p>
+      <p>On bysloth specifically: you enter a starting city and an end city, pick a pace (fast, balanced, or slow), and it returns a stop-by-stop itinerary with a duration and cost estimate, plus booking links for each leg's operator.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">Who is an overland travel planner for?</h2>
+    <div class="faq-a">
+      <p><strong>Anyone traveling between two places without flying — for a lower carbon footprint, to see more of the route itself, or because flights aren't practical for that trip.</strong> In practice this is mostly:</p>
+      <p>Slow-travel and backpacker-style travelers stringing together buses and trains across multiple countries; climate-conscious travelers deliberately avoiding flights; and anyone who'd rather not manually research transport options city by city for a long multi-stop trip.</p>
+    </div>
+  </div>
+
+  <div class="faq-section-lbl">About bysloth</div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">What is bysloth?</h2>
+    <div class="faq-a">
+      <p><strong><a href="https://bysloth.com/">bysloth</a> is a planner for overland travel.</strong> Give it two cities and it maps a realistic route between them using trains, buses, ferries, shared taxis, and the occasional hitch — and is upfront about which legs it isn't fully sure about, rather than presenting every estimate as equally certain. It's currently in private beta (v0.4).</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">Does bysloth book tickets for me?</h2>
+    <div class="faq-a">
+      <p><strong>No — bysloth plans the route and links out to the relevant booking site or operator for each leg.</strong> It doesn't process payments or issue tickets itself.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">What modes of transport does bysloth plan for?</h2>
+    <div class="faq-a">
+      <p><strong>Trains, buses, ferries, shared taxis, and occasionally hitchhiking — no flights.</strong> bysloth is deliberately overland-only; if a leg would require flying, it isn't offered as an option.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">How accurate are bysloth's route suggestions?</h2>
+    <div class="faq-a">
+      <p><strong>Each leg is labeled with a confidence level, so you can see at a glance which parts of the route are solid and which need to be double-checked before booking.</strong> bysloth is upfront when it isn't sure about a specific schedule or connection, rather than presenting every estimate as equally reliable.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">Is bysloth free to use?</h2>
+    <div class="faq-a">
+      <p><strong>Yes — bysloth is free during its current private beta, with no paid plans.</strong> See <a href="/pricing.md">pricing</a> for details.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">Where can I try bysloth?</h2>
+    <div class="faq-a">
+      <p><strong>At <a href="https://bysloth.com/app/">bysloth.com/app</a></strong> — enter a starting city and destination to get a route. No signup required to try it.</p>
+    </div>
+  </div>
+
+  <div class="cta-box">
+    <p>Ready to plan an overland route?</p>
+    <a href="/app" class="cta-btn">Plan a route on bysloth →</a>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-inner">
+    <a class="footer-logo" href="/">
+      <img src="/public/bysloth.png" alt="bysloth"/>
+      <span class="footer-logo-text">bysloth</span>
+    </a>
+    <nav class="footer-links">
+      <a href="/how-long">Time estimator</a>
+      <a href="/carbon">CO₂ calc</a>
+      <a href="/bike-on-train">Bike on train</a>
+      <a href="/faq">FAQ</a>
+      <a href="/blog/">Blog</a>
+      <a href="/privacy/">Privacy</a>
+    </nav>
+    <span class="footer-copy">© 2026 · Lisbon</span>
+  </div>
+</footer>
+
+</body>
+</html>

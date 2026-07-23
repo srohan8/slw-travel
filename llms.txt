@@ -1,0 +1,14 @@
+# bysloth
+
+> A planner for overland travel — bysloth maps a realistic route between any two cities using trains, buses, ferries, shared taxis, and the occasional hitch, and is honest about the legs it isn't sure about. Currently v0.4, private beta.
+
+## Key pages
+- [Planner](https://bysloth.com/app/): plan an overland route between two cities
+- [Time estimator](https://bysloth.com/how-long/): estimate overland travel time between cities
+- [CO₂ calculator](https://bysloth.com/carbon/): compare the carbon footprint of overland vs. flying
+- [Bike on train](https://bysloth.com/bike-on-train/): country-by-country rules for bringing a bike on trains
+- [Blog](https://bysloth.com/blog/): overland travel writing and route guides
+- [Privacy](https://bysloth.com/privacy/): privacy policy
+
+## Optional
+- [Contact](mailto:hello@bysloth.com)

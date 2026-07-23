@@ -5,7 +5,34 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>bysloth — Go the long way. On purpose.</title>
+<meta name="description" content="bysloth is a planner for overland travel — trains, buses, ferries, and shared taxis between any two cities, no flights. Get a realistic route with honest confidence ratings on every leg."/>
+<meta property="og:title" content="bysloth — Go the long way. On purpose."/>
+<meta property="og:description" content="A planner for overland travel. Trains, buses, ferries, shared taxis — bysloth maps a realistic route between any two cities and is honest about the legs it isn't sure about."/>
+<meta property="og:url" content="https://bysloth.com/"/>
+<meta property="og:type" content="website"/>
+<meta name="twitter:card" content="summary_large_image"/>
 <link rel="icon" type="image/png" href="/public/bysloth.png"/>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "bysloth",
+  "url": "https://bysloth.com/",
+  "description": "A planner for overland travel — trains, buses, ferries, and shared taxis between any two cities, no flights."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "bysloth",
+  "url": "https://bysloth.com/",
+  "applicationCategory": "TravelApplication",
+  "operatingSystem": "Web",
+  "description": "A planner for overland travel. Give it two cities and bysloth maps a realistic route between them using trains, buses, ferries, and shared taxis -- no flights -- with a confidence rating on every leg.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
 <!-- Google Ads tag -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18271935883"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','AW-18271935883');</script>
@@ -537,6 +564,26 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
   </div>
 </div>
 
+<!-- ── FAQ snippet (short, citable Q&A -- full version at /faq) ─────── -->
+<div class="section" style="max-width:760px;margin:0 auto;padding:0 1.5rem">
+  <span class="kicker" style="color:var(--sage)">FAQ</span>
+  <h2 style="font-family:var(--serif);font-weight:300;font-size:clamp(24px,4vw,32px);margin:8px 0 20px">A few quick answers</h2>
+  <div style="padding:16px 0;border-top:0.5px solid var(--border)">
+    <h3 style="font-family:var(--serif);font-weight:400;font-size:17px;margin-bottom:6px">What is bysloth?</h3>
+    <p style="font-size:14px;line-height:1.6;color:var(--text2)"><strong style="color:var(--text)">bysloth is a planner for overland travel.</strong> Give it two cities and it maps a realistic route between them using trains, buses, ferries, and shared taxis — no flights — with a confidence rating on every leg.</p>
+  </div>
+  <div style="padding:16px 0;border-top:0.5px solid var(--border)">
+    <h3 style="font-family:var(--serif);font-weight:400;font-size:17px;margin-bottom:6px">Is bysloth free?</h3>
+    <p style="font-size:14px;line-height:1.6;color:var(--text2)"><strong style="color:var(--text)">Yes — bysloth is free during its current private beta,</strong> with no paid plans.</p>
+  </div>
+  <div style="padding:16px 0;border-top:0.5px solid var(--border)">
+    <h3 style="font-family:var(--serif);font-weight:400;font-size:17px;margin-bottom:6px">Does bysloth book tickets?</h3>
+    <p style="font-size:14px;line-height:1.6;color:var(--text2)"><strong style="color:var(--text)">No — bysloth plans the route and links out to the operator for each leg.</strong> It doesn't process payments itself.</p>
+  </div>
+  <p style="font-size:13px;margin-top:6px"><a href="/faq" style="color:var(--fern)">See the full FAQ →</a></p>
+  <p style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:20px">Last updated July 23, 2026 · Written by the bysloth team</p>
+</div>
+
 <!-- ── Final CTA ──────────────────────────────────────────────────── -->
 <div class="section">
   <div class="final-cta-card">
@@ -560,6 +607,7 @@ body { font-family: var(--body); background: var(--bg3); color: var(--text); min
       <a href="/how-long">Time estimator</a>
       <a href="/carbon">CO₂ calc</a>
       <a href="/bike-on-train">Bike on train</a>
+      <a href="/faq">FAQ</a>
       <a href="/blog/">Blog</a>
       <a href="/privacy/">Privacy</a>
       <a href="mailto:hello@bysloth.com">Contact</a>
