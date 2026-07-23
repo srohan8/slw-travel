@@ -11,6 +11,19 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
 (function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
 </script>
 <meta name="description" content="{{ page.description | default: page.excerpt | strip_html | truncate: 160 }}"/>
+<meta name="author" content="bysloth"/>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": {{ page.title | jsonify }},
+  "datePublished": "{{ page.date | date: '%Y-%m-%d' }}",
+  "dateModified": "{{ page.last_modified_at | default: page.date | date: '%Y-%m-%d' }}",
+  "author": { "@type": "Organization", "name": "bysloth", "url": "https://bysloth.com/" },
+  "publisher": { "@type": "Organization", "name": "bysloth", "url": "https://bysloth.com/" },
+  "url": "{{ page.url | absolute_url }}"
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&family=Sora:wght@300;400;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -99,7 +112,7 @@ article h1 em { font-style:italic; color:var(--sage); }
 
 <article>
   <a class="back" href="{{ '/blog/' | relative_url }}">← All posts</a>
-  <div class="post-meta">{{ page.date | date: "%Y-%m-%d" }}{% if page.tag %} · {{ page.tag }}{% endif %}</div>
+  <div class="post-meta">Last updated {{ page.last_modified_at | default: page.date | date: "%Y-%m-%d" }}{% if page.tag %} · {{ page.tag }}{% endif %} · By the bysloth team — we build and use bysloth's overland route planner ourselves</div>
   <h1>{{ page.title }}</h1>
 
   <div class="post-body">

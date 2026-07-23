@@ -15,6 +15,19 @@ function initPostHog(){posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2
 (function(){var c=localStorage.getItem('slw_cookie_consent');if(c==='accepted'){initPostHog();}else if(!c){document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('slw-consent-banner');if(b)b.style.display='flex';});}})();
 </script>
 <meta name="description" content="Long-form overland route guides, border-crossing notes, and field reports from SLW Travel."/>
+<meta name="author" content="bysloth"/>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "name": "bysloth blog",
+  "description": "Long-form overland route guides, border-crossing notes, and field reports on planning trips without flights.",
+  "url": "https://bysloth.com/blog/",
+  "author": { "@type": "Organization", "name": "bysloth", "url": "https://bysloth.com/" },
+  "publisher": { "@type": "Organization", "name": "bysloth", "url": "https://bysloth.com/" },
+  "dateModified": "2026-07-23"
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&family=Sora:wght@300;400;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -69,6 +82,12 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
 .post-excerpt { font-size:14px; line-height:1.55; color:var(--text2); }
 
 .empty { padding:40px 0; text-align:center; color:var(--text3); font-size:14px; }
+.blog-def { font-size:16px; line-height:1.6; color:var(--cream); max-width:640px; margin:14px 0 8px; }
+.blog-meta { font-family:var(--mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; color:rgba(245,240,232,0.6); margin-top:6px; }
+.blog-intro { max-width:860px; margin:0 auto; padding:28px 22px 0; }
+.blog-q { font-family:var(--serif); font-weight:500; font-size:18px; margin-bottom:8px; }
+.blog-a { font-size:14px; line-height:1.6; color:var(--text2); }
+.blog-a a { color:var(--fern); }
 
 .site-footer{max-width:860px;margin:32px auto 0;padding:20px 1.25rem 48px;border-top:0.5px solid var(--border)}
 .site-footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
@@ -110,8 +129,15 @@ body { font-family:var(--body); background:var(--bg3); color:var(--text); min-he
   <div class="blog-hero-inner">
     <div class="kicker">Field notes</div>
     <h1 class="blog-h1">Route guides, <em>slowly written.</em></h1>
-    <p class="blog-sub">Long-form guides to overland corridors — borders, buses, ferries, and the small things that make a leg work. Written by travelers, edited for people who'd rather take the long way.</p>
+    <p class="blog-def"><strong>The bysloth blog is a collection of long-form overland travel guides — border crossings, bus and train routes, ferry connections, and comparisons with other trip-planning tools — for people planning trips without flights.</strong></p>
+    <p class="blog-sub">Written by the bysloth team, drawing on real routes planned in the app and public information from operators and other travel resources.</p>
+    <div class="blog-meta">Last updated 2026-07-23 · Written by the bysloth team</div>
   </div>
+</section>
+
+<section class="blog-intro">
+  <h2 class="blog-q">What will I find in this blog?</h2>
+  <p class="blog-a">Two kinds of posts: route-specific guides (border logistics, transport options, timing) and comparisons against other route-planning tools like <a href="https://bysloth.com/blog/why-rome2rio-gets-overland-routes-wrong/">Rome2rio</a> and <a href="https://www.omio.com/" target="_blank" rel="noopener">Omio</a>, based on public reviews and our own testing. Every post is dated and updated when the underlying information changes.</p>
 </section>
 
 <main class="posts-wrap">

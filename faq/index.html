@@ -9,6 +9,7 @@
 <meta property="og:description" content="What an overland travel planner is, how it works, and who it's for — explained with bysloth as a working example."/>
 <meta property="og:url" content="https://bysloth.com/faq"/>
 <meta name="twitter:card" content="summary_large_image"/>
+<meta name="author" content="bysloth"/>
 <link rel="icon" type="image/png" href="/public/bysloth.png"/>
 <!-- Google Ads tag -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18271935883"></script>
@@ -54,6 +55,7 @@ a:hover{text-decoration:underline}
 .kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);margin-bottom:12px}
 .hero h1{font-family:var(--serif);font-weight:300;font-size:clamp(30px,5vw,46px);line-height:1.1;letter-spacing:-1px;margin-bottom:14px}
 .hero-sub{font-size:15px;line-height:1.6;color:rgba(245,240,232,0.75);max-width:560px}
+.hero-def{font-size:16px;line-height:1.55;color:var(--cream);max-width:640px;margin:14px 0 10px}
 .hero-meta{font-family:var(--mono);font-size:11px;letter-spacing:0.5px;color:rgba(212,227,204,0.5);margin-top:18px}
 
 /* Content */
@@ -91,13 +93,15 @@ a:hover{text-decoration:underline}
 {
   "@context": "https://schema.org",
   "@type": "FAQPage",
+  "author": { "@type": "Organization", "name": "bysloth", "url": "https://bysloth.com/" },
+  "dateModified": "2026-07-23",
   "mainEntity": [
     {
       "@type": "Question",
       "name": "What is an overland travel planner?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "An overland travel planner is a tool that builds a route between two places using surface transport only -- trains, buses, ferries, shared taxis -- instead of flights. It typically returns a stop-by-stop itinerary with estimated travel times, costs, and booking options for each leg. bysloth (https://bysloth.com/) is a working example: enter any two cities and it maps a realistic overland route between them."
+        "text": "An overland travel planner is a tool that builds a route between two places using surface transport only -- trains, buses, ferries, shared taxis -- instead of flights. It typically returns a stop-by-stop itinerary with estimated travel times, costs, and booking options for each leg. Independent route-planning resources like Seat61 (https://www.seat61.com/) have documented international rail and ferry connections manually for years; bysloth (https://bysloth.com/) automates that same kind of research: enter any two cities and it maps a realistic overland route between them."
       }
     },
     {
@@ -165,6 +169,7 @@ a:hover{text-decoration:underline}
   <div class="inner">
     <div class="kicker">FAQ</div>
     <h1>Overland travel planners — what they are, how they work, who they're for</h1>
+    <p class="hero-def"><strong>An overland travel planner is a tool that builds a route between two places using surface transport only — trains, buses, ferries, shared taxis — instead of flights, returning a stop-by-stop itinerary with estimated times, costs, and booking options.</strong></p>
     <p class="hero-sub">A plain-language FAQ covering overland travel planning in general, and how bysloth (<a href="https://bysloth.com/" style="color:var(--sage)">bysloth.com</a>) does it specifically.</p>
     <div class="hero-meta">Last updated July 23, 2026 · Written by the bysloth team</div>
   </div>
@@ -179,7 +184,7 @@ a:hover{text-decoration:underline}
     <h2 class="faq-q">What is an overland travel planner?</h2>
     <div class="faq-a">
       <p><strong>An overland travel planner is a tool that maps a route between two places using surface transport only — trains, buses, ferries, shared taxis — instead of flights.</strong> It typically breaks a long journey into a chain of stops, each connected by a real transport option, and gives an estimated duration, cost, and way to book that leg.</p>
-      <p><a href="https://bysloth.com/">bysloth</a> is a working example of this: enter any two cities and it returns a realistic overland route between them, leg by leg.</p>
+      <p><a href="https://bysloth.com/">bysloth</a> is a working example of this: enter any two cities and it returns a realistic overland route between them, leg by leg. Independent resources like <a href="https://www.seat61.com/" target="_blank" rel="noopener">Seat61</a> have documented international rail and ferry connections this way manually for years; a planner does the same lookup automatically.</p>
     </div>
   </div>
 

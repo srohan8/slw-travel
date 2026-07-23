@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pricing — bysloth</title>
+<meta name="description" content="bysloth is free during its private beta, with no paid plans yet. See exactly what's included."/>
+<meta property="og:title" content="Pricing — bysloth"/>
+<meta property="og:description" content="bysloth is free during its private beta, with no paid plans yet."/>
+<meta property="og:url" content="https://bysloth.com/pricing"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="author" content="bysloth"/>
+<link rel="icon" type="image/png" href="/public/bysloth.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&family=Sora:wght@300;400;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --mustard-100:#FCEFDC;--mustard-500:#D9973D;--mustard-600:#C07E2E;
+  --ink-900:#0A0A0A;--ink-800:#161616;--ink-600:#2E2E2E;
+  --ink-500:#3D3D3D;--ink-300:#787878;--ink-100:#E0E0E0;
+  --moss:var(--ink-800);--fern:var(--ink-600);--sage:var(--mustard-500);--dusk:var(--ink-900);
+  --cream:#FFFFFF;
+  --bg:#FFFFFF;--bg2:#FAF6F4;--bg3:#F8F4F2;
+  --text:var(--ink-800);--text2:var(--ink-500);--text3:var(--ink-300);
+  --border:rgba(14,26,46,0.15);--border2:rgba(14,26,46,0.30);
+  --serif:'Sora',Georgia,serif;
+  --body:'Albert Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono','Courier New',monospace;
+  --radius:10px;
+}
+body{font-family:var(--body);background:var(--bg3);color:var(--text);min-height:100vh}
+a{color:var(--fern);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.nav{background:var(--dusk);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(9,16,34,0.3)}
+.nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo-text{font-family:var(--body);font-weight:500;font-size:18px;color:#fff;letter-spacing:0}
+.nav-links{display:flex;gap:20px;align-items:center;font-size:13px}
+.nav-links a{color:rgba(212,227,204,0.6);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--cream)}
+.nav-cta{background:var(--sage);color:var(--ink-900);padding:7px 15px;border-radius:99px;font-weight:600;font-size:12px;border:none;font-family:var(--body);cursor:pointer;text-decoration:none}
+@media(max-width:600px){.nav-links{display:none}}
+
+.hero{background:var(--dusk);color:var(--cream);padding:44px 0 56px}
+.inner{max-width:760px;margin:0 auto;padding:0 1.5rem}
+.kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage);margin-bottom:12px}
+.hero h1{font-family:var(--serif);font-weight:300;font-size:clamp(30px,5vw,46px);line-height:1.1;letter-spacing:-1px;margin-bottom:14px}
+.hero-def{font-size:16px;line-height:1.55;color:var(--cream);max-width:640px;margin:14px 0 10px}
+.hero-meta{font-family:var(--mono);font-size:11px;letter-spacing:0.5px;color:rgba(212,227,204,0.5);margin-top:18px}
+
+.content{max-width:760px;margin:0 auto;padding:36px 1.5rem 8px}
+.plan-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:16px;padding:1.75rem;margin-bottom:24px}
+.plan-name{font-family:var(--serif);font-weight:400;font-size:22px;margin-bottom:4px}
+.plan-price{font-family:var(--mono);font-size:28px;color:var(--sage);margin-bottom:14px}
+.plan-price span{font-size:13px;color:var(--text3);font-family:var(--body)}
+.plan-lbl{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin:16px 0 6px}
+.plan-lbl:first-of-type{margin-top:0}
+.plan-list{list-style:none;font-size:14.5px;line-height:1.7;color:var(--text2)}
+.plan-list li::before{content:"— "}
+.plan-note{font-size:13.5px;color:var(--text3);margin-top:14px;line-height:1.6}
+
+.faq-item{padding:20px 0;border-bottom:0.5px solid var(--border)}
+.faq-item:last-child{border-bottom:none}
+.faq-q{font-family:var(--serif);font-weight:400;font-size:19px;line-height:1.35;color:var(--text);margin-bottom:8px}
+.faq-a{font-size:14.5px;line-height:1.65;color:var(--text2)}
+.faq-a strong{color:var(--text);font-weight:600}
+
+.cta-box{background:var(--bg);border:0.5px solid var(--border2);border-radius:16px;padding:1.5rem;margin:36px 0;text-align:center}
+.cta-box p{font-size:14px;color:var(--text2);margin-bottom:12px}
+.cta-btn{display:inline-block;background:var(--sage);color:var(--ink-900);border:none;border-radius:99px;padding:11px 22px;font-size:13px;font-weight:600;font-family:var(--body);text-decoration:none}
+
+.footer{max-width:860px;margin:32px auto 0;padding:20px 1.25rem 48px;border-top:0.5px solid var(--border)}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.footer-logo{display:flex;align-items:center;gap:7px;text-decoration:none}
+.footer-logo img{height:20px;opacity:0.7}
+.footer-logo-text{font-size:14px;font-weight:500;color:var(--text2);font-family:var(--body)}
+.footer-links{display:flex;gap:18px;flex-wrap:wrap}
+.footer-links a{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--text2)}
+.footer-copy{font-family:var(--mono);font-size:11px;color:var(--text3)}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "bysloth",
+  "applicationCategory": "TravelApplication",
+  "url": "https://bysloth.com/pricing",
+  "author": { "@type": "Organization", "name": "bysloth", "url": "https://bysloth.com/" },
+  "dateModified": "2026-07-23",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "description": "Free during private beta -- no paid plans currently exist."
+  }
+}
+</script>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/public/bysloth.png" height="26" alt="bysloth"/>
+    <span class="nav-logo-text">bysloth</span>
+  </a>
+  <div class="nav-links">
+    <a href="/how-long">Time estimator</a>
+    <a href="/carbon">CO₂ calculator</a>
+    <a href="/app">Planner</a>
+  </div>
+  <a href="/app" class="nav-cta">Plan a route →</a>
+</nav>
+
+<section class="hero">
+  <div class="inner">
+    <div class="kicker">Pricing</div>
+    <h1>bysloth is free during its private beta</h1>
+    <p class="hero-def"><strong>bysloth has one plan right now: Free, $0/month, no paid tiers.</strong> The product is in private beta (v0.4) and every feature — route planning, time estimates, CO₂ savings, bike-on-train lookups, and trip journaling — is included at no cost.</p>
+    <div class="hero-meta">Last updated 2026-07-23 · Written by the bysloth team</div>
+  </div>
+</section>
+
+<div class="content">
+
+  <div class="plan-card">
+    <div class="plan-name">Free</div>
+    <div class="plan-price">$0 <span>/ month</span></div>
+    <div class="plan-lbl">Limits</div>
+    <ul class="plan-list">
+      <li>Private beta, v0.4 — no paid tiers exist yet</li>
+      <li>Feature set and limits may change as the beta develops</li>
+    </ul>
+    <div class="plan-lbl">Features</div>
+    <ul class="plan-list">
+      <li>Overland route planning between any two cities</li>
+      <li>Journey time estimator</li>
+      <li>CO₂ savings calculator</li>
+      <li>Bike-on-train policy lookups</li>
+      <li>Trip journaling</li>
+    </ul>
+    <p class="plan-note">bysloth doesn't sell tickets, so there's no booking fee or commission built into any future pricing plan either — it links out to the operator or booking site for each leg.</p>
+  </div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">Will bysloth stay free forever?</h2>
+    <div class="faq-a"><p><strong>Unknown — we haven't announced a paid plan.</strong> If that changes, this page will be updated with the actual terms rather than a placeholder.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <h2 class="faq-q">Is there a free trial I need to cancel?</h2>
+    <div class="faq-a"><p><strong>No.</strong> There's nothing to sign up for beyond a free account, and nothing to cancel — the whole product is free right now.</p></div>
+  </div>
+
+  <div class="cta-box">
+    <p>Try the planner — no payment info required.</p>
+    <a href="/app" class="cta-btn">Plan a route →</a>
+  </div>
+
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <a class="footer-logo" href="/">
+      <img src="/public/bysloth.png" alt="bysloth"/>
+      <span class="footer-logo-text">bysloth</span>
+    </a>
+    <nav class="footer-links">
+      <a href="/how-long">Time estimator</a>
+      <a href="/carbon">CO₂ calc</a>
+      <a href="/bike-on-train">Bike on train</a>
+      <a href="/faq">FAQ</a>
+      <a href="/blog/">Blog</a>
+      <a href="/privacy/">Privacy</a>
+    </nav>
+    <span class="footer-copy">© 2026 · Lisbon</span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -8,6 +8,8 @@ layout: post
 
 ---
 
+**Quick answer:** Rome2rio aggregates every transport option that might exist between two cities, without rating how current or reliable each one is. bysloth plans a specific overland route and rates each leg's confidence, so you know what to double-check before booking.
+
 Rome2rio and [bysloth](https://bysloth.com/) look similar from a distance — both take two cities and show you how to get between them without flying. The difference is in what each one is confident about, and how honest it is when it isn't.
 
 Rome2rio is a **route-possibility aggregator**. Its strength is showing you every mode that might connect two places — train, bus, ferry, flight — pulled together from a huge range of sources. It's a good tool for the question "what kinds of transport exist between these cities?"
@@ -24,7 +26,7 @@ bysloth is a **route planner built around uncertainty**. It's overland-only (no 
 | Best for | Sketching what modes exist between two cities | Building a route you can actually plan a departure date around |
 | Weakest coverage | Locally-operated buses/shuttles with no structured data feed (Central America, Southeast Asia, parts of Africa) | Corridors bysloth hasn't built confidence data for yet — marked "unverified," not hidden |
 
-## Where the gap actually is
+## Where does Rome2rio actually fall short?
 
 We wrote a [longer breakdown of this](/blog/2026/05/10/why-rome2rio-gets-overland-routes-wrong.html) after seeing the same complaint pattern repeatedly: Rome2rio is reliable where the underlying operator data is structured and current — major European rail, for instance — and much weaker wherever overland travel actually gets interesting: small local bus companies with no API, informal border crossings, seasonal services. In those places, Rome2rio can show a route exists without being able to tell you whether it's actually running this week.
 
