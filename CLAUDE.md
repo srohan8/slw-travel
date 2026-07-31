@@ -1,4 +1,4 @@
-# bysloth — Claude instructions
+﻿# bysloth — Claude instructions
 
 ## Mobile design is critical — never break it
 
@@ -92,7 +92,7 @@ in a future edit.
 All pages use the light border-top footer from `index.html`. Never use a dark `background:var(--dusk)` footer.
 
 Footer CSS class: `.footer` (tool pages) / `.site-footer` (blog pages).
-Footer always contains: bysloth logo + nav links + `© 2026 · Lisbon`.
+Footer always contains: bysloth logo + nav links + `© 2026`.
 
 ## Agent skills
 
