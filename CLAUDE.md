@@ -80,6 +80,13 @@ a CTA, a kicker — use `--sage` (mustard) instead. Reusing `--signal` for a
 non-live element visually implies "this is currently tracking," which is
 misleading.
 
+**Exception — map tiles.** Journey Detail, the mini-map, the live recording
+map, and the map-view screen intentionally use full-color OpenStreetMap
+tiles (including blue water/highways), matching the Planner's route-preview
+map. This is a deliberate exception to the "no blue" rule — real maps need
+water to read as water. Don't "fix" these back to monochrome CartoDB tiles
+in a future edit.
+
 ## Footer — consistent across all pages
 
 All pages use the light border-top footer from `index.html`. Never use a dark `background:var(--dusk)` footer.

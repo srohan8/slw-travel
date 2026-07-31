@@ -305,6 +305,53 @@ app.get('/api/brave-web-search', async (req, res) => {
   }
 });
 
+// ── POST /api/queue-seed-result — write raw Brave results into
+// booking_sites_pending using the service key (mirrors /api/verify-leg's
+// validation/error-shape conventions). Needed because the reactive
+// first-time-country trigger (app/index.html's _maybeTriggerReactiveSeed)
+// fires from a regular, non-admin user's browser session — that session
+// can't satisfy booking_sites_pending's is_admin-gated insert RLS directly,
+// so this one write path goes through the service key server-side instead.
+// The admin-triggered bulk sweep also flows through here for consistency,
+// so admins have one single review surface instead of two.
+app.post('/api/queue-seed-result', async (req, res) => {
+  const { country_code, category, results, trigger_source } = req.body || {};
+  if (!country_code || !category || !Array.isArray(results) || !results.length) {
+    return res.status(400).json({ error: { message: 'country_code, category, and a non-empty results array are required' } });
+  }
+  const source = trigger_source === 'reactive_new_country' ? 'reactive_new_country' : 'bulk_seed';
+  const sbUrl = process.env.SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_KEY;
+  if (!sbUrl || !sbKey) {
+    return res.status(500).json({ error: { message: 'Server misconfiguration: SUPABASE_URL/SUPABASE_SERVICE_KEY missing' } });
+  }
+  const rows = results.slice(0, 20).map(r => ({
+    country_code, category,
+    title: r.title || '', url: r.url || '', description: r.description || '',
+    trigger_source: source,
+  })).filter(r => r.url);
+  if (!rows.length) return res.status(400).json({ error: { message: 'No results had a usable url' } });
+  try {
+    const upstream = await fetch(`${sbUrl}/rest/v1/booking_sites_pending`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: sbKey,
+        Authorization: `Bearer ${sbKey}`,
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(rows),
+    });
+    if (!upstream.ok) {
+      const raw = await upstream.text();
+      return res.status(502).json({ error: { message: 'Queue-seed-result upstream error: ' + raw.slice(0, 200) } });
+    }
+    res.json({ ok: true, queued: rows.length });
+  } catch (err) {
+    res.status(502).json({ error: { message: 'Queue-seed-result upstream error: ' + err.message } });
+  }
+});
+
 // ── Supabase usage logger ────────────────────────────────────────────────────
 // NOTE: DeepSeek figures are an approximation as of this writing (deepseek-chat,
 // standard non-cached rate) — verify against https://api-docs.deepseek.com/quick_start/pricing
