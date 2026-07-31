@@ -5609,16 +5609,27 @@ function renderTransportLinks(mode, orig, dest, allowedNames, legRegion, allowed
   if (!sources.length) return '';
 
   if (allowedNames && allowedNames.length) {
-    // AI explicitly recommended these sites — trust it, skip region gate.
-    // Matched: use their proper URL template. Unmatched: Google search fallback.
-    const matched   = sources.filter(s => allowedNames.includes(s.name));
+    // AI explicitly recommended these sites — trust the name match, but still
+    // honor each site's own region tags and enabled/disabled state. The AI can
+    // (and does) hallucinate a real site for a leg it doesn't actually cover
+    // (e.g. suggesting a Peru bus operator for a Central Asia route); an admin
+    // excluding a site for a region, or disabling it outright, must not be
+    // overridable just because the AI named it anyway.
+    const allSites  = _readAllSites();
+    const matched   = sources.filter(s =>
+      allowedNames.includes(s.name) &&
+      (!legRegion || !s.regions.length || s.regions.includes(legRegion))
+    );
     const unmatched = allowedNames.filter(n => !matched.find(s => s.name === n));
-    const fallbacks = unmatched.map(n => ({
+    // Only names with no entry in our site registry at all (enabled, disabled,
+    // or region-excluded) get a Google-search fallback - a known site that got
+    // filtered out above must stay hidden, not reappear as a fallback link.
+    const trulyUnknown = unmatched.filter(n => !allSites.find(s => s.name === n));
+    const fallbacks = trulyUnknown.map(n => ({
       name: n,
       buildUrl: (o, d) => `https://www.google.com/search?q=${encodeURIComponent(n + ' ' + o + ' to ' + d + ' ticket')}`
     }));
     sources = [...matched, ...fallbacks];
-    // sources is now guaranteed non-empty if AI gave any names
   } else if (legRegion) {
     // No AI recommendation — use region tags as fallback filter.
     // sites with regions:[] are global; others only show when region matches.
@@ -5661,9 +5672,11 @@ function renderAccommodationLinks(city, suggestedNames, accomNote) {
   let sources = AFF.accommodation || [];
   if (!sources.length) return '<div style="font-size:12px;color:var(--text3);padding:2px 0">No accommodation sites configured.</div>';
   if (suggestedNames?.length) {
-    const matched   = sources.filter(s => suggestedNames.includes(s.name));
-    const unmatched = suggestedNames.filter(n => !matched.find(s => s.name === n));
-    const fallbacks = unmatched.map(n => ({
+    const matched      = sources.filter(s => suggestedNames.includes(s.name));
+    const allSites     = _readAllSites();
+    const unmatched    = suggestedNames.filter(n => !matched.find(s => s.name === n));
+    const trulyUnknown = unmatched.filter(n => !allSites.find(s => s.name === n));
+    const fallbacks = trulyUnknown.map(n => ({
       name: n,
       buildUrl: (c) => `https://www.google.com/search?q=${encodeURIComponent(n + ' ' + c + ' accommodation')}`
     }));
@@ -9706,6 +9719,8 @@ async function renderProfilePanel() {
     <span style="color:var(--fern);cursor:pointer" onclick="document.getElementById('prof-settings-section').scrollIntoView({behavior:'smooth'})">Account settings</span>
     <span>·</span>
     <span style="color:var(--fern);cursor:pointer" onclick="exportTrip()">Export data</span>
+    <span>·</span>
+    <a href="/blog/" style="color:var(--fern);text-decoration:none">Route research &amp; guides →</a>
     <span style="flex:1"></span>
     <span style="color:#C4622D;cursor:pointer" onclick="signOut()">Sign out</span>
   </div>`;
