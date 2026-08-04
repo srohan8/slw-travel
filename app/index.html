@@ -2199,18 +2199,66 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
         <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 0.75rem">AI provider</h3>
         <p style="font-size:13px;color:var(--text2);line-height:1.55;margin:0 0 1.25rem">Claude is the default for route generation. DeepSeek can be enabled as a failsafe if Claude's call fails, or forced on directly to test it. The DeepSeek API key itself is set as a Railway environment variable (<code>DEEPSEEK_API_KEY</code>) — not stored here.</p>
 
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-          <input type="checkbox" id="aiFailsafeToggle" style="cursor:pointer" onchange="saveAiProviderSettings()"/>
-          <label for="aiFailsafeToggle" style="font-size:13px;color:var(--text);cursor:pointer">Enable DeepSeek failsafe (auto-fallback if Claude's call fails)</label>
+        <!-- Priority chain -->
+        <div style="margin-bottom:16px">
+          <div class="lbl" style="margin-bottom:6px">Provider priority (Auto mode — tried in order, first success wins)</div>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;font-size:13px">
+            <span style="color:var(--muted)">1st</span>
+            <select class="inp" id="aiChain1" onchange="saveAiProviderSettings()" style="padding:4px 8px">
+              <option value="anthropic">Claude (Anthropic direct)</option>
+              <option value="pollinations">Pollinations AI (free)</option>
+              <option value="openrouter">OpenRouter</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+            <span style="color:var(--muted)">2nd</span>
+            <select class="inp" id="aiChain2" onchange="saveAiProviderSettings()" style="padding:4px 8px">
+              <option value="">— none —</option>
+              <option value="anthropic">Claude (Anthropic direct)</option>
+              <option value="pollinations">Pollinations AI (free)</option>
+              <option value="openrouter">OpenRouter</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+            <span style="color:var(--muted)">3rd</span>
+            <select class="inp" id="aiChain3" onchange="saveAiProviderSettings()" style="padding:4px 8px">
+              <option value="">— none —</option>
+              <option value="anthropic">Claude (Anthropic direct)</option>
+              <option value="pollinations">Pollinations AI (free)</option>
+              <option value="openrouter">OpenRouter</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+          </div>
         </div>
 
+        <!-- Model overrides -->
         <div style="margin-bottom:16px">
-          <div class="lbl" style="margin-bottom:4px">Force provider — for testing</div>
+          <div class="lbl" style="margin-bottom:6px">Model overrides (leave blank to use default)</div>
+          <div style="display:grid;grid-template-columns:120px 1fr;gap:6px 10px;align-items:center;font-size:13px">
+            <span style="color:var(--muted)">Claude</span>
+            <input class="inp" id="aiModelAnthropic" placeholder="claude-sonnet-4-6" oninput="debounceSaveAi()" style="padding:4px 8px"/>
+            <span style="color:var(--muted)">OpenRouter</span>
+            <input class="inp" id="aiModelOpenrouter" placeholder="anthropic/claude-sonnet-4-6" oninput="debounceSaveAi()" style="padding:4px 8px"/>
+            <span style="color:var(--muted)">DeepSeek</span>
+            <input class="inp" id="aiModelDeepeek" placeholder="deepseek-chat" oninput="debounceSaveAi()" style="padding:4px 8px"/>
+            <span style="color:var(--muted)">Pollinations</span>
+            <input class="inp" id="aiModelPollinations" placeholder="openai" oninput="debounceSaveAi()" style="padding:4px 8px"/>
+          </div>
+        </div>
+
+        <!-- Force override (testing) -->
+        <div style="margin-bottom:16px">
+          <div class="lbl" style="margin-bottom:4px">Force provider — bypass chain for testing</div>
           <select class="inp" id="aiForceProviderSelect" onchange="saveAiProviderSettings()">
-            <option value="">Auto (Claude, failsafe if enabled above)</option>
-            <option value="claude">Force Claude (ignore failsafe)</option>
-            <option value="deepseek">Force DeepSeek</option>
+            <option value="">Auto (use priority chain above)</option>
+            <option value="claude">Force Claude only</option>
+            <option value="deepseek">Force DeepSeek only</option>
+            <option value="openrouter">Force OpenRouter only</option>
+            <option value="pollinations">Force Pollinations AI only</option>
           </select>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+          <input type="checkbox" id="aiFailsafeToggle" style="cursor:pointer" onchange="saveAiProviderSettings()"/>
+          <label for="aiFailsafeToggle" style="font-size:13px;color:var(--text);cursor:pointer">Legacy failsafe (used only when no chain is set — falls back to DeepSeek if Claude fails)</label>
         </div>
 
         <span id="aiProviderSaveStatus" style="font-size:12px;color:var(--fern)"></span>
@@ -3593,23 +3641,47 @@ async function adminToggleGpsBeta(userId, enabled) {
   if (error) { alert('Failed to update: ' + error.message); return; }
 }
 
-// ── Admin > AI provider — reads/writes admin_settings (ai_failsafe_enabled,
-// ai_force_provider), which proxy/server.js reads on every /api/ai call.
+// ── Admin > AI provider ───────────────────────────────────────────────────────
+const AI_SETTINGS_KEYS = [
+  'ai_failsafe_enabled', 'ai_force_provider', 'ai_provider_chain',
+  'ai_model_anthropic', 'ai_model_deepseek', 'ai_model_openrouter', 'ai_model_pollinations',
+];
 async function renderAdminAiProvider() {
-  const { data } = await sb.from('admin_settings').select('key, value').in('key', ['ai_failsafe_enabled', 'ai_force_provider']);
+  const { data } = await sb.from('admin_settings').select('key, value').in('key', AI_SETTINGS_KEYS);
   const get = k => data?.find(row => row.key === k)?.value;
   document.getElementById('aiFailsafeToggle').checked = get('ai_failsafe_enabled') === true;
   document.getElementById('aiForceProviderSelect').value = get('ai_force_provider') || '';
+  const chain = get('ai_provider_chain');
+  document.getElementById('aiChain1').value = (Array.isArray(chain) && chain[0]) || 'anthropic';
+  document.getElementById('aiChain2').value = (Array.isArray(chain) && chain[1]) || '';
+  document.getElementById('aiChain3').value = (Array.isArray(chain) && chain[2]) || '';
+  document.getElementById('aiModelAnthropic').value    = get('ai_model_anthropic')    || '';
+  document.getElementById('aiModelOpenrouter').value   = get('ai_model_openrouter')   || '';
+  document.getElementById('aiModelDeepeek').value      = get('ai_model_deepseek')     || '';
+  document.getElementById('aiModelPollinations').value = get('ai_model_pollinations') || '';
 }
+let _aiSaveTimer = null;
+function debounceSaveAi() { clearTimeout(_aiSaveTimer); _aiSaveTimer = setTimeout(saveAiProviderSettings, 800); }
 async function saveAiProviderSettings() {
+  clearTimeout(_aiSaveTimer);
   const failsafe = document.getElementById('aiFailsafeToggle').checked;
   const force = document.getElementById('aiForceProviderSelect').value || null;
+  const chain = [
+    document.getElementById('aiChain1').value,
+    document.getElementById('aiChain2').value,
+    document.getElementById('aiChain3').value,
+  ].filter(Boolean);
   const statusEl = document.getElementById('aiProviderSaveStatus');
   statusEl.textContent = 'Saving…';
   try {
     const { error } = await sb.from('admin_settings').upsert([
-      { key: 'ai_failsafe_enabled', value: failsafe },
-      { key: 'ai_force_provider',   value: force },
+      { key: 'ai_failsafe_enabled',    value: failsafe },
+      { key: 'ai_force_provider',      value: force },
+      { key: 'ai_provider_chain',      value: chain.length ? chain : null },
+      { key: 'ai_model_anthropic',     value: document.getElementById('aiModelAnthropic').value.trim()    || null },
+      { key: 'ai_model_openrouter',    value: document.getElementById('aiModelOpenrouter').value.trim()   || null },
+      { key: 'ai_model_deepseek',      value: document.getElementById('aiModelDeepeek').value.trim()      || null },
+      { key: 'ai_model_pollinations',  value: document.getElementById('aiModelPollinations').value.trim() || null },
     ], { onConflict: 'key' });
     if (error) throw error;
     statusEl.textContent = 'Saved ✓';

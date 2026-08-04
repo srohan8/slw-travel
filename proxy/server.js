@@ -40,26 +40,40 @@ app.get('/', (_req, res) => res.json({ ok: true, service: 'slw-travel-proxy' }))
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 // ── AI provider settings (admin-configurable via admin_settings table) ───────
-// ai_failsafe_enabled: auto-retry with DeepSeek if Claude's call fails.
-// ai_force_provider:   'claude' | 'deepseek' | null(auto) — manual override,
-//                      set from Admin > AI provider in app/index.html.
-// Reads fail safe (defaults to Claude-only, no failsafe) rather than blocking
-// the request if Supabase is briefly unreachable.
+// ai_force_provider:   'claude'|'deepseek'|'openrouter'|'pollinations'|null
+// ai_provider_chain:  JSON array — priority order for auto mode, e.g. ["pollinations","anthropic"]
+// ai_model_*:         model overrides per provider (anthropic/deepseek/openrouter/pollinations)
 async function getAiProviderSettings() {
   const sbUrl = process.env.SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_KEY;
-  if (!sbUrl || !sbKey) return { failsafeEnabled: false, forceProvider: null };
+  if (!sbUrl || !sbKey) return { failsafeEnabled: false, forceProvider: null, providerChain: null, modelOverrides: {} };
   try {
+    const keys = [
+      'ai_failsafe_enabled', 'ai_force_provider', 'ai_provider_chain',
+      'ai_model_anthropic', 'ai_model_deepseek', 'ai_model_openrouter', 'ai_model_pollinations',
+    ];
     const r = await fetch(
-      `${sbUrl}/rest/v1/admin_settings?key=in.(ai_failsafe_enabled,ai_force_provider)&select=key,value`,
+      `${sbUrl}/rest/v1/admin_settings?key=in.(${keys.join(',')})&select=key,value`,
       { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
     );
     const rows = await r.json();
     const get = k => rows.find?.(row => row.key === k)?.value;
-    return { failsafeEnabled: get('ai_failsafe_enabled') === true, forceProvider: get('ai_force_provider') || null };
+    const chainRaw = get('ai_provider_chain');
+    const providerChain = Array.isArray(chainRaw) && chainRaw.length ? chainRaw : null;
+    return {
+      failsafeEnabled: get('ai_failsafe_enabled') === true,
+      forceProvider: get('ai_force_provider') || null,
+      providerChain,
+      modelOverrides: {
+        anthropic:   get('ai_model_anthropic')   || null,
+        deepseek:    get('ai_model_deepseek')    || null,
+        openrouter:  get('ai_model_openrouter')  || null,
+        pollinations: get('ai_model_pollinations') || null,
+      },
+    };
   } catch (e) {
     console.warn('getAiProviderSettings failed, defaulting to Claude-only:', e.message);
-    return { failsafeEnabled: false, forceProvider: null };
+    return { failsafeEnabled: false, forceProvider: null, providerChain: null, modelOverrides: {} };
   }
 }
 
@@ -74,7 +88,9 @@ app.post('/api/ai', async (req, res) => {
   // To change without a deploy: set ANTHROPIC_MODEL in Railway env vars
   const PRIMARY_MODEL  = process.env.ANTHROPIC_MODEL  || 'claude-sonnet-4-6';
   const FALLBACK_MODEL = process.env.ANTHROPIC_MODEL_FALLBACK || 'claude-haiku-4-5-20251001';
-  const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
+  const DEEPSEEK_MODEL     = process.env.DEEPSEEK_MODEL     || 'deepseek-chat';
+  const OPENROUTER_MODEL   = process.env.OPENROUTER_MODEL   || 'anthropic/claude-sonnet-4-6';
+  const POLLINATIONS_MODEL = process.env.POLLINATIONS_MODEL || 'openai';
 
   const callAnthropic = async (model) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -93,57 +109,81 @@ app.post('/api/ai', async (req, res) => {
     return { r, data: await r.json() };
   };
 
-  // DeepSeek's API is OpenAI-compatible — different request/response shape
-  // than Anthropic's Messages API. Normalized here so the rest of this
-  // handler (status handling, usage logging) and the frontend's callAI()
-  // (app/index.html, expects d.content[].text) need no provider-specific code.
-  const callDeepSeek = async (model) => {
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) return { r: { ok: false, status: 500 }, data: { error: { message: 'Server misconfiguration: DEEPSEEK_API_KEY missing' } } };
+  // Helper: normalize an OpenAI-compatible response into Anthropic shape
+  // so the rest of this handler and the frontend need no provider-specific code.
+  const normalizeOaiResponse = (raw, fallbackModel) => ({
+    content: [{ type: 'text', text: raw.choices?.[0]?.message?.content || '' }],
+    model:   raw.model || fallbackModel,
+    usage: {
+      input_tokens:  raw.usage?.prompt_tokens     || 0,
+      output_tokens: raw.usage?.completion_tokens || 0,
+    },
+  });
+
+  const callOaiCompat = async (url, model, apiKey, extraHeaders = {}) => {
+    if (apiKey === null) return { r: { ok: false, status: 500 }, data: { error: { message: `Server misconfiguration: API key missing for ${url}` } } };
     const chatMessages = system ? [{ role: 'system', content: system }, ...messages] : messages;
-    const r = await fetch('https://api.deepseek.com/chat/completions', {
+    const r = await fetch(url, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      headers: { 'Content-Type': 'application/json', ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}), ...extraHeaders },
       body: JSON.stringify({ model, messages: chatMessages, max_tokens: max_tokens || 16000 }),
     });
     const raw = await r.json();
     if (!r.ok) return { r, data: raw };
-    return {
-      r,
-      data: {
-        content: [{ type: 'text', text: raw.choices?.[0]?.message?.content || '' }],
-        model:   raw.model || model,
-        usage: {
-          input_tokens:  raw.usage?.prompt_tokens     || 0,
-          output_tokens: raw.usage?.completion_tokens || 0,
-        },
-      },
-    };
+    return { r, data: normalizeOaiResponse(raw, model) };
   };
 
-  const { failsafeEnabled, forceProvider } = await getAiProviderSettings();
+  const callDeepSeek = (model) => callOaiCompat(
+    'https://api.deepseek.com/chat/completions', model, process.env.DEEPSEEK_API_KEY
+  );
+
+  const callOpenRouter = (model) => callOaiCompat(
+    'https://openrouter.ai/api/v1/chat/completions', model, process.env.OPENROUTER_API_KEY,
+    { 'HTTP-Referer': 'https://bysloth.com', 'X-Title': 'bysloth' }
+  );
+
+  // Pollinations AI is free with no API key required
+  const callPollinations = (model) => callOaiCompat(
+    'https://text.pollinations.ai/openai', model, ''
+  );
+
+  const { failsafeEnabled, forceProvider, providerChain, modelOverrides } = await getAiProviderSettings();
+
+  // Resolve effective models: admin override > env var > hardcoded default
+  const anthropicModel    = modelOverrides.anthropic    || PRIMARY_MODEL;
+  const deepseekModel     = modelOverrides.deepseek     || DEEPSEEK_MODEL;
+  const openrouterModel   = modelOverrides.openrouter   || OPENROUTER_MODEL;
+  const pollinationsModel = modelOverrides.pollinations  || POLLINATIONS_MODEL;
+
+  // Map provider name → caller function
+  const tryProvider = async (name) => {
+    if (name === 'anthropic' || name === 'claude') {
+      let res = await callAnthropic(anthropicModel);
+      if (!res.r.ok && res.data.error?.type === 'not_found_error') {
+        console.warn(`Anthropic model ${anthropicModel} not found, falling back to ${FALLBACK_MODEL}`);
+        res = await callAnthropic(FALLBACK_MODEL);
+      }
+      return { ...res, usedProvider: 'claude' };
+    }
+    if (name === 'deepseek')     return { ...(await callDeepSeek(deepseekModel)),     usedProvider: 'deepseek' };
+    if (name === 'openrouter')   return { ...(await callOpenRouter(openrouterModel)),   usedProvider: 'openrouter' };
+    if (name === 'pollinations') return { ...(await callPollinations(pollinationsModel)), usedProvider: 'pollinations' };
+    return { r: { ok: false, status: 400 }, data: { error: { message: `Unknown provider: ${name}` } }, usedProvider: name };
+  };
 
   try {
     let r, data, usedProvider = 'claude';
 
-    if (forceProvider === 'deepseek') {
-      ({ r, data } = await callDeepSeek(DEEPSEEK_MODEL));
-      usedProvider = 'deepseek';
+    if (forceProvider && forceProvider !== 'auto') {
+      // Explicit force — use exactly that provider, no fallback
+      ({ r, data, usedProvider } = await tryProvider(forceProvider));
     } else {
-      ({ r, data } = await callAnthropic(PRIMARY_MODEL));
-
-      // If primary model is retired/not-found, retry with fallback
-      if (!r.ok && data.error?.type === 'not_found_error') {
-        console.warn(`Primary model ${PRIMARY_MODEL} not found, falling back to ${FALLBACK_MODEL}`);
-        ({ r, data } = await callAnthropic(FALLBACK_MODEL));
-      }
-
-      // Claude failed for some other reason — failsafe to DeepSeek if enabled
-      // (and not explicitly forced to stay on Claude for a test).
-      if (!r.ok && failsafeEnabled && forceProvider !== 'claude') {
-        console.warn(`Claude failed (${data.error?.message || r.status}) — failing over to DeepSeek`);
-        ({ r, data } = await callDeepSeek(DEEPSEEK_MODEL));
-        usedProvider = 'deepseek-failsafe';
+      // Auto mode: iterate provider chain in priority order, stop at first success
+      const chain = providerChain || (failsafeEnabled ? ['anthropic', 'deepseek'] : ['anthropic']);
+      for (const name of chain) {
+        ({ r, data, usedProvider } = await tryProvider(name));
+        if (r.ok) break;
+        console.warn(`Provider ${name} failed (${data.error?.message || r.status}), trying next in chain…`);
       }
     }
 
