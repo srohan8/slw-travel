@@ -142,9 +142,11 @@ app.post('/api/ai', async (req, res) => {
     { 'HTTP-Referer': 'https://bysloth.com', 'X-Title': 'bysloth' }
   );
 
-  // Pollinations AI is free with no API key required
+  // Pollinations AI's anonymous tier is free with no key, but "Quest"-tier
+  // models (e.g. openai/gpt-5-nano, openai/gpt-5.4-nano) require a pollen-backed
+  // API key. Pass it when set; fall back to unauthenticated (free-tier-only) otherwise.
   const callPollinations = (model) => callOaiCompat(
-    'https://text.pollinations.ai/openai', model, ''
+    'https://text.pollinations.ai/openai', model, process.env.POLLINATIONS_API_KEY || ''
   );
 
   const { failsafeEnabled, forceProvider, providerChain, modelOverrides } = await getAiProviderSettings();
