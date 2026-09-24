@@ -121,7 +121,10 @@ app.post('/api/ai', async (req, res) => {
   });
 
   const callOaiCompat = async (url, model, apiKey, extraHeaders = {}) => {
-    if (apiKey === null) return { r: { ok: false, status: 500 }, data: { error: { message: `Server misconfiguration: API key missing for ${url}` } } };
+    // Loose check catches both null and a missing env var (undefined). An empty
+    // string is passed deliberately by callPollinations for its anonymous, no-key
+    // tier, so it must stay distinct from "misconfigured" and fall through.
+    if (apiKey == null) return { r: { ok: false, status: 500 }, data: { error: { message: `Server misconfiguration: API key missing for ${url}` } } };
     const chatMessages = system ? [{ role: 'system', content: system }, ...messages] : messages;
     const r = await fetch(url, {
       method:  'POST',
