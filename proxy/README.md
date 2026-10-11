@@ -23,7 +23,7 @@ that can't live in client-side code (Anthropic, DeepSeek).
 | `/api/elevation` | GET | Proxies Open-Topo-Data SRTM90m. Query: `?locations=lat,lon\|lat,lon\|...`. |
 | `/api/geocode` | GET | Proxies Komoot Photon. Query: `?q=<place name>`. |
 | `/api/verify-leg` | POST | Grounds a shaky AI-suggested leg (confidence `check`/`uncertain`) against Brave's Answers API. Body: `{from, to, mode}`. Returns `{unchanged:true}` or `{unchanged:false, confidence?, cost_usd?, notes?, source_url?}`. |
-| `/api/brave-web-search` | GET | Raw Brave Web Search passthrough. Query: `?q=<search terms>`. Returns `{results: [{title, url, description}]}`. Only used by `prototype/booking-link-compare.html` — not called from the main app. |
+| `/api/brave-web-search` | GET | Raw Brave Web Search passthrough. Query: `?q=<search terms>`. Returns `{results: [{title, url, description}]}`. Used by the admin booking-site tools in `app/index.html` (coverage search, per-country discovery, bulk seed, per-site re-check). |
 
 ## Env vars
 

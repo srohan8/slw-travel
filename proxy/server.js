@@ -314,12 +314,11 @@ app.post('/api/verify-leg', async (req, res) => {
   }
 });
 
-// ── GET /api/brave-web-search — raw Brave Web Search results (prototype only).
+// ── GET /api/brave-web-search — raw Brave Web Search results.
 // Distinct from /api/verify-leg (Brave Answers, a synthesized/cited response)
-// -- this returns the plain search-result list, for the booking-link-compare
-// prototype (prototype/booking-link-compare.html) to eyeball against the
-// app's curated DEFAULT_SITES fallback on thin-coverage corridors (Iran,
-// Central Asia, etc). Not called from the main app.
+// -- this returns the plain search-result list. Called by the admin booking-site
+// tools in app/index.html: site-form coverage search, per-country URL discovery,
+// bulk seed sweep, and per-site "Re-check with Brave".
 app.get('/api/brave-web-search', async (req, res) => {
   const { q } = req.query;
   if (!q) return res.status(400).json({ error: { message: 'q query param required' } });
