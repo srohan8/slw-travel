@@ -29,11 +29,16 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
 </script>
 <script>
 !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ai Ri init Vi Yi Rr zi Gi Zi capture calculateEventProperties en register register_once register_for_session unregister unregister_for_session sn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync an identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty rn Ki createPersonProfile setInternalOrTestUser nn $i hn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Xi debug Mr tn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-// Consent is asked on the marketing pages (same origin) and stored here; no choice or a decline = no tracking.
-if (localStorage.getItem('slw_cookie_consent') === 'accepted') {
+// Consent is asked by the banner in this app or on the marketing pages (same origin, same key); no choice or a decline = no tracking.
+function initPostHog() {
   // Session replay stays off in the app: journals and trip notes are private user text.
   posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only',disable_session_recording:true});
 }
+try {
+  const c = localStorage.getItem('slw_cookie_consent');
+  if (c === 'accepted') initPostHog();
+  else if (c === 'declined') Object.keys(localStorage).filter(k => k.startsWith('ph_phc_')).forEach(k => localStorage.removeItem(k));
+} catch (e) {}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="showFatalError('CDN load failed: supabase-js (cdn.jsdelivr.net unreachable)')"></script>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
@@ -2327,6 +2332,24 @@ const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 // Analytics: no-op without consent (posthog not initialised) and for the admin account, so team browsing
 // doesn't skew usage numbers. Properties are counts/flags only, never place names or free text.
+function analyticsConsent() { try { return localStorage.getItem('slw_cookie_consent'); } catch (e) { return null; } }
+function analyticsLabel() { return analyticsConsent() === 'accepted' ? 'Analytics: on' : 'Analytics: off'; }
+// Single entry point for the banner and the Profile toggle. Declining also withdraws: stops capture and
+// clears PostHog's stored id, so switching it off is as easy as switching it on.
+function setAnalyticsConsent(c) {
+  try { localStorage.setItem('slw_cookie_consent', c); } catch (e) {}
+  const b = document.getElementById('slw-consent-banner'); if (b) b.style.display = 'none';
+  try {
+    if (c === 'accepted') {
+      if (window.posthog && posthog.__loaded) posthog.opt_in_capturing(); else initPostHog();
+    } else {
+      if (window.posthog && posthog.__loaded) { posthog.reset(); posthog.opt_out_capturing(); } // reset first: it would clear the opt-out flag
+      Object.keys(localStorage).filter(k => k.startsWith('ph_phc_')).forEach(k => localStorage.removeItem(k));
+    }
+  } catch (e) {}
+  document.querySelectorAll('.analytics-toggle').forEach(el => { el.textContent = analyticsLabel(); });
+}
+function toggleAnalytics() { setAnalyticsConsent(analyticsConsent() === 'accepted' ? 'declined' : 'accepted'); }
 function track(name, props) {
   try { if (!isAdminUser && window.posthog && posthog.__loaded) posthog.capture(name, props); } catch (e) {}
 }
@@ -12384,6 +12407,7 @@ async function renderProfilePanel() {
       <div style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:10px">Welcome to bysloth</div>
       <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Sign in to save trips, track karma, and contribute notes to the community.</p>
       <a class="btn btn-primary" href="/auth.html" onclick="goToAuth();return false;">Sign in / Create account</a>
+      <div style="margin-top:20px"><span class="analytics-toggle" role="button" tabindex="0" style="color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline" onclick="toggleAnalytics()" onkeydown="if(event.key==='Enter'||event.key===' '){toggleAnalytics();}">${analyticsLabel()}</span></div>
     </div>`;
     return;
   }
@@ -12575,6 +12599,8 @@ async function renderProfilePanel() {
     <span style="color:var(--fern);cursor:pointer" onclick="document.getElementById('prof-settings-section').scrollIntoView({behavior:'smooth'})">Account settings</span>
     <span>·</span>
     <span style="color:var(--fern);cursor:pointer" onclick="exportTrip()">Export data</span>
+    <span>·</span>
+    <span class="analytics-toggle" role="button" tabindex="0" style="color:var(--fern);cursor:pointer" onclick="toggleAnalytics()" onkeydown="if(event.key==='Enter'||event.key===' '){toggleAnalytics();}">${analyticsLabel()}</span>
     <span>·</span>
     <a href="/blog/" style="color:var(--fern);text-decoration:none">Route research &amp; guides →</a>
     <span style="flex:1"></span>
@@ -12832,6 +12858,22 @@ init().catch(e => {
 </script>
 
 <!-- ── Mobile bottom nav ──────────────────────────────────────── -->
+<!-- Analytics consent: shown until the visitor chooses; same key as the marketing pages. -->
+<style>
+  @media(max-width:640px){
+    #slw-consent-banner{bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important;flex-wrap:wrap;}
+    body.no-tabbar #slw-consent-banner,body.plan-results-active #slw-consent-banner{bottom:env(safe-area-inset-bottom,0px) !important;}
+  }
+  body.gps-fullscreen #slw-consent-banner{display:none !important;}
+</style>
+<div id="slw-consent-banner" role="dialog" aria-label="Analytics consent" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#0A0A0A;color:rgba(255,255,255,0.75);padding:14px 22px;align-items:center;justify-content:space-between;gap:12px 16px;font-size:13px;font-family:var(--body),system-ui,sans-serif;box-shadow:0 -1px 0 rgba(255,255,255,0.06),0 -4px 20px rgba(0,0,0,0.4);">
+  <span style="line-height:1.4;flex:1 1 220px;">We use analytics to see which parts of bysloth people use. It never includes what you type. <a href="/privacy/" style="color:rgba(255,255,255,0.5);text-decoration:underline">Learn&nbsp;more</a></span>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button onclick="setAnalyticsConsent('declined')" style="background:transparent;border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.6);padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
+    <button onclick="setAnalyticsConsent('accepted')" style="background:#D9973D;border:none;color:#161616;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
+  </div>
+</div>
+<script>if (!analyticsConsent()) document.getElementById('slw-consent-banner').style.display = 'flex';</script>
 <nav id="bottomNav" class="bottom-nav" aria-label="Navigation">
   <button class="bn-item bn-active" id="bn_plan" data-icon="compass"
     onclick="switchTab('plan',document.getElementById('navbtn_plan'))">
