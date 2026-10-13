@@ -27,6 +27,13 @@ window.addEventListener('unhandledrejection', (e) => {
 // overrides below) can never apply there, regardless of viewport width.
 if (window.Capacitor) document.documentElement.classList.add('native-app');
 </script>
+<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ai Ri init Vi Yi Rr zi Gi Zi capture calculateEventProperties en register register_once register_for_session unregister unregister_for_session sn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync an identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty rn Ki createPersonProfile setInternalOrTestUser nn $i hn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Xi debug Mr tn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+// Consent is asked on the marketing pages (same origin) and stored here; no choice or a decline = no tracking.
+if (localStorage.getItem('slw_cookie_consent') === 'accepted') {
+  posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'});
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="showFatalError('CDN load failed: supabase-js (cdn.jsdelivr.net unreachable)')"></script>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" type="module"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
@@ -2317,6 +2324,11 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
 const SUPA_URL  = 'https://xhbgplwahgdmqomgyjuo.supabase.co';
 const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmdwbHdhaGdkbXFvbWd5anVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzQwMjIsImV4cCI6MjA4OTY1MDAyMn0.7K5_k7iKiUMuHB9Dl60TKxp21J0c4MygYbekAqCfHTw';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+// Analytics: no-op without consent (posthog not initialised) and for the admin account, so team browsing
+// doesn't skew usage numbers. Properties are counts/flags only, never place names or free text.
+function track(name, props) {
+  try { if (!isAdminUser && window.posthog && posthog.__loaded) posthog.capture(name, props); } catch (e) {}
+}
 
 // ── Local Storage fallback (for offline / non-auth data) ──────────
 const storage = {
@@ -2859,6 +2871,7 @@ async function saveCurrentTrip() {
     document.getElementById('tripTitle').value = autoTitle;
   }
 
+  const _isNewTrip = !currentTripId;
   const tripData = {
     id: currentTripId || newTripId(),
     title: autoTitle, stops, legs,
@@ -2901,6 +2914,7 @@ async function saveCurrentTrip() {
 
   renderSavedTrips();
   updateActiveTripBar();
+  track(_isNewTrip ? 'trip_created' : 'trip_edited', { stops: stops.length, legs: legs.length, saved_to_cloud: savedToCloud });
   setTimeout(() => document.getElementById('saveStatus').textContent = '', 2500);
 }
 
@@ -3273,6 +3287,7 @@ function renderDeleteTripSheet() {
   </div>`;
 }
 function confirmDeleteTrip() {
+  track('trip_deleted');
   const trips = storage.get('trips') || [];
   storage.set('trips', trips.filter(x => x.id !== currentTripId));
   if (currentUser && _UUID_RE.test(currentTripId)) {
@@ -6080,6 +6095,7 @@ function switchTab(id, el) {
   // (updateNavAuth), but a direct URL/hash to #admin would otherwise
   // still open the panel.
   if (id === 'admin' && !isAdminUser) { switchTab('plan', document.getElementById('navbtn_plan')); return; }
+  track('screen_viewed', { screen: id });
   document.querySelectorAll('.nav-link').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const btn = el || document.getElementById('navbtn_' + id);
@@ -6519,6 +6535,7 @@ async function planRoute() {
   const budget = document.getElementById('pBudget').value.trim();
   const startDate = document.getElementById('pStartDate')?.value.trim() || '';
   const targetDays = document.getElementById('pDays')?.value.trim() || '';
+  track('search_performed', { has_via: !!via, has_budget: !!budget, has_dates: !!startDate, has_days: !!targetDays, signed_in: !!currentUser });
 
   // ── Cache lookup (local, then shared) — checked before the guest quota
   // gate below, so a cache hit never costs a guest one of their free
@@ -6527,6 +6544,7 @@ async function planRoute() {
   let hit = getCachedRoute(cacheKey) || findSubsetRoute(from, to, pace, prefModes);
   if (!hit) hit = await getSharedCachedRoute(cacheKey);
   if (hit) {
+    track('search_result', { source: 'cache', stops: hit.stops?.length || 0, legs: hit.legs?.length || 0 });
     setCachedRoute(cacheKey, hit, from, to); // warm the local cache too
     lastSuggestion = hit;
     document.getElementById('planResult').style.display = 'block';
@@ -6546,6 +6564,7 @@ async function planRoute() {
 
   const allowed = await checkAndGate('routePlans');
   if (!allowed) {
+    track('search_blocked', { reason: 'monthly_limit', signed_in: !!currentUser });
     document.getElementById('planResult').style.display = 'block';
     document.getElementById('planResult').innerHTML = `<div class="gate-msg"><h3>Monthly limit reached</h3><p>You've used all your free route plans this month. Upgrade to Pro for unlimited searches.</p><a href="#" class="btn btn-primary" onclick="openUpgrade();return false;">Upgrade to Pro</a></div>`;
     return;
@@ -6633,11 +6652,13 @@ Include ALL stops and ALL legs for the complete route. Do not truncate.`);
     writeSharedCachedRoute(cacheKey, data, from, to);
     updateCacheClearBtn();
     renderPlanSuggestion(data, false);
+    track('search_result', { source: 'ai', stops: data.stops?.length || 0, legs: data.legs?.length || 0 });
     verifyUncertainLegs(data); // fire-and-forget — must not block btn.disabled reset below
     resolveLegCountries(data); // fire-and-forget — writes leg.legCountry in place
     updateUsageBars();
   } catch (e) {
     console.error('planRoute error:', e);
+    track('search_failed');
     _stopRouteLoader();
     res.innerHTML = `<span style="color:var(--danger-text)">Could not get a suggestion — ${e.message || 'unknown error'}. Try again.</span>`;
   }
@@ -9569,6 +9590,7 @@ async function gpsEndCurrentTracking() {
 async function gpsStart(trip, { requireBackground = true } = {}) {
   if (!gpsIsNative()) { alert('Live GPS recording is only available on the bysloth mobile app.'); return { ok: false }; }
   _gps.mode = 'gps'; _gps.planned = trip || null;
+  track('tracking_started', { mode: 'gps' });
   _gps.startedAt = Date.now(); _gps.positions = []; _gps.stops = []; _gps.legs = []; _gps.suggestions = []; _gps.dwellStart = null; _gps.paused = false;
   gpsFlushCheckpoint(); _gps.lastFlush = 0; gpsFlushCheckpoint();
   const watcherOpts = { requestPermissions: true, stale: false, distanceFilter: 30 };
@@ -9588,6 +9610,7 @@ async function gpsStart(trip, { requireBackground = true } = {}) {
   }
 }
 function gpsStartManual(trip) {
+  track('tracking_started', { mode: 'manual' });
   _gps.mode = 'manual'; _gps.planned = trip || null;
   _gps.startedAt = Date.now(); _gps.stops = []; _gps.legs = []; _gps.suggestions = []; _gps.paused = false;
   gpsFlushCheckpoint(); _gps.lastFlush = 0; gpsFlushCheckpoint();
@@ -10601,6 +10624,7 @@ function jdJourneyTabHTML(t, stops, legs, m) {
 }
 
 function jdShareTrip(id) {
+  track('trip_shared');
   const trips = storage.get('trips') || [];
   const t = trips.find(x => x.id === id);
   if (!t) return;
@@ -12025,6 +12049,7 @@ function recRenderPublish() {
   </div>`;
 }
 function recDoPublish() {
+  track('journey_published', { audience: _recPub?.audience });
   // Record publish state on the trip blob and sync to backend.
   if (_recTrip) {
     _recTrip.published = true;
@@ -12603,6 +12628,7 @@ function stepStopDays(i, dir) {
 }
 
 function exportTrip() {
+  track('trip_exported');
   const title = document.getElementById('tripTitle').value;
   const lines = [`Trip: ${title}`, ''];
   stops.forEach((s, i) => {
