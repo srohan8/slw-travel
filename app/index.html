@@ -1342,7 +1342,9 @@ try {
   .jd-photos .rj-slide{max-width:100%;}
   .rj-card-grid{grid-template-columns:1fr;}
   body{overflow:hidden;height:100dvh;}
-  .container{padding:1rem 0.875rem 0;height:calc(100dvh - 112px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  /* width/min-width: body is a flex column and .container has margin:0 auto, which disables stretch, so it
+     shrink-wrapped to its widest content (e.g. Shared Journeys' no-wrap chip row) and overflowed the screen. */
+  .container{width:100%;min-width:0;padding:1rem 0.875rem 0;height:calc(100dvh - 112px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
   nav:not(#bottomNav){display:none !important;}
   .mobile-header{
     display:flex;align-items:center;height:56px;padding:0 6px;
