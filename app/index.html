@@ -2362,7 +2362,7 @@ function setAnalyticsConsent(c) {
 }
 function toggleAnalytics() { setAnalyticsConsent(analyticsConsent() === 'accepted' ? 'declined' : 'accepted'); }
 function track(name, props) {
-  try { if (!isAdminUser && window.posthog && posthog.__loaded) posthog.capture(name, props); } catch (e) {}
+  try { if (!isAdminUser && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && window.posthog && posthog.__loaded) posthog.capture(name, props); } catch (e) {}
 }
 
 // ── Local Storage fallback (for offline / non-auth data) ──────────
