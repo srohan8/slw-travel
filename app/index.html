@@ -33,6 +33,14 @@ if (window.Capacitor) document.documentElement.classList.add('native-app');
 function initPostHog() {
   // Session replay stays off in the app: journals and trip notes are private user text.
   posthog.init('phc_pXgQk4KkBHuFfnSd7VVHe6ZywTDq5dF6w479ae2q8xXU',{api_host:'https://eu.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only',disable_session_recording:true});
+  initMetaPixel();
+}
+// Meta Pixel loads only with the same consent as PostHog; declining revokes it for the rest of the session.
+function initMetaPixel() {
+  if (window.fbq) { fbq('consent', 'grant'); return; }
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init','1760067565252727');
+  fbq('track','PageView');
 }
 try {
   const c = localStorage.getItem('slw_cookie_consent');
@@ -2347,6 +2355,7 @@ function setAnalyticsConsent(c) {
     } else {
       if (window.posthog && posthog.__loaded) { posthog.reset(); posthog.opt_out_capturing(); } // reset first: it would clear the opt-out flag
       Object.keys(localStorage).filter(k => k.startsWith('ph_phc_')).forEach(k => localStorage.removeItem(k));
+      if (window.fbq) fbq('consent', 'revoke');
     }
   } catch (e) {}
   document.querySelectorAll('.analytics-toggle').forEach(el => { el.textContent = analyticsLabel(); });
