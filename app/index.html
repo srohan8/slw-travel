@@ -6570,7 +6570,7 @@ async function planRoute() {
   const budget = document.getElementById('pBudget').value.trim();
   const startDate = document.getElementById('pStartDate')?.value.trim() || '';
   const targetDays = document.getElementById('pDays')?.value.trim() || '';
-  track('search_performed', { has_via: !!via, has_budget: !!budget, has_dates: !!startDate, has_days: !!targetDays, signed_in: !!currentUser });
+  track('search_performed', { origin: from.slice(0, 80), destination: to.slice(0, 80), has_via: !!via, has_budget: !!budget, has_dates: !!startDate, has_days: !!targetDays, signed_in: !!currentUser });
 
   // ── Cache lookup (local, then shared) — checked before the guest quota
   // gate below, so a cache hit never costs a guest one of their free
