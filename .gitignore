@@ -22,3 +22,6 @@ android/keystore.properties
 # OS
 .DS_Store
 Thumbs.db
+
+# Video ad projects (large renders, not part of the site)
+bysloth-ad*/
