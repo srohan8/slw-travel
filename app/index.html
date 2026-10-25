@@ -7227,7 +7227,13 @@ async function geocodeStop(name) {
     // so a direct browser fetch() to it is blocked by CORS from any real origin.
     const url = PROXY_URL ? `${PROXY_URL}/api/geocode?q=${encodeURIComponent(name)}`
                            : `https://photon.komoot.io/api/?q=${encodeURIComponent(name)}&limit=1&lang=en`;
-    const res  = await fetch(url);
+    // A long route looks up every stop at once and the proxy's upstream can reject
+    // part of that burst; retry with a short backoff so those stops still get plotted.
+    let res = await fetch(url);
+    for (let attempt = 1; !res.ok && attempt <= 2; attempt++) {
+      await new Promise(r => setTimeout(r, 700 * attempt));
+      res = await fetch(url);
+    }
     if (!res.ok) {
       // Upstream/proxy error (502, rate-limit, etc.) -- not a real "zero
       // results" answer. Don't cache this as failed, or a transient hiccup

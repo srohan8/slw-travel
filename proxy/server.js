@@ -236,20 +236,65 @@ app.get('/api/elevation', async (req, res) => {
 // calls to it are blocked from any real origin (bysloth.com, etc.) — every
 // geocodeStop() call in app/index.html was failing silently for this reason,
 // which is why route maps showed disconnected gaps between stops.
+// A 21-stop route fires ~21 lookups at once; Photon throttles bursts from one
+// IP and the stops that failed were silently left off the map. So: cache every
+// answer, cap concurrent upstream calls, and fall back to Open-Meteo's geocoder
+// (same server-side hop, so visitors' IPs still never reach it).
+const _geoCache = new Map();
+let _geoActive = 0;
+const _geoWaiters = [];
+async function geoSlot() {
+  if (_geoActive >= 3) await new Promise(r => _geoWaiters.push(r));
+  _geoActive++;
+}
+function geoRelease() {
+  _geoActive--;
+  const next = _geoWaiters.shift();
+  if (next) next();
+}
+async function geocodePhoton(q) {
+  const r = await fetch(
+    `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1&lang=en`,
+    { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(6000) }
+  );
+  if (!r.ok) throw new Error('Photon HTTP ' + r.status);
+  return r.json();
+}
+// Reshaped to Photon's GeoJSON so geocodeStop() in the app doesn't care which one answered.
+async function geocodeOpenMeteo(q) {
+  const r = await fetch(
+    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`,
+    { signal: AbortSignal.timeout(6000) }
+  );
+  if (!r.ok) throw new Error('Open-Meteo HTTP ' + r.status);
+  const d = await r.json();
+  const p = d.results?.[0];
+  return { type: 'FeatureCollection', features: p ? [{
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] },
+    properties: { name: p.name, country: p.country, countrycode: p.country_code },
+  }] : [] };
+}
 app.get('/api/geocode', async (req, res) => {
   const { q } = req.query;
   if (!q) return res.status(400).json({ error: 'q query param required' });
+  const key = String(q).trim().toLowerCase();
+  // Place names don't move — cache aggressively
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  if (_geoCache.has(key)) return res.json(_geoCache.get(key));
+  await geoSlot();
   try {
-    const upstream = await fetch(
-      `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1&lang=en`,
-      { headers: { 'Accept': 'application/json' } }
-    );
-    const data = await upstream.json();
-    // Place names don't move — cache aggressively
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    res.status(upstream.status).json(data);
+    let data;
+    try { data = await geocodePhoton(q); }
+    catch (e1) { data = await geocodeOpenMeteo(q); }
+    if (_geoCache.size > 5000) _geoCache.clear();
+    _geoCache.set(key, data);
+    res.json(data);
   } catch (err) {
+    res.setHeader('Cache-Control', 'no-store');
     res.status(502).json({ error: { message: 'Geocode upstream error: ' + err.message } });
+  } finally {
+    geoRelease();
   }
 });
 
