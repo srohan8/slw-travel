@@ -12872,13 +12872,15 @@ init().catch(e => {
 <!-- Analytics consent: shown until the visitor chooses; same key as the marketing pages. -->
 <style>
   @media(max-width:640px){
-    #slw-consent-banner{bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important;flex-wrap:wrap;}
-    body.no-tabbar #slw-consent-banner,body.plan-results-active #slw-consent-banner{bottom:env(safe-area-inset-bottom,0px) !important;}
+    #slw-consent-banner{top:50% !important;bottom:auto !important;left:16px !important;right:16px !important;transform:translateY(-50%);flex-direction:column !important;align-items:stretch !important;text-align:center;gap:16px !important;padding:22px 20px !important;border-radius:16px !important;box-shadow:0 0 0 100vmax rgba(0,0,0,0.55),0 12px 40px rgba(0,0,0,0.5) !important;max-height:80vh;overflow:auto;}
+    #slw-consent-banner > div{width:100%;justify-content:center;}
+  #slw-consent-banner > span{flex:0 0 auto !important;}
+    #slw-consent-banner button{flex:1;padding:12px 16px !important;font-size:14px !important;}
   }
   body.gps-fullscreen #slw-consent-banner{display:none !important;}
 </style>
 <div id="slw-consent-banner" role="dialog" aria-label="Analytics consent" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#0A0A0A;color:rgba(255,255,255,0.75);padding:14px 22px;align-items:center;justify-content:space-between;gap:12px 16px;font-size:13px;font-family:var(--body),system-ui,sans-serif;box-shadow:0 -1px 0 rgba(255,255,255,0.06),0 -4px 20px rgba(0,0,0,0.4);">
-  <span style="line-height:1.4;flex:1 1 220px;">We use analytics to see which parts of bysloth people use. It never includes what you type. <a href="/privacy/" style="color:rgba(255,255,255,0.5);text-decoration:underline">Learn&nbsp;more</a></span>
+  <span style="line-height:1.4;flex:1 1 220px;">We use analytics to see which parts of bysloth people use, including the start and end places of route searches. We never record your journal or notes. <a href="/privacy/" style="color:rgba(255,255,255,0.5);text-decoration:underline">Learn&nbsp;more</a></span>
   <div style="display:flex;gap:8px;flex-shrink:0;">
     <button onclick="setAnalyticsConsent('declined')" style="background:transparent;border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.6);padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">Decline</button>
     <button onclick="setAnalyticsConsent('accepted')" style="background:#D9973D;border:none;color:#161616;padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;">Accept</button>
