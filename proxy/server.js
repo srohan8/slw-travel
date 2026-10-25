@@ -145,11 +145,11 @@ app.post('/api/ai', async (req, res) => {
     { 'HTTP-Referer': 'https://bysloth.com', 'X-Title': 'bysloth' }
   );
 
-  // Pollinations AI's anonymous tier is free with no key, but "Quest"-tier
-  // models (e.g. openai/gpt-5-nano, openai/gpt-5.4-nano) require a pollen-backed
-  // API key. Pass it when set; fall back to unauthenticated (free-tier-only) otherwise.
+  // Pollinations' current API (gen.pollinations.ai) requires a secret key from
+  // enter.pollinations.ai/keys. The old text.pollinations.ai Classic endpoint
+  // does not serve publisher/model IDs such as openai/gpt-5-nano.
   const callPollinations = (model) => callOaiCompat(
-    'https://text.pollinations.ai/openai', model, process.env.POLLINATIONS_API_KEY || ''
+    'https://gen.pollinations.ai/v1/chat/completions', model, process.env.POLLINATIONS_API_KEY
   );
 
   const { failsafeEnabled, forceProvider, providerChain, modelOverrides } = await getAiProviderSettings();
@@ -185,10 +185,17 @@ app.post('/api/ai', async (req, res) => {
     } else {
       // Auto mode: iterate provider chain in priority order, stop at first success
       const chain = providerChain || (failsafeEnabled ? ['anthropic', 'deepseek'] : ['anthropic']);
+      const failures = [];
       for (const name of chain) {
         ({ r, data, usedProvider } = await tryProvider(name));
         if (r.ok) break;
-        console.warn(`Provider ${name} failed (${data.error?.message || r.status}), trying next in chain…`);
+        const reason = data.error?.message || r.status;
+        failures.push(`${usedProvider}: ${reason}`);
+        console.warn(`Provider ${name} failed (${reason}), trying next in chain…`);
+      }
+      // Report every provider's failure, not just the last one tried
+      if (!r.ok && failures.length > 1) {
+        data = { error: { ...(data.error || {}), message: `All providers failed — ${failures.join(' | ')}` } };
       }
     }
 
