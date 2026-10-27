@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>bysloth planner</title>
+<!-- A real page (HTTP 200) for the ad landing URL: unknown paths fall through to 404.html, which hands
+     the visitor on with a JS redirect but answers 404, so ad platforms and in-app browsers can treat it as broken. -->
+<script>
+(function () {
+  var path = location.pathname.replace(/\/+$/, '') || '/route';
+  var search = location.search;
+  var keep = new URLSearchParams();
+  new URLSearchParams(search).forEach(function (v, k) {
+    if (/^utm_/.test(k) || ['fbclid', 'gclid', 'ttclid', 'ref'].indexOf(k) > -1) keep.append(k, v);
+  });
+  var q = '?p=' + encodeURIComponent(path) + (search ? '&q=' + encodeURIComponent(search.slice(1)) : '') + (keep.toString() ? '&' + keep.toString() : '');
+  location.replace('/app/' + q + location.hash);
+})();
+</script>
+<noscript><meta http-equiv="refresh" content="0;url=/app/"></noscript>
+</head>
+<body></body>
+</html>
